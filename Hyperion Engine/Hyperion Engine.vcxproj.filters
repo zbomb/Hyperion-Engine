@@ -1,0 +1,247 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Framework">
+      <UniqueIdentifier>{ceeacff1-e10d-44dc-ae7b-43f0d075bd52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lib">
+      <UniqueIdentifier>{f0ca69c6-629b-4328-879f-62d184b3d2f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tests">
+      <UniqueIdentifier>{3c1089af-1688-4565-9a50-3a2e59d6e5f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{8f55c96c-251c-48b8-aea3-60bcf2305799}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer">
+      <UniqueIdentifier>{c77c9b24-05c8-47d0-b1c8-917015999edb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\DirectX11">
+      <UniqueIdentifier>{ae4aecca-36f1-4629-b540-2a7f6d510445}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\Proxy">
+      <UniqueIdentifier>{3eb64028-56c7-4305-a15b-0a87edbb2444}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Types">
+      <UniqueIdentifier>{bbff4234-7ca3-4e57-a5be-4900dced3599}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Library">
+      <UniqueIdentifier>{78355464-2caa-49c7-bb7c-a4b7aa49f0e7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Hyperion\Hyperion.h">
+      <Filter>Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Thread.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\Entity.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\World.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Engine.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Object.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\ThreadManager.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\InputManager.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\Component.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\PrimitiveComponent.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\RenderFactory.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Factory.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Renderer.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Renderer.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\RenderMarshal.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyPrimitive.h">
+      <Filter>Renderer\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyScene.h">
+      <Filter>Renderer\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyView.h">
+      <Filter>Renderer\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyLight.h">
+      <Filter>Renderer\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\ViewState.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\MeshLoader.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\SerializationTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Constants.h">
+      <Filter>Lib</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Library\Mutex.hpp">
+      <Filter>Core\Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Types\Angle.h">
+      <Filter>Core\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Types\Color.h">
+      <Filter>Core\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Types\Point.h">
+      <Filter>Core\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Types\Vector.h">
+      <Filter>Core\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Library\Serialization.h">
+      <Filter>Core\Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Library\Memory.hpp">
+      <Filter>Core\Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\MemoryTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\String.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\EncodingTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Library\UTF8.hpp">
+      <Filter>Core\Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\StringTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Library\UTF16.hpp">
+      <Filter>Core\Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Library\UTF32.hpp">
+      <Filter>Core\Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Library\Binary.h">
+      <Filter>Core\Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\File.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Stream.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\Framework\Entity.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\World.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Engine.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Object.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\ThreadManager.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Thread.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\InputManager.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\Component.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\PrimitiveComponent.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\RenderFactory.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Factory.cpp">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\Renderer.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Renderer.cpp">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\RenderMarshal.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\Proxy\ProxyLight.cpp">
+      <Filter>Renderer\Proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\Proxy\ProxyPrimitive.cpp">
+      <Filter>Renderer\Proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\Proxy\ProxyScene.cpp">
+      <Filter>Renderer\Proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\Proxy\ProxyView.cpp">
+      <Filter>Renderer\Proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\MeshLoader.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Hyperion.cpp">
+      <Filter>Lib</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Types\Angle.cpp">
+      <Filter>Core\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Types\Color.cpp">
+      <Filter>Core\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Types\Point.cpp">
+      <Filter>Core\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Types\Vector.cpp">
+      <Filter>Core\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Library\Serialization.cpp">
+      <Filter>Core\Library</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Library\Binary.cpp">
+      <Filter>Core\Library</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\String.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\File.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Stream.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

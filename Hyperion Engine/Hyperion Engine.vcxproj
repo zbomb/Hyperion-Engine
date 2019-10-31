@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\Hyperion\Constants.h" />
+    <ClInclude Include="Include\Hyperion\Core\Engine.h" />
+    <ClInclude Include="Include\Hyperion\Core\File.h" />
+    <ClInclude Include="Include\Hyperion\Core\InputManager.h" />
+    <ClInclude Include="Include\Hyperion\Core\Library\Binary.h" />
+    <ClInclude Include="Include\Hyperion\Core\Library\Memory.hpp" />
+    <ClInclude Include="Include\Hyperion\Core\Library\Mutex.hpp" />
+    <ClInclude Include="Include\Hyperion\Core\Library\Serialization.h" />
+    <ClInclude Include="Include\Hyperion\Core\Library\UTF16.hpp" />
+    <ClInclude Include="Include\Hyperion\Core\Library\UTF32.hpp" />
+    <ClInclude Include="Include\Hyperion\Core\Library\UTF8.hpp" />
+    <ClInclude Include="Include\Hyperion\Core\Object.h" />
+    <ClInclude Include="Include\Hyperion\Core\Stream.h" />
+    <ClInclude Include="Include\Hyperion\Core\String.h" />
+    <ClInclude Include="Include\Hyperion\Core\Thread.h" />
+    <ClInclude Include="Include\Hyperion\Core\ThreadManager.h" />
+    <ClInclude Include="Include\Hyperion\Core\Types\Angle.h" />
+    <ClInclude Include="Include\Hyperion\Core\Types\Color.h" />
+    <ClInclude Include="Include\Hyperion\Core\Types\Point.h" />
+    <ClInclude Include="Include\Hyperion\Core\Types\Vector.h" />
+    <ClInclude Include="Include\Hyperion\Framework\Component.h" />
+    <ClInclude Include="Include\Hyperion\Framework\Entity.h" />
+    <ClInclude Include="Include\Hyperion\Framework\PrimitiveComponent.h" />
+    <ClInclude Include="Include\Hyperion\Framework\ViewState.h" />
+    <ClInclude Include="Include\Hyperion\Framework\World.h" />
+    <ClInclude Include="include\Hyperion\Hyperion.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Factory.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Renderer.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\MeshLoader.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyLight.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyPrimitive.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyScene.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyView.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Renderer.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\RenderFactory.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\RenderMarshal.h" />
+    <ClInclude Include="Tests\EncodingTests.hpp" />
+    <ClInclude Include="Tests\MemoryTests.hpp" />
+    <ClInclude Include="Tests\SerializationTests.hpp" />
+    <ClInclude Include="Tests\StringTests.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\Core\Engine.cpp" />
+    <ClCompile Include="Source\Core\File.cpp" />
+    <ClCompile Include="Source\Core\InputManager.cpp" />
+    <ClCompile Include="Source\Core\Library\Binary.cpp" />
+    <ClCompile Include="Source\Core\Library\Serialization.cpp" />
+    <ClCompile Include="Source\Core\Object.cpp" />
+    <ClCompile Include="Source\Core\Stream.cpp" />
+    <ClCompile Include="Source\Core\String.cpp" />
+    <ClCompile Include="Source\Core\Thread.cpp" />
+    <ClCompile Include="Source\Core\ThreadManager.cpp" />
+    <ClCompile Include="Source\Core\Types\Angle.cpp" />
+    <ClCompile Include="Source\Core\Types\Color.cpp" />
+    <ClCompile Include="Source\Core\Types\Point.cpp" />
+    <ClCompile Include="Source\Core\Types\Vector.cpp" />
+    <ClCompile Include="Source\Framework\Component.cpp" />
+    <ClCompile Include="Source\Framework\Entity.cpp" />
+    <ClCompile Include="Source\Framework\PrimitiveComponent.cpp" />
+    <ClCompile Include="Source\Framework\World.cpp" />
+    <ClCompile Include="Source\Hyperion.cpp" />
+    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Factory.cpp" />
+    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Renderer.cpp" />
+    <ClCompile Include="Source\Renderer\MeshLoader.cpp" />
+    <ClCompile Include="Source\Renderer\Proxy\ProxyLight.cpp" />
+    <ClCompile Include="Source\Renderer\Proxy\ProxyPrimitive.cpp" />
+    <ClCompile Include="Source\Renderer\Proxy\ProxyScene.cpp" />
+    <ClCompile Include="Source\Renderer\Proxy\ProxyView.cpp" />
+    <ClCompile Include="Source\Renderer\Renderer.cpp" />
+    <ClCompile Include="Source\Renderer\RenderFactory.cpp" />
+    <ClCompile Include="Source\Renderer\RenderMarshal.cpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <ProjectGuid>{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>HyperionEngine</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>Hyperion</TargetName>
+    <IncludePath>C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include;$(IncludePath)</IncludePath>
+    <OutDir>$(SolutionDir)Build\$(Configuration)\</OutDir>
+    <IntDir>Build\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>Hyperion</TargetName>
+    <IncludePath>C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
