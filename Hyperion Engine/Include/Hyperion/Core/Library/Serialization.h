@@ -29,13 +29,6 @@ namespace Hyperion
 	template< class _Ty >
 	struct is_serializable : std::bool_constant< is_serializable_v< _Ty > > {};
 
-	enum class WriteMode
-	{
-		Overwrite,
-		Append,
-		None
-	};
-
 	enum class ArchiveType : uint8
 	{
 		Boolean		= 0b00000000,

@@ -221,7 +221,7 @@ namespace Hyperion
 			*/
 			NonLocalizedStringData();
 			NonLocalizedStringData( const NonLocalizedStringData& Other );
-			NonLocalizedStringData( const std::vector< byte >& inData, StringEncoding Encoding );
+			NonLocalizedStringData( const std::vector< byte >& inData, StringEncoding Encoding, bool bKnownByteOrder = false, bool bLittleEndian = false );
 			NonLocalizedStringData( const std::vector< byte >& inData );
 
 			/*
@@ -277,7 +277,7 @@ namespace Hyperion
 		--------------------------------------------------------------------------------*/
 	public:
 
-		class iterator
+		class HYPERION_UNUSED iterator
 		{
 		private:
 
@@ -331,8 +331,8 @@ namespace Hyperion
 			/*
 				Comparison Operators
 			*/
-			bool operator==( iterator Other ) const;
-			bool operator!=( iterator Other ) const;
+			HYPERION_NODISCARD bool operator==( iterator Other ) const;
+			HYPERION_NODISCARD bool operator!=( iterator Other ) const;
 
 			/*
 				Assignment Operator
@@ -342,13 +342,13 @@ namespace Hyperion
 			/*
 				Distance Functions
 			*/
-			size_t operator-( const iterator& Other );
-			size_t Distance( const iterator& Other );
+			HYPERION_NODISCARD size_t operator-( const iterator& Other );
+			HYPERION_NODISCARD size_t Distance( const iterator& Other );
 
 			/*
 				Dereference Operator
 			*/
-			Char operator*();
+			HYPERION_NODISCARD Char operator*();
 
 			/*
 				Iterator Traits
@@ -385,6 +385,8 @@ namespace Hyperion
 		String( const char* inStr, StringEncoding Enc = StringEncoding::ASCII );
 		String( const iterator& Begin, const iterator& End );
 		String( const String& Other ); 
+		String( const std::wstring& inStr, StringEncoding Enc );
+		String( const wchar_t* inStr, StringEncoding Enc );
 
 		/*--------------------------------------------------------------------------------
 			Member Functions
@@ -417,6 +419,9 @@ namespace Hyperion
 		*/
 		iterator end() const;
 
+		std::string GetU8Str() const;
+		std::u16string GetU16Str() const;
+
 
 		/*--------------------------------------------------------------------------------
 			String Library
@@ -427,7 +432,7 @@ namespace Hyperion
 		/*
 			String::ChangeEncoding_Impl
 		*/
-		static const std::vector< byte > ChangeEncoding_Impl( const std::vector< byte >& Source, StringEncoding SourceEncoding, StringEncoding TargetEncoding );
+		static const std::vector< byte > ChangeEncoding_Impl( const std::vector< byte >& Source, StringEncoding SourceEncoding, StringEncoding TargetEncoding, bool bKnownByteOrder = false, bool bLittleEndian = false );
 
 		/*
 			String::Find_Impl

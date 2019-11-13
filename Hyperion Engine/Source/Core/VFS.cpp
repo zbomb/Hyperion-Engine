@@ -1,15 +1,15 @@
 /*==================================================================================================
 	Hyperion Engine
-	Source/Core/Stream.cpp
+	Source/Core/VFS.cpp
 	© 2019, Zachary Berry
 ==================================================================================================*/
 
-#include "Hyperion/Core/Stream.h"
-
+#include "Hyperion/Core/VFS.h"
 
 
 namespace Hyperion
 {
+
 
 
 }

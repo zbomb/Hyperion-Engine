@@ -11,6 +11,8 @@
 #include "Hyperion/Framework/World.h"
 #include "Hyperion/Renderer/RenderFactory.h"
 #include "Hyperion/Renderer/RenderMarshal.h"
+#include "Hyperion/Core/File.h"
+#include "Hyperion/Core/Platform.h"
 #include <typeindex>
 #include <type_traits>
 
@@ -32,6 +34,9 @@ namespace Hyperion
 		// Create sub-objects
 		m_ThreadManager		= CreateObject< ThreadManager >();
 		m_InputManager		= CreateObject< InputManager >();
+
+		// Initialize any platform services
+		Platform::Init();
 	}
 
 

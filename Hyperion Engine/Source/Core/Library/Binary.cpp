@@ -28,8 +28,10 @@ namespace Hyperion
 		/*
 			Binary::Print
 		*/
-		void Binary::PrintHex( const std::vector< byte >::iterator Begin, const std::vector< byte >::iterator End )
+		void Binary::PrintHex( const std::vector< byte >::const_iterator Begin, const std::vector< byte >::const_iterator End )
 		{
+			std::ios_base::fmtflags normalFlags( std::cout.flags() );
+
 			// We want to print out 8 bytes on a tabbed line
 			uint32 Count = 0;
 			std::cout << "\t";
@@ -43,11 +45,12 @@ namespace Hyperion
 					std::cout << "\n\t";
 				}
 
-				std::cout << std::hex << std::setfill( '0' ) << std::setw( 2 ) << *It;
+				std::cout << std::hex << std::setfill( '0' ) << std::setw( 2 ) << static_cast< uint16 >( *It );
 				std::cout << " ";
 			}
 
 			std::cout << "\n";
+			std::cout.setf( normalFlags );
 		}
 
 		/*

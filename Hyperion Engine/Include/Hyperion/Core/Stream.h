@@ -7,366 +7,346 @@
 #pragma once
 
 #include <vector>
+#include <atomic>
+#include <iostream>
+#include <boost/interprocess/streams/vectorstream.hpp>
+
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Core/Library/UTF8.hpp"
-#include "Hyperion/Core/Library/UTF16.hpp"
-#include "Hyperion/Core/String.h"
 
 
 namespace Hyperion
 {
-	template< typename _Iter >
-	class _wrap_iterator_const
+	/*-----------------------------------------------------------------------------
+		IDataSource Interface
+	-----------------------------------------------------------------------------*/
+	class IDataSource
 	{
-	protected:
-
-		_Iter m_Iter;
 
 	public:
 
-		/*
-			Iterator Traits
-		*/
-		using difference_type		= typename _Iter::difference_type;
-		using value_type			= typename _Iter::value_type;
-		using pointer				= typename const value_type*;
-		using reference				= typename const value_type&;
-		using iterator_category		= typename _Iter::iterator_category;
+		virtual std::basic_streambuf< byte >* GetStreamBuffer() = 0;
 
-		/*
-			Constructors
-		*/
-		_wrap_iterator_const( const _Iter& Base )
-			: m_Iter( Base )
+		virtual bool CanWriteStream() const	= 0;
+		virtual bool CanReadStream() const	= 0;
+	};
+
+
+	class GenericBuffer : public IDataSource
+	{
+		using _CharType = byte;
+		using _VecType = std::vector< _CharType, std::allocator< _CharType > >;
+
+	protected:
+
+		boost::interprocess::basic_vectorbuf< _VecType > m_Buffer;
+		const bool bAllowRead;
+		const bool bAllowWrite;
+
+	public:
+
+		GenericBuffer( bool bCanRead = true, bool bCanWrite = true )
+			:m_Buffer( ( bCanRead ? std::ios_base::out : 0x00 ) | ( bCanWrite ? std::ios_base::in : 0x00 ) ), bAllowRead( bCanRead ), bAllowWrite( bCanWrite )
 		{}
 
-		_wrap_iterator_const( const _wrap_iterator_const& Other )
-			: m_Iter( Other.m_Iter )
-		{}
-
-		void operator=( const _wrap_iterator_const& Other )
+		GenericBuffer( const std::vector< byte >& In, bool bCanRead = true, bool bCanWrite = true )
+			: m_Buffer( In, ( bCanRead ? std::ios_base::out : 0x00 ) | ( bCanWrite ? std::ios_base::in : 0x00 ) ), bAllowRead( bCanRead ), bAllowWrite( bCanWrite )
 		{
-			m_Iter = Other.m_Iter;
 		}
 
-		/*
-			Increment/Decrement/Add/Subtract
-		*/
-		_wrap_iterator_const& operator+=( const difference_type Offset )	{ m_Iter += Offset; return *this; }
-		_wrap_iterator_const& operator++()									{ m_Iter++; return *this; }
-		_wrap_iterator_const operator++( int )								{ _wrap_iterator_const ret( *this ); ++( *this ); return ret; }
-		_wrap_iterator_const& operator+( const difference_type Offset )		{ _wrap_iterator_const ret( *this ); return ret += Offset; }
-		_wrap_iterator_const& operator-=( const difference_type Offset )	{ m_Iter -= Offset; return *this; }
-		_wrap_iterator_const& operator--()									{ m_Iter--; return *this; }
-		_wrap_iterator_const operator--( int )								{ _wrap_iterator_const ret( *this ); --( *this ); return ret; }
-		_wrap_iterator_const operator-( const difference_type Offset )		{ _wrap_iterator_const ret( *this ); return ret -= Offset; }
+		// For now.. no copying or assigning
+		GenericBuffer( const GenericBuffer& ) = delete;
+		GenericBuffer& operator=( const GenericBuffer& ) = delete;
 
-		/*
-			Range
-		*/
-		difference_type operator-( const _wrap_iterator_const& Other )		{ return m_Iter - Other.m_Iter; }
-
-		/*
-			Equality Checks
-		*/
-		bool operator==( const _wrap_iterator_const& Other ) const	{ return m_Iter == Other.m_Iter; }
-		bool operator!=( const _wrap_iterator_const& Other ) const	{ return !( *this == Other.m_Iter ); }
-		bool operator<( const _wrap_iterator_const& Other ) const	{ return m_Iter < Other.m_Iter; }
-		bool operator<=( const _wrap_iterator_const& Other ) const	{ return m_Iter <= Other.m_Iter; }
-		bool operator>( const _wrap_iterator_const& Other ) const	{ return m_Iter > Other.m_Iter; }
-		bool operator>=( const _wrap_iterator_const& Other ) const	{ return m_Iter >= Other.m_Iter; }
-
-		_Iter _get() { return m_Iter; }
-
-	};
-
-	template< typename _Iter >
-	class _wrap_iterator : public _wrap_iterator_const< _Iter >
-	{
-	protected:
-
-		using _base = _wrap_iterator_const;
-
-	public:
-
-		/*
-			Iterator Traits
-		*/
-		using difference_type		= typename _Iter::difference_type;
-		using value_type			= typename _Iter::value_type;
-		using pointer				= typename value_type*;
-		using reference				= typename value_type&;
-		using iterator_category		= typename _Iter::iterator_category;
-
-		/*
-			Constructors
-		*/
-		_wrap_iterator() 
-		{}
-
-		_wrap_iterator( const _Iter& Base )
-			: _base( Base )
-		{}
-
-		_wrap_iterator( const _wrap_iterator& Other )
-			: m_Iter( Other.m_Iter )
-		{}
-
-		void operator=( const _wrap_iterator& Other )
+		void Reserve( _VecType::size_type Size )
 		{
-			m_Iter = Other.m_Iter;
+			m_Buffer.reserve( Size );
 		}
 
-		/*
-			Underlying Value Access
-		*/
-		inline reference operator*()		{ return *m_Iter; }
-		inline pointer operator->()			{ return m_Iter.operator->(); }
-
-	};
-
-
-	enum class BufferMode
-	{
-		Read,
-		Write,
-		ReadWrite
-	};
-
-
-	/*----------------------------------------------------------------------------------------
-		IDataBuffer Interface
-		* Used for things like files, and memory buffers
-	----------------------------------------------------------------------------------------*/
-	class IDataBuffer
-	{
-
-	public:
-
-		virtual std::vector< byte >& GetBuffer() = 0;
-		virtual BufferMode GetMode() = 0;
-
-	};
-
-	/*----------------------------------------------------------------------------------------
-		BinaryStreamBase Class
-	----------------------------------------------------------------------------------------*/
-	class BinaryStreamBase
-	{
-
-	protected:
-
-		IDataBuffer& m_Target;
-
-	public:
-
-		BinaryStreamBase() = delete;
-		BinaryStreamBase( IDataBuffer& );
-		~BinaryStreamBase();
-
-		using iterator = _wrap_iterator_const< std::vector< byte >::const_iterator >;
-
-		iterator Begin() const;
-		iterator End() const;
-
-		byte At( size_t Index ) const;
-		void Copy( std::vector< byte >& Target ) const;
-		void Copy( std::vector< byte >& Target, std::vector< byte >::iterator Where ) const;
-		void Copy( iterator Start, iterator End, std::vector< byte >& Target ) const;
-		void Copy( iterator Start, iterator End, std::vector< byte >& Target, std::vector< byte >::iterator Where ) const;
-		void Copy( size_t StartIndex, size_t Count, std::vector< byte >& Target ) const;
-		void Copy( size_t StartIndex, size_t Count, std::vector< byte >& Target, std::vector< byte >::iterator Where ) const;
-		size_t Size() const;
-
-	};
-
-	/*----------------------------------------------------------------------------------------
-		BinaryReader Class
-	----------------------------------------------------------------------------------------*/
-	class BinaryReader : public BinaryStreamBase
-	{
-
-	public:
-
-		BinaryReader() = delete;
-
-		BinaryReader( IDataBuffer& In )
-			: BinaryStreamBase( In )
-		{}
-
-		~BinaryReader()
-		{}
-
-	};
-
-	/*----------------------------------------------------------------------------------------
-		BinaryWriter Class
-	----------------------------------------------------------------------------------------*/
-	class BinaryWriter : public BinaryStreamBase
-	{
-
-	public:
-
-		BinaryWriter() = delete;
-
-		BinaryWriter( IDataBuffer& In )
-			: BinaryStreamBase( In )
-		{}
-
-		~BinaryWriter()
-		{}
-
-		iterator InsertAt( iterator Where, byte In );
-		iterator InsertAt( iterator Where, std::initializer_list< byte > In );
-		iterator InsertAt( iterator Where, std::vector< byte >::const_iterator, std::vector< byte >::const_iterator );
-		iterator InsertAt( iterator Where, iterator, iterator );
-
-		void InsertFront( byte );
-		void InsertFront( std::initializer_list< byte > );
-		void InsertFront( std::vector< byte >::const_iterator, std::vector< byte >::const_iterator );
-		void InsertFront( iterator, iterator );
-
-		void InsertBack( byte );
-		void InsertBack( std::initializer_list< byte > );
-		void InsertBack( std::vector< byte >::const_iterator, std::vector< byte >::const_iterator );
-		void InsertBack( iterator, iterator );
-
-		iterator Erase( size_t Index, size_t Count );
-		iterator Erase( iterator, iterator );
-		iterator Erase( iterator );
-
-	};
-
-	/*----------------------------------------------------------------------------------------
-		TextStreamBase Class
-	----------------------------------------------------------------------------------------*/
-	class TextStreamBase
-	{
-
-	protected:
-
-		IDataBuffer& m_Target;
-
-	public:
-
-		TextStreamBase() = delete;
-		TextStreamBase( IDataBuffer& );
-		~TextStreamBase();
-
-		class char_iterator
+		void Clear()
 		{
+			m_Buffer.clear();
+		}
 
-		protected:
-		
-			StringEncoding m_Encoding;
-			std::vector< byte >* m_Target;
-			std::vector< byte >::const_iterator m_Position;
-			std::vector< byte >::const_iterator m_NextChar;
-			bool m_LittleEndian;
-			uint32 m_CodePoint;
+		const _VecType& GetVector() const
+		{
+			return m_Buffer.vector();
+		}
 
-		public:
+		virtual std::basic_streambuf< byte >* GetStreamBuffer() override final
+		{
+			return &m_Buffer;
+		}
 
-			/*
-				Iterator Traits
-			*/
-			using difference_type		= size_t;
-			using value_type			= Char;
-			using pointer				= const Char*;
-			using reference				= const Char&;
-			using iterator_category		= std::forward_iterator_tag;
+		virtual bool CanWriteStream() const override final
+		{
+			return bAllowWrite;
+		}
 
-			char_iterator()
-				: m_Encoding( StringEncoding::UTF8 ), m_Target( nullptr ), m_LittleEndian( false )
-			{}
+		virtual bool CanReadStream() const override final
+		{
+			return bAllowRead;
+		}
 
-			char_iterator( std::vector< byte >& v, std::vector< byte >::const_iterator i, StringEncoding e, bool bLittleEndian = false )
-				: m_Position( i ), m_Target( std::addressof( v ) ), m_Encoding( e ), m_LittleEndian( bLittleEndian )
-			{}
+		_VecType::size_type Size()
+		{
+			return m_Buffer.vector().size();
+		}
 
-			~char_iterator()
+	};
+
+
+	class DataReader
+	{
+
+		using _StreamType = std::basic_istream< byte >;
+
+	protected:
+
+		IDataSource& m_Target;
+		_StreamType m_Stream;
+		const bool m_Alive;
+
+	public:
+
+		DataReader() = delete;
+		DataReader( const DataReader& ) = delete;
+		DataReader& operator=( const DataReader& ) = delete;
+
+		DataReader( IDataSource& Target )
+			: m_Target( Target ), m_Stream( Target.CanReadStream() ? Target.GetStreamBuffer() : nullptr ), m_Alive( Target.CanReadStream() )
+		{
+			if( !m_Alive )
 			{
-				m_Target = nullptr;
+				std::cout << "[ERROR] DataReader: Attempt to read from a stream that doesnt allow reading!\n";
 			}
+		}
 
-
-			void Advance()
+		void SeekBegin( _StreamType::pos_type Offset = 0 )
+		{
+			if( m_Alive )
 			{
-				// Check if were invalid or hit the end of the data buffer (or invalid string encoding)
-				if( !m_Target || m_Position == m_Target->end() || m_Encoding == StringEncoding::AUTO )
-					return;
-
-				// Now.. we need to read the next character from the source buffer using the provided encoding
-				if( m_Encoding == StringEncoding::ASCII )
-				{
-					// First move the current position up to the next character
-					m_Position = m_NextChar;
-
-					// Next, read in this character
-					m_CodePoint = static_cast< Char >( *m_Position );
-
-					// Finally.. advance m_NextChar to the start of the next character
-					m_NextChar++;
-				}
-				else if( m_Encoding == StringEncoding::UTF8 )
-				{
-					Encoding::UTF8::ReadNextCode( *m_Target, m_Position, m_CodePoint );
-				}
-
+				m_Stream.seekg( Offset, _StreamType::beg );
 			}
+		}
 
+		void SeekEnd( _StreamType::pos_type Offset = 0 )
+		{
+			if( m_Alive )
+			{
+				m_Stream.seekg( Offset, _StreamType::end );
+			}
+		}
 
+		void SeekOffset( _StreamType::pos_type Offset )
+		{
+			if( m_Alive )
+			{
+				m_Stream.seekg( Offset );
+			}
+		}
 
+		_StreamType::pos_type GetOffset()
+		{
+			return m_Alive ? m_Stream.tellg() : static_cast< _StreamType::pos_type >( 0 );
+		}
+
+		enum class ReadResult
+		{
+			Fail,
+			End,
+			Success
 		};
 
-
-
-
-
-	};
-
-
-	/*----------------------------------------------------------------------------------------
-		TextReader Class
-	----------------------------------------------------------------------------------------*/
-	class TextReader
-	{
-
-	protected:
-
-		IDataBuffer& m_Target;
-
-	public:
-
-		TextReader() = delete;
-		TextReader( IDataBuffer&, StringEncoding );
-		~TextReader();
-
-		class iterator
+		ReadResult ReadBytes( std::vector< byte >& Output, size_t Count, size_t& outBytesRead )
 		{
+			if( !m_Alive )
+			{
+				return ReadResult::Fail;
+			}
 
-		};
+			auto res = ReadResult::Success;
 
-		iterator Begin() const;
-		iterator End() const;
+			// We need to resize the vector to fit the expected number of bytes being read from the stream
+			auto startSize = Output.size();
+			auto newSize = startSize + Count;
+
+			if( newSize < startSize )
+			{
+				// Overflow!
+				std::cout << "[ERROR] DataReader: Attempt to read into a vector.. but the vector size overflowed!\n";
+				return ReadResult::Fail;
+			}
+
+			Output.resize( newSize );
+
+			// Now we need to get a pointer to where we can start writing the data
+			byte* insPtr = Output.data() + startSize;
+
+			// Read from the stream...
+			m_Stream.read( insPtr, static_cast< std::streamsize >( Count ) );
+
+			// Check for success
+			if( m_Stream )
+			{
+				outBytesRead = static_cast< size_t >( Count );
+			}
+			else
+			{
+				// Resize the vector to fit the data
+				outBytesRead = static_cast< size_t >( m_Stream.gcount() );
+				Output.resize( startSize + outBytesRead );
+
+				// Determine reason for failure.. error or just eof
+				if( m_Stream.eof() )
+				{
+					res = ReadResult::End;
+
+					// Reset EOF bit so we can continue using this stream
+					if( !m_Stream.bad() )
+					{
+						m_Stream.clear();
+					}
+				}
+				else
+				{
+					res = ReadResult::Fail;
+				}
+			}
+
+			return res;
+		}
+
+		ReadResult ReadBytes( std::vector< byte >& Output, size_t Count )
+		{
+			size_t _dummy;
+			return ReadBytes( Output, Count, _dummy );
+		}
+
+		_StreamType::pos_type Size()
+		{
+			if( !m_Alive )
+			{
+				return static_cast< _StreamType::pos_type >( 0 );
+			}
+
+			// Store current offset, and seek to the end of the stream
+			auto curOffset = GetOffset();
+			SeekEnd();
+
+			// Since were at the end of the stream, we only need to get the offset from the begining to determine size
+			auto outSize = GetOffset();
+
+			// Reset offset to where we were before, and return the result
+			SeekBegin( curOffset );
+			return outSize;
+		}
 	};
 
-	/*----------------------------------------------------------------------------------------
-		TextWriter Class
-	----------------------------------------------------------------------------------------*/
-	class TextWriter
+
+	class DataWriter
 	{
+
+		using _StreamType = std::basic_ostream< byte >;
+		using _Iter = std::vector< byte >::const_iterator;
 
 	protected:
 
-		IDataBuffer& m_Target;
+		IDataSource& m_Target;
+		_StreamType m_Stream;
+		const bool m_Alive;
 
 	public:
 
-		TextWriter() = delete;
-		TextWriter( IDataBuffer& );
-		~TextWriter();
+		DataWriter() = delete;
+		DataWriter( const DataWriter& ) = delete;
+		DataWriter& operator=( const DataWriter& ) = delete;
 
+		DataWriter( IDataSource& Target )
+			: m_Target( Target ), m_Stream( Target.CanWriteStream() ? Target.GetStreamBuffer() : nullptr ), m_Alive( Target.CanWriteStream() )
+		{
+			if( !m_Alive )
+			{
+				std::cout << "[ERROR] DataWriter: Attempt to write to a stream that doesnt allow writing\n";
+			}
+		}
+
+		~DataWriter()
+		{
+			if( m_Alive )
+			{
+				m_Stream.flush();
+			}
+		}
+
+		bool WriteBytes( _Iter Start, _Iter End )
+		{
+			if( !m_Alive )
+			{
+				return false;
+			}
+
+			auto byteCount	= std::distance( Start, End );
+			auto bytePtr	= std::addressof( *Start );
+
+			// Validate iter distance
+			if( byteCount <= 0 )
+				return true;
+
+			// Write to stream
+			m_Stream.write( bytePtr, static_cast< std::streamsize >( byteCount ) );
+
+			// Check for failure
+			return m_Stream ? true : false;
+		}
+
+		bool WriteBytes( const std::vector< byte >& In )
+		{
+			return WriteBytes( In.begin(), In.end() );
+		}
+
+		bool WriteBytes( const std::vector< byte >& In, size_t Count )
+		{
+			auto Distance = In.size() > Count ? Count : In.size();
+			return WriteBytes( In.begin(), In.begin() + Distance );
+		}
+
+		void Flush()
+		{
+			if( m_Alive )
+			{
+				m_Stream.flush();
+			}
+		}
+
+		_StreamType::pos_type GetOffset()
+		{
+			return m_Alive ? m_Stream.tellp() : static_cast< _StreamType::pos_type >( 0 );
+		}
+
+		void SeekEnd( _StreamType::off_type Off = 0 )
+		{
+			if( m_Alive )
+			{
+				m_Stream.seekp( Off, _StreamType::end );
+			}
+		}
+
+		void SeekBegin( _StreamType::off_type Off = 0 )
+		{
+			if( m_Alive )
+			{
+				m_Stream.seekp( Off, _StreamType::beg );
+			}
+		}
+
+		void SeekOffset( _StreamType::off_type Off )
+		{
+			if( m_Alive )
+			{
+				m_Stream.seekp( Off );
+			}
+		}
 	};
+
 
 }

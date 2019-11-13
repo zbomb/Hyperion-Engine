@@ -34,7 +34,7 @@ namespace Hyperion
 			Binary::Print(
 			* Writes a series of bytes to the console, in hexadecimal
 		*/
-		static void PrintHex( const std::vector< byte >::iterator Begin, const std::vector< byte >::iterator End );
+		static void PrintHex( const std::vector< byte >::const_iterator Begin, const std::vector< byte >::const_iterator End );
 
 		/*
 			Binary::PrintBin

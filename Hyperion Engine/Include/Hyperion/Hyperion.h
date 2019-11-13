@@ -23,13 +23,25 @@
 
 
 
-
 //////////////////////////////////////////////
 /////// Do not edit below this line!!! ///////
 //////////////////////////////////////////////
 
 #ifndef HYPERION_CONFIG_2D
 #define HYPERION_CONFIG_3D
+#endif
+
+// Operating System
+#if _WIN32
+#define HYPERION_OS_WIN32 true
+#elif __ANDROID__
+#define HYPERION_OS_ANDROID true
+#elif __linux__
+#define HYPERION_OS_LINUX true
+#elif __APPLE__ && __MACH__
+#define HYPERION_OS_MAC true
+#else
+static_assert( true, "[HYPERION] Couldnt detect the OS this is targetting!" );
 #endif
 
 typedef int8_t		int8;
@@ -57,6 +69,10 @@ typedef uint32		Char;
 #elif
 #define HYPERION_VERIFY( condition, message ) do { } while( false )
 #endif
+
+// Attributes
+#define HYPERION_NODISCARD [[nodiscard]]
+#define HYPERION_UNUSED [[maybe_unused]]
 
 
 #include "Hyperion/Constants.h"

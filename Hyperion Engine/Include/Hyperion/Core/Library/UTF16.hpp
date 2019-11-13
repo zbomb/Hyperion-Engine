@@ -81,6 +81,53 @@ namespace Encoding
 			}
 		}
 
+		static uint32 ReadSurrogatePair( uint16 UpperHalf, uint16 LowerHalf )
+		{
+			// A surrogate pair has some control bits set on it, so we need to extract the significant bits from the two values
+			uint32 SigUpperBits = UpperHalf & 0b00000011'11111111;
+			uint32 SigLowerBits = LowerHalf & 0b00000011'11111111;
+
+			// Finally, perform an add and return the result
+			return ( ( SigUpperBits << 10 ) | SigLowerBits ) + 0x10000;
+		}
+
+		static std::pair< uint16, uint16 > WriteSurrogatePair( uint32 inCode )
+		{
+			auto Output = std::make_pair< uint16, uint16 >( 0, 0 );
+
+			// First, we need to validate the code point
+			if( inCode < 0x10000 || inCode > 0x10FFFF )
+				return Output;
+
+			// Next, were going to subtract 0x10000 from the code point to get U'
+			uint32 uPrime = inCode - 0x10000;
+
+			// Now, were going to encode the bits into a 4 byte sequence
+			Output.first	= ( ( uPrime & 0b00000000'00001111'11111100'00000000 ) >> 10 );
+			Output.second	= ( ( uPrime & 0b00000000'00000000'00000011'11111111 ) );
+
+			// Now, we need to add in the formatting
+			Output.first	|= 0b11011000'00000000;
+			Output.second	|= 0b11011100'00000000;
+
+			return Output;
+		}
+
+		static std::pair< uint8, uint8 > SerializeSurrogate( uint16 In )
+		{
+			auto Output = std::make_pair< uint8, uint8 >( 0, 0 );
+
+			Output.first = ( ( In & 0b11111111'00000000 ) >> 8 );
+			Output.second = ( In & 0b00000000'11111111 );
+
+			return Output;
+		}
+
+
+	public:
+
+		UTF16() = delete;
+
 		static ProcessResult ProcessBinary( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End )
 		{
 			// Ensure we are not null
@@ -152,53 +199,6 @@ namespace Encoding
 			return Binary::IsLittleEndian() ? ProcessResult::LittleEndian : ProcessResult::BigEndian;
 		}
 
-		static uint32 ReadSurrogatePair( uint16 UpperHalf, uint16 LowerHalf )
-		{
-			// A surrogate pair has some control bits set on it, so we need to extract the significant bits from the two values
-			uint32 SigUpperBits = UpperHalf & 0b00000011'11111111;
-			uint32 SigLowerBits = LowerHalf & 0b00000011'11111111;
-
-			// Finally, perform an add and return the result
-			return ( ( SigUpperBits << 10 ) | SigLowerBits ) + 0x10000;
-		}
-
-		static std::pair< uint16, uint16 > WriteSurrogatePair( uint32 inCode )
-		{
-			auto Output = std::make_pair< uint16, uint16 >( 0, 0 );
-
-			// First, we need to validate the code point
-			if( inCode < 0x10000 || inCode > 0x10FFFF )
-				return Output;
-
-			// Next, were going to subtract 0x10000 from the code point to get U'
-			uint32 uPrime = inCode - 0x10000;
-
-			// Now, were going to encode the bits into a 4 byte sequence
-			Output.first	= ( ( uPrime & 0b00000000'00001111'11111100'00000000 ) >> 10 );
-			Output.second	= ( ( uPrime & 0b00000000'00000000'00000011'11111111 ) );
-
-			// Now, we need to add in the formatting
-			Output.first	|= 0b11011000'00000000;
-			Output.second	|= 0b11011100'00000000;
-
-			return Output;
-		}
-
-		static std::pair< uint8, uint8 > SerializeSurrogate( uint16 In )
-		{
-			auto Output = std::make_pair< uint8, uint8 >( 0, 0 );
-
-			Output.first = ( ( In & 0b11111111'00000000 ) >> 8 );
-			Output.second = ( In & 0b00000000'11111111 );
-
-			return Output;
-		}
-
-
-	public:
-
-		UTF16() = delete;
-
 		/*
 			Encoding::UTF16::IsValidCode
 		*/
@@ -223,26 +223,12 @@ namespace Encoding
 		/*
 			Encoding::UTF16::BinaryToCodes
 		*/
-		static bool BinaryToCodes( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, std::vector< uint32 >& outCodes )
+		static bool BinaryToCodes( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, std::vector< uint32 >& outCodes, bool bIsLittleEndian )
 		{
-			// First, were going to process the input, and determine endian order
-			auto Result = ProcessBinary( Begin, End );
-			if( Result == ProcessResult::Invalid )
-			{
-				std::cout << "[ERROR] UTF-16 Decoder: Invalid data provided!\n";
-				return false;
-			}
-			else if( Result == ProcessResult::Null )
-			{
+			// We dont need to call 'ProcessBinary' since were assuming the byte order the caller specified.. so we need 
+			// to check for null strings, since normally that is done in that function
+			if( std::distance( Begin, End ) < 2 )
 				return true;
-			}
-
-			bool bIsLittleEndian = ( Result == ProcessResult::LittleEndian );
-
-			if( bIsLittleEndian )
-				std::cout << "[DEBUG] UTF-16 Decoder: Found Little Endian String!\n";
-			else
-				std::cout << "[DEBUG] UTF-16 Decoder: Found Big Endian String!\n";
 
 			// Next, we need to iterate through the string, read in the surrogates using the correct endian order.. validate them and insert into the outCodes vector
 			for( auto It = Begin;; )
@@ -312,9 +298,32 @@ namespace Encoding
 		/*
 			Encoding::UTF16::BinaryToCodes
 		*/
+		static bool BinaryToCodes( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, std::vector< uint32 >& outCodes )
+		{
+			// We need to call 'ProcessBinary' to auto-detect endian order
+			auto Result = ProcessBinary( Begin, End );
+
+			if( Result == ProcessResult::Null )					return true;
+			else if( Result == ProcessResult::Invalid )			return false;
+			else if( Result == ProcessResult::BigEndian )		return BinaryToCodes( Begin, End, outCodes, false );
+			else if( Result == ProcessResult::LittleEndian )	return BinaryToCodes( Begin, End, outCodes, true );
+			else												return false;
+		}
+
+		/*
+			Encoding::UTF16::BinaryToCodes
+		*/
 		inline static bool BinaryToCodes( const std::vector< byte >& In, std::vector< uint32 >& outCodes )
 		{
 			return BinaryToCodes( In.begin(), In.end(), outCodes );
+		}
+
+		/*
+			Encoding::UTF16::BinaryToCodes
+		*/
+		inline static bool BinaryToCodes( const std::vector< byte >& In, std::vector< uint32 >& outCodes, bool bIsLittleEndian )
+		{
+			return BinaryToCodes( In.begin(), In.end(), outCodes, bIsLittleEndian );
 		}
 
 		/*
@@ -372,6 +381,49 @@ namespace Encoding
 		inline static bool CodesToBinary( const std::vector< uint32 >& inCodes, std::vector< byte >& outData )
 		{
 			return CodesToBinary( inCodes.begin(), inCodes.end(), outData );
+		}
+
+		static bool CodesToU16String( std::vector< uint32 >::const_iterator Begin, std::vector< uint32 >::const_iterator End, std::u16string& outStr )
+		{
+			if( Begin == End )
+				return false;
+
+			// Create vector for the output data and reserve needed space
+			std::vector< char16_t > u16Chars;
+			u16Chars.reserve( std::distance( Begin, End ) / 2 );
+
+			// Were going to write out a BOM.. TODO: Is this needed?
+			u16Chars.push_back( 0xFEFF );
+			
+			for( auto It = Begin; It != End; It++ )
+			{
+				auto Type = ValidateCodePoint( *It );
+				if( Type == SurrogateType::Single )
+				{
+					// Serialize surrogate to single char16_t
+					auto bytes = SerializeSurrogate( *It );
+					u16Chars.push_back( ( bytes.first << 8 ) | ( bytes.second ) );
+				}
+				else if( Type == SurrogateType::Pair )
+				{
+					// Create surrogate pair, and write both to the char vector
+					auto pair = WriteSurrogatePair( *It );
+					auto first = SerializeSurrogate( pair.first );
+					auto second = SerializeSurrogate( pair.second );
+
+					u16Chars.push_back( ( first.first << 8 ) | first.second );
+					u16Chars.push_back( ( second.first << 8 ) | second.second );
+				}
+				else
+				{
+					// Invalid code point
+					continue;
+				}
+			}
+
+			// Build the output string
+			outStr = std::u16string( u16Chars.data(), u16Chars.size() );
+			return true;
 		}
 
 		/*

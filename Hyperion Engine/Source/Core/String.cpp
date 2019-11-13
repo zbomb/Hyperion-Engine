@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <codecvt>
 
 #include "Hyperion/Core/String.h"
 #include "Hyperion/Core/Library/UTF8.hpp"
@@ -531,8 +532,8 @@ namespace Hyperion
 	/*
 		String::NonLocalizedStringData::NonLocalizedStringData
 	*/
-	String::NonLocalizedStringData::NonLocalizedStringData( const std::vector< byte >& inData, StringEncoding Encoding )
-		:m_Ref( Cache::CreateInstance( ChangeEncoding_Impl( inData, Encoding, StringEncoding::UTF8 ) ) )
+	String::NonLocalizedStringData::NonLocalizedStringData( const std::vector< byte >& inData, StringEncoding Encoding, bool bKnownByteOrder /* = false */, bool bLittleEndian /* = false */ )
+		:m_Ref( Cache::CreateInstance( ChangeEncoding_Impl( inData, Encoding, StringEncoding::UTF8, bKnownByteOrder, bLittleEndian ) ) )
 	{}
 
 	/*
@@ -801,6 +802,57 @@ namespace Hyperion
 	}
 
 	/*
+		String::String
+	*/
+	String::String( const std::wstring& inStr, StringEncoding Enc )
+	{
+		// This is a little complicated due to the nature of wchar_t, we dont really know the size of a wchar_t, 
+		// the encoding of the source data (caller needs to specify!) or the byte order
+		// We can determine the size of whcar_t and the byte order.. so we can build the string with a byte buffer and the correct encoding
+		auto isLittleEndian = Binary::IsLittleEndian();
+		auto wcharSize = sizeof( wchar_t );
+		std::vector< byte > sortedData;
+		sortedData.reserve( inStr.size() * wcharSize );
+
+		// We need to reinterpret the wstring data as a byte array
+		const byte* strData = reinterpret_cast< const byte* >( inStr.data() );
+
+		// Iterate through each character, and its position in the byte array is..
+		// strData + [Index] * sizeof( wchar_t )
+		for( size_t ich = 0; ich < inStr.size(); ich++ )
+		{
+			// Get pointer to where this characters data begins
+			const byte* charStart = strData + ( ich * wcharSize );
+
+			// Now, we need to take endian order into account before copying this into our buffer
+			for( unsigned int ib = 0; ib < wcharSize; ib++ )
+			{
+				if( isLittleEndian )
+				{
+					// Copy each character byte into the buffer, in reverse order
+					sortedData.push_back( *( charStart + ( wcharSize - 1 ) - ib ) );
+				}
+				else
+				{
+					// Copy each character byte into the buffer in order
+					sortedData.push_back( *( charStart + ib ) );
+				}
+			}
+		}
+
+		// Now, were going to construct the NonLocalizedStringData, but were going to specify the byte order so
+		// the encoding conversion doesnt have to read through the entire string to auto-detect the byte order
+		m_Data = std::make_shared< NonLocalizedStringData >( std::move( sortedData ), Enc, true, false );
+	}
+
+	/*
+		String::String
+	*/
+	String::String( const wchar_t* inStr, StringEncoding Enc )
+		: String( std::wstring( inStr ), Enc )
+	{}
+
+	/*
 		String::Data
 	*/
 	std::shared_ptr< const std::vector< byte > > String::Data() const 
@@ -861,10 +913,41 @@ namespace Hyperion
 		}
 	}
 
+	std::string String::GetU8Str() const
+	{
+		std::shared_ptr< const std::vector< byte > > internalData = m_Data ? m_Data->GetData() : nullptr;
+		if( internalData )
+		{
+			return std::string( internalData->begin(), internalData->end() );
+		}
+		else
+		{
+			return std::string();
+		}
+	}
+
+	std::u16string String::GetU16Str() const
+	{
+		auto strData = Data();
+		std::u16string output;
+
+		if( strData )
+		{
+			// Convert the raw hyperion string data (utf-8) to a u16string using the utf-16 library
+			std::vector< uint32 > codePoints;
+			if( Encoding::UTF8::BinaryToCodes( *strData, codePoints ) )
+			{
+				Encoding::UTF16::CodesToU16String( codePoints.begin(), codePoints.end(), output );
+			}
+		}
+
+		return output;
+	}
+
 	/*
 		String::ChangeEncoding_Impl
 	*/
-	const std::vector< byte > String::ChangeEncoding_Impl( const std::vector< byte >& Source, StringEncoding SourceEncoding, StringEncoding TargetEncoding )
+	const std::vector< byte > String::ChangeEncoding_Impl( const std::vector< byte >& Source, StringEncoding SourceEncoding, StringEncoding TargetEncoding, bool bKnownByteOrder /* = false */, bool bLittleEndian /* = false */ )
 	{
 		if( SourceEncoding == TargetEncoding )
 			return Source;
@@ -886,9 +969,19 @@ namespace Hyperion
 		}
 		else if( SourceEncoding == StringEncoding::UTF16 )
 		{
-			if( !Encoding::UTF16::BinaryToCodes( Source, CodePoints ) )
+			if( bKnownByteOrder )
 			{
-				std::cout << "[ERROR] String Library: UTF-16 Decode failed!\n";
+				if( !Encoding::UTF16::BinaryToCodes( Source, CodePoints, bLittleEndian ) )
+				{
+					std::cout << "[ERROR] String: UTF-16 decode failed!\n";
+				}
+			}
+			else
+			{
+				if( !Encoding::UTF16::BinaryToCodes( Source, CodePoints ) )
+				{
+					std::cout << "[ERROR] String Library: UTF-16 Decode failed!\n";
+				}
 			}
 		}
 		else
