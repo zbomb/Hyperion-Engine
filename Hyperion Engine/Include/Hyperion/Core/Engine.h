@@ -10,6 +10,7 @@
 #include "Hyperion/Core/ThreadManager.h"
 #include "Hyperion/Core/InputManager.h"
 #include "Hyperion/Renderer/Renderer.h"
+#include "Hyperion/Core/String.h"
 #include <type_traits>
 #include <map>
 #include <memory>
@@ -40,6 +41,17 @@ namespace Hyperion
 		Shutdown
 	};
 
+	struct GameInfo
+	{
+		String DisplayName;
+		String FolderName;
+		String AuthorName;
+		String AuthorContact;
+		uint8 MajorVersion;
+		uint8 MinorVersion;
+		uint8 BuildNumber;
+	};
+
 	/*
 		Engine Declaration
 	*/
@@ -49,22 +61,52 @@ namespace Hyperion
 		/*
 			Singleton Access Pattern
 		*/
+	private:
+
+		static std::unique_ptr< Engine > m_Instance;
+
 	public:
+
+		template< typename _EngTy >
+		static Engine& CreateInstance()
+		{
+			if( m_Instance )
+			{
+				throw std::runtime_error( "Attempt to create engine instance, when one already exists!" );
+			}
+
+			m_Instance = std::make_unique< _EngTy >();
+			return *m_Instance;
+		}
 
 		static Engine& GetInstance()
 		{
-			static Engine Instance;
-			return Instance;
+			if( !m_Instance )
+			{
+				throw std::runtime_error( "Attempt to get engine singleton before initialization!" );
+			}
+
+			return *m_Instance;
 		}
-
-	private:
-
-		Engine();
 
 	public:
 
+		Engine();
 		Engine( Engine const& ) = delete;
 		void operator=( Engine const& ) = delete;
+
+		/*
+			Engine Info
+		*/
+		virtual String GetGameName() const = 0;
+		virtual String GetDocumentsFolderName() const = 0;
+		virtual String GetAuthorName() const = 0;
+		virtual String GetVersionName() const = 0;
+
+		virtual void OnInitialize() {}
+		virtual void OnShutdown() {}
+
+		virtual void RegisterAssetLoaders();
 
 		/*=======================================================================================================
 				Object System

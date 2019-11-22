@@ -12,6 +12,7 @@
 #include <boost/interprocess/streams/vectorstream.hpp>
 
 #include "Hyperion/Hyperion.h"
+#include "Hyperion/Core/String.h"
 
 
 namespace Hyperion
@@ -120,6 +121,19 @@ namespace Hyperion
 				std::cout << "[ERROR] DataReader: Attempt to read from a stream that doesnt allow reading!\n";
 			}
 		}
+
+		DataReader( const std::unique_ptr< IDataSource >& Target )
+			: DataReader( *Target )
+		{}
+
+		DataReader( const std::shared_ptr< IDataSource >& Target )
+			: DataReader( *Target )
+		{}
+
+		template< typename T >
+		DataReader( const std::unique_ptr< T >& Target )
+			: DataReader( *Target )
+		{}
 
 		void SeekBegin( _StreamType::pos_type Offset = 0 )
 		{
@@ -270,6 +284,19 @@ namespace Hyperion
 			}
 		}
 
+		DataWriter( const std::unique_ptr< IDataSource >& Target )
+			: DataWriter( *Target )
+		{}
+
+		DataWriter( const std::shared_ptr< IDataSource >& Target )
+			: DataWriter( *Target )
+		{}
+
+		template< typename T >
+		DataWriter( const std::unique_ptr< T >& Target )
+			: DataWriter( *Target )
+		{}
+
 		~DataWriter()
 		{
 			if( m_Alive )
@@ -308,6 +335,15 @@ namespace Hyperion
 		{
 			auto Distance = In.size() > Count ? Count : In.size();
 			return WriteBytes( In.begin(), In.begin() + Distance );
+		}
+
+		bool WriteString( const String& In, StringEncoding Enc = StringEncoding::UTF8 )
+		{
+			// Write string data as requested type into a vector
+			std::vector< byte > Data;
+			In.CopyData( Data, Enc );
+
+			return WriteBytes( Data );
 		}
 
 		void Flush()

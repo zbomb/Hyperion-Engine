@@ -18,6 +18,9 @@
 // 0: No Debugging
 // 1: Debugging
 #define STRING_DEBUG_LEVEL 0
+#define HYPERION_VERIFY_BASICSTR( _STR_ ) HYPERION_VERIFY( !Hyperion::String::IsLocalized( _STR_ ), "This function only allows basic strings!" )
+#define HYPERION_VERIFY_LOCALSTR( _STR_ ) HYPERION_VERIFY( Hyperion::String::IsLocalized( _STR_ ), "This function only allows localized strings!" )
+#define HYPERION_VERIFY_NONCACHEDSTR( _STR_ ) HYPERION_VERIFY( Hyperion::String::IsNonCached( _STR_ ), "This function only allows non-cached strings!" );
 
 namespace Hyperion
 {
@@ -236,6 +239,36 @@ namespace Hyperion
 		};
 
 		/*--------------------------------------------------------------------------------
+			NonCachedStringData
+		--------------------------------------------------------------------------------*/
+		struct NonCachedStringData : public IStringData
+		{
+			/*
+				Data Members
+			*/
+			std::shared_ptr< const std::vector< byte > > m_Data;
+			inline std::shared_ptr< const std::vector< byte > > GetData() { return m_Data; }
+
+			/*
+				Constructors
+			*/
+			NonCachedStringData();
+			NonCachedStringData( const NonCachedStringData& Other );
+			NonCachedStringData( const std::vector< byte >& inData, StringEncoding Encoding, bool bKnownByteOrder = false, bool bLittleEndian = false );
+			NonCachedStringData( const std::vector< byte >& inData );
+
+			/*
+				Destructor
+			*/
+			~NonCachedStringData();
+
+			/*
+				Assignment Operator
+			*/
+			void operator=( const NonCachedStringData& Other );
+		};
+
+		/*--------------------------------------------------------------------------------
 			LocalizedStringData
 		--------------------------------------------------------------------------------*/
 		struct LocalizedStringData : public IStringData
@@ -252,11 +285,11 @@ namespace Hyperion
 			*/
 			LocalizedStringData();
 			LocalizedStringData( const LocalizedStringData& Other );
-			LocalizedStringData( const std::string& inKey );
+			explicit LocalizedStringData( const std::string& inKey );
 			LocalizedStringData( const std::string& inKey, const std::vector< byte >& inDefault, StringEncoding Enc = StringEncoding::ASCII );
 			LocalizedStringData( const std::string& inKey, const std::string& inDefault, StringEncoding Enc = StringEncoding::ASCII );
 			LocalizedStringData( const std::string& inKey, const char* inDefault, StringEncoding Enc = StringEncoding::ASCII );
-			LocalizedStringData( const char* inKey );
+			explicit LocalizedStringData( const char* inKey );
 			LocalizedStringData( const char* inKey, const std::vector< byte >& inDefault, StringEncoding Enc = StringEncoding::ASCII );
 			LocalizedStringData( const char* inKey, const std::string& inDefault, StringEncoding Enc = StringEncoding::ASCII );
 			LocalizedStringData( const char* inKey, const char* inDefault, StringEncoding Enc = StringEncoding::ASCII );
@@ -313,7 +346,7 @@ namespace Hyperion
 			/*
 				Constructors
 			*/
-			iterator( std::shared_ptr< const std::vector< byte > >& Target );
+			explicit iterator( std::shared_ptr< const std::vector< byte > >& Target );
 			iterator( std::shared_ptr< const std::vector< byte > >& Target, std::vector< byte >::const_iterator Iter );
 			iterator( const iterator& Other );
 
@@ -377,16 +410,16 @@ namespace Hyperion
 
 	public:
 
-		String();
-		String( nullptr_t );
-		String( const std::shared_ptr< IStringData >& inRawData );
-		String( const std::vector< byte >& inData, StringEncoding Enc = StringEncoding::ASCII );
-		String( const std::string& inStr, StringEncoding Enc = StringEncoding::ASCII );
-		String( const char* inStr, StringEncoding Enc = StringEncoding::ASCII );
-		String( const iterator& Begin, const iterator& End );
+		String( bool bCached = false );
+		explicit String( nullptr_t, bool bCached = false );
+		explicit String( const std::shared_ptr< IStringData >& inRawData );
+		explicit String( const std::vector< byte >& inData, StringEncoding Enc = StringEncoding::ASCII, bool bCached = false );
+		String( const std::string& inStr, StringEncoding Enc = StringEncoding::ASCII, bool bCached = false );
+		String( const char* inStr, StringEncoding Enc = StringEncoding::ASCII, bool bCached = false );
+		String( const iterator& Begin, const iterator& End, bool bCached = false );
 		String( const String& Other ); 
-		String( const std::wstring& inStr, StringEncoding Enc );
-		String( const wchar_t* inStr, StringEncoding Enc );
+		String( const std::wstring& inStr, StringEncoding Enc, bool bCached = false );
+		String( const wchar_t* inStr, StringEncoding Enc, bool bCached = false );
 
 		/*--------------------------------------------------------------------------------
 			Member Functions
@@ -420,8 +453,9 @@ namespace Hyperion
 		iterator end() const;
 
 		std::string GetU8Str() const;
-		std::u16string GetU16Str() const;
+		std::u16string GetU16Str( bool bIncludeBOM = false ) const;
 
+		bool CopyData( std::vector< byte >& Out, StringEncoding TargetEncoding = StringEncoding::UTF8 ) const;
 
 		/*--------------------------------------------------------------------------------
 			String Library
@@ -456,6 +490,8 @@ namespace Hyperion
 			String::IsLocalized
 		*/
 		static bool IsLocalized( const String& In );
+		static bool IsCached( const String& In );
+		static bool IsNonCached( const String& In );
 
 		/*
 			String::GetLocalized
@@ -532,6 +568,8 @@ namespace Hyperion
 		inline bool EndsWith( const String& Pattern ) const { return String::EndsWith( *this, Pattern ); }
 		inline bool Equals( const String& Other ) const { return String::Equals( *this, Other ); }
 		inline bool IsLocalized() const { return String::IsLocalized( *this ); }
+		inline bool IsCached() const { return String::IsCached( *this ); }
+		inline bool IsNonCached() const { return String::IsNonCached( *this ); }
 
 		/*
 			Operator Overloads
@@ -540,10 +578,9 @@ namespace Hyperion
 		inline bool operator==( const String& Other ) const { return String::Equals( *this, Other ); }
 		inline bool operator!=( const String& Other ) const { return !String::Equals( *this, Other ); }
 
+		friend std::ostream& operator<<( std::ostream& l, const Hyperion::String& r )
+		{
+			return l << GetSTLString( r );
+		}
 	};
 }
-
-/*
-	Operator '<<' Overload
-*/
-std::ostream& operator<<( std::ostream& inStream, const Hyperion::String& inStr );

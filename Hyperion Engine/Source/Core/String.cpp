@@ -572,6 +572,39 @@ namespace Hyperion
 		}
 	}
 
+	/*=========================================================================================================
+		Non Cached String Data
+	=========================================================================================================*/
+	String::NonCachedStringData::NonCachedStringData()
+		: m_Data( nullptr )
+	{}
+
+	String::NonCachedStringData::NonCachedStringData( const NonCachedStringData& Other )
+		: m_Data( Other.m_Data )
+	{}
+
+	String::NonCachedStringData::NonCachedStringData( const std::vector< byte >& inData, StringEncoding Encoding, bool bKnownByteOrder /* = false */, bool bLittleEndian /* = false */ )
+		: NonCachedStringData( ChangeEncoding_Impl( inData, Encoding, StringEncoding::UTF8, bKnownByteOrder, bLittleEndian ) )
+	{}
+
+	String::NonCachedStringData::NonCachedStringData( const std::vector< byte >& inData )
+		: m_Data( std::make_shared< const std::vector< byte > >( inData ) )
+	{}
+
+	String::NonCachedStringData::~NonCachedStringData()
+	{
+		m_Data.reset();
+	}
+
+	void String::NonCachedStringData::operator=( const NonCachedStringData& Other )
+	{
+		if( m_Data != Other.m_Data )
+		{
+			// Simple assignment
+			m_Data = Other.m_Data;
+		}
+	}
+
 
 	/*=========================================================================================================
 		Localized String Data
@@ -749,36 +782,37 @@ namespace Hyperion
 	/*
 		String::String
 	*/
-	String::String( const std::vector< byte >& inData, StringEncoding Enc /*= StringEncoding::ASCII */)
-		: m_Data( std::make_shared< NonLocalizedStringData >( inData, Enc ) )
+	String::String( const std::vector< byte >& inData, StringEncoding Enc /*= StringEncoding::ASCII */, bool bCached /* = false */ )
+		: m_Data( bCached ? std::dynamic_pointer_cast< IStringData >( std::make_shared< NonLocalizedStringData >( inData, Enc ) ) 
+							: std::dynamic_pointer_cast< IStringData >( std::make_shared< NonCachedStringData >( inData, Enc ) ) )
 	{}
 
 	/*
 		String::String
 	*/
-	String::String( const std::string& inStr, StringEncoding Enc /*= StringEncoding::ASCII*/ )
-		: String( std::vector< byte >( inStr.begin(), inStr.end() ), Enc )
+	String::String( const std::string& inStr, StringEncoding Enc /*= StringEncoding::ASCII*/, bool bCached /* = false */ )
+		: String( std::vector< byte >( inStr.begin(), inStr.end() ), Enc, bCached )
 	{}
 
 	/*
 		String::String
 	*/
-	String::String( const char* inStr, StringEncoding Enc /*= StringEncoding::ASCII*/ )
-		: String( std::string( inStr ), Enc )
+	String::String( const char* inStr, StringEncoding Enc /*= StringEncoding::ASCII*/, bool bCached /* = false */ )
+		: String( std::string( inStr ), Enc, bCached )
 	{}
 
 	/*
 		String::String
 	*/
-	String::String()
+	String::String( bool bCached /* = false */)
 		: m_Data( nullptr )
 	{}
 
 	/*
 		String::String
 	*/
-	String::String( nullptr_t )
-		: m_Data()
+	String::String( nullptr_t, bool bCached /* = false */ )
+		: m_Data( nullptr )
 	{}
 
 	/*
@@ -791,20 +825,21 @@ namespace Hyperion
 	/*
 		String::String
 	*/
-	String::String( const iterator& Begin, const iterator& End )
+	String::String( const iterator& Begin, const iterator& End, bool bCached /* = false */ )
 	{
 		// Ensure theyre from the same source string, and not null
 		if( Begin.m_Target != End.m_Target || !Begin.m_Target )
 			return;
 
 		// Get the underlying char start position in the data vector, copy into the string data and were done!
-		m_Data = std::make_shared< NonLocalizedStringData >( std::vector< byte >( Begin.m_Iter, End.m_Iter ) );
+		m_Data = bCached ? std::dynamic_pointer_cast< IStringData >( std::make_shared< NonLocalizedStringData >( std::vector< byte >( Begin.m_Iter, End.m_Iter ) ) )
+			: std::dynamic_pointer_cast< IStringData >( std::make_shared< NonCachedStringData >( std::vector< byte >( Begin.m_Iter, End.m_Iter ) ) );
 	}
 
 	/*
 		String::String
 	*/
-	String::String( const std::wstring& inStr, StringEncoding Enc )
+	String::String( const std::wstring& inStr, StringEncoding Enc, bool bCached /* = false */ )
 	{
 		// This is a little complicated due to the nature of wchar_t, we dont really know the size of a wchar_t, 
 		// the encoding of the source data (caller needs to specify!) or the byte order
@@ -842,14 +877,15 @@ namespace Hyperion
 
 		// Now, were going to construct the NonLocalizedStringData, but were going to specify the byte order so
 		// the encoding conversion doesnt have to read through the entire string to auto-detect the byte order
-		m_Data = std::make_shared< NonLocalizedStringData >( std::move( sortedData ), Enc, true, false );
+		m_Data = bCached ? std::dynamic_pointer_cast< IStringData >( std::make_shared< NonLocalizedStringData >( std::move( sortedData ), Enc, true, false ) )
+			: std::dynamic_pointer_cast< IStringData >( std::make_shared< NonCachedStringData >( std::move( sortedData ), Enc, true, false ) );
 	}
 
 	/*
 		String::String
 	*/
-	String::String( const wchar_t* inStr, StringEncoding Enc )
-		: String( std::wstring( inStr ), Enc )
+	String::String( const wchar_t* inStr, StringEncoding Enc, bool bCached /* = false */ )
+		: String( std::wstring( inStr ), Enc, bCached )
 	{}
 
 	/*
@@ -874,7 +910,7 @@ namespace Hyperion
 	*/
 	bool String::IsEmpty() const
 	{
-		return Data() ? true : false;
+		return Data() ? false : true;
 	}
 
 	/*
@@ -926,7 +962,7 @@ namespace Hyperion
 		}
 	}
 
-	std::u16string String::GetU16Str() const
+	std::u16string String::GetU16Str( bool bIncludeBOM /* = false */ ) const
 	{
 		auto strData = Data();
 		std::u16string output;
@@ -937,11 +973,56 @@ namespace Hyperion
 			std::vector< uint32 > codePoints;
 			if( Encoding::UTF8::BinaryToCodes( *strData, codePoints ) )
 			{
-				Encoding::UTF16::CodesToU16String( codePoints.begin(), codePoints.end(), output );
+				Encoding::UTF16::CodesToU16String( codePoints.begin(), codePoints.end(), output, bIncludeBOM );
 			}
 		}
 
 		return output;
+	}
+
+	bool String::CopyData( std::vector< byte >& Out, StringEncoding Enc /* = StringEncoding::UTF8 */ ) const
+	{
+		auto strData = Data();
+		if( strData )
+		{
+			// If were using UTF-8 (native) then just copy into the output buffer
+			if( Enc == StringEncoding::UTF8 )
+			{
+				Out.insert( Out.end(), strData->begin(), strData->end() );
+				return true;
+			}
+
+			std::vector< uint32 > CodePoints;
+			if( !Encoding::UTF8::BinaryToCodes( *strData, CodePoints ) )
+			{
+				return false;
+			}
+
+			if( Enc == StringEncoding::UTF16 )
+			{
+				return Encoding::UTF16::CodesToBinary( CodePoints, Out );
+			}
+			else if( Enc == StringEncoding::UTF32 )
+			{
+				return false;
+			}
+			else
+			{
+				// ASCII
+				for( auto& p : CodePoints )
+				{
+					if( p < 256 )
+						Out.push_back( p );
+				}
+
+				// No-Fail
+				return true;
+			}
+		}
+		else
+		{
+			return true;
+		}
 	}
 
 	/*
@@ -1430,6 +1511,22 @@ namespace Hyperion
 		return dynamic_cast< LocalizedStringData* >( In.m_Data.get() );
 	}
 
+	bool String::IsCached( const String& In )
+	{
+		if( !In.m_Data )
+			return true;
+
+		return dynamic_cast< NonLocalizedStringData* >( In.m_Data.get() );
+	}
+
+	bool String::IsNonCached( const String& In )
+	{
+		if( !In.m_Data )
+			return true;
+
+		return dynamic_cast< NonCachedStringData* >( In.m_Data.get() );
+	}
+
 	/*
 		String::GetLocalized
 	*/
@@ -1726,14 +1823,4 @@ namespace Hyperion
 	{
 		return m_ThisChar;
 	}
-}
-
-/*
-	'<<' Overload
-*/
-std::ostream& operator<<( std::ostream& inStream, const Hyperion::String& inStr )
-{
-	// Since we cant use wstring here, we need to encode the string as ASCII, and print that
-	std::string stlStr = Hyperion::String::GetSTLString( inStr );
-	return inStream << stlStr;
 }

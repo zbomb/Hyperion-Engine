@@ -17,30 +17,17 @@
 
 namespace Hyperion
 {
-	IFileSystem& IFileSystem::Get()
-	{
-		if( !m_Singleton )
-		{
-#if HYPERION_OS_WIN32
-			m_Singleton = std::make_unique< Win32FileSystem >();
-#elif HYPERION_OS_MAC
-#elif HYPERION_OS_LINUX
-#elif HYPERION_OS_ANDROID
-#endif
-		}
-
-		return *m_Singleton;
-	}
-
-
 	FilePath::FilePath()
 	{}
 
 	FilePath::FilePath( const String& In, PathRoot Root /* = PathRoot::Game */ )
+		: m_Path( IFileSystem::BuildSystemPath( In, Root ) )
 	{
-		auto& fs = IFileSystem::Get();
-
 	}
+
+	FilePath::FilePath( PathRoot Root )
+		: m_Path( IFileSystem::BuildSystemPath( "", Root ) )
+	{}
 
 	FilePath::FilePath( const FilePath& In )
 		: m_Path( In.m_Path )
@@ -224,6 +211,11 @@ namespace Hyperion
 		return m_Path;
 	}
 
+	std::ostream& operator<<( std::ostream& inStream, const FilePath& inPath )
+	{
+		return inStream << inPath.GetSTLPath();
+	}
+
 	/*===================================================================================
 		File
 	===================================================================================*/
@@ -236,12 +228,12 @@ namespace Hyperion
 
 		if( inMode == FileMode::Read || inMode == FileMode::ReadWrite )
 		{
-			openFlags |= std::ios::out;
+			openFlags |= std::ios::in;
 		}
 		
 		if( inMode == FileMode::Write || inMode == FileMode::ReadWrite )
 		{
-			openFlags |= std::ios::in;
+			openFlags |= std::ios::out;
 
 			if( inWriteMode == WriteMode::Overwrite )		openFlags |= std::ios::trunc;
 			else if( inWriteMode == WriteMode::Append )		openFlags |= std::ios::app;
@@ -289,7 +281,7 @@ namespace Hyperion
 
 	std::unique_ptr< MetaData > File::GetMetaData()
 	{
-		return IFileSystem::Get().GetFileMetaData( m_Path );
+		return IFileSystem::GetFileMetaData( m_Path );
 	}
 
 	/*===================================================================================
@@ -319,7 +311,7 @@ namespace Hyperion
 		if( bIsValid )
 		{
 			std::error_code err;
-			m_LastWrite = std::filesystem::last_write_time( rawPath, err );
+			m_LastWrite = IFileSystem::GetLastWrite( inPath );
 
 			auto status = std::filesystem::status( rawPath, err );
 			m_Permissions = status.permissions();
@@ -328,7 +320,7 @@ namespace Hyperion
 		}
 		else
 		{
-			m_LastWrite		= FileTimePoint::min();
+			m_LastWrite		= std::time_t();
 			m_Size			= 0;
 			m_Permissions	= Permissions();
 		}
@@ -346,8 +338,8 @@ namespace Hyperion
 	{
 		// Clear any cached files or folders
 		{
-			std::vector< String >().swap( m_Files );
-			std::vector< String >().swap( m_Folders );
+			std::vector< FilePath >().swap( m_Files );
+			std::vector< FilePath >().swap( m_Folders );
 		}
 
 		// Get list of all contents
@@ -366,7 +358,7 @@ namespace Hyperion
 					auto filePath = entry.path();
 					if( filePath.has_filename() )
 					{
-						m_Files.push_back( String( filePath.filename().generic_u8string(), StringEncoding::UTF8 ) );
+						m_Files.push_back( FilePath( std::filesystem::path( filePath.generic_wstring(), std::filesystem::path::format::generic_format ) ) );
 					}
 				}
 				else if( entry.is_directory( type_err ) )
@@ -375,7 +367,7 @@ namespace Hyperion
 					auto dirPath = entry.path();
 					if( dirPath.has_stem() )
 					{
-						m_Folders.push_back( String( dirPath.stem().generic_u8string(), StringEncoding::UTF8 ) );
+						m_Folders.push_back( FilePath( std::filesystem::path( dirPath.generic_wstring(), std::filesystem::path::format::generic_format ) ) );
 					}
 				}
 			}
@@ -384,7 +376,7 @@ namespace Hyperion
 		m_Cached = true;
 	}
 
-	std::vector< String > Directory::GetSubFiles()
+	const std::vector< FilePath >& Directory::GetSubFiles()
 	{
 		if( !IsCached() )
 		{
@@ -394,7 +386,7 @@ namespace Hyperion
 		return m_Files;
 	}
 
-	std::vector< String > Directory::GetSubDirectories()
+	const std::vector< FilePath >& Directory::GetSubDirectories()
 	{
 		if( !IsCached() )
 		{
@@ -406,7 +398,7 @@ namespace Hyperion
 
 	std::unique_ptr< MetaData > Directory::GetMetaData() const
 	{
-		return IFileSystem::Get().GetDirectoryMetaData( m_Path );
+		return IFileSystem::GetDirectoryMetaData( m_Path );
 	}
 
 }

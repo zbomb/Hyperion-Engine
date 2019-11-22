@@ -9,8 +9,10 @@
 #if HYPERION_OS_WIN32
 
 #include "Hyperion/Win32/Win32FileSystem.h"
+#include "Hyperion/Core/Platform.h"
+#include "Hyperion/Core/Engine.h"
 
-
+#include <sys/stat.h>
 
 namespace Hyperion
 {
@@ -47,10 +49,47 @@ namespace Hyperion
 		}
 	}
 
+	bool Win32FileSystem::CreateNeededDirectories( const FilePath& In )
+	{
+		// Get underlying path
+		auto& p = In.GetSTLPath();
+		auto root = p.root_path();
+
+		// Ensure root path is valid
+		if( root.empty() || !std::filesystem::exists( root ) )
+		{
+			return false;
+		}
+
+		// Copy path and remove filename
+		std::filesystem::path copy( p );
+
+		if( copy.has_filename() )
+		{
+			copy.remove_filename();
+		}
+
+		// Remove trailing backslash
+		std::filesystem::path clean_path;
+		for( auto& p : copy )
+		{
+			if( !p.empty() )
+				clean_path /= p;
+		}
+
+		clean_path.make_preferred();
+
+		// Create any missing directories
+		std::error_code err, err2;
+		return std::filesystem::exists( clean_path, err ) || std::filesystem::create_directories( clean_path, err2 );
+	}
+
 	std::unique_ptr< File > Win32FileSystem::CreateFile( const FilePath& inPath, FileMode inMode, WriteMode inWrite /* = WriteMode::Append */, bool bFailIfExists /* = true */ )
 	{
 		if( inPath.IsEmpty() || !inPath.HasExtension() || !inPath.HasFilename() )
+		{
 			return nullptr;
+		}
 
 		// If the file already exists, then either fail or open the file depending on the args
 		std::error_code err;
@@ -67,6 +106,12 @@ namespace Hyperion
 		}
 		
 		// File doesnt exist, so lets open a filebuf and create this new file
+		// Also, create any needed directories for this file path
+		if( !CreateNeededDirectories( inPath ) )
+		{
+			return nullptr;
+		}
+
 		return std::unique_ptr< File >( new File( inPath, inMode, inWrite ) );
 	}
 
@@ -154,7 +199,7 @@ namespace Hyperion
 
 		// Directory doesnt exist, so lets create it
 		std::error_code create_err;
-		if( std::filesystem::create_directory( inPath.GetSTLPath(), create_err ) )
+		if( std::filesystem::create_directories( inPath.GetSTLPath(), create_err ) )
 		{
 			return std::unique_ptr< Directory >( new Directory( inPath ) );
 		}
@@ -220,33 +265,69 @@ namespace Hyperion
 
 	std::filesystem::path Win32FileSystem::BuildSystemPath( const String& inStr, PathRoot Root )
 	{
-		switch( Root )
+		if( Root == PathRoot::Root )
 		{
-		case PathRoot::Root:
-			
-			// Root - The system root
-			// Ex:
-			//	Input = C:/asdf/asdf
-			//	Output = C:/asdf/asdf
-
 			return std::filesystem::path( inStr.GetU16Str(), std::filesystem::path::format::generic_format );
-
-		case PathRoot::Documents:
-			
-			// Documents - The documents folder for this game
-			// Ex:
-			//	Input = shit/asdf.txt
-			//	Output = C:/Users/<username>/<gamename>/shit/asdf.txt
-
-
-		case PathRoot::Data:
-			break;
-		case PathRoot::Assets:
-			break;
-		case PathRoot::Game:
-		default:
-			break;
 		}
+		else if( Root == PathRoot::Documents )
+		{
+			auto docPath = Platform::GetUserDataPath();
+			auto& eng = Engine::GetInstance();
+
+			docPath = docPath.Append( "/" ).Append( eng.GetDocumentsFolderName() );
+			if( !inStr.IsEmpty() )
+			{
+				docPath = docPath.Append( "/" ).Append( inStr );
+			}
+
+			return std::filesystem::path( docPath.GetU16Str(), std::filesystem::path::generic_format );
+		}
+		else if( Root == PathRoot::Data )
+		{
+			auto gameRoot = Platform::GetExecutablePath().Append( "/data" );
+
+			if( !inStr.IsEmpty() )
+			{
+				gameRoot = gameRoot.Append( "/" ).Append( inStr );
+			}
+
+			return std::filesystem::path( gameRoot.GetU16Str(), std::filesystem::path::format::generic_format );
+		}
+		else if( Root == PathRoot::Assets )
+		{
+			auto gameRoot = Platform::GetExecutablePath().Append( "/assets" );
+
+			if( !inStr.IsEmpty() )
+			{
+				gameRoot = gameRoot.Append( "/" ).Append( inStr );
+			}
+
+			return std::filesystem::path( gameRoot.GetU16Str(), std::filesystem::path::format::generic_format );
+		}
+		else /* PathRoot::Game & default */
+		{
+			auto gameRoot = Platform::GetExecutablePath();
+
+			if( !inStr.IsEmpty() )
+			{
+				gameRoot = gameRoot.Append( "/" ).Append( inStr );
+			}
+
+			return std::filesystem::path( gameRoot.GetU16Str(), std::filesystem::path::format::generic_format );
+		}
+	}
+
+	std::time_t Win32FileSystem::GetLastWrite( const FilePath& Target )
+	{
+		// Try to get the last write to this file/folder
+		struct _stat64 fileInfo;
+		if( _wstati64( Target.GetSTLPath().wstring().c_str(), &fileInfo ) != 0 )
+		{
+			// Error!
+			return std::time_t( 0 );
+		}
+
+		return fileInfo.st_mtime;
 	}
 
 }

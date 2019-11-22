@@ -10,7 +10,13 @@
 
 #include "Hyperion/Win32/Win32Platform.h"
 #include <Windows.h>
+#include <KnownFolders.h>
+#include <ShlObj.h>
 #include <filesystem>
+
+#undef CreateFile
+#undef DeleteFile
+#undef CreateDirectory
 
 namespace Hyperion
 {
@@ -42,6 +48,25 @@ namespace Hyperion
 		std::filesystem::path execName = fullPath.filename();
 		std::filesystem::path execPath = fullPath.parent_path();
 
+		// Now, we need to get the 'Documents' folder for the active user
+		PWSTR docPath = NULL;
+		HRESULT res = SHGetKnownFolderPath( FOLDERID_Documents, 0, NULL, &docPath );
+
+		if( SUCCEEDED( res ) )
+		{
+			std::filesystem::path dpath( docPath );
+			m_UserPath = String( dpath.generic_u8string(), StringEncoding::UTF8 );
+		}
+		else
+		{
+			// We need a path so we will use the ExecPath as a default
+			m_UserPath = String( execPath.generic_u8string(), StringEncoding::UTF8 );
+			std::cout << "[ERROR] Win32PlatformServices: Failed to get the documents directory for current user! Defaulting to game directory...\n";
+		}
+
+		// Make sure we free the memory allocated by the winapi call
+		CoTaskMemFree( docPath );
+
 		// Now, we have to turn these path objects into hyperion strings
 		m_ExecName = String( execName.generic_u8string(), StringEncoding::UTF8 );
 		m_ExecPath = String( execPath.generic_u8string(), StringEncoding::UTF8 );
@@ -56,6 +81,11 @@ namespace Hyperion
 	String Win32PlatformServices::GetExecutablePath()
 	{
 		return m_ExecPath;
+	}
+
+	String Win32PlatformServices::GetUserDataPath()
+	{
+		return m_UserPath;
 	}
 
 	void Win32PlatformServices::Init()

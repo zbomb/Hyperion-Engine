@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# Boost Stuff
+*.html
+*.jam
+*.bat
+*.tag
+*.log
+*gs.version

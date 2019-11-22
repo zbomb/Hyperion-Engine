@@ -20,8 +20,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Hyperion\Constants.h" />
+    <ClInclude Include="Include\Hyperion\Core\Asset.h" />
+    <ClInclude Include="Include\Hyperion\Core\AssetLoader.h" />
+    <ClInclude Include="Include\Hyperion\Core\AssetManager.h" />
     <ClInclude Include="Include\Hyperion\Core\Engine.h" />
     <ClInclude Include="Include\Hyperion\Core\File.h" />
+    <ClInclude Include="Include\Hyperion\Core\FileImpl.h" />
     <ClInclude Include="Include\Hyperion\Core\InputManager.h" />
     <ClInclude Include="Include\Hyperion\Core\Library\Binary.h" />
     <ClInclude Include="Include\Hyperion\Core\Library\Memory.hpp" />
@@ -31,6 +35,8 @@
     <ClInclude Include="Include\Hyperion\Core\Library\UTF32.hpp" />
     <ClInclude Include="Include\Hyperion\Core\Library\UTF8.hpp" />
     <ClInclude Include="Include\Hyperion\Core\Object.h" />
+    <ClInclude Include="Include\Hyperion\Core\Platform.h" />
+    <ClInclude Include="Include\Hyperion\Core\PlatformImpl.h" />
     <ClInclude Include="Include\Hyperion\Core\Stream.h" />
     <ClInclude Include="Include\Hyperion\Core\String.h" />
     <ClInclude Include="Include\Hyperion\Core\Thread.h" />
@@ -55,12 +61,17 @@
     <ClInclude Include="Include\Hyperion\Renderer\Renderer.h" />
     <ClInclude Include="Include\Hyperion\Renderer\RenderFactory.h" />
     <ClInclude Include="Include\Hyperion\Renderer\RenderMarshal.h" />
+    <ClInclude Include="Include\Hyperion\Win32\Win32FileSystem.h" />
+    <ClInclude Include="Include\Hyperion\Win32\Win32Platform.h" />
+    <ClInclude Include="Tests\BufferTests.hpp" />
     <ClInclude Include="Tests\EncodingTests.hpp" />
+    <ClInclude Include="Tests\FileTests.hpp" />
     <ClInclude Include="Tests\MemoryTests.hpp" />
     <ClInclude Include="Tests\SerializationTests.hpp" />
     <ClInclude Include="Tests\StringTests.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Core\AssetManager.cpp" />
     <ClCompile Include="Source\Core\Engine.cpp" />
     <ClCompile Include="Source\Core\File.cpp" />
     <ClCompile Include="Source\Core\InputManager.cpp" />
@@ -90,6 +101,8 @@
     <ClCompile Include="Source\Renderer\Renderer.cpp" />
     <ClCompile Include="Source\Renderer\RenderFactory.cpp" />
     <ClCompile Include="Source\Renderer\RenderMarshal.cpp" />
+    <ClCompile Include="Source\Win32\Win32FileSystem.cpp" />
+    <ClCompile Include="Source\Win32\Win32Platform.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -179,6 +192,7 @@
     </Link>
     <Lib>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -198,6 +212,7 @@
     </Link>
     <Lib>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

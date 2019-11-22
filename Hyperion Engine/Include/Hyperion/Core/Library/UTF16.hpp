@@ -383,7 +383,7 @@ namespace Encoding
 			return CodesToBinary( inCodes.begin(), inCodes.end(), outData );
 		}
 
-		static bool CodesToU16String( std::vector< uint32 >::const_iterator Begin, std::vector< uint32 >::const_iterator End, std::u16string& outStr )
+		static bool CodesToU16String( std::vector< uint32 >::const_iterator Begin, std::vector< uint32 >::const_iterator End, std::u16string& outStr, bool bIncludeBOM = false )
 		{
 			if( Begin == End )
 				return false;
@@ -393,8 +393,11 @@ namespace Encoding
 			u16Chars.reserve( std::distance( Begin, End ) / 2 );
 
 			// Were going to write out a BOM.. TODO: Is this needed?
-			u16Chars.push_back( 0xFEFF );
-			
+			if( bIncludeBOM )
+			{
+				u16Chars.push_back( 0xFEFF );
+			}
+
 			for( auto It = Begin; It != End; It++ )
 			{
 				auto Type = ValidateCodePoint( *It );

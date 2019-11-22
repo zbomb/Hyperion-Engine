@@ -21,6 +21,7 @@ namespace Hyperion
 
 		String m_ExecPath;
 		String m_ExecName;
+		String m_UserPath;
 
 	public:
 
@@ -31,6 +32,7 @@ namespace Hyperion
 
 		virtual String GetExecutableName() override;
 		virtual String GetExecutablePath() override;
+		virtual String GetUserDataPath() override;
 		virtual void Init() override;
 
 	};

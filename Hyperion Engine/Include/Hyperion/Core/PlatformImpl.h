@@ -20,6 +20,7 @@ namespace Hyperion
 
 		virtual String GetExecutableName() = 0;
 		virtual String GetExecutablePath() = 0;
+		virtual String GetUserDataPath() = 0;
 
 		virtual void Init() = 0;
 
@@ -46,6 +47,7 @@ namespace Hyperion
 
 		static String GetExecutableName() { return Get().GetExecutableName(); }
 		static String GetExecutablePath() { return Get().GetExecutablePath(); }
+		static String GetUserDataPath() { return Get().GetUserDataPath(); }
 		static void Init() { return Get().Init(); }
 
 	};

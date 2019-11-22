@@ -32,6 +32,9 @@
     <Filter Include="Core\Library">
       <UniqueIdentifier>{78355464-2caa-49c7-bb7c-a4b7aa49f0e7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Win32">
+      <UniqueIdentifier>{d58398ab-ceb8-46ea-bb42-7ef9589d7fc2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Hyperion\Hyperion.h">
@@ -154,6 +157,36 @@
     <ClInclude Include="Include\Hyperion\Core\Stream.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Tests\BufferTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Win32\Win32FileSystem.h">
+      <Filter>Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\FileTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Win32\Win32Platform.h">
+      <Filter>Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\PlatformImpl.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Platform.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\FileImpl.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Asset.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\AssetLoader.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\AssetManager.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework\Entity.cpp">
@@ -241,6 +274,15 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Source\Core\Stream.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Win32\Win32FileSystem.cpp">
+      <Filter>Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Win32\Win32Platform.cpp">
+      <Filter>Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\AssetManager.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>

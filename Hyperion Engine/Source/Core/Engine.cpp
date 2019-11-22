@@ -20,6 +20,8 @@
 #include <thread>
 #include <chrono>
 
+std::unique_ptr< Hyperion::Engine > Hyperion::Engine::m_Instance;
+
 namespace Hyperion
 {
 
@@ -253,11 +255,16 @@ namespace Hyperion
 		// Create the game world
 		m_World = CreateObject< World >();
 
+		// Allow derived class to initialize
+		OnInitialize();
 	}
 
 	void Engine::ShutdownEngine()
 	{
 		std::cout << "[DEBUG] Engine: Main engine thread shutdown...\n";
+
+		// Allow derived class to shutdown
+		OnShutdown();
 
 		// Shutdown the world
 		m_World.reset();
@@ -366,5 +373,9 @@ namespace Hyperion
 	}
 
 
+	void Engine::RegisterAssetLoaders()
+	{
+
+	}
 
 }

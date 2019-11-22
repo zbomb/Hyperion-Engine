@@ -6,19 +6,23 @@
 
 #pragma once
 
-#include "Hyperion/Core/File.h"
+#include "Hyperion/Core/FileImpl.h"
 
 
 
 namespace Hyperion
 {
 
-	class Win32FileSystem : public IFileSystem
+	class Win32FileSystem : public IFileServices
 	{
+	private:
+
+		bool CreateNeededDirectories( const FilePath& );
 
 	protected:
 
 		virtual std::filesystem::path BuildSystemPath( const String& inPath, PathRoot Root ) override;
+		virtual std::time_t GetLastWrite( const FilePath& Target ) override;
 
 	public:
 

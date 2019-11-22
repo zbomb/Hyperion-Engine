@@ -1,41 +1,10 @@
 ﻿  Engine.cpp
-  File.cpp
-  InputManager.cpp
-  Binary.cpp
-  Serialization.cpp
   Object.cpp
-  Stream.cpp
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Stream.h(110,6): error C3861:  'm_Iter': identifier not found
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Stream.h(124): message :  see reference to class template instantiation 'Hyperion::_wrap_iterator<_Iter>' being compiled
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.22.27905\include\chrono(591): message :  see reference to class template instantiation 'std::chrono::duration<double,std::ratio<1,1>>' being compiled
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.22.27905\include\chrono(169): message :  see reference to class template instantiation 'std::chrono::duration<__int64,std::nano>' being compiled
-C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.22.27905\include\chrono(570): message :  see reference to class template instantiation 'std::chrono::time_point<std::chrono::steady_clock,std::chrono::steady_clock::duration>' being compiled
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Stream.h(115,4): error C3861:  'm_Iter': identifier not found
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Stream.h(121,43): error C3861:  'm_Iter': identifier not found
-  String.cpp
-  Thread.cpp
   ThreadManager.cpp
-  Angle.cpp
-  Color.cpp
-  Point.cpp
-  Vector.cpp
   Component.cpp
   Entity.cpp
-  PrimitiveComponent.cpp
   World.cpp
-  Hyperion.cpp
   DirectX11Factory.cpp
-  Compiling...
+  Win32FileSystem.cpp
   Generating Code...
-  Compiling...
-  DirectX11Renderer.cpp
-  MeshLoader.cpp
-  ProxyLight.cpp
-  ProxyPrimitive.cpp
-  ProxyScene.cpp
-  ProxyView.cpp
-  Renderer.cpp
-  RenderFactory.cpp
-  RenderMarshal.cpp
-  Compiling...
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Stream.h(122,42): error C3861:  'm_Iter': identifier not found
+  Hyperion Engine.vcxproj -> C:\Users\zackb\source\repos\Heartline Editor\Build\Debug\Hyperion.lib
