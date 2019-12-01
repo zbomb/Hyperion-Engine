@@ -6,11 +6,14 @@
 
 #pragma once
 
+// Hyperion 
 #include "Hyperion/Core/Object.h"
 #include "Hyperion/Core/ThreadManager.h"
 #include "Hyperion/Core/InputManager.h"
 #include "Hyperion/Renderer/Renderer.h"
 #include "Hyperion/Core/String.h"
+
+// STL
 #include <type_traits>
 #include <map>
 #include <memory>

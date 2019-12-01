@@ -236,6 +236,20 @@ namespace Hyperion
 			return ReadBytes( Output, Count, _dummy );
 		}
 
+		ReadResult PeekBytes( std::vector< byte >& Output, size_t Count, size_t& outBytesRead )
+		{
+			auto cur_pos = GetOffset();
+			auto res = ReadBytes( Output, Count, outBytesRead );
+			SeekOffset( cur_pos );
+			return res;
+		}
+
+		ReadResult PeekBytes( std::vector< byte >& Output, size_t Count )
+		{
+			size_t _dummy;
+			return PeekBytes( Output, Count, _dummy );
+		}
+
 		_StreamType::pos_type Size()
 		{
 			if( !m_Alive )

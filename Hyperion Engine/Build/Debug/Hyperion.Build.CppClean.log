@@ -1,11 +1,9 @@
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion engine.pdb
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion engine.idb
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\directx11factory.obj
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion.obj
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\world.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\primitivecomponent.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\entity.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\component.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\virtualfilesystem.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\vector.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\point.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\color.obj
@@ -13,12 +11,17 @@ c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\angle.ob
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\threadmanager.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\thread.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\string.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\stream.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\object.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\serialization.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\binary.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\inputmanager.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\file.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\engine.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\assetmanager.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\testasset.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\win32platform.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\win32filesystem.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\rendermarshal.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\renderfactory.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\renderer.obj
@@ -28,35 +31,10 @@ c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\proxypri
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\proxylight.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\meshloader.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\directx11renderer.obj
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\stream.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\directx11factory.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\world.obj
 c:\users\zackb\source\repos\heartline editor\build\debug\hyperion.lib
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\esp6ece.tmp
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\angle.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\binary.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\color.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\component.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\directx11factory.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\engine.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\entity.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\file.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\inputmanager.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\object.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\point.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\primitivecomponent.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\proxylight.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\proxyprimitive.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\proxyscene.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\proxyview.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\renderer.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\renderfactory.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\rendermarshal.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\serialization.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\string.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\thread.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\threadmanager.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\vector.nativecodeanalysis.xml
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\world.nativecodeanalysis.xml
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion engine.tlog\cl.command.1.tlog
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion engine.tlog\cl.read.1.tlog
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion engine.tlog\cl.write.1.tlog

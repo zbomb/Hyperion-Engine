@@ -9,6 +9,7 @@
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/Asset.h"
 #include "Hyperion/Core/File.h"
+#include "Hyperion/Core/VirtualFileSystem.h"
 
 #include <vector>
 #include <map>
@@ -17,56 +18,17 @@
 namespace Hyperion
 {
 
-	struct AssetInfo
-	{
-		std::streamoff DataBegin;
-		std::streamoff DataEnd;
-		String AssetType;
-	};
-
-	enum class AssetCacheType
-	{
-		Static,
-		Dynamic,
-		Stream,
-		Grouped
-	};
-
-	struct AssetGroup
-	{
-		AssetCacheType CacheMode;
-		std::map< String, AssetInfo > Assets;
-
-		FilePath ChunkFile;
-		std::streamoff GroupBegin;
-		std::streamoff GroupEnd;
-	};
-
-	class AssetChunkManager
-	{
-
-	private:
-
-		static std::unordered_map< String, AssetGroup > m_Groups;
-
-	public:
-
-		enum CacheResult
-		{
-			Success,
-			NotFound,
-			Error,
-			AlreadyCached
-		};
-
-	};
-
 	class AssetLoader
 	{
 
 	private:
 
-		static std::map< String, std::function< std::shared_ptr< Asset >( std::vector< byte >::const_iterator, std::vector< byte >::const_iterator ) > > m_LoadFuncMap;
+		static std::map< String, 
+			std::pair< 
+				std::function< std::shared_ptr< Asset >( std::vector< byte >::const_iterator, std::vector< byte >::const_iterator ) >,
+				std::function< std::shared_ptr< Asset >( AssetStream& ) > 
+			>
+		> m_LoadFuncMap;
 
 	public:
 
@@ -75,10 +37,28 @@ namespace Hyperion
 		// Use template-specialization to define custom loaders for your asset type
 		// You also need to use AssetLoader::RegisterAssetName to register the name, so the asset can be loaded from files
 		template< typename _Ty >
-		static std::shared_ptr< Asset > Load( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End )
+		inline static std::shared_ptr< Asset > Load( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End )
 		{
 			// If we dont have a registered loader.. we need to create a 'GenericAsset'
 			return std::make_shared< GenericAsset >( Begin, End );
+		}
+
+		template< typename _Ty >
+		inline static std::shared_ptr< Asset > Stream( AssetStream& inStream )
+		{
+			// If we dont have a specialized stream function for this asset type, were going to cache all the
+			// data available, and use the normal load function with iterators
+			std::vector< byte > data;
+			auto result = inStream.ReadBytes( data, (size_t) inStream.GetSize() );
+			if( result != AssetStream::ReadResult::Fail )
+			{
+				return Load< _Ty >( data.begin(), data.end() );
+			}
+			else
+			{
+				std::cout << "[ERROR] AssetLoader: Failed to stream in asset! Couldnt read the data from the stream!\n";
+				return nullptr;
+			}
 		}
 		
 		
@@ -86,7 +66,10 @@ namespace Hyperion
 		static void RegisterAssetType( const String& Identifier )
 		{
 			HYPERION_VERIFY_BASICSTR( Identifier );
-			m_LoadFuncMap[ Identifier ] = std::bind( &AssetLoader::Load< _Ty >, std::placeholders::_1, std::placeholders::_2 );
+			m_LoadFuncMap[ Identifier ] = std::pair( 
+				std::bind( &AssetLoader::Load< _Ty >, std::placeholders::_1, std::placeholders::_2 ),
+				std::bind( &AssetLoader::Stream< _Ty >, std::placeholders::_1 )
+			);
 		}
 		
 		
@@ -96,17 +79,53 @@ namespace Hyperion
 
 			// Check if we have a registered load function
 			auto Entry = m_LoadFuncMap.find( Identifier );
-			if( Entry == m_LoadFuncMap.end() || !Entry->second )
+			if( Entry == m_LoadFuncMap.end() || !Entry->second.first )
 			{
 				// No loader found.. so lets just create a generic asset
 				return Load< void >( Begin, End );
 			}
 
-			return Entry->second( Begin, End );
+			return Entry->second.first( Begin, End );
 		}
 
+		static std::shared_ptr< Asset > StreamFromIdentifier( const String& Identifier, AssetStream& inStream )
+		{
+			HYPERION_VERIFY_BASICSTR( Identifier );
 
-		
-		
+			// Check if this asset type is registerd
+			auto Entry = m_LoadFuncMap.find( Identifier );
+			if( Entry == m_LoadFuncMap.end() || !Entry->second.second )
+			{
+				// No stream function found.. so were going to cache the data and use a loader function
+				std::vector< byte > data;
+				auto result = inStream.ReadBytes( data, (size_t) inStream.GetSize() );
+
+				if( result != AssetStream::ReadResult::Fail )
+				{
+					// We didnt fail, so if theres a loader function for this type, use that
+					// otherwise, return a generic asset with this data inside of it
+					if( Entry != m_LoadFuncMap.end() && Entry->second.first )
+					{
+						return Entry->second.first( data.begin(), data.end() );
+					}
+					else
+					{
+						return Load< void >( data.begin(), data.end() );
+					}
+				}
+				else
+				{
+					// Failed to read from the AssetStream.. so lets return null
+					return nullptr;
+				}
+			}
+			else
+			{
+				// We found the stream function
+				return Entry->second.second( inStream );
+			}
+		}
 	};
+
+
 }

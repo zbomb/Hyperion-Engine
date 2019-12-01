@@ -4,10 +4,10 @@
 	© 2019, Zachary Berry
 ==================================================================================================*/
 
+
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/Engine.h"
 #include "Hyperion/Framework/Entity.h"
-#include "Hyperion/Core/InputManager.h"
 #include "Hyperion/Framework/World.h"
 #include "Hyperion/Renderer/RenderFactory.h"
 #include "Hyperion/Renderer/RenderMarshal.h"
@@ -15,6 +15,9 @@
 #include "Hyperion/Core/Platform.h"
 #include <typeindex>
 #include <type_traits>
+
+// Assets
+#include "Hyperion/Assets/TestAsset.h"
 
 // DEBUG
 #include <thread>
@@ -39,6 +42,9 @@ namespace Hyperion
 
 		// Initialize any platform services
 		Platform::Init();
+
+		// Register asset loader functions
+		RegisterAssetLoaders();
 	}
 
 
@@ -375,7 +381,7 @@ namespace Hyperion
 
 	void Engine::RegisterAssetLoaders()
 	{
-
+		AssetLoader::RegisterAssetType< TestAsset >( "test_asset.htxt" );
 	}
 
 }

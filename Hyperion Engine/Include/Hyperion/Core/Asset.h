@@ -18,8 +18,28 @@ namespace Hyperion
 
 	public:
 
-		virtual String GetAssetIdentifier() const = 0;
+		virtual String GetAssetName() const = 0;
 
+	};
+
+	class GenericAsset : public Asset
+	{
+
+	public:
+
+		GenericAsset()
+		{}
+
+		GenericAsset( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End )
+			: m_Data( Begin, End )
+		{}
+
+		virtual String GetAssetName() const
+		{
+			return "#asset_generic";
+		}
+
+		std::vector< byte > m_Data;
 	};
 
 	struct AssetInstance
@@ -34,19 +54,6 @@ namespace Hyperion
 		std::unordered_map< String, std::shared_ptr< AssetInstance > > m_Assets;
 		std::atomic< bool > m_Locked;
 		std::atomic< uint32 > m_RefAssetCount;
-	};
-
-	class AssetCache
-	{
-
-	private:
-
-		static std::unordered_map< String, GroupInstance > m_AssetGroups;
-
-	public:
-
-
-
 	};
 
 	template< typename _Ty >
@@ -162,14 +169,14 @@ namespace Hyperion
 			// Assign the new pointers 
 			if( inRef && inInst )
 			{
-				m_Ref = inRef;
+				m_Ptr = inRef;
 				m_Inst = inInst;
 
 				_IncRefCount();
 			}
 			else
 			{
-				m_Ref.reset();
+				m_Ptr.reset();
 				m_Inst.reset();
 			}
 
@@ -224,7 +231,7 @@ namespace Hyperion
 		*/
 		bool IsValid() const
 		{
-			return m_Ref && m_Inst;
+			return m_Ptr && m_Inst;
 		}
 
 		/*
@@ -239,7 +246,7 @@ namespace Hyperion
 			else if( lhsValid != rhsValid ) return false;
 			else
 			{
-				return m_Ref == Other.m_Ref && m_Inst == Other.m_Inst;
+				return m_Ptr == Other.m_Ptr && m_Inst == Other.m_Inst;
 			}
 		}
 
@@ -253,9 +260,9 @@ namespace Hyperion
 		*/
 		_Ty* operator->()
 		{
-			if( m_Ref && m_Inst )
+			if( m_Ptr && m_Inst )
 			{
-				return m_Ref.get();
+				return m_Ptr.get();
 			}
 
 			return nullptr; // Throws exception!
@@ -290,7 +297,7 @@ namespace Hyperion
 	{
 		// Check if source is valid, and attempt to get the base ptr from the instance data
 		// Then use a dynamic cast to get the desired type, if we cant, return null
-		auto ptr = Target.IsValid() ? Target.m_Inst->m_Ref : nullptr;
+		auto ptr = Target.IsValid() ? Target.m_Inst->m_Ptr : nullptr;
 		auto casted_ptr = ptr ? std::dynamic_pointer_cast< _To >( ptr ) : nullptr;
 		if( !ptr )
 		{

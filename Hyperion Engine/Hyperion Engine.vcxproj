@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Hyperion\Assets\TestAsset.h" />
     <ClInclude Include="Include\Hyperion\Constants.h" />
     <ClInclude Include="Include\Hyperion\Core\Asset.h" />
     <ClInclude Include="Include\Hyperion\Core\AssetLoader.h" />
@@ -34,17 +35,20 @@
     <ClInclude Include="Include\Hyperion\Core\Library\UTF16.hpp" />
     <ClInclude Include="Include\Hyperion\Core\Library\UTF32.hpp" />
     <ClInclude Include="Include\Hyperion\Core\Library\UTF8.hpp" />
+    <ClInclude Include="Include\Hyperion\Core\Memory.h" />
     <ClInclude Include="Include\Hyperion\Core\Object.h" />
     <ClInclude Include="Include\Hyperion\Core\Platform.h" />
     <ClInclude Include="Include\Hyperion\Core\PlatformImpl.h" />
     <ClInclude Include="Include\Hyperion\Core\Stream.h" />
     <ClInclude Include="Include\Hyperion\Core\String.h" />
     <ClInclude Include="Include\Hyperion\Core\Thread.h" />
+    <ClInclude Include="Include\Hyperion\Core\Threading.h" />
     <ClInclude Include="Include\Hyperion\Core\ThreadManager.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Angle.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Color.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Point.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Vector.h" />
+    <ClInclude Include="Include\Hyperion\Core\VirtualFileSystem.h" />
     <ClInclude Include="Include\Hyperion\Framework\Component.h" />
     <ClInclude Include="Include\Hyperion\Framework\Entity.h" />
     <ClInclude Include="Include\Hyperion\Framework\PrimitiveComponent.h" />
@@ -63,6 +67,7 @@
     <ClInclude Include="Include\Hyperion\Renderer\RenderMarshal.h" />
     <ClInclude Include="Include\Hyperion\Win32\Win32FileSystem.h" />
     <ClInclude Include="Include\Hyperion\Win32\Win32Platform.h" />
+    <ClInclude Include="Tests\AssetTests.hpp" />
     <ClInclude Include="Tests\BufferTests.hpp" />
     <ClInclude Include="Tests\EncodingTests.hpp" />
     <ClInclude Include="Tests\FileTests.hpp" />
@@ -71,6 +76,7 @@
     <ClInclude Include="Tests\StringTests.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Assets\TestAsset.cpp" />
     <ClCompile Include="Source\Core\AssetManager.cpp" />
     <ClCompile Include="Source\Core\Engine.cpp" />
     <ClCompile Include="Source\Core\File.cpp" />
@@ -81,11 +87,13 @@
     <ClCompile Include="Source\Core\Stream.cpp" />
     <ClCompile Include="Source\Core\String.cpp" />
     <ClCompile Include="Source\Core\Thread.cpp" />
+    <ClCompile Include="Source\Core\Threading.cpp" />
     <ClCompile Include="Source\Core\ThreadManager.cpp" />
     <ClCompile Include="Source\Core\Types\Angle.cpp" />
     <ClCompile Include="Source\Core\Types\Color.cpp" />
     <ClCompile Include="Source\Core\Types\Point.cpp" />
     <ClCompile Include="Source\Core\Types\Vector.cpp" />
+    <ClCompile Include="Source\Core\VirtualFileSystem.cpp" />
     <ClCompile Include="Source\Framework\Component.cpp" />
     <ClCompile Include="Source\Framework\Entity.cpp" />
     <ClCompile Include="Source\Framework\PrimitiveComponent.cpp" />

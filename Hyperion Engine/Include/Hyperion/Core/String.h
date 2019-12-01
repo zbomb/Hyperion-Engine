@@ -13,6 +13,8 @@
 #include <memory>
 #include <atomic>
 #include <string>
+#include <algorithm>
+
 
 // String Debug Levels
 // 0: No Debugging
@@ -553,6 +555,11 @@ namespace Hyperion
 		static bool Equals( const String& First, const String& Second );
 
 		/*
+			String::Compare
+		*/
+		static int Compare( const String& lhs, const String& rhs );
+
+		/*
 			Member Functions For String Library Functions
 		*/
 		inline size_t Length() const { return String::Length( *this ); }
@@ -566,6 +573,7 @@ namespace Hyperion
 		inline bool StartsWith( const String& Pattern ) const { return String::StartsWith( *this, Pattern ); }
 		inline bool EndsWith( const char& ToCheck ) const { return String::EndsWith( *this, ToCheck ); }
 		inline bool EndsWith( const String& Pattern ) const { return String::EndsWith( *this, Pattern ); }
+		inline int Compare( const String& rhs ) const { return String::Compare( *this, rhs ); }
 		inline bool Equals( const String& Other ) const { return String::Equals( *this, Other ); }
 		inline bool IsLocalized() const { return String::IsLocalized( *this ); }
 		inline bool IsCached() const { return String::IsCached( *this ); }
@@ -577,10 +585,48 @@ namespace Hyperion
 		inline String operator+( const String& Other ) const { return String::Append( *this, Other ); }
 		inline bool operator==( const String& Other ) const { return String::Equals( *this, Other ); }
 		inline bool operator!=( const String& Other ) const { return !String::Equals( *this, Other ); }
+		inline bool operator<( const String& Other ) const { return String::Compare( *this, Other ) < 0; }
+		inline bool operator>( const String& Other ) const { return String::Compare( *this, Other ) > 0; }
+		inline bool operator<=( const String& Other ) const { return String::Compare( *this, Other ) <= 0; }
+		inline bool operator>=( const String& Other ) const { return String::Compare( *this, Other ) >= 0; }
 
 		friend std::ostream& operator<<( std::ostream& l, const Hyperion::String& r )
 		{
 			return l << GetSTLString( r );
 		}
 	};
+}
+
+constexpr size_t __hyperion_str_hash_bias__ = 2166136261U;
+constexpr size_t __hyperion_str_hash_prime__ = 16777619U;
+
+
+namespace std
+{
+	template<>
+	struct hash< Hyperion::String >
+	{
+		size_t operator()( const Hyperion::String& In ) const noexcept
+		{
+			// Perform the stl hash function on the underlying byte vector
+			size_t Output = __hyperion_str_hash_bias__;
+
+			auto strData = In.Data();
+			if( strData )
+			{
+				for( auto It = strData->begin(); It != strData->end(); It++ )
+				{
+					Output ^= static_cast< size_t >( *It );
+					Output *= __hyperion_str_hash_prime__;
+				}
+			}
+			
+			return Output;
+		}
+	};
+
+	inline bool equal( const Hyperion::String& first, const Hyperion::String& second )
+	{
+		return Hyperion::String::Equals( first, second );
+	}
 }

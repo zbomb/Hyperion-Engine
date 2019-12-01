@@ -1408,32 +1408,59 @@ namespace Hyperion
 	}
 
 	/*
+		String::Compare
+	*/
+	int String::Compare( const String& lhs, const String& rhs )
+	{
+		// We need to use character iterators to compare the value of two characters of the same index of both strings
+		if( lhs.IsEmpty() && rhs.IsEmpty() ) return 0;
+
+		auto rhs_it = rhs.begin();
+		for( auto lhs_it = lhs.begin(); lhs_it != lhs.end(); lhs_it++ )
+		{
+			// Check if the rhs string has ended
+			if( rhs_it == rhs.end() )
+			{
+				// If the rhs is shorter, then return <0
+				return -1;
+			}
+
+			// Compare the two characters
+			auto lhs_char = *lhs_it;
+			auto rhs_char = *rhs_it;
+
+			if( rhs_char < lhs_char )
+			{
+				return -1;
+			}
+			else if( rhs_char > lhs_char )
+			{
+				return 1;
+			}
+			else
+			{
+				rhs_it++;
+			}
+		}
+
+		// If we got here, all characters matched, but lets check if there is more
+		// characters left in the rhs string, if so return 1
+		if( rhs_it == rhs.end() )
+		{
+			return 0;
+		}
+		else
+		{
+			return 1;
+		}
+	}
+
+	/*
 		String::Equals
 	*/
 	bool String::Equals( const String& First, const String& Second )
 	{
-		auto firstData		= First.Data();
-		auto secondData		= Second.Data();
-
-		size_t firstSize		= firstData ? firstData->size() : 0;
-		size_t secondSize		= secondData ? secondData->size() : 0;
-
-		if( firstSize != secondSize )						return false;
-		else if( firstSize == 0 /* && secondSize == 0 */ )	return true;
-
-		auto firstIter		= firstData->begin();
-		auto secondIter		= secondData->begin();
-
-		for( size_t i = 0; i < firstSize; i++ )
-		{
-			if( *firstIter != *secondIter )
-				return false;
-
-			firstIter++;
-			secondIter++;
-		}
-
-		return true;
+		return String::Compare( First, Second ) == 0;
 	}
 
 	/*

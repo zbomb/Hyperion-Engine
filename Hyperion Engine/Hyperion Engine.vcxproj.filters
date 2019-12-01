@@ -35,6 +35,9 @@
     <Filter Include="Win32">
       <UniqueIdentifier>{d58398ab-ceb8-46ea-bb42-7ef9589d7fc2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{d57b6cae-c17d-4528-968d-09065e2c0fae}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Hyperion\Hyperion.h">
@@ -187,6 +190,21 @@
     <ClInclude Include="Include\Hyperion\Core\AssetManager.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\VirtualFileSystem.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\AssetTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Assets\TestAsset.h">
+      <Filter>Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Memory.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Threading.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework\Entity.cpp">
@@ -283,6 +301,15 @@
       <Filter>Win32</Filter>
     </ClCompile>
     <ClCompile Include="Source\Core\AssetManager.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\VirtualFileSystem.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Assets\TestAsset.cpp">
+      <Filter>Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Threading.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>

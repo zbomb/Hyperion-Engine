@@ -7,7 +7,6 @@
 #include "Hyperion/Core/AssetManager.h"
 
 
-
 namespace Hyperion
 {
 	/*
@@ -15,72 +14,12 @@ namespace Hyperion
 	*/
 	std::unordered_map< String, std::shared_ptr< AssetInstance > > AssetManager::m_Assets;
 	std::vector< String > AssetManager::m_CachedGroups;
-
-	std::unordered_map< String, GroupManifestEntry > AssetManifest::m_Manifest;
-	std::unordered_map< String, String > AssetManifest::m_AssetIndex;
-	GroupManifestEntry AssetManifest::m_InvalidGroup;
-	AssetManifestEntry AssetManifest::m_InvalidAsset;
-
-	/*
-		Asset Manifest
-	*/
-	void AssetManifest::LoadSync()
-	{
-
-	}
-
-	
-	std::pair< bool, GroupManifestEntry& > AssetManifest::FindGroupEntry( const String& groupIdentifier )
-	{
-		HYPERION_VERIFY_BASICSTR( groupIdentifier );
-
-		// TODO: ToLower( groupIdentifier );
-
-		auto groupEntry = m_Manifest.find( groupIdentifier );
-		if( groupEntry == m_Manifest.end() )
-		{
-			// Group not found!
-			return std::pair< bool, GroupManifestEntry& >( false, m_InvalidGroup );
-		}
-		else
-		{
-			return std::pair< bool, GroupManifestEntry& >( true, groupEntry->second );
-		}
-	}
-
-	std::pair< bool, AssetManifestEntry& > AssetManifest::FindAssetEntry( const String& assetIdentifier, const String& groupIdentifier )
-	{
-		HYPERION_VERIFY_BASICSTR( assetIdentifier );
-		HYPERION_VERIFY_BASICSTR( groupIdentifier );
-
-		// TODO: ToLower( assetIdentifier ), ToLower( groupIdentifier );
-
-		// First, we need to find the target group
-		auto groupEntry = m_Manifest.find( groupIdentifier );
-		if( groupEntry == m_Manifest.end() ) return std::pair< bool, AssetManifestEntry& >( false, m_InvalidAsset );
-
-		// Now try and find this asset in the group
-		auto assetEntry = groupEntry->second.Assets.find( assetIdentifier );
-		if( assetEntry == groupEntry->second.Assets.end() ) return std::pair< bool, AssetManifestEntry& >( false, m_InvalidAsset );
-
-		return std::pair< bool, AssetManifestEntry& >( true, assetEntry->second );
-	}
-
-	std::pair< bool, AssetManifestEntry& > AssetManifest::FindAssetEntry( const String& assetIdentifier )
-	{
-		HYPERION_VERIFY_BASICSTR( assetIdentifier );
-
-		// TODO: ToLower( assetIdentifier )
-
-		// Use the secondary index to quickly find the proper group
-		auto targetGroup = m_AssetIndex.find( assetIdentifier );
-		if( targetGroup == m_AssetIndex.end() ) return std::pair< bool, AssetManifestEntry& >( false, m_InvalidAsset );
-
-		return FindAssetEntry( assetIdentifier, targetGroup->second );
-	}
-
-
-
+	std::map< String, 
+			std::pair< 
+				std::function< std::shared_ptr< Asset >( std::vector< byte >::const_iterator, std::vector< byte >::const_iterator ) >,
+				std::function< std::shared_ptr< Asset >( AssetStream& ) > 
+			>
+		> AssetLoader::m_LoadFuncMap;
 
 	bool AssetManager::IsCached( const String& groupIdentifier )
 	{
@@ -97,7 +36,7 @@ namespace Hyperion
 		return false;
 	}
 
-	bool AssetManager::CacheGroupSync( const String& groupIdentifier )
+	bool AssetManager::CacheGroupSync( const String& groupIdentifier, bool bBatchRead /* = false */ )
 	{
 		HYPERION_VERIFY_BASICSTR( groupIdentifier );
 
@@ -107,7 +46,7 @@ namespace Hyperion
 		if( IsCached( groupIdentifier ) ) return true;
 
 		// Find this groups manifest info, if exists
-		auto manifestEntry = AssetManifest::FindGroupEntry( groupIdentifier );
+		auto manifestEntry = VirtualFileSystem::FindGroupEntry( groupIdentifier );
 		if( !manifestEntry.first )
 		{
 			// Group wasnt found....
@@ -119,22 +58,80 @@ namespace Hyperion
 		// Add this group to the 'cached' list
 		m_CachedGroups.push_back( groupIdentifier );
 
-		// Now, go through and cache each indivisual asset
-		for( auto It = manifestEntry.second.Assets.begin(); It != manifestEntry.second.Assets.end(); It++ )
+		if( bBatchRead )
 		{
-			// Check if this asset is already in the cache
-			auto existing = m_Assets.find( It->first );
-			if( existing != m_Assets.end() )
+			std::map< String, std::vector< byte > > assetData;
+			if( VirtualFileSystem::BatchReadGroup( groupIdentifier, assetData ) )
 			{
-				// Already in the asset list.. so flag as 'cached'
-				existing->second->m_Cached = true;
+				// Loop through the list of asset data, and load each of them in
+				for( auto It = assetData.begin(); It != assetData.end(); It++ )
+				{
+					// Ensure this asset isnt already cached
+					auto existing = m_Assets.find( It->first );
+					if( existing != m_Assets.end() && existing->second )
+					{
+						existing->second->m_Cached = true;
+						It->second.erase( It->second.begin(), It->second.end() );
+						continue;
+					}
+
+					std::shared_ptr< Asset > assetPtr = AssetLoader::LoadFromIdentifier( It->first, It->second.begin(), It->second.end() );
+					
+					// Erase the source vector to free up memeory as soon as possible
+					It->second.erase( It->second.begin(), It->second.end() );
+
+					if( !assetPtr )
+					{
+						std::cout << "[ERROR} AssetManager: Failed to cache group '" << groupIdentifier << "', the asset '" << It->first << "' couldnt be loaded!\n";
+						continue;
+					}
+
+					auto& inst = m_Assets[ It->first ] = std::make_shared< AssetInstance >();
+
+					inst->m_Cached		= true;
+					inst->m_Ref			= assetPtr;
+					inst->m_RefCount	= 0;
+				}
 			}
-			else
+		}
+		else
+		{
+			for( auto It = manifestEntry.second.Assets.begin(); It != manifestEntry.second.Assets.end(); It++ )
 			{
-				// We need to load this asset from memory
-				// auto inst = AssetLoader::CreateFromChunk( manifestEntry.second.ChunkFile, It->second );
-				// TODO
-				return false;
+				// Check if this asset is already in the cache
+				auto existing = m_Assets.find( It->first );
+				if( existing != m_Assets.end() )
+				{
+					// Already in the asset list.. so flag as 'cached'
+					existing->second->m_Cached = true;
+				}
+				else
+				{
+					// We need to load this asset from memory
+					auto streamResult = VirtualFileSystem::StreamChunkSection( manifestEntry.second.ChunkFile, It->second.Begin, It->second.Begin + It->second.Length );
+					if( !streamResult )
+					{
+						// Couldnt read this asset in!
+						std::cout << "[ERROR] AssetManager: Failed to cache group '" << manifestEntry.second.Name << "', the asset '" << It->second.Name << "' couldnt be streamed in!\n";
+						continue;
+					}
+
+					// Use AssetLoader to cache this asset
+					std::shared_ptr< Asset > assetPtr = AssetLoader::StreamFromIdentifier( It->second.Name, *streamResult );
+					if( !assetPtr )
+					{
+						// Couldnt create this asset from the stream!
+						std::cout << "[ERROR] AssetManager: Failed to cache group '" << manifestEntry.second.Name << "', the asset '" << It->second.Name << "' failed to load from the data stream!\n";
+						continue;
+					}
+
+					// Create cache entry for this asset
+					auto& inst = m_Assets[ It->second.Name ] = std::make_shared< AssetInstance >();
+
+					inst->m_Cached		= true;
+					inst->m_Ref			= assetPtr;
+					inst->m_RefCount	= 0;
+				}
 			}
 		}
 
@@ -182,7 +179,7 @@ namespace Hyperion
 		}
 
 		// Now, we need to go through and uncache all associated assets
-		auto groupManifest = AssetManifest::FindGroupEntry( groupIdentifier );
+		auto groupManifest = VirtualFileSystem::FindGroupEntry( groupIdentifier );
 		if( !groupManifest.first ) return false;
 
 		for( auto It = groupManifest.second.Assets.begin(); It != groupManifest.second.Assets.end(); It++ )
@@ -210,6 +207,7 @@ namespace Hyperion
 			}
 		}
 
+		return true;
 	}
 
 
