@@ -14,6 +14,10 @@
 
 #include <sys/stat.h>
 
+#undef CreateFile
+#undef DeleteFile
+#undef CreateDirectory
+
 namespace Hyperion
 {
 

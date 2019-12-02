@@ -13,25 +13,34 @@ namespace Hyperion
 {
 
 	/*----------------------------------------------------------------------------
+		TickedThread::TickedThread
+	----------------------------------------------------------------------------*/
+	TickedThread::TickedThread( const TickedThreadParameters& params )
+		: Thread( params.Identifier, params.AllowTasks ), m_Init( params.InitFunction ), m_Main( params.TickFunction ), m_Shutdown( params.ShutdownFunction ),
+		m_Frequency( 1.f / params.Frequency * 1000.f ), m_Deviation( params.Deviation ), m_MinTasks( params.MinimumTasksPerTick ), m_MaxTasks( params.MaximumTasksPerTick )
+	{
+	}
+
+	/*----------------------------------------------------------------------------
 		TickedThread::Start
 	----------------------------------------------------------------------------*/
 	bool TickedThread::Start()
 	{
-		// First, check if the thread is already running, and if a main func is set
-		if( m_State || m_Thread )
+		// Check state to see if we can start this thread
+		if( m_State || m_Handle )
 		{
-			std::cout << "[ERROR] TickedThread: Attempt to start thread that is still running!\n";
+			std::cout << "[ERROR] ThreadManager: Attempt to start thread '" << m_Identifier << "' while it was already running\n";
 			return false;
 		}
-		else if( !m_MainFunc )
+		else if( !m_Main )
 		{
-			std::cout << "[ERROR] TickedThread: Attempt to start a thread that doesnt have its main function set!\n";
+			std::cout << "[ERROR] ThreadManager: Attempt to start thread '" << m_Identifier << "' without a valid main function\n";
 			return false;
 		}
 
-		// Set state and create thread
-		m_State = true;
-		m_Thread = std::make_unique< std::thread >( std::bind( &TickedThread::ThreadMain, this ) );
+		// Create OS thread and set state
+		m_State		= true;
+		m_Handle	= std::make_unique< std::thread >( std::bind( &TickedThread::ThreadMain, this ) );
 
 		return true;
 	}
@@ -44,18 +53,18 @@ namespace Hyperion
 		// Once this state is set to false, the thread should stop at the start of the next iteration before calling the main func
 		m_State = false;
 
-		if( m_Thread )
+		if( m_Handle )
 		{
 			// Check if the active thread is joinable, meaning we can properly shut it down
-			if( m_Thread->joinable() )
+			if( m_Handle->joinable() )
 			{
 				// The join call is going to block this thread until the thread were shutting down completes
-				m_Thread->join();
-				m_Thread.reset();
+				m_Handle->join();
+				m_Handle.reset();
 			}
 			else
 			{
-				std::cout << "[ERROR] TickedThread: Failed to properly stop thread '" << m_Name << "' because it wasnt joinable!\n";
+				std::cout << "[ERROR] ThreadManager: Failed to properly stop thread '" << m_Identifier << "' because it wasnt joinable!\n";
 				return false;
 			}
 		}
@@ -64,72 +73,212 @@ namespace Hyperion
 	}
 
 	/*----------------------------------------------------------------------------
+		TickedThread::RunNextTask
+	----------------------------------------------------------------------------*/
+	bool TickedThread::RunNextTask()
+	{
+		// There should already be a lock obtained before calling this function!
+		std::unique_ptr< TaskInstanceBase > nextTask = nullptr;
+
+		// Lock access to the task list when we go to pop the entry out
+		{
+			std::lock_guard< std::mutex > task_lock( m_TaskMutex );
+
+			while( !nextTask && !m_TaskList.empty() )
+			{
+				nextTask = std::move( m_TaskList.top() );
+				m_TaskList.pop();
+			}
+		}
+
+		if( nextTask )
+		{
+			nextTask->Execute();
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	/*----------------------------------------------------------------------------
 		TickedThread::ThreadMain
 	----------------------------------------------------------------------------*/
 	void TickedThread::ThreadMain()
 	{
-		// Run the set init func
-		if( m_InitFunc )
+		// First, lets run our init function
+		if( m_Init )
 		{
-			m_InitFunc();
+			m_Init();
 		}
 
-		// Continue to tick as long as state is good, and the main func is not null
-		while( m_MainFunc && m_State )
+		// Main thread loop begin
+		while( m_Main && m_State )
 		{
-			// First, store the current time
-			auto tick_start = std::chrono::high_resolution_clock::now();
-			auto next_tick = tick_start + m_Frequency;
+			// Store start of this tick, and calculate when the next tick should be
+			auto tick_start		= std::chrono::high_resolution_clock::now();
+			auto next_tick		= tick_start + m_Frequency;
 
-			// Run the main function
-			m_MainFunc( *this );
-			
-			auto main_end = std::chrono::high_resolution_clock::now();
-			auto next_tick_delta = next_tick - main_end;
+			// Run tick function
+			m_Main();
 
-			if( m_bAllowTaskInjection )
+			// Run the minimum number of tasks required, or until we run out of tasks
+			uint32 taskCount = 0;
+			while( taskCount < m_MinTasks && RunNextTask() )
 			{
-				// TODO: Run injected tasks
-				// TODO: If we have extra time, pause so we hit target frequency
+				taskCount++;
+			}
+
+			// Now, run more tasks until we either run out of time, hit the max number of tasks, or run out of tasks
+			while( ( next_tick - std::chrono::high_resolution_clock::now() ) > m_Deviation && taskCount < m_MaxTasks && RunNextTask() )
+			{
+				taskCount++;
+			}
+
+			// If we have leftover time, sleep until the next tick
+			if( ( next_tick - std::chrono::high_resolution_clock::now() ) > m_Deviation )
+			{
+				std::this_thread::sleep_until( next_tick - std::chrono::microseconds( 1 ) );
+			}
+		}
+
+		// Ensure any pending tasks are ran.. and ensure no more tasks are able to be added
+		m_State = false;
+
+		{
+			// Lock access to the task list, since m_State is already set to false, no other tasks should be added
+			std::lock_guard< std::mutex > task_lock( m_TaskMutex );
+			while( !m_TaskList.empty() )
+			{
+				RunNextTask();
+			}
+		}
+
+		// Thread shutdown, run the shutdown func and update state
+		if( m_Shutdown )
+		{
+			m_Shutdown();
+		}
+	}
+
+	/*----------------------------------------------------------------------------
+		TickedThread::InjectTask
+	----------------------------------------------------------------------------*/
+	bool TickedThread::InjectTask( std::unique_ptr< TaskInstanceBase >&& inTask )
+	{
+		// Ensure task is valid, thread is running, and we allow task injection
+		if( inTask && m_State && m_AllowTasks )
+		{
+			std::lock_guard< std::mutex > task_lock( m_TaskMutex );
+			m_TaskList.push( std::move( inTask ) );
+			return true;
+		}
+
+		return false;
+	}
+
+
+	/*----------------------------------------------------------------------------
+		CustomThread::CustomThread
+	----------------------------------------------------------------------------*/
+	CustomThread::CustomThread( const CustomThreadParameters& params )
+		: Thread( params.Identifier, params.AllowTasks ), m_MainFunc( params.ThreadFunction )
+	{
+	}
+
+
+	/*----------------------------------------------------------------------------
+		CustomThread::Start
+	----------------------------------------------------------------------------*/
+	bool CustomThread::Start()
+	{
+		// Check if the thread is already running
+		if( m_State || m_Handle )
+		{
+			std::cout << "[ERROR] ThreadManager: Attempt to start thread '" << m_Identifier << "' but its already running\n";
+			return false;
+		}
+		else if( !m_MainFunc )
+		{
+			std::cout << "[ERROR] ThreadManager: Attempt to start thread '" << m_Identifier << "' but the thread function isnt bound\n";
+			return false;
+		}
+
+		// Create the os thread and set state
+		m_State = true;
+		m_Handle = std::make_unique< std::thread >( std::bind( &CustomThread::ThreadMain, this ) );
+
+		return true;
+	}
+
+	/*----------------------------------------------------------------------------
+		CustomThread::Stop
+	----------------------------------------------------------------------------*/
+	bool CustomThread::Stop()
+	{
+		// The thread function is responsible for checking this atomic boolean for shutdown
+		m_State = false;
+
+		if( m_Handle )
+		{
+			// Check if the active thread is joinable, meaning we can properly shut it down
+			if( m_Handle->joinable() )
+			{
+				// The join call is going to block this thread until the thread were shutting down completes
+				m_Handle->join();
+				m_Handle.reset();
 			}
 			else
 			{
-				// TODO: Pause current thread so we hit the targetted tick frequency
+				std::cout << "[ERROR] ThreadManager: Failed to properly stop thread '" << m_Identifier << "' because it wasnt joinable!\n";
+				return false;
 			}
-
 		}
 
-		// Run the shutdown function
-		if( m_ShutdownFunc )
+		return true;
+	}
+
+	/*----------------------------------------------------------------------------
+		CustomThread::InjectTask
+	----------------------------------------------------------------------------*/
+	bool CustomThread::InjectTask( std::unique_ptr< TaskInstanceBase >&& inTask )
+	{
+		if( inTask && m_State && m_AllowTasks )
 		{
-			m_ShutdownFunc();
+			std::lock_guard< std::mutex > task_lock( m_TaskMutex );
+			m_TaskList.push( std::move( inTask ) );
+			return true;
 		}
 
-		// Ensure state is set to false, signalling the thread is shutting down/shut down
-		m_State = false;
-	}
-
-
-	/*----------------------------------------------------------------------------
-		StandardThread::Start
-	----------------------------------------------------------------------------*/
-	bool StandardThread::Start()
-	{
 		return false;
 	}
 
 	/*----------------------------------------------------------------------------
-		StandardThread::Stop
+		CustomThread::PopTask
 	----------------------------------------------------------------------------*/
-	bool StandardThread::Stop()
+	std::unique_ptr< TaskInstanceBase > CustomThread::PopTask()
 	{
-		return false;
+		std::unique_ptr< TaskInstanceBase > task = nullptr;
+
+		// Obtain a lock on the task list so we can remove the next task from it
+		{
+			std::lock_guard< std::mutex > task_lock( m_TaskMutex );
+
+			while( !task && !m_TaskList.empty() )
+			{
+				task = std::move( m_TaskList.top() );
+				m_TaskList.pop();
+			}
+		}
+
+		return task;
 	}
 
 	/*----------------------------------------------------------------------------
-		StandardThread::ThreadMain
+		CustomThread::ThreadMain
 	----------------------------------------------------------------------------*/
-	void StandardThread::ThreadMain()
+	void CustomThread::ThreadMain()
 	{
 		if( m_MainFunc )
 		{
@@ -139,285 +288,229 @@ namespace Hyperion
 		m_State = false;
 	}
 
-	/*----------------------------------------------------------------------------
-		TaskManager::ScheduleNextTask
-	----------------------------------------------------------------------------*/
-	void TaskManager::ScheduleNextTask()
+
+	PoolWorkerThread::PoolWorkerThread()
 	{
-		// There should already be a lock on the task mutex before calling this
-		// If there is still a 'NextTask' then dont do anything
-		if( m_NextTask )
-			return;
-
-		// We have 3 task lists.. one for each priority level.. we need to determine how long its been since each task has been
-		// added, apply a multiplier for each priority level and find the 'oldest' one and select it
-		float verylowPriorityValue		= -1.f;
-		float lowPriorityValue			= -1.f;
-		float normPriorityValue			= -1.f;
-		float highPriorityValue			= -1.f;
-		float veryhighPriorityValue		= -1.f;
-
-		// We want to ensure any empty tasks are cleared from our lists
-		while( !m_VeryLowPriorityTasks.empty() && !m_VeryLowPriorityTasks.top() )
-		{
-			m_VeryLowPriorityTasks.pop();
-		}
-
-		while( !m_LowPriorityTasks.empty() && !m_LowPriorityTasks.top() )
-		{
-			m_LowPriorityTasks.pop();
-		}
-
-		while( !m_NormalPriorityTasks.empty() && !m_NormalPriorityTasks.top() )
-		{
-			m_NormalPriorityTasks.pop();
-		}
-
-		while( !m_HighPriorityTasks.empty() && !m_HighPriorityTasks.top() )
-		{
-			m_HighPriorityTasks.pop();
-		}
-
-		while( !m_VeryHighPriorityTasks.empty() && !m_VeryHighPriorityTasks.top() )
-		{
-			m_VeryHighPriorityTasks.pop();
-		}
-
-		// Calculate time since insertion for the oldest task from each priority to find the best task to run
-		auto now = std::chrono::high_resolution_clock::now();
-		bool bHasTask = false;
-
-		if( !m_VeryLowPriorityTasks.empty() )
-		{
-			verylowPriorityValue = (float)( ( now - m_VeryLowPriorityTasks.top()->ScheduledTime ).count() ) * 0.2f;
-			bHasTask = true;
-		}
-
-		if( !m_LowPriorityTasks.empty() )
-		{
-			lowPriorityValue = (float)( ( now - m_LowPriorityTasks.top()->ScheduledTime ).count() ) * 0.5f;
-			bHasTask = true;
-		}
-
-		if( !m_NormalPriorityTasks.empty() )
-		{
-			normPriorityValue = (float)( ( now - m_NormalPriorityTasks.top()->ScheduledTime ).count() );
-			bHasTask = true;
-		}
-
-		if( !m_HighPriorityTasks.empty() )
-		{
-			highPriorityValue = (float)( ( now - m_HighPriorityTasks.top()->ScheduledTime ).count() ) * 2.f;
-			bHasTask = true;
-		}
-
-		if( !m_VeryHighPriorityTasks.empty() )
-		{
-			veryhighPriorityValue = (float)( ( now - m_VeryHighPriorityTasks.top()->ScheduledTime ).count() ) * 5.f;
-			bHasTask = true;
-		}
-
-		// Now we need to find the highest value, and select that task
-		if( bHasTask )
-		{
-			if( verylowPriorityValue > lowPriorityValue )
-			{
-				if( verylowPriorityValue > normPriorityValue )
-				{
-					if( verylowPriorityValue > highPriorityValue )
-					{
-						if( verylowPriorityValue > veryhighPriorityValue )
-						{
-							// VERY LOW
-							m_NextTask = std::move( m_VeryLowPriorityTasks.top() );
-							m_VeryLowPriorityTasks.pop();
-						}
-						else
-						{
-							// VERY HIGH
-							m_NextTask = std::move( m_VeryHighPriorityTasks.top() );
-							m_VeryHighPriorityTasks.pop();
-						}
-					}
-					else // verylow > low && norm && high > verylow.. Therefore high > verylow, norm, high
-					{
-						if( highPriorityValue > veryhighPriorityValue )
-						{
-							// HIGH
-							m_NextTask = std::move( m_HighPriorityTasks.top() );
-							m_HighPriorityTasks.pop();
-						}
-						else
-						{
-							// VERY HIGH
-							m_NextTask = std::move( m_VeryHighPriorityTasks.top() );
-							m_VeryHighPriorityTasks.pop();
-						}
-					}
-				}
-				else // verylow > low && norm > verylow.. Therefore norm > verylow && low
-				{
-					if( normPriorityValue > highPriorityValue )
-					{
-						if( normPriorityValue > veryhighPriorityValue )
-						{
-							// NORM
-							m_NextTask = std::move( m_NormalPriorityTasks.top() );
-							m_NormalPriorityTasks.pop();
-						}
-						else
-						{
-							// VERY HIGH
-							m_NextTask = std::move( m_VeryHighPriorityTasks.top() );
-							m_VeryHighPriorityTasks.pop();
-						}
-					}
-					else // norm > low, verylow & high > norm.. therefore high > verylow, low, norm
-					{
-						if( highPriorityValue > veryhighPriorityValue )
-						{
-							// HIGH
-							m_NextTask = std::move( m_HighPriorityTasks.top() );
-							m_HighPriorityTasks.pop();
-						}
-						else
-						{
-							// VERY HIGH
-							m_NextTask = std::move( m_VeryHighPriorityTasks.top() );
-							m_VeryHighPriorityTasks.pop();
-						}
-					}
-				}
-			}
-			else // low > verylow
-			{
-				if( lowPriorityValue > normPriorityValue )
-				{
-					if( lowPriorityValue > highPriorityValue )
-					{
-						if( lowPriorityValue > veryhighPriorityValue )
-						{
-							// LOW
-							m_NextTask = std::move( m_LowPriorityTasks.top() );
-							m_LowPriorityTasks.pop();
-						}
-						else
-						{
-							// VERY HIGH
-							m_NextTask = std::move( m_VeryHighPriorityTasks.top() );
-							m_VeryHighPriorityTasks.pop();
-						}
-					}
-					else // low > verylow, norm & high > low therefore high > low, verylow, norm
-					{
-						if( highPriorityValue > veryhighPriorityValue )
-						{
-							// HIGH
-							m_NextTask = std::move( m_HighPriorityTasks.top() );
-							m_HighPriorityTasks.pop();
-						}
-						else
-						{
-							// VERY HIGH
-							m_NextTask = std::move( m_VeryHighPriorityTasks.top() );
-							m_VeryHighPriorityTasks.pop();
-						}
-					}
-				}
-				else // low > verylow, norm > low THEREFORE norm > low, verylow
-				{
-					if( normPriorityValue > highPriorityValue )
-					{
-						if( normPriorityValue > veryhighPriorityValue )
-						{
-							// NORM
-							m_NextTask = std::move( m_NormalPriorityTasks.top() );
-							m_NormalPriorityTasks.pop();
-						}
-						else
-						{
-							// VERY HIGH
-							m_NextTask = std::move( m_VeryHighPriorityTasks.top() );
-							m_VeryHighPriorityTasks.pop();
-						}
-					}
-					else // norm > low, verylow & high > norm THEREFORE high > norm, low, verylow
-					{
-						if( highPriorityValue > veryhighPriorityValue )
-						{
-							// HIGH
-							m_NextTask = std::move( m_HighPriorityTasks.top() );
-							m_HighPriorityTasks.pop();
-						}
-						else
-						{
-							// VERY HIGH
-							m_NextTask = std::move( m_VeryHighPriorityTasks.top() );
-							m_VeryHighPriorityTasks.pop();
-						}
-					}
-				}
-			}
-		}
 
 	}
 
+
+	void PoolWorkerThread::ThreadMain()
+	{
+
+	}
+
+	bool PoolWorkerThread::Start()
+	{
+		// Check if the thread is already running
+		if( m_State || m_Handle )
+		{
+			std::cout << "[ERROR] Threading: Attempt to start a pool worker thread thats already running!\n";
+			return false;
+		}
+
+		m_State		= true;
+		m_Handle	= std::make_unique< std::thread >( std::bind( &PoolWorkerThread::ThreadMain, this ) );
+
+		return true;
+	}
+
+	bool PoolWorkerThread::Stop()
+	{
+		m_State = false;
+
+		if( m_Handle )
+		{
+			if( m_Handle->joinable() )
+			{
+				// join
+			}
+		}
+	}
+
+
 	/*----------------------------------------------------------------------------
-		TaskManager::PopNextTask
+		ThreadManager::ThreadManager
 	----------------------------------------------------------------------------*/
-	std::unique_ptr< TaskInstanceBase > TaskManager::PopNextTask()
+	ThreadManager::ThreadManager()
+	{
+	}
+
+	/*----------------------------------------------------------------------------
+		ThreadManager::PopNextTask
+	----------------------------------------------------------------------------*/
+	std::unique_ptr< TaskInstanceBase > ThreadManager::PopNextTask()
 	{
 		// First we need to gain a lock on the task pool members
 		std::lock_guard< std::mutex > lock( m_TaskMutex );
-
-		// Next, check if there is a 'next task' scheduled
-		if( m_NextTask )
+		if( !m_TaskList.empty() )
 		{
-			// Move this task into a local variable so we can output it later
-			auto output		= std::move( m_NextTask );
-			m_NextTask		= nullptr;
+			auto output = std::move( m_TaskList.top() );
+			m_TaskList.pop();
 
-			// We need to calculate the next task to run 
-			ScheduleNextTask();
+			// Pop any null tasks
+			while( !output )
+			{
+				output = std::move( m_TaskList.top() );
+				m_TaskList.pop();
+			}
 
 			return output;
 		}
-		else
-		{
-			return nullptr;
-		}
+
+		return nullptr;
 	}
 
-	/*----------------------------------------------------------------------------
-		TaskManager::AddTask
-	----------------------------------------------------------------------------*/
-	void TaskManager::AddTask( std::unique_ptr< TaskInstanceBase >&& inTask, TaskPriority inPriority )
+	std::shared_ptr< Thread > ThreadManager::CreateThread( const TickedThreadParameters& params )
 	{
-		// Aquire a lock on the lists so we can perform the needed operations
-		std::lock_guard< std::mutex > lock( m_TaskMutex );
-
-		// Add the task to the proper list
-		switch( inPriority )
+		// Validate the parameters
+		if( params.Identifier.size() == 0 )
 		{
-		case TaskPriority::VeryLow:
-			m_VeryLowPriorityTasks.push( std::move( inTask ) );
-			break;
-		case TaskPriority::Low:
-			m_LowPriorityTasks.push( std::move( inTask ) );
-			break;
-		case TaskPriority::Normal:
-			m_NormalPriorityTasks.push( std::move( inTask ) );
-			break;
-		case TaskPriority::High:
-			m_HighPriorityTasks.push( std::move( inTask ) );
-			break;
-		case TaskPriority::VeryHigh:
-			m_VeryHighPriorityTasks.push( std::move( inTask ) );
-			break;
+			std::cout << "[ERROR] ThreadManager: Attempt to create a thread without a valid identifier\n";
+			return nullptr;
+		}
+		else if( !params.TickFunction )
+		{
+			std::cout << "[ERROR] ThreadManager: Failed to create thread '" << params.Identifier << "' because the tick function was not specified\n";
+			return nullptr;
+		}
+		else if( params.MinimumTasksPerTick > params.MaximumTasksPerTick && params.MaximumTasksPerTick != 0 )
+		{
+			std::cout << "[ERROR] ThreadManager: Failed to create thread '" << params.Identifier << "' because the minimum task count is greater than the maximum task count\n";
+			return nullptr;
+		}
+		else if( GetThread( params.Identifier ) )
+		{
+			std::cout << "[ERROR] ThreadManager: Failed to create thread '" << params.Identifier << "' because a thread with that identifier already exists\n";
+			return nullptr;
 		}
 
-		// Recalculate the next task to execute
-		ScheduleNextTask();
+		// Next, create the thread in-place
+		auto& newThread = m_TickedThreads[ params.Identifier ] = std::shared_ptr< TickedThread >( new TickedThread( params ) );
+
+		// And were going to run it automatically if desired
+		if( params.StartAutomatically )
+		{
+			newThread->Start();
+		}
+
+		return newThread;
+	}
+
+	std::shared_ptr< Thread > ThreadManager::CreateThread( const CustomThreadParameters& params )
+	{
+		// Validate the parameters
+		if( params.Identifier.size() == 0 )
+		{
+			std::cout << "[ERROR] ThreadManager: Attempt to create a thread without a valid identifier\n";
+			return nullptr;
+		}
+		else if( !params.ThreadFunction )
+		{
+			std::cout << "[ERROR] ThreadManager: Failed to create thread '" << params.Identifier << "' because the tick function was not specified\n";
+			return nullptr;
+		}
+		else if( GetThread( params.Identifier ) )
+		{
+			std::cout << "[ERROR] ThreadManager: Failed to create thread '" << params.Identifier << "' because a thread with that identifier already exists\n";
+			return nullptr;
+		}
+
+		// Create thread in-place
+		auto& newThread = m_CustomThreads[ params.Identifier ] = std::shared_ptr< CustomThread >( new CustomThread( params ) );
+
+		if( params.StartAutomatically )
+		{
+			newThread->Start();
+		}
+
+		return newThread;
+	}
+
+	std::shared_ptr< Thread > ThreadManager::GetThread( const std::string& identifier )
+	{
+		if( identifier.size() == 0 )
+			return nullptr;
+
+		// Check both lists for the target 
+		auto it = m_TickedThreads.find( identifier );
+		if( it != m_TickedThreads.end() )
+		{
+			return it->second;
+		}
+
+		auto cit = m_CustomThreads.find( identifier );
+		if( cit != m_CustomThreads.end() )
+		{
+			return cit->second;
+		}
+
+		return nullptr;
+	}
+
+	bool ThreadManager::DestroyThread( const std::string& identifier )
+	{
+		if( identifier.size() == 0 )
+			return false;
+
+		// Attempt to find an iterator to the thread
+		auto it = m_TickedThreads.find( identifier );
+		if( it != m_TickedThreads.end() )
+		{
+			if( it->second && it->second->IsRunning() )
+			{
+				it->second->Stop();
+			}
+
+			m_TickedThreads.erase( it );
+			return true;
+		}
+		else
+		{
+			auto cit = m_CustomThreads.find( identifier );
+			if( cit != m_CustomThreads.end() )
+			{
+				if( cit->second && cit->second->IsRunning() )
+				{
+					cit->second->Stop();
+				}
+
+				m_CustomThreads.erase( cit );
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	uint32 ThreadManager::GetThreadCount()
+	{
+		return m_TickedThreads.size() + m_CustomThreads.size();
+	}
+
+
+	void ThreadManager::Shutdown()
+	{
+		// Shutdown all open threads
+		for( auto& pair : m_TickedThreads )
+		{
+			if( pair.second && pair.second->IsRunning() )
+			{
+				pair.second->Stop();
+			}
+		}
+
+		for( auto& pair : m_CustomThreads )
+		{
+			if( pair.second && pair.second->IsRunning() )
+			{
+				pair.second->Stop();
+			}
+		}
+
+		// Clear the thread maps
+		m_TickedThreads.clear();
+		m_CustomThreads.clear();
 	}
 
 }

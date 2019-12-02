@@ -31,6 +31,10 @@ namespace Hyperion
 	typedef uint16 LanguageID;
 	constexpr LanguageID LANG_NONE = 0;
 
+	constexpr auto THREAD_GAME		= "game";
+	constexpr auto THREAD_RENDERER	= "renderer";
+	constexpr auto THREAD_POOL		= "pool";
+
 	enum class InputAxis
 	{
 		None	= 0,

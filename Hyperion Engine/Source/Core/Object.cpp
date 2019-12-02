@@ -13,6 +13,8 @@
 #include <iostream>
 #endif
 
+#undef min
+
 namespace Hyperion
 {
 	Object::Object()

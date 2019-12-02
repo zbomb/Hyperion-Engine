@@ -8,7 +8,7 @@
 
 // Hyperion 
 #include "Hyperion/Core/Object.h"
-#include "Hyperion/Core/ThreadManager.h"
+#include "Hyperion/Core/Threading.h"
 #include "Hyperion/Core/InputManager.h"
 #include "Hyperion/Renderer/Renderer.h"
 #include "Hyperion/Core/String.h"
@@ -316,7 +316,7 @@ namespace Hyperion
 
 	public:
 
-		inline ThreadManager* GetThreadManager() { return m_ThreadManager ? m_ThreadManager.get() : nullptr; }
+		inline const std::shared_ptr< ThreadManager >& GetThreadManager() const { return m_ThreadManager; }
 
 		/*
 			Initialization System
@@ -339,7 +339,7 @@ namespace Hyperion
 		bool Startup();
 		bool Shutdown();
 
-		inline InputManager* GetInputManager() { return m_InputManager ? m_InputManager.get() : nullptr; }
+		inline const std::shared_ptr< InputManager >& GetInputManager() const { return m_InputManager; }
 
 
 		/*=======================================================================================================

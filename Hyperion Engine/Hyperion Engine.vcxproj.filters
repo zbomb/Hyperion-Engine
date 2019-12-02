@@ -43,9 +43,6 @@
     <ClInclude Include="include\Hyperion\Hyperion.h">
       <Filter>Lib</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Thread.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Framework\Entity.h">
       <Filter>Framework</Filter>
     </ClInclude>
@@ -56,9 +53,6 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Object.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\ThreadManager.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\InputManager.h">
@@ -217,12 +211,6 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Source\Core\Object.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Core\ThreadManager.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Core\Thread.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Source\Core\InputManager.cpp">

@@ -1,2 +1,11 @@
-﻿  Threading.cpp
+﻿  Engine.cpp
+  Object.cpp
+  Threading.cpp
+  Component.cpp
+  Entity.cpp
+  World.cpp
+  DirectX11Factory.cpp
+  Win32FileSystem.cpp
+  Generating Code...
+C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\Source\Core\Threading.cpp(448,57): warning C4267:  'return': conversion from 'size_t' to 'uint32', possible loss of data
   Hyperion Engine.vcxproj -> C:\Users\zackb\source\repos\Heartline Editor\Build\Debug\Hyperion.lib

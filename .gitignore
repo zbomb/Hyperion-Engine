@@ -38,3 +38,6 @@
 *.tag
 *.log
 *gs.version
+
+*.rsp
+Hyperion Engine/Boost/*

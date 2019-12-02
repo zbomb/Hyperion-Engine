@@ -1,27 +1,28 @@
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion engine.pdb
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion engine.idb
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\primitivecomponent.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\win32filesystem.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\directx11factory.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\world.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\entity.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\component.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\threading.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\object.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\engine.obj
+c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\primitivecomponent.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\virtualfilesystem.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\vector.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\point.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\color.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\angle.obj
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\threadmanager.obj
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\thread.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\string.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\stream.obj
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\object.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\serialization.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\binary.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\inputmanager.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\file.obj
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\engine.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\assetmanager.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\testasset.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\win32platform.obj
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\win32filesystem.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\rendermarshal.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\renderfactory.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\renderer.obj
@@ -31,9 +32,7 @@ c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\proxypri
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\proxylight.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\meshloader.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\directx11renderer.obj
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\directx11factory.obj
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion.obj
-c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\world.obj
 c:\users\zackb\source\repos\heartline editor\build\debug\hyperion.lib
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion engine.tlog\cl.command.1.tlog
 c:\users\zackb\source\repos\hyperion engine\hyperion engine\build\debug\hyperion engine.tlog\cl.read.1.tlog

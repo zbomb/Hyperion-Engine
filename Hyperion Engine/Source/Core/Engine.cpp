@@ -227,19 +227,6 @@ namespace Hyperion
 	*/
 	void Engine::TickEngine()
 	{
-		// TODO: Events/Async Tasks/User Input/etc...
-
-		// Calculate time since the last tick
-		std::chrono::duration< double, std::milli > tickDelta = std::chrono::high_resolution_clock::now() - m_lastTick;
-
-		// We want to aim for around 10ms or more between ticks, otherwise we will sleep
-		// TODO: Evaluate this decision
-		if( tickDelta.count() < 10.0 )
-		{
-			std::this_thread::sleep_until( m_lastTick + std::chrono::milliseconds( 10 ) );
-		}
-		
-		// Recalc more accurate delta
 		auto Now = std::chrono::high_resolution_clock::now();
 		std::chrono::duration< double > newDelta = Now - m_lastTick;
 
@@ -304,42 +291,52 @@ namespace Hyperion
 		// Store weak ref to renderer in the Marshaler, so it can quickly access it
 		m_RenderMarshal->m_RendererRef = std::weak_ptr< Renderer >( m_Renderer );
 
-		// Create all of the threads needed
-		m_ThreadManager->m_EngineThread = m_ThreadManager->CreateThread( "engine_main", 
-			std::bind( &Engine::TickEngine, this ), 
-			std::bind( &Engine::InitEngine, this ), 
-			std::bind( &Engine::ShutdownEngine, this ) 
-		);
+		TickedThreadParameters gameThreadParams;
+		gameThreadParams.Identifier				= THREAD_GAME;
+		gameThreadParams.Frequency				= 60.f;
+		gameThreadParams.Deviation				= 2.f;
+		gameThreadParams.MinimumTasksPerTick	= 1;
+		gameThreadParams.MaximumTasksPerTick	= 0;
+		gameThreadParams.AllowTasks				= true;
+		gameThreadParams.StartAutomatically		= true;
+		gameThreadParams.InitFunction			= std::bind( &Engine::InitEngine, this );
+		gameThreadParams.TickFunction			= std::bind( &Engine::TickEngine, this );
+		gameThreadParams.ShutdownFunction		= std::bind( &Engine::ShutdownEngine, this );
 
-		m_ThreadManager->m_RenderThread = m_ThreadManager->CreateThread( "render_main", 
-			std::bind( &Renderer::TickThread, m_Renderer.get() ), 
-			std::bind( &Renderer::InitThread, m_Renderer.get() ), 
-			std::bind( &Renderer::ShutdownThread, m_Renderer.get() ) 
-		);
-
-		m_ThreadManager->m_RenderMarshalThread = m_ThreadManager->CreateThread( "render_marshal",
-			std::bind( &RenderMarshal::TickThread, m_RenderMarshal.get() ),
-			std::bind( &RenderMarshal::InitThread, m_RenderMarshal.get() ),
-			std::bind( &RenderMarshal::ShutdownThread, m_RenderMarshal.get() )
-		);
-
-		// Run threads
-		bool bEngThrSuccess = m_ThreadManager->m_EngineThread->Start();
-		bool bRndThrSuccess = m_ThreadManager->m_RenderThread->Start();
-		bool bRndMshSuccess = m_ThreadManager->m_RenderMarshalThread->Start();
-
-		if( !bEngThrSuccess || !bRndThrSuccess || !bRndMshSuccess )
+		auto gameThread = m_ThreadManager->CreateThread( gameThreadParams );
+		if( !gameThread )
 		{
-			// TODO: Error out, close down engine
-			std::cout << "[ERROR] Engine: Failed to create threads!\n";
+			std::cout << "[ERROR] Engine: Failed to create the main game thread!\n";
 			Shutdown();
 			return false;
 		}
 
+		
+		TickedThreadParameters renderThreadParams;
+		renderThreadParams.Identifier			= THREAD_RENDERER;
+		renderThreadParams.Frequency			= 0.f;
+		renderThreadParams.Deviation			= 0.f;
+		renderThreadParams.MinimumTasksPerTick	= 1;
+		renderThreadParams.MaximumTasksPerTick	= 0;
+		renderThreadParams.AllowTasks			= true;
+		renderThreadParams.StartAutomatically	= true;
+		renderThreadParams.InitFunction			= std::bind( &Renderer::InitThread, m_Renderer );
+		renderThreadParams.TickFunction			= std::bind( &Renderer::TickThread, m_Renderer );
+		renderThreadParams.ShutdownFunction		= std::bind( &Renderer::ShutdownThread, m_Renderer );
+
+		auto renderThread = m_ThreadManager->CreateThread( renderThreadParams );
+		if( !renderThread )
+		{
+			std::cout << "[ERROR] Engine: Failed to create the render thread!\n";
+			Shutdown();
+			return false;
+		}
+
+		// TODO: Render marshal? If we even end up with the paradigm
+
 		// Store thread id's for the main threads
-		__gGameThreadId				= m_ThreadManager->m_EngineThread->GetSystemIdentifier();
-		__gRenderThreadId			= m_ThreadManager->m_RenderThread->GetSystemIdentifier();
-		__gRenderMarshalThreadId	= m_ThreadManager->m_RenderMarshalThread->GetSystemIdentifier();
+		__gGameThreadId		= gameThread->GetSystemIdentifier();
+		__gRenderThreadId	= renderThread->GetSystemIdentifier();
 
 		// Update status
 		m_Status = EngineStatus::Running;
@@ -367,7 +364,7 @@ namespace Hyperion
 		// Stop all of our threads.. for now, this is a blocking call and it will call thread shutdown functions
 		if( m_ThreadManager )
 		{
-			m_ThreadManager->StopThreads();
+			m_ThreadManager->Shutdown();
 		}
 
 		// Clear stored thread id's
