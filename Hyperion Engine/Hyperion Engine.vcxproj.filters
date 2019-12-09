@@ -67,35 +67,17 @@
     <ClInclude Include="Include\Hyperion\Renderer\RenderFactory.h">
       <Filter>Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Factory.h">
-      <Filter>Renderer\DirectX11</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\Renderer.h">
       <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Renderer.h">
       <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\RenderMarshal.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyPrimitive.h">
-      <Filter>Renderer\Proxy</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyScene.h">
-      <Filter>Renderer\Proxy</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyView.h">
-      <Filter>Renderer\Proxy</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyLight.h">
       <Filter>Renderer\Proxy</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Framework\ViewState.h">
       <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\MeshLoader.h">
-      <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Tests\SerializationTests.hpp">
       <Filter>Tests</Filter>
@@ -199,6 +181,9 @@
     <ClInclude Include="Include\Hyperion\Core\Threading.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Async.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework\Entity.cpp">
@@ -225,32 +210,14 @@
     <ClCompile Include="Source\Renderer\RenderFactory.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Factory.cpp">
-      <Filter>Renderer\DirectX11</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Renderer\Renderer.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Source\Renderer\DirectX11\DirectX11Renderer.cpp">
       <Filter>Renderer\DirectX11</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\RenderMarshal.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Renderer\Proxy\ProxyLight.cpp">
-      <Filter>Renderer\Proxy</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Renderer\Proxy\ProxyPrimitive.cpp">
-      <Filter>Renderer\Proxy</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Renderer\Proxy\ProxyScene.cpp">
       <Filter>Renderer\Proxy</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Renderer\Proxy\ProxyView.cpp">
-      <Filter>Renderer\Proxy</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Renderer\MeshLoader.cpp">
-      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Source\Hyperion.cpp">
       <Filter>Lib</Filter>

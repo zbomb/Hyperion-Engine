@@ -24,6 +24,7 @@
     <ClInclude Include="Include\Hyperion\Core\Asset.h" />
     <ClInclude Include="Include\Hyperion\Core\AssetLoader.h" />
     <ClInclude Include="Include\Hyperion\Core\AssetManager.h" />
+    <ClInclude Include="Include\Hyperion\Core\Async.h" />
     <ClInclude Include="Include\Hyperion\Core\Engine.h" />
     <ClInclude Include="Include\Hyperion\Core\File.h" />
     <ClInclude Include="Include\Hyperion\Core\FileImpl.h" />
@@ -53,16 +54,10 @@
     <ClInclude Include="Include\Hyperion\Framework\ViewState.h" />
     <ClInclude Include="Include\Hyperion\Framework\World.h" />
     <ClInclude Include="include\Hyperion\Hyperion.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Factory.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Renderer.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\MeshLoader.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyLight.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyPrimitive.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyScene.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyView.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Renderer.h" />
     <ClInclude Include="Include\Hyperion\Renderer\RenderFactory.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\RenderMarshal.h" />
     <ClInclude Include="Include\Hyperion\Win32\Win32FileSystem.h" />
     <ClInclude Include="Include\Hyperion\Win32\Win32Platform.h" />
     <ClInclude Include="Tests\AssetTests.hpp" />
@@ -95,16 +90,10 @@
     <ClCompile Include="Source\Framework\PrimitiveComponent.cpp" />
     <ClCompile Include="Source\Framework\World.cpp" />
     <ClCompile Include="Source\Hyperion.cpp" />
-    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Factory.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\DirectX11Renderer.cpp" />
-    <ClCompile Include="Source\Renderer\MeshLoader.cpp" />
-    <ClCompile Include="Source\Renderer\Proxy\ProxyLight.cpp" />
-    <ClCompile Include="Source\Renderer\Proxy\ProxyPrimitive.cpp" />
     <ClCompile Include="Source\Renderer\Proxy\ProxyScene.cpp" />
-    <ClCompile Include="Source\Renderer\Proxy\ProxyView.cpp" />
     <ClCompile Include="Source\Renderer\Renderer.cpp" />
     <ClCompile Include="Source\Renderer\RenderFactory.cpp" />
-    <ClCompile Include="Source\Renderer\RenderMarshal.cpp" />
     <ClCompile Include="Source\Win32\Win32FileSystem.cpp" />
     <ClCompile Include="Source\Win32\Win32Platform.cpp" />
   </ItemGroup>
@@ -163,14 +152,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>Hyperion</TargetName>
-    <IncludePath>C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\DirectXTK\Inc;C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)Build\$(Configuration)\</OutDir>
     <IntDir>Build\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>Hyperion</TargetName>
-    <IncludePath>C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\DirectXTK\Inc;C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)Build\$(Configuration)\</OutDir>
     <IntDir>Build\$(Configuration)\</IntDir>
   </PropertyGroup>

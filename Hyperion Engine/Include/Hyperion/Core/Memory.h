@@ -54,7 +54,7 @@ namespace Hyperion
 
 		T& Get()
 		{
-			return obj.get();
+			return *obj.get();
 		}
 
 		Nullable& operator=( const Nullable& Other )
@@ -69,9 +69,17 @@ namespace Hyperion
 			return *this;
 		}
 
+		Nullable& operator=( const T& In )
+		{
+			obj.reset();
+			obj = std::make_unique< T >( In );
+			return *this;
+		}
+
 		Nullable& operator=( nullptr_t )
 		{
 			obj.reset();
+			return *this;
 		}
 
 		T& operator->()
@@ -93,6 +101,97 @@ namespace Hyperion
 		{
 			return obj ? true : false;
 		}
+	};
+
+	template< typename R >
+	class Nullable< R& >
+	{
+
+	private:
+
+		R* ref;
+		bool valid;
+
+	public:
+
+		Nullable()
+			: valid( false ), ref( nullptr )
+		{}
+
+		Nullable( nullptr_t )
+			: valid( false ), ref( nullptr )
+		{}
+
+		Nullable( R& In )
+			: ref( std::addressof( In ) ), valid( true )
+		{}
+
+		Nullable( R&& In ) = delete;
+
+		Nullable( const Nullable& Other )
+			: ref( Other.ref ), valid( Other.valid )
+		{}
+
+		~Nullable()
+		{
+			ref		= nullptr;
+			valid	= false;
+		}
+
+		operator bool() const
+		{
+			return valid && ref;
+		}
+
+		R& Get()
+		{
+			return *ref;
+		}
+
+		Nullable& operator=( const Nullable& Other )
+		{
+			ref		= Other.ref;
+			valid	= Other.valid;
+
+			return *this;
+		}
+
+		Nullable& operator=( nullptr_t )
+		{
+			valid	= false;
+			ref		= nullptr;
+
+			return *this;
+		}
+
+		Nullable& operator=( R& In )
+		{
+			ref		= std::addressof( In );
+			valid	= true;
+
+			return *this;
+		}
+
+		R& operator->()
+		{
+			return *ref;
+		}
+
+		R& operator*()
+		{
+			return *ref;
+		}
+
+		R* operator&()
+		{
+			return ref;
+		}
+
+		bool IsNull() const
+		{
+			return !valid || !ref;
+		}
+
 	};
 
 }

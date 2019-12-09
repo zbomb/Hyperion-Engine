@@ -112,9 +112,6 @@ namespace Tests
 			String otherString( "this is a second string!" );
 			otherString = "penis toucher";
 
-			// Print out Cache
-			String::Cache::PrintDebugInfo();
-
 			std::cout << "----> String assignment test...\n";
 			otherString = testString;
 
@@ -122,12 +119,8 @@ namespace Tests
 			std::cout << otherString;
 			std::cout << std::endl;
 
-			String::Cache::PrintDebugInfo();
-
 			std::cout << "----> Clearing Cache...\n";
 		}
-
-		String::Cache::PrintDebugInfo();
 
 		{
 			std::cout << "\n\n\n\n------------> Begining Localization Tests!\n\n";
@@ -175,7 +168,6 @@ namespace Tests
 
 			std::cout << std::endl;
 			Localization::DebugCache();
-			String::Cache::PrintDebugInfo();
 
 			std::cout << "\n\n----> Assignment Test...\n";
 			std::cout << "----> Assigning localized string to non-localized string\n";
@@ -184,7 +176,6 @@ namespace Tests
 
 			std::cout << "----> Value: " << firstStr << "\n";
 			Localization::DebugCache();
-			String::Cache::PrintDebugInfo();
 
 			// What else can we test?
 			// Iterators

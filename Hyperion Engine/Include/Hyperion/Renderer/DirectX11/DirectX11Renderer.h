@@ -5,16 +5,101 @@
 ==================================================================================================*/
 
 #pragma once
+#include "Hyperion/Hyperion.h"
+
+#ifdef HYPERION_SUPPORT_DIRECTX
+
+// Link in directx 11 libs
+#pragma comment( lib, "dxgi.lib" )
+#pragma comment( lib, "d3d11.lib" )
+#pragma comment( lib, "DirectXTK.lib" )
+
+// Hyperion Includes
 #include "Hyperion/Renderer/Renderer.h"
+
+// DirectX11 Includes
+#include <dxgi.h>
+#include <d3dcommon.h>
+#include <d3d11.h>
+#include <DirectXMath.h>
+
+// Windows Includes
+#include <wrl.h>
+
+
+// Forward Declarations
+namespace DirectX
+{
+	class EffectFactory;
+	class CommonStates;
+}
 
 
 namespace Hyperion
 {
-
+	// Constants
+	constexpr float SCREEN_NEAR		= 0.1f;
+	constexpr float SCREEN_FAR		= 1000.f;
 
 	class DirectX11Renderer : public Renderer
 	{
+		template< typename T >
+		using ComPtr = Microsoft::WRL::ComPtr< T >;
+
+	protected:
+
+		ComPtr< IDXGISwapChain > m_SwapChain;
+		ComPtr< ID3D11Device > m_Device;
+		ComPtr< ID3D11DeviceContext > m_DeviceContext;
+		ComPtr< ID3D11RenderTargetView > m_RenderTargetView;
+		ComPtr< ID3D11Texture2D > m_DepthStencilBuffer;
+		ComPtr< ID3D11RasterizerState > m_RasterizerState;
+		ComPtr< ID3D11DepthStencilView > m_DepthStencilView;
+		ComPtr< ID3D11DepthStencilState > m_DepthStencilState;
+		ComPtr< ID3D11DepthStencilState > m_DepthDisabledState;
+		ComPtr< ID3D11BlendState > m_BlendState;
+		ComPtr< ID3D11BlendState > m_BlendDisabledState;
+
+		//std::unique_ptr< DirectX::EffectFactory > m_EffectFactory;
+		std::unique_ptr< DirectX::CommonStates > m_CommonStates;
+
+		// Parameters
+		HWND m_RenderTarget;
+		bool m_VSync;
+		ScreenResolution m_Resolution;
+
+		uint32 m_VideoCardMemory;
+		String m_VideoCardDescription;
+
+		DirectX::XMMATRIX m_ProjectionMatrix, m_WorldMatrix, m_OrthoMatrix, m_ScreenMatrix;
+
+		DirectX11Renderer();
+		~DirectX11Renderer();
+
+		virtual bool SetScreenResolution( const ScreenResolution& inResolution ) override;
+		inline virtual ScreenResolution GetScreenResolution() override { return m_Resolution; }
+		virtual std::vector< ScreenResolution > GetAvailableResolutions() override;
+
+		virtual bool SetRenderTarget( HWND inTarget ) override;
+		inline virtual HWND GetRenderTarget() override { return m_RenderTarget; }
+
+		virtual void SetVSync( bool inVSync ) override;
+		inline virtual bool GetVSyncEnabled() override { return m_VSync; }
+
+		inline virtual uint32 GetVideoCardMemory() override { return m_VideoCardMemory; }
+		inline virtual String GetVideoCardDescription() override { return m_VideoCardDescription; }
+
+		virtual bool Init() override;
+		virtual void Frame() override;
+		virtual void Shutdown() override;
+
+		void GenerateMatricies( const ScreenResolution& inRes, float inFOV, float inNear, float inFar );
+
+		bool InitializeResources( HWND renderTarget, ScreenResolution& inOutRes );
+		void ShutdownResources();
 
 	};
 
 }
+
+#endif

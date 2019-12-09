@@ -20,6 +20,7 @@
 #include <mutex>
 #include <stack>
 #include <map>
+#include <tuple>
 
 
 namespace Hyperion
@@ -67,6 +68,9 @@ namespace Hyperion
 	struct TaskInstanceBase
 	{
 		virtual void Execute() = 0;
+
+		virtual ~TaskInstanceBase()
+		{}
 	};
 
 
@@ -238,6 +242,9 @@ namespace Hyperion
 			state->state = TaskState::NotStarted;
 		}
 
+		~TaskInstance()
+		{}
+
 		void Execute() override
 		{
 			// First, lets check if were in a proper state to execute this task
@@ -245,7 +252,7 @@ namespace Hyperion
 			{
 				// Lock access to the state object so we can run the task
 				{
-					std::lock_guard< boost::fibers::mutex > state_lock( state->mutex );
+					std::unique_lock< std::mutex > state_lock( state->mutex );
 					if( state->state == TaskState::Error || state->state == TaskState::Complete )
 					{
 						// Already complete!
@@ -259,7 +266,10 @@ namespace Hyperion
 					}
 					else
 					{
-						state->result = func();
+						state_lock.unlock();
+						auto res = func();
+						state_lock.lock();
+						state->result = std::move( res );
 						state->state = TaskState::Complete;
 					}
 
@@ -270,7 +280,7 @@ namespace Hyperion
 						{
 							// Lock and signal
 							{
-								std::lock_guard< boost::fibers::mutex > token_lock( token->m );
+								std::lock_guard< std::mutex > token_lock( token->m );
 								token->b = true;
 							}
 
@@ -300,16 +310,17 @@ namespace Hyperion
 			state->state = TaskState::NotStarted;
 		}
 
+		~TaskInstance()
+		{}
+
 		void Execute() override
 		{
-			std::cout << "[DEBUG] Executing task instance...\n";
-
 			// First, lets check if were in a proper state to execute this task
 			if( state )
 			{
 				// Lock access to the state object so we can run the task
 				{
-					std::lock_guard< std::mutex > state_lock( state->mutex );
+					std::unique_lock< std::mutex > state_lock( state->mutex );
 					if( state->state == TaskState::Error || state->state == TaskState::Complete )
 					{
 						// Already complete!
@@ -323,7 +334,13 @@ namespace Hyperion
 					}
 					else
 					{
+						// Allow the lock to unlock during the function execution
+						// If this is a long running function and we hold the lock, we wont be able to check the state
+						// without blocking until the function completes
+						state_lock.unlock();
 						func();
+						state_lock.lock();
+
 						state->state = TaskState::Complete;
 					}
 
@@ -350,7 +367,7 @@ namespace Hyperion
 	};
 
 	template< typename T >
-	struct TaskHandle
+	struct TaskHandle : public TaskHandleBase
 	{
 
 	protected:
@@ -458,7 +475,7 @@ namespace Hyperion
 
 					if( task_state == TaskState::Complete )
 					{
-						return Nullable< T& >( std::ref( state->result ) );
+						return Nullable< const T& >( std::ref( state->result ) );
 					}
 					else if( bShouldWait && task_state != TaskState::Error )
 					{
@@ -473,7 +490,7 @@ namespace Hyperion
 				{
 					{
 						std::unique_lock< std::mutex > wait_lock( wait_token->m );
-						wait_token->cv.wait( wait_lock, []{ return wait_token->b; } );
+						wait_token->cv.wait( wait_lock, [ wait_token ]{ return wait_token->b; } );
 					}
 
 					// Now access the result from the shared state
@@ -483,7 +500,7 @@ namespace Hyperion
 
 						if( task_state == TaskState::Complete )
 						{
-							return Nullable< T& >( std::ref( state->result ) );
+							return Nullable< const T& >( std::ref( state->result ) );
 						}
 						else
 						{
@@ -501,6 +518,12 @@ namespace Hyperion
 		{
 			std::lock_guard< std::mutex > state_lock( state->mutex );
 			return state->result;
+		}
+
+		T&& MoveResultRaw()
+		{
+			std::lock_guard< std::mutex > state_lock( state->mutex);
+			return std::move( state->result);
 		}
 
 		bool IsComplete() const override
@@ -639,6 +662,24 @@ namespace Hyperion
 	};
 
 
+	class TaskPool
+	{
+
+	protected:
+
+		static std::mutex m_TaskMutex;
+		static std::stack< std::unique_ptr< TaskInstanceBase > > m_TaskList;
+		static std::condition_variable m_TaskCV;
+		static bool m_TaskBool;
+
+	public:
+
+		static std::unique_ptr< TaskInstanceBase > PopNextTask();
+		static void WaitForNextTask();
+
+		friend class ThreadManager;
+		friend class PoolWorkerThread;
+	};
 
 
 	class ThreadManager : public Object
@@ -646,13 +687,10 @@ namespace Hyperion
 
 	protected:
 
-		std::mutex m_TaskMutex;
-		std::stack< std::unique_ptr< TaskInstanceBase > > m_TaskList;
-
 		std::map< std::string, std::shared_ptr< TickedThread > > m_TickedThreads;
 		std::map< std::string, std::shared_ptr< CustomThread > > m_CustomThreads;
 
-		std::unique_ptr< TaskInstanceBase > PopNextTask();
+		std::vector< std::shared_ptr< PoolWorkerThread > > m_WorkerPool;
 
 	public:
 
@@ -676,8 +714,17 @@ namespace Hyperion
 
 			if( inTargetThread == THREAD_POOL )
 			{
-				// Insert into the queue
-				m_TaskList.push( std::move( inst ) );
+				// Aquire lock on the task list
+				{
+					std::lock_guard< std::mutex > lock( TaskPool::m_TaskMutex );
+
+					// Insert into the queue and notify any threads waiting
+					TaskPool::m_TaskList.push( std::move( inst ) );
+					TaskPool::m_TaskBool = true;
+				}
+
+				// The boolean will be reset by whichever worker thread wakes up from this call
+				TaskPool::m_TaskCV.notify_one();
 			}
 			else
 			{
@@ -706,71 +753,8 @@ namespace Hyperion
 		uint32 GetThreadCount();
 
 		void Shutdown();
+
+		friend class PoolWorkerThread;
 	};
-
-
-
-	class Task
-	{
-
-	public:
-
-		template< typename T >
-		static TaskHandle< T > Create( std::function< T( void ) > inFunc, std::string inTargetThread = "pool" )
-		{
-			auto tm = Engine::GetInstance().GetThreadManager();
-			if( tm )
-			{
-				return tm->CreateTask( inFunc, inTargetThread );
-			}
-			else
-			{
-				std::cout << "[ERROR] TaskLibrary: Failed to create new task because the thread manager was null!\n";
-				return nullptr;
-			}
-		}
-
-		static void WaitAll( std::initializer_list< TaskHandleBase > Tasks )
-		{
-			for( auto& t : Tasks )
-			{
-				if( !t.IsComplete() )
-					t.Wait();
-			}
-		}
-
-		static void WaitAny( std::initializer_list< TaskHandleBase > Tasks )
-		{
-			if( Tasks.size() > 0 )
-			{
-				// Create a wait token, then add it to each shared task states token list
-				// This way, which ever task finishes first will trigger the token
-				auto wait_token		= std::make_shared< TaskWaitToken >();
-				bool bWait			= false;
-
-				for( auto& task : Tasks )
-				{
-					if( task.AddWaitToken( wait_token ) )
-					{
-						bWait = true;
-					}
-				}
-
-				// Check if we actually added any wait tokens before waiting
-				if( bWait )
-				{
-					// Wait for a task to trigger our cv lock
-					std::unique_lock< std::mutex > token_lock( wait_token->m );
-					wait_token->cv.wait( token_lock, [ wait_token ]{ return wait_token->b; } );
-				}
-			}
-		}
-
-		
-
-
-
-	};
-
 
 }

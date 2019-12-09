@@ -12,6 +12,7 @@
 // Debug Defines
 #define HYPERION_DEBUG
 #define HYPERION_DEBUG_OBJECT
+#define HYPERION_DEBUG_RENDERER
 
 /*
 	Engine Configuration
@@ -19,7 +20,7 @@
 
 // * Uncomment this to have the engine build in '2d' mode.. where the 2d renderer will be used
 // and the 2d editor, along with the 2d runtime
-#define HYPERION_CONFIG_2D
+//#define HYPERION_CONFIG_2D
 
 
 
@@ -34,6 +35,7 @@
 // Operating System
 #if _WIN32
 #define HYPERION_OS_WIN32 true
+#define WIN32_LEAN_AND_MEAN
 #elif __ANDROID__
 #define HYPERION_OS_ANDROID true
 #elif __linux__
@@ -42,6 +44,11 @@
 #define HYPERION_OS_MAC true
 #else
 static_assert( true, "[HYPERION] Couldnt detect the OS this is targetting!" );
+#endif
+
+// Renderer Support
+#ifdef HYPERION_OS_WIN32
+#define HYPERION_SUPPORT_DIRECTX
 #endif
 
 typedef int8_t		int8;

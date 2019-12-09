@@ -6,9 +6,6 @@
 
 // Hyperion Includes
 #include "Hyperion/Renderer/Proxy/ProxyScene.h"
-#include "Hyperion/Renderer/Proxy/ProxyView.h"
-#include "Hyperion/Renderer/Proxy/ProxyPrimitive.h"
-#include "Hyperion/Renderer/Proxy/ProxyLight.h"
 
 // STD Includes
 #include <iostream>

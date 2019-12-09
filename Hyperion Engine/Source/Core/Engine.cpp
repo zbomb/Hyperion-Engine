@@ -10,7 +10,6 @@
 #include "Hyperion/Framework/Entity.h"
 #include "Hyperion/Framework/World.h"
 #include "Hyperion/Renderer/RenderFactory.h"
-#include "Hyperion/Renderer/RenderMarshal.h"
 #include "Hyperion/Core/File.h"
 #include "Hyperion/Core/Platform.h"
 #include <typeindex>
@@ -39,6 +38,7 @@ namespace Hyperion
 		// Create sub-objects
 		m_ThreadManager		= CreateObject< ThreadManager >();
 		m_InputManager		= CreateObject< InputManager >();
+		m_Renderer			= IRenderFactory::CreateRenderer( RendererType::DirectX11 );
 
 		// Initialize any platform services
 		Platform::Init();
@@ -279,18 +279,7 @@ namespace Hyperion
 		// Update Status
 		m_Status = EngineStatus::Init;
 
-		// TODO: Load which type of renderer we want to use
-		// DEBUG: For now.. were simply setting the renderer type to DirectX11
-		IRenderFactory::SetActiveRenderer( RendererType::DirectX11 );
-
-		IRenderFactory& RenderFactory = IRenderFactory::GetInstance();
-
-		m_Renderer			= RenderFactory.CreateRenderer();
-		m_RenderMarshal		= CreateObject< RenderMarshal >();
-
-		// Store weak ref to renderer in the Marshaler, so it can quickly access it
-		m_RenderMarshal->m_RendererRef = std::weak_ptr< Renderer >( m_Renderer );
-
+		// Create our game thread
 		TickedThreadParameters gameThreadParams;
 		gameThreadParams.Identifier				= THREAD_GAME;
 		gameThreadParams.Frequency				= 60.f;
@@ -310,33 +299,26 @@ namespace Hyperion
 			Shutdown();
 			return false;
 		}
-
 		
-		TickedThreadParameters renderThreadParams;
-		renderThreadParams.Identifier			= THREAD_RENDERER;
-		renderThreadParams.Frequency			= 0.f;
-		renderThreadParams.Deviation			= 0.f;
-		renderThreadParams.MinimumTasksPerTick	= 1;
-		renderThreadParams.MaximumTasksPerTick	= 0;
-		renderThreadParams.AllowTasks			= true;
-		renderThreadParams.StartAutomatically	= true;
-		renderThreadParams.InitFunction			= std::bind( &Renderer::InitThread, m_Renderer );
-		renderThreadParams.TickFunction			= std::bind( &Renderer::TickThread, m_Renderer );
-		renderThreadParams.ShutdownFunction		= std::bind( &Renderer::ShutdownThread, m_Renderer );
-
-		auto renderThread = m_ThreadManager->CreateThread( renderThreadParams );
-		if( !renderThread )
+		// Start the renderer
+		if( !m_renderTarget )
 		{
-			std::cout << "[ERROR] Engine: Failed to create the render thread!\n";
+			std::cout << "[ERROR] Engine: Failed to startup.. render target wasnt set!\n";
 			Shutdown();
 			return false;
 		}
 
-		// TODO: Render marshal? If we even end up with the paradigm
+		RendererParameters params;
+		params.OutputWindow = m_renderTarget;
+		params.ScreenWidth = 0;
+		params.ScreenHeight = 0;
+		params.VSync = false;
 
-		// Store thread id's for the main threads
+		m_Renderer->UpdateParameters( params );
+		m_Renderer->Start();
+		
+		// Store thread id's for the game thread
 		__gGameThreadId		= gameThread->GetSystemIdentifier();
-		__gRenderThreadId	= renderThread->GetSystemIdentifier();
 
 		// Update status
 		m_Status = EngineStatus::Running;
@@ -359,6 +341,12 @@ namespace Hyperion
 		if( m_InputManager )
 		{
 			m_InputManager->ClearAllBindings();
+		}
+
+		// Shutdown renderer
+		if( m_Renderer )
+		{
+			m_Renderer->Stop();
 		}
 
 		// Stop all of our threads.. for now, this is a blocking call and it will call thread shutdown functions

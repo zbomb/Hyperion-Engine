@@ -19,10 +19,6 @@
 
 namespace Hyperion
 {
-	class ProxyView;
-	class ProxyLight;
-	class ProxyPrimitive;
-	class ProxyPrimitiveUpdate;
 
 	class ProxyScene
 	{

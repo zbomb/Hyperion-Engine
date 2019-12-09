@@ -7,6 +7,7 @@
 #pragma once
 
 // Hyperion 
+#include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/Object.h"
 #include "Hyperion/Core/Threading.h"
 #include "Hyperion/Core/InputManager.h"
@@ -22,6 +23,10 @@
 
 #ifdef HYPERION_DEBUG_OBJECT
 #include <iostream>
+#endif
+
+#ifdef HYPERION_OS_WIN32
+#include <Windows.h>
 #endif
 
 namespace Hyperion
@@ -359,12 +364,37 @@ namespace Hyperion
 	private:
 
 		std::shared_ptr< Renderer > m_Renderer;
-		std::shared_ptr< RenderMarshal > m_RenderMarshal;
+
+#ifdef HYPERION_OS_WIN32
+		HWND m_renderTarget;
+#endif
 
 	public:
 
 		inline std::weak_ptr< Renderer > GetRenderer() { return std::weak_ptr< Renderer >( m_Renderer ); }
-		inline std::weak_ptr< RenderMarshal > GetRenderMarshal() { return std::weak_ptr< RenderMarshal >( m_RenderMarshal ); }
+
+#ifdef HYPERION_OS_WIN32
+		void SetRenderTarget( HWND inRenderTarget )
+		{
+			m_renderTarget = inRenderTarget;
+			if( m_Renderer )
+			{
+				auto params = m_Renderer->GetParameters();
+				params.OutputWindow = inRenderTarget;
+				m_Renderer->UpdateParameters( params );
+			}
+		}
+
+		inline HWND GetRenderTarget()
+		{
+			if( m_Renderer )
+			{
+				return m_Renderer->GetParameters().OutputWindow;
+			}
+
+			return NULL;
+		}
+#endif
 
 	};
 

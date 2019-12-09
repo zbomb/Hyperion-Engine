@@ -19,7 +19,6 @@ namespace Hyperion
 		Static Variable Definitions
 	*/
 	std::unordered_map< std::string, std::shared_ptr< Localization::Cache::Instance > > Localization::Cache::m_Values;
-	std::map< const std::vector< byte >, std::shared_ptr< String::Cache::Instance > > String::Cache::m_Values;
 	std::map< LanguageID, LanguageInfo > Localization::m_Languages;
 	LanguageID Localization::m_LastLangID( LANG_NONE );
 	LanguageInfo Localization::Language_None{ { 0x44, 0x65, 0x66, 0x61, 0x75, 0x6C, 0x74 }, "none", LANG_NONE };
@@ -369,209 +368,6 @@ namespace Hyperion
 		std::cout << "==================================== LOCALIZATION CACHE END ====================================\n";
 	}
 
-
-	/*=========================================================================================================
-		String Cache
-	=========================================================================================================*/
-
-	/*
-		String::Cache::CreateInstance
-	*/
-	std::shared_ptr< String::Cache::Instance > String::Cache::CreateInstance( const std::vector< byte >& In )
-	{
-		// If we try and create a null string, were just going to return nullptr instead
-		if( In.size() <= 0 )
-			return nullptr;
-
-		// Check if this string already exists in the cache
-		auto Entry = m_Values.find( In );
-		if( Entry == m_Values.end() )
-		{
-			// Create new instance of this value
-			auto newInst			= std::make_shared< Instance >();
-			newInst->m_Data			= std::make_shared< std::vector< byte > >( In );
-			newInst->m_RefCount		= 1;
-
-			auto newEntry = m_Values.emplace( In, newInst );
-			return newEntry.first->second;
-		}
-		else
-		{
-			if( Entry->second )
-			{
-				Entry->second->m_RefCount++;
-				return Entry->second;
-			}
-			else
-			{
-				return nullptr;
-			}
-		}
-	}
-
-	/*
-		String::Cache::DestroyInstance
-	*/
-	void String::Cache::DestroyInstance( std::shared_ptr< String::Cache::Instance >& In )
-	{
-		if( !In || In->m_Data->size() <= 0 )
-			return;
-
-		auto Entry = m_Values.find( *( In->m_Data.get() ) );
-		if( Entry == m_Values.end() )
-		{
-			std::cout << "[ERROR] String Cache: Couldnt find string data in the cache!\n";
-					
-			// Still, decrement ref counter
-			if( In->m_RefCount > 0 )
-				In->m_RefCount--;
-		}
-		else
-		{
-			if( Entry->second )
-			{
-				if( Entry->second->m_RefCount <= 1 )
-				{
-					m_Values.erase( Entry );
-				}
-				else
-				{
-					Entry->second->m_RefCount--;
-				}
-			}
-			else
-			{
-				std::cout << "[ERROR] String Cache: Bad string instance found in cache... removing...\n";
-				m_Values.erase( Entry );
-			}
-		}
-
-		In.reset();
-	}
-
-	/*
-		String::Cache::PrintDebugInfo
-	*/
-	void String::Cache::PrintDebugInfo()
-	{
-		std::cout << "\n==================== Non-Localized String Cache ====================\n";
-		std::cout << "--> Instance Count: ";
-		std::cout << m_Values.size();
-		std::cout << "\n\n";
-		std::cout << "--> Instance List:\n";
-
-		for( auto It = m_Values.begin(); It != m_Values.end(); It++ )
-		{
-			std::cout << "\t[INSTANCE]\n\t";
-					
-			if( It->second )
-			{
-				std::cout << "--> Ref Valid\n\t";
-				std::cout << "--> Ref Count: ";
-				std::cout << It->second->m_RefCount;
-				std::cout << "\n\t";
-
-				auto Data = It->second->m_Data;
-				if( Data )
-				{
-					std::cout << "--> Data Not Null!\n\t";
-					std::cout << "--> Raw Data: ";
-
-					std::string rawData( Data->begin(), Data->end() );
-					std::cout << rawData;
-					std::cout << "\n";
-				}
-				else
-				{
-					std::cout << "--> Data Null!\n";
-				}
-			}
-			else
-			{
-				std::cout << "--> Ref Null\n";
-			}
-		}
-
-		std::cout << "\n==================== End Of Cache ====================\n";
-	}
-
-
-	/*=========================================================================================================
-		Non-Localized String Data
-	=========================================================================================================*/
-
-	/*
-		String::NonLocalizedStringData::GetData
-	*/
-	std::shared_ptr< const std::vector< byte > > String::NonLocalizedStringData::GetData()
-	{
-		if( m_Ref )
-			return m_Ref->m_Data;
-
-		return nullptr;
-	}
-
-	/*
-		String::NonLocalizedStringData::NonLocalizedStringData
-	*/
-	String::NonLocalizedStringData::NonLocalizedStringData()
-	{}
-
-	/*
-		String::NonLocalizedStringData::NonLocalizedStringData
-	*/
-	String::NonLocalizedStringData::NonLocalizedStringData( const NonLocalizedStringData& Other )
-	{
-		if( Other.m_Ref )
-		{
-			Other.m_Ref->m_RefCount++;
-			m_Ref = Other.m_Ref;
-		}
-	}
-
-	/*
-		String::NonLocalizedStringData::NonLocalizedStringData
-	*/
-	String::NonLocalizedStringData::NonLocalizedStringData( const std::vector< byte >& inData, StringEncoding Encoding, bool bKnownByteOrder /* = false */, bool bLittleEndian /* = false */ )
-		:m_Ref( Cache::CreateInstance( ChangeEncoding_Impl( inData, Encoding, StringEncoding::UTF8, bKnownByteOrder, bLittleEndian ) ) )
-	{}
-
-	/*
-		String::NonLocalizedStringData::NonLocalizedStringData
-	*/
-	String::NonLocalizedStringData::NonLocalizedStringData( const std::vector< byte >& inData )
-		: m_Ref( Cache::CreateInstance( inData ) )
-	{}
-
-	/*
-		String::NonLocalizedStringData::~NonLocalizedStringData
-	*/
-	String::NonLocalizedStringData::~NonLocalizedStringData()
-	{
-		Cache::DestroyInstance( m_Ref );
-	}
-
-	/*
-		String::NonLocalizedStringData::operator=
-	*/
-	void String::NonLocalizedStringData::operator=( const NonLocalizedStringData& Other )
-	{
-		if( m_Ref != Other.m_Ref )
-		{
-			if( m_Ref )
-			{
-				Cache::DestroyInstance( m_Ref );
-				m_Ref.reset();
-			}
-
-			if( Other.m_Ref )
-			{
-				Other.m_Ref->m_RefCount++;
-				m_Ref = Other.m_Ref;
-			}
-		}
-	}
-
 	/*=========================================================================================================
 		Non Cached String Data
 	=========================================================================================================*/
@@ -620,10 +416,10 @@ namespace Hyperion
 			// Ensure its valid
 			return m_LocalizedRef->m_Data;
 		}
-		else if( m_NonLocalizedRef && m_NonLocalizedRef->m_Data )
+		else if( m_NonLocalizedRef )
 		{
 			// Default string
-			return m_NonLocalizedRef->m_Data;
+			return m_NonLocalizedRef;
 		}
 
 		// If everything fails, return null
@@ -649,7 +445,6 @@ namespace Hyperion
 
 		if( Other.m_NonLocalizedRef )
 		{
-			Other.m_NonLocalizedRef->m_RefCount++;
 			m_NonLocalizedRef = Other.m_NonLocalizedRef;
 		}
 	}
@@ -667,7 +462,7 @@ namespace Hyperion
 	*/
 	String::LocalizedStringData::LocalizedStringData( const std::string& inKey, const std::vector< byte >& inDefault, StringEncoding Enc /*= StringEncoding::ASCII*/ )
 		: m_LocalizedRef( Localization::Cache::CreateInstance( inKey ) ),
-		m_NonLocalizedRef( Cache::CreateInstance( ChangeEncoding_Impl( inDefault, Enc, StringEncoding::UTF8 ) ) )
+		m_NonLocalizedRef( std::make_shared< const std::vector< byte > >( ChangeEncoding_Impl( inDefault, Enc, StringEncoding::UTF8 ) ) )
 	{}
 
 	/*
@@ -725,7 +520,6 @@ namespace Hyperion
 
 		if( m_NonLocalizedRef )
 		{
-			Cache::DestroyInstance( m_NonLocalizedRef );
 			m_NonLocalizedRef.reset();
 		}
 	}
@@ -755,13 +549,11 @@ namespace Hyperion
 		{
 			if( m_NonLocalizedRef )
 			{
-				Cache::DestroyInstance( m_NonLocalizedRef );
 				m_NonLocalizedRef.reset();
 			}
 
 			if( Other.m_NonLocalizedRef )
 			{
-				Other.m_NonLocalizedRef->m_RefCount++;
 				m_NonLocalizedRef = Other.m_NonLocalizedRef;
 			}
 		}
@@ -782,36 +574,35 @@ namespace Hyperion
 	/*
 		String::String
 	*/
-	String::String( const std::vector< byte >& inData, StringEncoding Enc /*= StringEncoding::ASCII */, bool bCached /* = false */ )
-		: m_Data( bCached ? std::dynamic_pointer_cast< IStringData >( std::make_shared< NonLocalizedStringData >( inData, Enc ) ) 
-							: std::dynamic_pointer_cast< IStringData >( std::make_shared< NonCachedStringData >( inData, Enc ) ) )
+	String::String( const std::vector< byte >& inData, StringEncoding Enc /*= StringEncoding::ASCII */ )
+		: m_Data( std::dynamic_pointer_cast< IStringData >( std::make_shared< NonCachedStringData >( inData, Enc ) ) )
 	{}
 
 	/*
 		String::String
 	*/
-	String::String( const std::string& inStr, StringEncoding Enc /*= StringEncoding::ASCII*/, bool bCached /* = false */ )
-		: String( std::vector< byte >( inStr.begin(), inStr.end() ), Enc, bCached )
+	String::String( const std::string& inStr, StringEncoding Enc /*= StringEncoding::ASCII*/ )
+		: String( std::vector< byte >( inStr.begin(), inStr.end() ), Enc )
 	{}
 
 	/*
 		String::String
 	*/
-	String::String( const char* inStr, StringEncoding Enc /*= StringEncoding::ASCII*/, bool bCached /* = false */ )
-		: String( std::string( inStr ), Enc, bCached )
+	String::String( const char* inStr, StringEncoding Enc /*= StringEncoding::ASCII*/ )
+		: String( std::string( inStr ), Enc )
 	{}
 
 	/*
 		String::String
 	*/
-	String::String( bool bCached /* = false */)
+	String::String()
 		: m_Data( nullptr )
 	{}
 
 	/*
 		String::String
 	*/
-	String::String( nullptr_t, bool bCached /* = false */ )
+	String::String( nullptr_t )
 		: m_Data( nullptr )
 	{}
 
@@ -825,21 +616,20 @@ namespace Hyperion
 	/*
 		String::String
 	*/
-	String::String( const iterator& Begin, const iterator& End, bool bCached /* = false */ )
+	String::String( const iterator& Begin, const iterator& End )
 	{
 		// Ensure theyre from the same source string, and not null
 		if( Begin.m_Target != End.m_Target || !Begin.m_Target )
 			return;
 
 		// Get the underlying char start position in the data vector, copy into the string data and were done!
-		m_Data = bCached ? std::dynamic_pointer_cast< IStringData >( std::make_shared< NonLocalizedStringData >( std::vector< byte >( Begin.m_Iter, End.m_Iter ) ) )
-			: std::dynamic_pointer_cast< IStringData >( std::make_shared< NonCachedStringData >( std::vector< byte >( Begin.m_Iter, End.m_Iter ) ) );
+		m_Data =  std::dynamic_pointer_cast< IStringData >( std::make_shared< NonCachedStringData >( std::vector< byte >( Begin.m_Iter, End.m_Iter ) ) );
 	}
 
 	/*
 		String::String
 	*/
-	String::String( const std::wstring& inStr, StringEncoding Enc, bool bCached /* = false */ )
+	String::String( const std::wstring& inStr, StringEncoding Enc )
 	{
 		// This is a little complicated due to the nature of wchar_t, we dont really know the size of a wchar_t, 
 		// the encoding of the source data (caller needs to specify!) or the byte order
@@ -877,15 +667,14 @@ namespace Hyperion
 
 		// Now, were going to construct the NonLocalizedStringData, but were going to specify the byte order so
 		// the encoding conversion doesnt have to read through the entire string to auto-detect the byte order
-		m_Data = bCached ? std::dynamic_pointer_cast< IStringData >( std::make_shared< NonLocalizedStringData >( std::move( sortedData ), Enc, true, false ) )
-			: std::dynamic_pointer_cast< IStringData >( std::make_shared< NonCachedStringData >( std::move( sortedData ), Enc, true, false ) );
+		m_Data = std::dynamic_pointer_cast< IStringData >( std::make_shared< NonCachedStringData >( std::move( sortedData ), Enc, true, false ) );
 	}
 
 	/*
 		String::String
 	*/
-	String::String( const wchar_t* inStr, StringEncoding Enc, bool bCached /* = false */ )
-		: String( std::wstring( inStr ), Enc, bCached )
+	String::String( const wchar_t* inStr, StringEncoding Enc )
+		: String( std::wstring( inStr ), Enc )
 	{}
 
 	/*
@@ -1538,15 +1327,7 @@ namespace Hyperion
 		return dynamic_cast< LocalizedStringData* >( In.m_Data.get() );
 	}
 
-	bool String::IsCached( const String& In )
-	{
-		if( !In.m_Data )
-			return true;
-
-		return dynamic_cast< NonLocalizedStringData* >( In.m_Data.get() );
-	}
-
-	bool String::IsNonCached( const String& In )
+	bool String::IsBasic( const String& In )
 	{
 		if( !In.m_Data )
 			return true;

@@ -55,7 +55,7 @@ namespace Hyperion
 		Binary::SerializeUInt32( ArchiveByte, m_TargetBuffer, m_ByteOrder == ByteOrder::LittleEndian );
 
 		// Then, we want to write the offset at which the content starts, so when read, we can split it up
-		uint32 HeaderSize = 10 + m_HeaderBuffer.size();
+		uint32 HeaderSize = 10 + (uint32) m_HeaderBuffer.size();
 		Binary::SerializeUInt32( HeaderSize, m_TargetBuffer, m_ByteOrder == ByteOrder::LittleEndian );
 
 		// Write control byte to denote the start of the header info

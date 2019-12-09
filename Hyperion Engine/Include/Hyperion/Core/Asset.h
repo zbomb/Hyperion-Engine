@@ -9,6 +9,7 @@
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/String.h"
 
+#include <condition_variable>
 
 namespace Hyperion
 {
@@ -45,8 +46,11 @@ namespace Hyperion
 	struct AssetInstance
 	{
 		std::shared_ptr< Asset > m_Ref;
-		std::atomic< uint32 > m_RefCount;
-		std::atomic< bool > m_Cached;
+		std::atomic< int > m_RefCount;
+		bool m_Cached;
+
+		std::condition_variable_any m_Wait;
+		bool m_Loaded;
 	};
 
 	struct GroupInstance
@@ -56,42 +60,37 @@ namespace Hyperion
 		std::atomic< uint32 > m_RefAssetCount;
 	};
 
+	class AssetRefBase
+	{
+
+	protected:
+
+		std::shared_ptr< AssetInstance > m_Inst;
+
+		void _IncRefCount();
+		void _DecRefCount( const std::shared_ptr< AssetInstance >& Target );
+		inline void _DecRefCount() { _DecRefCount( m_Inst ); }
+
+		AssetRefBase()
+			: m_Inst( nullptr )
+		{}
+
+		AssetRefBase( const std::shared_ptr< AssetInstance >& inInst )
+			: m_Inst( inInst )
+		{}
+
+		AssetRefBase( std::shared_ptr< AssetInstance >&& inInst )
+			: m_Inst( std::move( inInst ) )
+		{}
+	};
+
 	template< typename _Ty >
-	class AssetRef
+	class AssetRef : public AssetRefBase
 	{
 
 	private:
 
 		std::shared_ptr< _Ty > m_Ptr;
-		std::shared_ptr< AssetInstance > m_Inst;
-
-		/*
-			Increment ref counter
-		*/
-		void _IncRefCount()
-		{
-			if( m_Inst )
-			{
-				m_Inst->m_RefCount++;
-			}
-		}
-
-		/*
-			Decrement ref counter
-		*/
-		void _DecRefCount( const std::shared_ptr< AssetInstance >& Target )
-		{
-			if( Target )
-			{
-				Target->m_RefCount--;
-				// TODO: Check if we need to free this asset
-			}
-		}
-
-		inline void _DecRefCount()
-		{
-			_DecRefCount( m_Inst );
-		}
 
 
 	public:
@@ -101,13 +100,14 @@ namespace Hyperion
 		*/
 		AssetRef()
 			: AssetRef( nullptr )
-		{}
+		{
+		}
 
 		/*
 			Convert from nullptr
 		*/
 		AssetRef( nullptr_t )
-			: m_Ptr( nullptr ), m_Inst( nullptr )
+			: AssetRefBase(), m_Ptr( nullptr )
 		{}
 
 		/*
@@ -131,14 +131,16 @@ namespace Hyperion
 		*/
 		AssetRef( const AssetRef& Other )
 			: AssetRef( Other.m_Ptr, Other.m_Inst )
-		{}
+		{
+		}
 
 		/*
 			Move constructor, doesnt increment ref counter
 		*/
-		AssetRef( AssetRef&& Other )
-			: m_Ptr( std::move( Other.m_Ptr ) ), m_Inst( std::move( Other.m_Inst ) )
-		{}
+		AssetRef( AssetRef&& Other ) noexcept
+			: AssetRefBase( std::move( Other.m_Inst ) ), m_Ptr( std::move( Other.m_Ptr ) )
+		{
+		}
 
 		/*
 			Destructor
@@ -210,6 +212,29 @@ namespace Hyperion
 			}
 
 			// Use the copy of the old instance pointer to decrement ref counter for old data
+			if( instCopy )
+			{
+				_DecRefCount( instCopy );
+			}
+
+			return *this;
+		}
+
+		AssetRef& operator=( AssetRef&& Other )
+		{
+			std::shared_ptr< AssetInstance > instCopy( m_Inst );
+
+			if( Other.m_Ptr && Other.m_Inst )
+			{
+				m_Ptr = std::move( Other.m_Ptr );
+				m_Inst = std::move( Other.m_Inst );
+			}
+			else
+			{
+				m_Ptr.reset();
+				m_Inst.reset();
+			}
+
 			if( instCopy )
 			{
 				_DecRefCount( instCopy );

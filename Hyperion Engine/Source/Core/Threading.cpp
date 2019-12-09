@@ -5,19 +5,27 @@
 ==================================================================================================*/
 
 #include "Hyperion/Core/Threading.h"
+#include "Hyperion/Core/Engine.h"
 
 #include <chrono>
 
 
 namespace Hyperion
 {
+	/*
+		Static Definitions
+	*/
+	std::mutex TaskPool::m_TaskMutex;
+	std::stack< std::unique_ptr< TaskInstanceBase > > TaskPool::m_TaskList;
+	std::condition_variable TaskPool::m_TaskCV;
+	bool TaskPool::m_TaskBool( false );
 
 	/*----------------------------------------------------------------------------
 		TickedThread::TickedThread
 	----------------------------------------------------------------------------*/
 	TickedThread::TickedThread( const TickedThreadParameters& params )
 		: Thread( params.Identifier, params.AllowTasks ), m_Init( params.InitFunction ), m_Main( params.TickFunction ), m_Shutdown( params.ShutdownFunction ),
-		m_Frequency( 1.f / params.Frequency * 1000.f ), m_Deviation( params.Deviation ), m_MinTasks( params.MinimumTasksPerTick ), m_MaxTasks( params.MaximumTasksPerTick )
+		m_Frequency( params.Frequency > 0.f ? 1.f / params.Frequency * 1000.f : 0.f ), m_Deviation( params.Deviation ), m_MinTasks( params.MinimumTasksPerTick ), m_MaxTasks( params.MaximumTasksPerTick )
 	{
 	}
 
@@ -131,7 +139,7 @@ namespace Hyperion
 			}
 
 			// Now, run more tasks until we either run out of time, hit the max number of tasks, or run out of tasks
-			while( ( next_tick - std::chrono::high_resolution_clock::now() ) > m_Deviation && taskCount < m_MaxTasks && RunNextTask() )
+			while( ( next_tick - std::chrono::high_resolution_clock::now() ) > m_Deviation && ( taskCount < m_MaxTasks || m_MaxTasks == 0 ) && RunNextTask() )
 			{
 				taskCount++;
 			}
@@ -288,18 +296,41 @@ namespace Hyperion
 		m_State = false;
 	}
 
-
+	/*----------------------------------------------------------------------------
+		PoolWorkerThread::PoolWorkerThread
+	----------------------------------------------------------------------------*/
 	PoolWorkerThread::PoolWorkerThread()
+		: m_State( false ), m_Handle( nullptr )
 	{
-
 	}
 
-
+	/*----------------------------------------------------------------------------
+		PoolWorkerThread::ThreadMain
+	----------------------------------------------------------------------------*/
 	void PoolWorkerThread::ThreadMain()
 	{
+		while( m_State )
+		{
+			// Attempt to pop a task from the list
+			auto task = TaskPool::PopNextTask();
+			if( task )
+			{
+				task->Execute();
+			}
+			else
+			{
+				// Since there were no tasks.. were going to wait until there is
+				// If we dont get one within the next couple milliseconds, were going to stop waiting and iterate again
+				TaskPool::WaitForNextTask();
+			}
+		}
 
+		m_State = false;
 	}
 
+	/*----------------------------------------------------------------------------
+		PoolWorkerThread::Start
+	----------------------------------------------------------------------------*/
 	bool PoolWorkerThread::Start()
 	{
 		// Check if the thread is already running
@@ -315,6 +346,9 @@ namespace Hyperion
 		return true;
 	}
 
+	/*----------------------------------------------------------------------------
+		PoolWorkerThread::Stop
+	----------------------------------------------------------------------------*/
 	bool PoolWorkerThread::Stop()
 	{
 		m_State = false;
@@ -323,23 +357,23 @@ namespace Hyperion
 		{
 			if( m_Handle->joinable() )
 			{
-				// join
+				m_Handle->join();
+				m_Handle.reset();
+			}
+			else
+			{
+				std::cout << "[ERROR] ThreadManager: Failed to stop worker thread.. wasnt joinable!\n";
+				return false;
 			}
 		}
-	}
 
-
-	/*----------------------------------------------------------------------------
-		ThreadManager::ThreadManager
-	----------------------------------------------------------------------------*/
-	ThreadManager::ThreadManager()
-	{
+		return true;
 	}
 
 	/*----------------------------------------------------------------------------
-		ThreadManager::PopNextTask
+		TaskPool::PopNextTask
 	----------------------------------------------------------------------------*/
-	std::unique_ptr< TaskInstanceBase > ThreadManager::PopNextTask()
+	std::unique_ptr< TaskInstanceBase > TaskPool::PopNextTask()
 	{
 		// First we need to gain a lock on the task pool members
 		std::lock_guard< std::mutex > lock( m_TaskMutex );
@@ -361,6 +395,47 @@ namespace Hyperion
 		return nullptr;
 	}
 
+	/*----------------------------------------------------------------------------
+		TaskPool::WaitForNextTask
+	----------------------------------------------------------------------------*/
+	void TaskPool::WaitForNextTask()
+	{
+		// Wait for a task to be added, but time out after a couple milliseconds (incase of program shutdown)
+		{
+			std::unique_lock< std::mutex > lock( m_TaskMutex );
+			m_TaskBool = false;
+			m_TaskCV.wait_for( lock, std::chrono::milliseconds( 2 ), [ & ](){ return m_TaskBool; } );
+		}
+	}
+
+
+	/*----------------------------------------------------------------------------
+		ThreadManager::ThreadManager
+	----------------------------------------------------------------------------*/
+	ThreadManager::ThreadManager()
+	{
+		// We need to create the threads used for the task pool
+		// This should give us the number of CPU threads minus one
+		// If this function cant determine the number, we default to 3
+		// TODO: Performance testing to determine the optimal number of threads for the pool
+		auto tc = std::thread::hardware_concurrency();
+		if( tc == 0 ) tc = 3; else tc--;
+
+		std::cout << "Thread Manager: Initializing with " << tc << " worker threads in the pool\n";
+
+		for( uint32 i = 0; i < tc; i++ )
+		{
+			// Create and start worker thread, then add to the list
+			auto newWorker = std::make_shared< PoolWorkerThread >();
+			newWorker->Start();
+
+			m_WorkerPool.push_back( newWorker );
+		}
+	}
+
+	/*----------------------------------------------------------------------------
+		ThreadManager::CreateThread
+	----------------------------------------------------------------------------*/
 	std::shared_ptr< Thread > ThreadManager::CreateThread( const TickedThreadParameters& params )
 	{
 		// Validate the parameters
@@ -485,7 +560,7 @@ namespace Hyperion
 
 	uint32 ThreadManager::GetThreadCount()
 	{
-		return m_TickedThreads.size() + m_CustomThreads.size();
+		return static_cast< uint32 >( m_TickedThreads.size() + m_CustomThreads.size() );
 	}
 
 
@@ -508,9 +583,19 @@ namespace Hyperion
 			}
 		}
 
+		// Shutdown thread pool workers
+		for( auto& worker : m_WorkerPool )
+		{
+			if( worker )
+			{
+				worker->Stop();
+			}
+		}
+
 		// Clear the thread maps
 		m_TickedThreads.clear();
 		m_CustomThreads.clear();
+		m_WorkerPool.clear();
 	}
 
 }

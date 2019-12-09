@@ -20,9 +20,8 @@
 // 0: No Debugging
 // 1: Debugging
 #define STRING_DEBUG_LEVEL 0
-#define HYPERION_VERIFY_BASICSTR( _STR_ ) HYPERION_VERIFY( !Hyperion::String::IsLocalized( _STR_ ), "This function only allows basic strings!" )
+#define HYPERION_VERIFY_BASICSTR( _STR_ ) HYPERION_VERIFY( Hyperion::String::IsBasic( _STR_ ), "This function only allows basic strings!" )
 #define HYPERION_VERIFY_LOCALSTR( _STR_ ) HYPERION_VERIFY( Hyperion::String::IsLocalized( _STR_ ), "This function only allows localized strings!" )
-#define HYPERION_VERIFY_NONCACHEDSTR( _STR_ ) HYPERION_VERIFY( Hyperion::String::IsNonCached( _STR_ ), "This function only allows non-cached strings!" );
 
 namespace Hyperion
 {
@@ -163,81 +162,11 @@ namespace Hyperion
 	public:
 
 		/*--------------------------------------------------------------------------------
-			String Cache
-		--------------------------------------------------------------------------------*/
-		class Cache
-		{
-		
-		public:
-
-			/*
-				Internal Instance Structure
-			*/
-			struct Instance
-			{
-				std::shared_ptr< const std::vector< byte > > m_Data;
-				std::atomic< uint32 > m_RefCount;
-			};
-
-			/*
-				Instance Cache
-			*/
-			static std::map< const std::vector< byte >, std::shared_ptr< Instance > > m_Values;
-
-			/*
-				String::Cache::CreateInstance
-			*/
-			static std::shared_ptr< Instance > CreateInstance( const std::vector< byte >& In );
-
-			/*
-				String::Cache::DestroyInstance
-			*/
-			static void DestroyInstance( std::shared_ptr< Instance >& In );
-
-			/*
-				String::Cache::PrintDebugInfo
-			*/
-			static void PrintDebugInfo();
-			
-		};
-
-
-		/*--------------------------------------------------------------------------------
 			IStringData
 		--------------------------------------------------------------------------------*/
 		struct IStringData
 		{
 			virtual std::shared_ptr< const std::vector< byte > > GetData() = 0;
-		};
-
-		/*--------------------------------------------------------------------------------
-			NonLocalizedStringData
-		--------------------------------------------------------------------------------*/
-		struct NonLocalizedStringData : public IStringData
-		{
-			/*
-				Data Members
-			*/
-			std::shared_ptr< Cache::Instance > m_Ref;
-			std::shared_ptr< const std::vector< byte > > GetData();
-
-			/*
-				Constructors
-			*/
-			NonLocalizedStringData();
-			NonLocalizedStringData( const NonLocalizedStringData& Other );
-			NonLocalizedStringData( const std::vector< byte >& inData, StringEncoding Encoding, bool bKnownByteOrder = false, bool bLittleEndian = false );
-			NonLocalizedStringData( const std::vector< byte >& inData );
-
-			/*
-				Destructor
-			*/
-			~NonLocalizedStringData();
-
-			/*
-				Assignment operator
-			*/
-			void operator=( const NonLocalizedStringData& Other );
 		};
 
 		/*--------------------------------------------------------------------------------
@@ -279,7 +208,7 @@ namespace Hyperion
 				Data Members
 			*/
 			std::shared_ptr< Localization::Cache::Instance > m_LocalizedRef;
-			std::shared_ptr< Cache::Instance > m_NonLocalizedRef;
+			std::shared_ptr< const std::vector< byte > > m_NonLocalizedRef;
 			std::shared_ptr< const std::vector< byte > > GetData();
 
 			/*
@@ -412,16 +341,16 @@ namespace Hyperion
 
 	public:
 
-		String( bool bCached = false );
-		explicit String( nullptr_t, bool bCached = false );
+		String();
+		explicit String( nullptr_t );
 		explicit String( const std::shared_ptr< IStringData >& inRawData );
-		explicit String( const std::vector< byte >& inData, StringEncoding Enc = StringEncoding::ASCII, bool bCached = false );
-		String( const std::string& inStr, StringEncoding Enc = StringEncoding::ASCII, bool bCached = false );
-		String( const char* inStr, StringEncoding Enc = StringEncoding::ASCII, bool bCached = false );
-		String( const iterator& Begin, const iterator& End, bool bCached = false );
+		explicit String( const std::vector< byte >& inData, StringEncoding Enc = StringEncoding::ASCII );
+		String( const std::string& inStr, StringEncoding Enc = StringEncoding::ASCII );
+		String( const char* inStr, StringEncoding Enc = StringEncoding::ASCII );
+		String( const iterator& Begin, const iterator& End );
 		String( const String& Other ); 
-		String( const std::wstring& inStr, StringEncoding Enc, bool bCached = false );
-		String( const wchar_t* inStr, StringEncoding Enc, bool bCached = false );
+		String( const std::wstring& inStr, StringEncoding Enc );
+		String( const wchar_t* inStr, StringEncoding Enc );
 
 		/*--------------------------------------------------------------------------------
 			Member Functions
@@ -492,8 +421,7 @@ namespace Hyperion
 			String::IsLocalized
 		*/
 		static bool IsLocalized( const String& In );
-		static bool IsCached( const String& In );
-		static bool IsNonCached( const String& In );
+		static bool IsBasic( const String& In );
 
 		/*
 			String::GetLocalized
@@ -576,8 +504,7 @@ namespace Hyperion
 		inline int Compare( const String& rhs ) const { return String::Compare( *this, rhs ); }
 		inline bool Equals( const String& Other ) const { return String::Equals( *this, Other ); }
 		inline bool IsLocalized() const { return String::IsLocalized( *this ); }
-		inline bool IsCached() const { return String::IsCached( *this ); }
-		inline bool IsNonCached() const { return String::IsNonCached( *this ); }
+		inline bool IsBasic() const { return String::IsBasic( *this ); }
 
 		/*
 			Operator Overloads
