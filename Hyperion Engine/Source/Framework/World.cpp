@@ -10,6 +10,15 @@
 
 namespace Hyperion
 {
+	
+	World::World()
+		: m_bSpawned( false ), m_bActive( false )
+	{
+	}
+
+	World::~World()
+	{
+	}
 
 	void World::Initialize()
 	{
@@ -19,196 +28,189 @@ namespace Hyperion
 	void World::Shutdown()
 	{
 		std::cout << "[DEBUG] World: Shutdown...\n";
-	}
 
-
-
-	/*-----------------------------------------------------------
-		Entity List Methods
-	-----------------------------------------------------------*/
-
-	/*
-		World::GetEntityList()
-		* Returns a vector of weak_ptrs of all valid entities in the world
-	*/
-	std::vector< std::weak_ptr< Entity > > World::GetEntityList()
-	{
-		std::vector< std::weak_ptr< Entity > > Output;
-		
-		for( auto cIt = m_EntityCache.begin(); cIt != m_EntityCache.end(); cIt++ )
+		// If were active
+		if( m_bSpawned )
 		{
-			for( auto oIt = cIt->second.begin(); oIt != cIt->second.end(); oIt++ )
+			if( !DespawnWorld() )
 			{
-				// Ensure the entity is valid before adding to list
-				if( oIt->second && oIt->second->IsValid() )
-				{
-					Output.push_back( std::weak_ptr< Entity >( oIt->second ) );
-				}
+				std::cout << "[ERROR] World: Failed to automatically despawn world on destruction!\n";
 			}
 		}
-
-		return Output;
 	}
 
-	/*
-		World::GetEntityMap()
-		* Returns a map where entity weak_ptr's are mapped to the ObjectIDs
-	*/
-	std::map< ObjectID, std::weak_ptr< Entity > > World::GetEntityMap()
-	{
-		std::map< ObjectID, std::weak_ptr< Entity > > Output;
 
-		for( auto cIt = m_EntityCache.begin(); cIt != m_EntityCache.end(); cIt++ )
+	bool World::SpawnWorld()
+	{
+		// Check if were already spawned
+		if( m_bSpawned || !m_bActive )
 		{
-			for( auto oIt = cIt->second.begin(); oIt != cIt->second.end(); oIt++ )
-			{
-				if( oIt->second && oIt->second->IsValid() )
-				{
-					Output[ oIt->first ] = std::weak_ptr< Entity >( oIt->second );
-				}
-			}
-		}
-
-		return Output;
-	}
-
-	/*
-		World::GetEntityCache( ObjectCacheID )
-		* Returns the entity cache with the specified ID
-	*/
-	EntityCache* World::GetEntityCache( ObjectCacheID Identifier )
-	{
-		auto target = m_EntityCache.find( Identifier );
-		return target == m_EntityCache.end() ? nullptr : std::addressof( target->second );
-	}
-
-	/*
-		World::IsEntityValid( ObjectID, ObjectCacheID )
-		* Checks if an object is valid, quicker method, since we can directly look up the cache
-	*/
-	bool World::IsEntityValid( ObjectID Identifier, ObjectCacheID CacheIdentifier )
-	{
-		auto Target = GetEntity( Identifier, CacheIdentifier ).lock();
-		return Target && Target->IsAlive();
-	}
-
-	/*
-		World::IsEntityValid( ObjectID )
-		* Checks if an object is valid, this is the slowest method
-	*/
-	bool World::IsEntityValid( ObjectID Identifier )
-	{
-		auto Target = GetEntity( Identifier ).lock();
-		return Target && Target->IsAlive();
-	}
-
-	/*
-		World::GetEntity( ObjectID, ObjectCacheID )
-		* Finds an entity quickly using the objectID and cacheID
-	*/
-	std::weak_ptr< Entity > World::GetEntity( ObjectID Identifier, ObjectCacheID CacheIdentifier )
-	{
-		if( Identifier == OBJECT_INVALID )
-			return std::weak_ptr< Entity >();
-		else if( CacheIdentifier == CACHE_INVALID )
-			return std::weak_ptr< Entity >();
-
-		auto* TargetCache = GetEntityCache( CacheIdentifier );
-		if( TargetCache == nullptr )
-			return std::weak_ptr< Entity >();
-
-		auto TargetObject = TargetCache->find( Identifier );
-		if( TargetObject == TargetCache->end() )
-			return std::weak_ptr< Entity >();
-
-		// Check if the entity is valid before returning
-		return TargetObject->second && TargetObject->second->IsValid() ? std::weak_ptr< Entity >( TargetObject->second ) : std::weak_ptr< Entity >();
-	}
-
-	/*
-		World::GetEntity( ObjectID )
-		* Slow entity lookup using the objectID alone
-	*/
-	std::weak_ptr< Entity > World::GetEntity( ObjectID Identifier )
-	{
-		if( Identifier == OBJECT_INVALID )
-			return std::weak_ptr< Entity >();
-
-		for( auto cIt = m_EntityCache.begin(); cIt != m_EntityCache.end(); cIt++ )
-		{
-			for( auto oIt = cIt->second.begin(); oIt != cIt->second.end(); oIt++ )
-			{
-				if( oIt->first == Identifier )
-				{
-					// Check if the entity is valid
-					return oIt->second && oIt->second->IsValid() ? std::weak_ptr< Entity >( oIt->second ) : std::weak_ptr< Entity >();
-				}
-			}
-		}
-
-		return std::weak_ptr< Entity >();
-	}
-
-	/*
-		World::DestroyEntity( Entity* )
-		* Destroys an entity and removes it from the world
-	*/
-	bool World::DestroyEntity( std::weak_ptr< Entity > Target )
-	{
-		// Ensure target is valid, and within this world
-		if( Target.expired() )
-		{
-			std::cout << "[WARNING] World: DestroyEntity was passed an expired weak_ptr!\n";
 			return false;
 		}
 
-		auto entPtr = Target.lock();
-		if( !entPtr || !entPtr->IsAlive() )
-		{
-			std::cout << "[WARNING] World: DestroyEntity was passed a null/dead entity!\n";
-			return false;
-		}
+		m_bSpawned = true;
+		OnSpawn();
 
-		auto entWorld = entPtr->GetWorld();
-		if( entWorld.lock()->GetID() != GetID() )
+		// Spawn all entities
+		for( auto It = m_ActiveEnts.begin(); It != m_ActiveEnts.end(); It++ )
 		{
-			std::cout << "[WARNING] World: DestroyEntity was passed an entity that didnt belong to this world!\n";
-			return false;
-		}
-
-		// First, loop through and destroy children first
-		for( auto It = entPtr->m_Children.begin(); It != entPtr->m_Children.end(); It++ )
-		{
-			if( !DestroyEntity( *It ) )
+			if( It->second && It->second->IsValid() )
 			{
-				std::cout << "[WARNING] World: DestroyEntity failed to destroy the children of target entityt!\n";
-			}
-		}
-
-		// Call PerformDestroy method
-		entPtr->PerformDestroy();
-
-		// Remove this entity from the cache
-		auto entId = entPtr->GetID();
-
-		for( auto cIt = m_EntityCache.begin(); cIt != m_EntityCache.end(); cIt++ )
-		{
-			for( auto oIt = cIt->second.begin(); oIt != cIt->second.end(); )
-			{
-				if( oIt->first == entId )
-				{
-					oIt = cIt->second.erase( oIt );
-				}
-				else
-				{
-					oIt++;
-				}
+				It->second->PerformSpawn();
 			}
 		}
 
 		return true;
 	}
 
+	bool World::DespawnWorld()
+	{
+		if( !m_bSpawned )
+		{
+			return false;
+		}
 
+		// Despawn all entities
+		for( auto It = m_ActiveEnts.begin(); It != m_ActiveEnts.end(); It++ )
+		{
+			if( It->second && It->second->IsValid() )
+			{
+				It->second->PerformDespawn();
+			}
+		}
+
+		m_bSpawned = false;
+		OnDespawn();
+
+		return true;
+	}
+
+	/*-----------------------------------------------------------
+		Entity List Methods
+	-----------------------------------------------------------*/
+
+	bool World::AddEntity( const HypPtr< Entity >& inEnt )
+	{
+		// Validate the entity
+		if( !inEnt || !inEnt->IsValid() || inEnt->GetWorld() )
+		{
+			std::cout << "[WARNING] World: Attempt to add invalid entity (or already added to a world)\n";
+			return false;
+		}
+
+		m_ActiveEnts[ inEnt->GetIdentifier() ] = inEnt;
+		inEnt->SetWorld( AquirePointer< World >() );
+
+		OnEntityAdded( inEnt );
+		
+		// If this world is spawned.. and the target entity is not.. then we need to spawn this entity
+		if( IsSpawned() && !inEnt->IsSpawned() )
+		{
+			inEnt->PerformSpawn();
+		}
+
+		return true;
+	}
+
+	bool World::AddEntityAt( const HypPtr< Entity >& inEnt, Transform3D inTransform )
+	{
+		// Validate Entity
+		if( !inEnt || !inEnt->IsValid() || inEnt->GetWorld() )
+		{
+			std::cout << "[Warning] World: Attempt to add an invalid/existing entity to this world!\n";
+			return false;
+		}
+
+		// Set new transform
+		inEnt->SetTransform( inTransform );
+
+		// Add to entity list, and update entity state
+		m_ActiveEnts[ inEnt->GetIdentifier() ] = inEnt;
+		inEnt->SetWorld( AquirePointer< World >() );
+
+		// Call hook(s)
+		OnEntityAdded( inEnt );
+
+		if( IsSpawned() && !inEnt->IsSpawned() )
+		{
+			inEnt->PerformSpawn();
+		}
+
+		return true;
+	}
+
+	bool World::RemoveEntity( const HypPtr< Entity >& inEnt )
+	{
+		// Validate the entity
+		if( !inEnt || !inEnt->IsValid() )
+		{
+			std::cout << "[Warning] World: Attempt to remove an invalid entity from this world\n";
+			return false;
+		}
+
+		auto listEntry = m_ActiveEnts.find( inEnt->GetIdentifier() );
+		if( listEntry == m_ActiveEnts.end() )
+		{
+			std::cout << "[Warning] World: Attempt to remove an entity that doesnt belong to this world!\n";
+			return false;
+		}
+
+		// Despawn the entity if needed
+		if( inEnt->IsSpawned() )
+		{
+			inEnt->PerformDespawn();
+		}
+
+		// Next, call hook before actually removing from this world
+		OnEntityRemoved( inEnt );
+
+		inEnt->SetWorld( nullptr );
+		m_ActiveEnts.erase( listEntry );
+
+		return true;
+	}
+
+	HypPtr< Entity > World::GetEntity( uint32 inIdentifier )
+	{
+		auto listEntry = m_ActiveEnts.find( inIdentifier );
+		if( listEntry == m_ActiveEnts.end() )
+		{
+			return nullptr;
+		}
+
+		return listEntry->second;
+	}
+
+
+
+	void World::OnSpawn()
+	{
+
+	}
+
+	void World::OnDespawn()
+	{
+
+	}
+
+	void World::OnSetActive()
+	{
+
+	}
+
+	void World::OnSetDeactive()
+	{
+
+	}
+
+	void World::OnEntityAdded( const HypPtr< Entity >& inEnt )
+	{
+
+	}
+
+	void World::OnEntityRemoved( const HypPtr< Entity >& inEnt )
+	{
+
+	}
 
 }

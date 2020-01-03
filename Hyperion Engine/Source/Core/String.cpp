@@ -694,6 +694,16 @@ namespace Hyperion
 		m_Data = Other.m_Data;
 	}
 
+	void String::operator=( nullptr_t )
+	{
+		Clear();
+	}
+
+	void String::Clear()
+	{
+		m_Data.reset();
+	}
+
 	/*
 		String::IsEmpty
 	*/

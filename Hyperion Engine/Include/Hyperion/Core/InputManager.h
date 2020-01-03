@@ -7,6 +7,7 @@
 #pragma once
 
 #include "Hyperion/Core/Object.h"
+
 #include <vector>
 #include <functional>
 #include <map>
@@ -17,6 +18,11 @@
 
 namespace Hyperion
 {
+	/*
+		Forward Declarations
+	*/
+	class Entity;
+
 	/*
 		KeyPressEvent
 		* Structure holding info about a key event, passed as a parameter into key press callbacks
@@ -81,11 +87,9 @@ namespace Hyperion
 		}
 	};
 
-	class InputManager : public Object
-	{
-	public:
 
-		HYPERION_GROUP_OBJECT( CACHE_CORE );
+	class InputManager
+	{
 
 	private:
 
@@ -100,9 +104,24 @@ namespace Hyperion
 
 			KeyEvent Type;
 
-			std::function< bool( KeyPressEvent ) > Callback;
+			std::function< bool( const KeyPressEvent& ) > Callback;
 
-			Object* Target;
+			HypPtr< Entity > Target;
+		};
+
+		struct RawKeyMapping
+		{
+			Keys Key;
+
+			bool bRequireShift;
+			bool bRequireAlt;
+			bool bRequireCtrl;
+
+			KeyEvent Type;
+
+			std::function< bool( const KeyPressEvent& ) > Callback;
+
+			void* Target;
 		};
 
 		// Private structure to hold info about axis mapping
@@ -111,9 +130,19 @@ namespace Hyperion
 			InputAxis Axis;
 			float Mult;
 
-			std::function< bool( InputAxisEvent ) > Callback;
+			std::function< bool( const InputAxisEvent& ) > Callback;
 
-			Object* Target;
+			HypPtr< Entity > Target;
+		};
+
+		struct RawAxisMapping
+		{
+			InputAxis Axis;
+			float Mult;
+
+			std::function< bool( const InputAxisEvent& ) > Callback;
+
+			void* Target;
 		};
 
 		// Private structure to hold info about a key press event from the OS
@@ -136,6 +165,9 @@ namespace Hyperion
 		*/
 		std::map< Keys, std::vector< KeyMapping > > m_KeyMappings;
 		std::map< InputAxis, std::vector< AxisMapping > > m_AxisMappings;
+
+		std::map< Keys, std::vector< RawKeyMapping > > m_RawKeyMappings;
+		std::map< InputAxis, std::vector< RawAxisMapping > > m_RawAxisMappings;
 
 		/*
 			Data Members
@@ -164,13 +196,17 @@ namespace Hyperion
 		InputManager();
 		~InputManager();
 
-		void Shutdown() override;
 		void ClearAllBindings();
 		
-		void BindKey( const KeyBindInfo& inParams, std::function< bool( KeyPressEvent ) > Callback, Object* Target );
-		void BindAxis( const AxisBindInfo& inParams, std::function< bool( InputAxisEvent ) > Callback, Object* Target );
+		void BindKeyRaw( const KeyBindInfo& inParams, std::function< bool( const KeyPressEvent& ) > Callback, void* Address );
+		void BindAxisRaw( const AxisBindInfo& inParams, std::function< bool( const InputAxisEvent& ) > Callback, void* Address );
 
-		void ClearBindings( Object* Target );
+		void ClearRawBindings( void* classAddress );
+
+		void BindKey( const KeyBindInfo& inParams, std::function< bool( const KeyPressEvent& ) > Callback, const HypPtr< Entity >& Target );
+		void BindAxis( const AxisBindInfo& inParams, std::function< bool( const InputAxisEvent& ) > Callback, const HypPtr< Entity >& Target );
+
+		void ClearBindings( const HypPtr< Entity >& Target );
 
 		void HandleKeyPress( Keys inKey );
 		void HandleKeyRelease( Keys inKey );

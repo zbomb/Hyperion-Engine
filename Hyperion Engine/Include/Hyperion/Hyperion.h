@@ -105,6 +105,33 @@ namespace Hyperion
 	bool IsRenderThread();
 	bool IsRenderMarshalThread();
 
-	// TODO: Print Function?
+	enum class ComparisonType
+	{
+		LESS_THAN,
+		LESS_THAN_OR_EQUAL,
+		EQUAL,
+		GREATER_THAN,
+		GREATER_THAN_OR_EQUAL
+	};
+
+	template< typename _F, typename _S >
+	bool EvaluateComparison( const _F& first, const _S& second, ComparisonType compare )
+	{
+		switch( compare )
+		{
+		case ComparisonType::LESS_THAN:
+			return first < second;
+		case ComparisonType::LESS_THAN_OR_EQUAL:
+			return first <= second;
+		case ComparisonType::EQUAL:
+			return first == second;
+		case ComparisonType::GREATER_THAN:
+			return first > second;
+		case ComparisonType::GREATER_THAN_OR_EQUAL:
+			return first >= second;
+		default:
+			return false;
+		}
+	}
 
 }

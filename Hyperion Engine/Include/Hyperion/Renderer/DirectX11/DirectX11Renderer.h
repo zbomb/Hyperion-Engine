@@ -9,22 +9,9 @@
 
 #ifdef HYPERION_SUPPORT_DIRECTX
 
-// Link in directx 11 libs
-#pragma comment( lib, "dxgi.lib" )
-#pragma comment( lib, "d3d11.lib" )
-#pragma comment( lib, "DirectXTK.lib" )
-
 // Hyperion Includes
 #include "Hyperion/Renderer/Renderer.h"
-
-// DirectX11 Includes
-#include <dxgi.h>
-#include <d3dcommon.h>
-#include <d3d11.h>
-#include <DirectXMath.h>
-
-// Windows Includes
-#include <wrl.h>
+#include "Hyperion/Renderer/DirectX11/DirectX11.h"
 
 
 // Forward Declarations
@@ -46,8 +33,13 @@ namespace Hyperion
 		template< typename T >
 		using ComPtr = Microsoft::WRL::ComPtr< T >;
 
-	protected:
+	public:
 
+		DirectX11Renderer();
+		~DirectX11Renderer();
+
+	protected:
+		
 		ComPtr< IDXGISwapChain > m_SwapChain;
 		ComPtr< ID3D11Device > m_Device;
 		ComPtr< ID3D11DeviceContext > m_DeviceContext;
@@ -59,9 +51,10 @@ namespace Hyperion
 		ComPtr< ID3D11DepthStencilState > m_DepthDisabledState;
 		ComPtr< ID3D11BlendState > m_BlendState;
 		ComPtr< ID3D11BlendState > m_BlendDisabledState;
-
+		ComPtr< ID3D11Texture2D > m_BackBuffer;
+		
 		//std::unique_ptr< DirectX::EffectFactory > m_EffectFactory;
-		std::unique_ptr< DirectX::CommonStates > m_CommonStates;
+		//std::unique_ptr< DirectX::CommonStates > m_CommonStates;
 
 		// Parameters
 		HWND m_RenderTarget;
@@ -71,10 +64,7 @@ namespace Hyperion
 		uint32 m_VideoCardMemory;
 		String m_VideoCardDescription;
 
-		DirectX::XMMATRIX m_ProjectionMatrix, m_WorldMatrix, m_OrthoMatrix, m_ScreenMatrix;
-
-		DirectX11Renderer();
-		~DirectX11Renderer();
+		DirectX::XMFLOAT4X4 m_ProjectionMatrix, m_WorldMatrix, m_OrthoMatrix, m_ScreenMatrix;
 
 		virtual bool SetScreenResolution( const ScreenResolution& inResolution ) override;
 		inline virtual ScreenResolution GetScreenResolution() override { return m_Resolution; }
@@ -98,6 +88,13 @@ namespace Hyperion
 		bool InitializeResources( HWND renderTarget, ScreenResolution& inOutRes );
 		void ShutdownResources();
 
+		void EnableAlphaBlending();
+		void DisableAlphaBlending();
+		bool IsAlphaBlendingEnabled();
+
+		void EnableZBuffer();
+		void DisableZBuffer();
+		bool IsZBufferEnabled();
 	};
 
 }

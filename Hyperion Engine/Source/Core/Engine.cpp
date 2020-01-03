@@ -32,13 +32,7 @@ namespace Hyperion
 	*/
 	Engine::Engine()
 	{
-		m_LastObjectID	= OBJECT_INVALID;
 		m_Status		= EngineStatus::NotStarted;
-
-		// Create sub-objects
-		m_ThreadManager		= CreateObject< ThreadManager >();
-		m_InputManager		= CreateObject< InputManager >();
-		m_Renderer			= IRenderFactory::CreateRenderer( RendererType::DirectX11 );
 
 		// Initialize any platform services
 		Platform::Init();
@@ -47,178 +41,12 @@ namespace Hyperion
 		RegisterAssetLoaders();
 	}
 
-
-	/*
-		Engine::GetObjectCache( ObjectCacheID )
-		* Lookup an object cache via a cache identifier
-	*/
-	ObjectCache* Engine::GetObjectCache( ObjectCacheID Identifier )
+	Engine::~Engine()
 	{
-		if( Identifier == CACHE_INVALID )
-			return nullptr;
-
-		// Lookup the group in the object cache
-		auto cacheGroup = m_ObjectCache.find( Identifier );
-		return cacheGroup == m_ObjectCache.end() ? nullptr : std::addressof( cacheGroup->second );
-	}
-
-	/*
-		Engine::FullObjectLookup( ObjectID )
-		* Look through all object caches for the desired target object (slow)
-	*/
-	std::shared_ptr< Object > Engine::FullObjectLookup( ObjectID Identifier )
-	{
-		if( Identifier == OBJECT_INVALID )
-			return nullptr;
-
-		for( auto cacheIter = m_ObjectCache.begin(); cacheIter != m_ObjectCache.end(); cacheIter++ )
+		if( m_Status != EngineStatus::Shutdown )
 		{
-			for( auto objIter = cacheIter->second.begin(); objIter != cacheIter->second.end(); objIter++ )
-			{
-				if( objIter->first == Identifier )
-				{
-					// Ensure the object is valid
-					if( !objIter->second.expired() )
-					{
-						auto objCast = std::dynamic_pointer_cast< Object >( objIter->second.lock() );
-						if( objCast )
-						{
-							return objCast;
-						}
-					}
-
-					return nullptr;
-				}
-			}
-		}
-
-		return nullptr;
-	}
-
-	/*
-		Engine::QuickObjectLookupByCache( ObjectID, ObjectCacheID )
-		* Lookup an object by the object identifier, and cache identifier
-	*/
-	std::shared_ptr< Object > Engine::QuickObjectLookup( ObjectID ObjIdentifier, ObjectCacheID CacheIdentifier )
-	{
-		if( ObjIdentifier == OBJECT_INVALID )
-			return nullptr;
-		else if( CacheIdentifier == CACHE_INVALID )
-			return FullObjectLookup( ObjIdentifier );
-
-		// Get the proper cache group
-		auto* objCache = GetObjectCache( CacheIdentifier );
-		if( !objCache )
-		{
-			// Print error?
-			return nullptr;
-		}
-
-		for( auto It = objCache->begin(); It != objCache->end(); It++ )
-		{
-			if( It->first == ObjIdentifier )
-			{
-				// Check if object is valid
-				if( !It->second.expired() )
-				{
-					auto objCast = std::dynamic_pointer_cast< Object >( It->second.lock() );
-					if( objCast )
-					{
-						return objCast;
-					}
-				}
-
-				return nullptr;
-			}
-		}
-
-		return nullptr;
-	}
-
-	/*
-		Engine::IsObjectValid( ObjectID )
-		* Check through the entire object cache, for this object and check if its valid (slow!)
-	*/
-	bool Engine::IsObjectValid( ObjectID Identifier )
-	{
-		return FullObjectLookup( Identifier ) != nullptr;
-	}
-
-	/*
-		Engine::IsObjectValid( ObjectID, ObjectCacheID )
-		* Check if an object is valid, given the cache group and object identifier
-	*/
-	bool Engine::IsObjectValid( ObjectID Identifier, ObjectCacheID CacheIdentifier )
-	{
-		return QuickObjectLookup( Identifier, CacheIdentifier ) != nullptr;
-	}
-
-
-	/*
-		Engine::DestroyObject( Object* )
-		* Destroy the target object, this wont invalidate any hanging shared_ptr's 
-		* Until all shared_ptr's are out of scope, the object actually wont be freed
-		* To check if the object has been destroyed, call Object::IsValid()
-	*/
-	bool Engine::DestroyObject( Object* Target )
-	{
-		// Check parameter
-		if( !Target )
-			return false;
-
-		auto objIdentifier = Target->GetID();
-
-		// Remove any input mappings for this object
-		if( m_InputManager && Target != m_InputManager.get() )
-		{
-			m_InputManager->ClearBindings( Target );
-		}
-
-		// Perform shutdown on this object
-		if( Target->m_IsValid )
-		{
-			Target->PerformObjectShutdown();
-			Target->m_IsValid = false;
-		}
-
-		// We need to remove the object from the cache
-		for( auto CacheIter = m_ObjectCache.begin(); CacheIter != m_ObjectCache.end(); CacheIter++ )
-		{
-			for( auto ObjIter = CacheIter->second.begin(); ObjIter != CacheIter->second.end(); ObjIter++ )
-			{
-				if( ObjIter->first == objIdentifier )
-				{
-					// Clean the object from the cache
-					CacheIter->second.erase( ObjIter->first );
-					return true;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	/*
-		Engine::TickObjects()
-		* Loops through the list of all objects, and tick each one
-		* Only objects that have ticking enabled will have the method actually called
-	*/
-	void Engine::TickObjects()
-	{
-		for( auto cIt = m_ObjectCache.begin(); cIt != m_ObjectCache.end(); cIt++ )
-		{
-			for( auto oIt = cIt->second.begin(); oIt != cIt->second.end(); oIt++ )
-			{
-				if( !oIt->second.expired() )
-				{
-					// Get pointer to the object
-					auto target = oIt->second.lock();
-					if( target && target->IsValid() && target->b_RequiresTick )
-					{
-						target->PerformObjectTick();
-					}
-				}
-			}
+			std::cout << "[FATAL] Engine: Shutdown detected.. but the proper shutdown sequence was never called!\n";
+			Shutdown();
 		}
 	}
 
@@ -227,26 +55,44 @@ namespace Hyperion
 	*/
 	void Engine::TickEngine()
 	{
+		// Wait until were within a frame of the renderer
+		if( m_Renderer && m_Renderer->IsRunning() && m_FenceWatcher )
+		{
+			// If we dont catch up within a few milliseconds.. then we just timeout and skip this tick
+			// This also prevents this thread from locking up when shutting down
+			if( !m_FenceWatcher->WaitForCount( 1, std::chrono::milliseconds( 3 ), ComparisonType::LESS_THAN_OR_EQUAL ) )
+				return;
+		}
+
 		auto Now = std::chrono::high_resolution_clock::now();
 		std::chrono::duration< double > newDelta = Now - m_lastTick;
 
 		// Dispatch input events
-		m_InputManager->DispatchQueue( newDelta.count() );
+		m_InputManager.DispatchQueue( newDelta.count() );
 
 		// Store current time
 		m_lastTick = Now;
 
+		auto ms = std::chrono::duration_cast< std::chrono::microseconds >( newDelta ).count();
+		//std::cout << "---> Engine took " << ( ms / 1000 ) << "ms to tick (Approx: " << ( 1000000.f / (float)ms ) << "hz)\n";
+
 		// Tick all objects
 		TickObjects();
+
+		// Tell renderer that were finished with ticking
+		if( m_Renderer && m_Renderer->IsRunning() && m_FenceWatcher )
+		{
+			auto eofCommand = m_FenceWatcher->CreateCommand();
+			eofCommand->EnableFlag( RENDERER_COMMAND_FLAG_END_OF_FRAME );
+
+			m_Renderer->PushCommand( std::move( eofCommand ) );
+		}
 	}
 
 	void Engine::InitEngine()
 	{
 		std::cout << "[DEBUG] Engine: Main engine thread init...\n";
 		m_lastTick = std::chrono::high_resolution_clock::now();
-
-		// Create the game world
-		m_World = CreateObject< World >();
 
 		// Allow derived class to initialize
 		OnInitialize();
@@ -259,8 +105,8 @@ namespace Hyperion
 		// Allow derived class to shutdown
 		OnShutdown();
 
-		// Shutdown the world
-		m_World.reset();
+		// Clear the active world
+		ClearActiveWorld();
 	}
 
 	/*
@@ -279,11 +125,17 @@ namespace Hyperion
 		// Update Status
 		m_Status = EngineStatus::Init;
 
+		// Create sub-objects
+		m_ThreadManager		= CreateObject< ThreadManager >();
+		m_Renderer			= IRenderFactory::CreateRenderer( RendererType::DirectX11 );
+
+		m_FenceWatcher = std::make_unique< RenderFenceWatcher >();
+
 		// Create our game thread
 		TickedThreadParameters gameThreadParams;
 		gameThreadParams.Identifier				= THREAD_GAME;
-		gameThreadParams.Frequency				= 60.f;
-		gameThreadParams.Deviation				= 2.f;
+		gameThreadParams.Frequency				= 0.f;
+		gameThreadParams.Deviation				= 0.f;
 		gameThreadParams.MinimumTasksPerTick	= 1;
 		gameThreadParams.MaximumTasksPerTick	= 0;
 		gameThreadParams.AllowTasks				= true;
@@ -308,14 +160,22 @@ namespace Hyperion
 			return false;
 		}
 
-		RendererParameters params;
-		params.OutputWindow = m_renderTarget;
-		params.ScreenWidth = 0;
-		params.ScreenHeight = 0;
-		params.VSync = false;
+		ScreenResolution resolution;
+		resolution.FullScreen = false;
+		resolution.Width = 1280;
+		resolution.Height = 720;
 
-		m_Renderer->UpdateParameters( params );
+		m_Renderer->SetRenderTarget( m_renderTarget );
+		m_Renderer->SetVSync( false );
+		m_Renderer->SetScreenResolution( resolution );
 		m_Renderer->Start();
+
+		// Create the game world
+		HypPtr< World > newWorld = CreateObject< World >();
+		if( !SetActiveWorld( newWorld ) || !newWorld->SpawnWorld() )
+		{
+			std::cout << "[ERROR] Engine: Failed to set the active starting world!\n";
+		}
 		
 		// Store thread id's for the game thread
 		__gGameThreadId		= gameThread->GetSystemIdentifier();
@@ -338,10 +198,10 @@ namespace Hyperion
 		m_Status = EngineStatus::Shutdown;
 
 		// Clear all input mappings
-		if( m_InputManager )
-		{
-			m_InputManager->ClearAllBindings();
-		}
+		m_InputManager.ClearAllBindings();
+
+		// Shutdown the world
+		ClearActiveWorld();
 
 		// Shutdown renderer
 		if( m_Renderer )
@@ -352,7 +212,8 @@ namespace Hyperion
 		// Stop all of our threads.. for now, this is a blocking call and it will call thread shutdown functions
 		if( m_ThreadManager )
 		{
-			m_ThreadManager->Shutdown();
+			m_ThreadManager->StopThreads();
+			DestroyObject( m_ThreadManager );
 		}
 
 		// Clear stored thread id's
@@ -364,9 +225,53 @@ namespace Hyperion
 	}
 
 
+	bool Engine::SetActiveWorld( const HypPtr< World >& inWorld )
+	{
+		// If there is an active world.. then clear it
+		ClearActiveWorld();
+
+		// Validate the world
+		if( !inWorld || !inWorld->IsValid() )
+		{
+			std::cout << "[ERROR] Engine: Attempt to set an invalid active world!\n";
+			return false;
+		}
+
+		m_ActiveWorld = inWorld;
+		m_ActiveWorld->m_bActive = true;
+		m_ActiveWorld->OnSetActive();
+
+		return true;
+	}
+
+	bool Engine::ClearActiveWorld()
+	{
+		if( !m_ActiveWorld || !m_ActiveWorld->IsValid() )
+		{
+			return false;
+		}
+
+		if( m_ActiveWorld->IsSpawned() )
+		{
+			if( !m_ActiveWorld->DespawnWorld() )
+			{
+				std::cout << "[ERROR] Engine: Failed to despawn world!\n";
+				return false;
+			}
+		}
+
+		m_ActiveWorld->m_bActive = false;
+		m_ActiveWorld->OnSetDeactive();
+
+		m_ActiveWorld.Clear();
+		return true;
+	}
+
+
 	void Engine::RegisterAssetLoaders()
 	{
 		AssetLoader::RegisterAssetType< TestAsset >( "test_asset.htxt" );
 	}
+
 
 }

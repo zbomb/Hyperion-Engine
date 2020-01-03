@@ -5,6 +5,7 @@
 ==================================================================================================*/
 
 #include "Hyperion/Core/InputManager.h"
+#include "Hyperion/Framework/Entity.h"
 #include <iostream>
 #include <algorithm>
 #include <map>
@@ -30,25 +31,26 @@ namespace Hyperion
 
 	InputManager::~InputManager()
 	{
+		ClearAllBindings();
 		m_bShutdown = true;
 	}
 
 
-	void InputManager::BindKey( const KeyBindInfo& inParams, std::function< bool( KeyPressEvent ) > Callback, Object* Target )
+	void InputManager::BindKey( const KeyBindInfo& inParams, std::function< bool( const KeyPressEvent& ) > Callback, const HypPtr< Entity >& Target )
 	{
-		// Check if the parameters are valid
-		if( !Target )
+		// Validate Parameters
+		if( !Target || !Target->IsValid() )
 		{
-			std::cout << "[WARNING] InputManager: Failed to bind key.. Object target was null!\n";
+			std::cout << "[Warning] InputManager: Attempt to bind key to invalid entity!\n";
 			return;
 		}
 		else if( inParams.Key == Keys::NONE || inParams.Type == KeyEvent::None )
 		{
-			std::cout << "[WARNING] InputManager: Failed to bind key.. invalid KeyBindInfo!\n";
+			std::cout << "[Warning] InputManager: Attempt to bind invalid key event!\n";
 			return;
 		}
 
-		// Create key binding structure
+		// Create key binding entry structure
 		KeyMapping newMapping;
 		newMapping.Target			= Target;
 		newMapping.Type				= inParams.Type;
@@ -58,20 +60,51 @@ namespace Hyperion
 		newMapping.bRequireCtrl		= inParams.bRequireCtrl;
 		newMapping.bRequireShift	= inParams.bRequireShift;
 
-		// Add to the key map
+		// Add to mappings
 		m_KeyMappings[ inParams.Key ].push_back( newMapping );
 	}
 
-	void InputManager::BindAxis( const AxisBindInfo& inParams, std::function< bool( InputAxisEvent ) > Callback, Object* Target )
+
+	void InputManager::BindKeyRaw( const KeyBindInfo& inParams, std::function< bool( const KeyPressEvent& ) > Callback, void* Target )
 	{
+		// Validate Parameters
 		if( !Target )
 		{
-			std::cout << "[WARNING] InputManager: Failed to bind axis.. Object target was null!\n";
+			std::cout << "[Warning] InputManager: Attempt to bind key raw against a null pointer!\n";
+			return;
+		}
+		else if( inParams.Key == Keys::NONE || inParams.Type == KeyEvent::None )
+		{
+			std::cout << "[Warning] InputManager: Attempt to bind invalid key event (raw)!\n";
+			return;
+		}
+
+		// Create raw key binding entry structure
+		RawKeyMapping newMapping;
+		newMapping.Target			= Target;
+		newMapping.Type				= inParams.Type;
+		newMapping.Key				= inParams.Key;
+		newMapping.Callback			= Callback;
+		newMapping.bRequireAlt		= inParams.bRequireAlt;
+		newMapping.bRequireCtrl		= inParams.bRequireCtrl;
+		newMapping.bRequireShift	= inParams.bRequireShift;
+
+		// Add to mappings
+		m_RawKeyMappings[ inParams.Key ].push_back( newMapping );
+	}
+
+
+	void InputManager::BindAxis( const AxisBindInfo& inParams, std::function< bool( const InputAxisEvent& ) > Callback, const HypPtr< Entity >& Target )
+	{
+		// Validate parameters
+		if( !Target || !Target->IsValid() )
+		{
+			std::cout << "[Warning] InputManager: Attempt to bind axis from an invalid entity!\n";
 			return;
 		}
 		else if( inParams.Axis == InputAxis::None )
 		{
-			std::cout << "[WARNING] InputManager: Failed to bind axis.. Target axis was invalid!\n";
+			std::cout << "[Warning] InputManager: Attempt to bind invalid axis event!\n";
 			return;
 		}
 
@@ -82,71 +115,86 @@ namespace Hyperion
 		newMapping.Target = Target;
 		newMapping.Callback = Callback;
 
+		// Add to mappings
 		m_AxisMappings[ inParams.Axis ].push_back( newMapping );
 	}
 
-	void InputManager::ClearBindings( Object* Target )
-	{
-		if( m_bShutdown )
-			return;
 
-		if( !Target || !Target->IsValid() )
+	void InputManager::BindAxisRaw( const AxisBindInfo& inParams, std::function< bool( const InputAxisEvent& ) > Callback, void* Target )
+	{
+		// Validate parameters
+		if( !Target )
 		{
-			std::cout << "[ERROR] InputManager: Failed to clear bindings, object was null!\n";
+			std::cout << "[Warning] InputManager: Attempt to bind axis raw from an invalid entity!\n";
+			return;
+		}
+		else if( inParams.Axis == InputAxis::None )
+		{
+			std::cout << "[Warning] InputManager: Attempt to bind invalid axis raw event!\n";
 			return;
 		}
 
-		// Clear any key bindings for this object
+		// Create axis binding structure
+		RawAxisMapping newMapping;
+		newMapping.Axis = inParams.Axis;
+		newMapping.Mult = inParams.Mult;
+		newMapping.Target = Target;
+		newMapping.Callback = Callback;
+
+		// Add to mappings
+		m_RawAxisMappings[ inParams.Axis ].push_back( newMapping );
+	}
+
+
+	void InputManager::ClearBindings( const HypPtr< Entity >& Target )
+	{
+		if( m_bShutdown || !Target )
+			return;
+
+		// Clear any key bindings for this entity (or invalid/empty bindings)
 		for( auto It = m_KeyMappings.begin(); It != m_KeyMappings.end(); It++ )
 		{
 			It->second.erase( std::remove_if( It->second.begin(), It->second.end(),
-				[ Target ]( const KeyMapping& Mapping ) { return Mapping.Target == Target; } ), It->second.end() );
+				[ Target ]( const KeyMapping& m ) { return !m.Target || !m.Target->IsValid() || m.Target == Target; } ), It->second.end() );
 		}
 
-		// Clear any axis bindings for this object
+		// Clear any axis bindings for this entity (or invalid/empty bindings)
 		for( auto It = m_AxisMappings.begin(); It != m_AxisMappings.end(); It++ )
 		{
 			It->second.erase( std::remove_if( It->second.begin(), It->second.end(),
-				[ Target ]( const AxisMapping& Mapping ) { return Mapping.Target ==Target; } ), It->second.end() );
+				[ Target ]( const AxisMapping& m ) { return !m.Target || !m.Target->IsValid() || m.Target == Target; } ), It->second.end() );
 		}
 
-		// Now, lets remove any empty key or axis mapping groups
-		for( auto It = m_KeyMappings.begin(); It != m_KeyMappings.end(); )
+	}
+
+
+	void InputManager::ClearRawBindings( void* Target )
+	{
+		if( m_bShutdown || !Target )
+			return;
+
+		// Clear any key bindings for this entity (or invalid/empty bindings)
+		for( auto It = m_RawKeyMappings.begin(); It != m_RawKeyMappings.end(); It++ )
 		{
-			if( It->second.empty() )
-			{
-				It = m_KeyMappings.erase( It );
-			}
-			else
-			{
-				It++;
-			}
+			It->second.erase( std::remove_if( It->second.begin(), It->second.end(),
+				[ Target ]( const RawKeyMapping& m ) { return !m.Target || m.Target == Target; } ), It->second.end() );
 		}
 
-		for( auto It = m_AxisMappings.begin(); It != m_AxisMappings.end(); )
+		// Clear any axis bindings for this entity (or invalid/empty bindings)
+		for( auto It = m_RawAxisMappings.begin(); It != m_RawAxisMappings.end(); It++ )
 		{
-			if( It->second.empty() )
-			{
-				It = m_AxisMappings.erase( It );
-			}
-			else
-			{
-				It++;
-			}
+			It->second.erase( std::remove_if( It->second.begin(), It->second.end(),
+				[ Target ]( const RawAxisMapping& m ) { return !m.Target || m.Target == Target; } ), It->second.end() );
 		}
 	}
+
 
 	void InputManager::ClearAllBindings()
 	{
 		m_KeyMappings.clear();
 		m_AxisMappings.clear();
-		m_bShutdown = true;
-	}
-
-	void InputManager::Shutdown()
-	{
-		// Make sure all input bindings are cleared
-		ClearAllBindings();
+		m_RawKeyMappings.clear();
+		m_RawAxisMappings.clear();
 	}
 
 	/*
@@ -304,6 +352,10 @@ namespace Hyperion
 		{
 			m_KeyStates[ KeyNumber ] = true;
 
+			KeyPressEvent eventArgs;
+			eventArgs.Key	= inKey;
+			eventArgs.Type	= KeyEvent::Pressed;
+
 			// Loop through the key map, look for any bindings for this key
 			auto keyBindings = m_KeyMappings.find( inKey );
 
@@ -325,18 +377,36 @@ namespace Hyperion
 							continue;
 
 						// All requirment are met, call the callback
-						KeyPressEvent eventArgs;
-						eventArgs.Key	= inKey;
-						eventArgs.Type	= KeyEvent::Pressed;
-
-						bool bHandled = It->Callback( eventArgs );
-
-						// If the callback 'handled' the event, then we will stop firing it
-						if( bHandled )
+						if( It->Callback( eventArgs ) )
 							break;
 					}
 				}
 			}
+
+			auto rawkeyBindings = m_RawKeyMappings.find( inKey );
+			if( rawkeyBindings != m_RawKeyMappings.end() )
+			{
+				for( auto It = rawkeyBindings->second.begin(); It != rawkeyBindings->second.end(); It++ )
+				{
+					// We want to make sure all requirments are met before calling the event
+					// Also, we want to ensure the actual object reference is valid
+					if( It->Type == KeyEvent::Pressed && It->Callback )
+					{
+						if( It->bRequireAlt && ( !IsKeyDown( Keys::LALT ) && !IsKeyDown( Keys::RALT ) ) )
+							continue;
+
+						if( It->bRequireCtrl && ( !IsKeyDown( Keys::LCTRL ) && !IsKeyDown( Keys::RCTRL ) ) )
+							continue;
+
+						if( It->bRequireShift && ( !IsKeyDown( Keys::LSHIFT ) && !IsKeyDown( Keys::RSHIFT ) ) )
+							continue;
+
+						if( It->Callback( eventArgs ) )
+							break;
+					}
+				}
+			}
+
 		}
 	}
 
@@ -354,15 +424,14 @@ namespace Hyperion
 		{
 			m_KeyStates[ KeyNumber ] = false;
 
+			KeyPressEvent eventArgs;
+			eventArgs.Key	= inKey;
+			eventArgs.Type	= KeyEvent::Released;
+
 			// Loop through the key map, look for any bindings for this key
 			auto keyBindings = m_KeyMappings.find( inKey );
-
 			if( keyBindings != m_KeyMappings.end() )
 			{
-					KeyPressEvent eventArgs;
-					eventArgs.Key	= inKey;
-					eventArgs.Type	= KeyEvent::Released;
-
 				for( auto It = keyBindings->second.begin(); It != keyBindings->second.end(); It++ )
 				{
 					// We want to make sure all requirments are met before calling the event
@@ -378,11 +447,29 @@ namespace Hyperion
 						if( It->bRequireShift && ( !IsKeyDown( Keys::LSHIFT ) && !IsKeyDown( Keys::RSHIFT ) ) )
 							continue;
 
-						// All requirment are met, call the callback
-						bool bHandled = It->Callback( eventArgs );
+						if( It->Callback( eventArgs ) )
+							break;
+					}
+				}
+			}
 
-						// If the callback 'handled' the event, then we will stop firing it
-						if( bHandled )
+			auto rawkeyBindings = m_RawKeyMappings.find( inKey );
+			if( rawkeyBindings != m_RawKeyMappings.end() )
+			{
+				for( auto It = rawkeyBindings->second.begin(); It != rawkeyBindings->second.end(); It++ )
+				{
+					if( It->Type == KeyEvent::Released && It->Callback )
+					{
+						if( It->bRequireAlt && ( !IsKeyDown( Keys::LALT ) && !IsKeyDown( Keys::RALT ) ) )
+							continue;
+
+						if( It->bRequireCtrl && ( !IsKeyDown( Keys::LCTRL ) && !IsKeyDown( Keys::RCTRL ) ) )
+							continue;
+
+						if( It->bRequireShift && ( !IsKeyDown( Keys::LSHIFT ) && !IsKeyDown( Keys::RSHIFT ) ) )
+							continue;
+
+						if( It->Callback( eventArgs ) )
 							break;
 					}
 				}
@@ -411,6 +498,26 @@ namespace Hyperion
 			{
 				// Ensure the object and callback are valid
 				if( It->Target && It->Target->IsValid() && It->Callback )
+				{
+					Event.Value = AxisInput * It->Mult;
+					bool bHandled = It->Callback( Event );
+
+					if( bHandled )
+						break;
+				}
+			}
+		}
+
+		auto rawaxisBindings = m_RawAxisMappings.find( Axis );
+		if( rawaxisBindings != m_RawAxisMappings.end() )
+		{
+			InputAxisEvent Event;
+			Event.Axis = Axis;
+
+			for( auto It = axisBindings->second.begin(); It != axisBindings->second.end(); It++ )
+			{
+				// Ensure the object and callback are valid
+				if( It->Callback )
 				{
 					Event.Value = AxisInput * It->Mult;
 					bool bHandled = It->Callback( Event );

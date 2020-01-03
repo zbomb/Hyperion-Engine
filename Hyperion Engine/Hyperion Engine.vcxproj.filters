@@ -52,16 +52,10 @@
     <ClInclude Include="Include\Hyperion\Core\Engine.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Object.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\InputManager.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Framework\Component.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\PrimitiveComponent.h">
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\RenderFactory.h">
@@ -184,6 +178,33 @@
     <ClInclude Include="Include\Hyperion\Core\Async.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\RenderTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyBase.h">
+      <Filter>Renderer\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Types\ConcurrentQueue.h">
+      <Filter>Core\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyCamera.h">
+      <Filter>Renderer\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyLight.h">
+      <Filter>Renderer\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyPrimitive.h">
+      <Filter>Renderer\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Types\Transform.h">
+      <Filter>Core\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Object.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework\Entity.cpp">
@@ -204,9 +225,6 @@
     <ClCompile Include="Source\Framework\Component.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Framework\PrimitiveComponent.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Renderer\RenderFactory.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
@@ -222,16 +240,7 @@
     <ClCompile Include="Source\Hyperion.cpp">
       <Filter>Lib</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Core\Types\Angle.cpp">
-      <Filter>Core\Types</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Core\Types\Color.cpp">
-      <Filter>Core\Types</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Core\Types\Point.cpp">
-      <Filter>Core\Types</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Core\Types\Vector.cpp">
       <Filter>Core\Types</Filter>
     </ClCompile>
     <ClCompile Include="Source\Core\Library\Serialization.cpp">
@@ -266,6 +275,9 @@
     </ClCompile>
     <ClCompile Include="Source\Core\Threading.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\Proxy\ProxyBase.cpp">
+      <Filter>Renderer\Proxy</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

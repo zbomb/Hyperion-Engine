@@ -25,7 +25,7 @@ namespace Hyperion
 	----------------------------------------------------------------------------*/
 	TickedThread::TickedThread( const TickedThreadParameters& params )
 		: Thread( params.Identifier, params.AllowTasks ), m_Init( params.InitFunction ), m_Main( params.TickFunction ), m_Shutdown( params.ShutdownFunction ),
-		m_Frequency( params.Frequency > 0.f ? 1.f / params.Frequency * 1000.f : 0.f ), m_Deviation( params.Deviation ), m_MinTasks( params.MinimumTasksPerTick ), m_MaxTasks( params.MaximumTasksPerTick )
+		m_Frequency( params.Frequency > 0.f ? ( 1.f / params.Frequency ) * 1000.f : 0.f ), m_Deviation( params.Deviation ), m_MinTasks( params.MinimumTasksPerTick ), m_MaxTasks( params.MaximumTasksPerTick )
 	{
 	}
 
@@ -126,7 +126,9 @@ namespace Hyperion
 		{
 			// Store start of this tick, and calculate when the next tick should be
 			auto tick_start		= std::chrono::high_resolution_clock::now();
-			auto next_tick		= tick_start + m_Frequency;
+			
+			auto tick_delta		= std::chrono::duration_cast< std::chrono::nanoseconds >( m_Frequency );
+			auto next_tick		= tick_start + tick_delta;
 
 			// Run tick function
 			m_Main();
@@ -145,9 +147,10 @@ namespace Hyperion
 			}
 
 			// If we have leftover time, sleep until the next tick
-			if( ( next_tick - std::chrono::high_resolution_clock::now() ) > m_Deviation )
+			auto time_left = next_tick - std::chrono::high_resolution_clock::now();
+			if( time_left > m_Deviation )
 			{
-				std::this_thread::sleep_until( next_tick - std::chrono::microseconds( 1 ) );
+				std::this_thread::sleep_until( next_tick - std::chrono::microseconds( 800 ) );
 			}
 		}
 
@@ -564,7 +567,7 @@ namespace Hyperion
 	}
 
 
-	void ThreadManager::Shutdown()
+	void ThreadManager::StopThreads()
 	{
 		// Shutdown all open threads
 		for( auto& pair : m_TickedThreads )
@@ -596,6 +599,11 @@ namespace Hyperion
 		m_TickedThreads.clear();
 		m_CustomThreads.clear();
 		m_WorkerPool.clear();
+	}
+
+	void ThreadManager::Shutdown()
+	{
+		StopThreads();
 	}
 
 }

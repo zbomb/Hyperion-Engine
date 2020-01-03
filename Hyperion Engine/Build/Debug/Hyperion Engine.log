@@ -1,29 +1,14 @@
-﻿  TestAsset.cpp
-  AssetManager.cpp
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Engine.h(382,1): error C2039:  'GetParameters': is not a member of 'Hyperion::Renderer'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Renderer\Renderer.h(32): message :  see declaration of 'Hyperion::Renderer'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Engine.h(383,1): error C3536:  'params': cannot be used before it is initialized
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Engine.h(384,1): error C2039:  'UpdateParameters': is not a member of 'Hyperion::Renderer'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Renderer\Renderer.h(32): message :  see declaration of 'Hyperion::Renderer'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Engine.h(392,1): error C2039:  'GetParameters': is not a member of 'Hyperion::Renderer'
+﻿  AssetManager.cpp
   Engine.cpp
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Renderer\Renderer.h(32): message :  see declaration of 'Hyperion::Renderer'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Engine.h(382,1): error C2039:  'GetParameters': is not a member of 'Hyperion::Renderer'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Renderer\Renderer.h(32): message :  see declaration of 'Hyperion::Renderer'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Engine.h(383,1): error C3536:  'params': cannot be used before it is initialized
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Engine.h(384,1): error C2039:  'UpdateParameters': is not a member of 'Hyperion::Renderer'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Renderer\Renderer.h(32): message :  see declaration of 'Hyperion::Renderer'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Core\Engine.h(392,1): error C2039:  'GetParameters': is not a member of 'Hyperion::Renderer'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Renderer\Renderer.h(32): message :  see declaration of 'Hyperion::Renderer'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\Source\Core\Engine.cpp(311,3): error C2065:  'RendererParameters': undeclared identifier
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\Source\Core\Engine.cpp(311,22): error C2146:  syntax error: missing ';' before identifier 'params'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\Source\Core\Engine.cpp(311,22): error C2065:  'params': undeclared identifier
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\Source\Core\Engine.cpp(312,3): error C2065:  'params': undeclared identifier
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\Source\Core\Engine.cpp(313,3): error C2065:  'params': undeclared identifier
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\Source\Core\Engine.cpp(314,3): error C2065:  'params': undeclared identifier
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\Source\Core\Engine.cpp(315,3): error C2065:  'params': undeclared identifier
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\Source\Core\Engine.cpp(317,31): error C2039:  'UpdateParameters': is not a member of 'Hyperion::Renderer'
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include\Hyperion\Renderer\Renderer.h(32): message :  see declaration of 'Hyperion::Renderer'
-  Serialization.cpp
+  InputManager.cpp
   Object.cpp
-C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\Source\Core\Engine.cpp(317,33): error C2065:  'params': undeclared identifier
+  Threading.cpp
+  Component.cpp
+  Entity.cpp
+  World.cpp
+  DirectX11Renderer.cpp
+  RenderFactory.cpp
+  Renderer.cpp
+  Win32FileSystem.cpp
+  Generating Code...
+  Hyperion Engine.vcxproj -> C:\Users\zackb\source\repos\Heartline Editor\Build\Debug\Hyperion.lib

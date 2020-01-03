@@ -9,6 +9,7 @@
 #include "Hyperion/Core/Object.h"
 #include "Hyperion/Framework/Component.h"
 #include "Hyperion/Core/Engine.h"
+#include "Hyperion/Core/Types/Transform.h"
 
 #include <vector>
 #include <memory>
@@ -23,244 +24,228 @@ namespace Hyperion
 
 	private:
 
-		std::weak_ptr< World > m_World;
-		std::vector< std::weak_ptr< Entity > > m_Children;
-		std::weak_ptr< Entity > m_Parent;
+		/*-------------------------------------------------------
+			Private Members
+		-------------------------------------------------------*/
 
-		bool m_IsAlive;
+		HypPtr< Entity > m_Parent;
+		HypPtr< World > m_World;
 
-		Vector3D m_Position;
-		Angle3D m_Rotation;
-		Vector3D m_Scale;
+		std::vector< HypPtr< Entity > > m_Children;
+		std::map< String, HypPtr< Component > > m_Components;
+		std::map< String, HypPtr< Component > > m_AllComponents;
 
+		Transform3D m_Transform;
+
+		bool m_bIsSpawned;
+
+	protected:
+
+
+		/*-------------------------------------------------------
+			Object Overrides
+		-------------------------------------------------------*/
+
+		void Initialize() final;
+		void Shutdown() final;
+
+		void SetWorld( const HypPtr< World >& inWorld );
 		void PerformSpawn();
-		void PerformDestroy();
-		void PerformTick( float Delta );
+		void PerformDespawn();
+
+
+		/*-------------------------------------------------------
+			Hooks
+		-------------------------------------------------------*/
+		
+		virtual void OnCreate();
+		virtual void OnDestroy();
+
+		virtual void OnSpawn( const HypPtr< World >& inNewWorld );
+		virtual void OnDespawn( const HypPtr< World >& inOldWorld );
+
+		virtual void OnChildAdded( const HypPtr< Entity >& inChild );
+		virtual void OnChildRemoved( const HypPtr< Entity >& inChild );
+
+		virtual void OnParentChanged( const HypPtr< Entity >& newParent, const HypPtr< Entity >& oldParent );
+
+		virtual void OnComponentAdded( const HypPtr< Component >& newComponent );
+		virtual void OnComponentRemoved( const HypPtr< Component >& oldComponent );
+
+		virtual void OnLocalTransformChanged();
+		virtual void OnWorldTransformChanged();
+
+		virtual void BindUserInput( InputManager& inManager );
 
 	public:
 
+		/*-------------------------------------------------------
+			Constructor/Destructor
+		-------------------------------------------------------*/
+
 		Entity();
-		~Entity();
+		virtual ~Entity();
 
-		virtual void OnSpawn();
-		virtual void OnDestroy();
-		virtual void Tick( float Delta );
+		/*-------------------------------------------------------
+			Public Functions
+		-------------------------------------------------------*/
 
-		bool IsAlive() const;
-		std::weak_ptr< World > GetWorld() const;
-		inline bool IsRoot() const { return !m_Parent.expired(); }
+		bool AddChild( const HypPtr< Entity >& inChild );
+		bool RemoveChild( const HypPtr< Entity >& inChild );
+		bool RemoveChild( uint32 inIdentifier );
 
-		/*
-			Position/Rotation/Scale Getters
-		*/
-		inline Vector3D GetPosition() const		{ return m_Position; }
-		inline Angle3D GetRotation() const		{ return m_Rotation; }
-		inline Vector3D GetScale() const		{ return m_Scale; }
+		bool AddComponent( const HypPtr< Component >& inComponent, const String& inIdentifier, const HypPtr< Component >& inParent = nullptr );
+		bool RemoveComponent( const HypPtr< Component >& inComponent );
+		bool RemoveComponent( const String& inIdentifier );
+		bool RemoveComponent( uint32 inIdentifier );
+
+		bool RemoveFromParent();
+
+		void GetRootComponents( std::vector< HypPtr< Component > >& outComponents, bool bIncludeChildEnts = false ) const;
+		void GetAllComponents( std::vector< HypPtr< Component > >& outComponents, bool bIncludeChildEnts = false ) const;
+		void GetComponentIdentifiers( std::vector< String >& outIdentifiers, bool bOnlyRoot = false ) const;
+
+		void GetChildren( std::vector< HypPtr< Entity > >& outChildren, bool bOnlyRoot = false ) const;
+
+		bool IsSpawned() const;
+		bool IsRoot() const;
+
+		inline HypPtr< World > GetWorld() const { return m_World; }
+
+		HypPtr< Entity > GetParent() const;
+
+		inline Vector3D GetPosition() const			{ return m_Transform.Position; }
+		inline Angle3D GetRotation() const			{ return m_Transform.Rotation; }
+		inline Vector3D GetScale() const			{ return m_Transform.Scale; }
+		inline Transform3D GetTransform() const		{ return m_Transform; }
 
 		Vector3D GetWorldPosition() const;
 		Angle3D GetWorldRotation() const;
 		Vector3D GetWorldScale() const;
+		Transform3D GetWorldTransform() const;
 
-		void SetPosition( const Vector3D& inPosition );
-		void SetRotation( const Angle3D& inRotation );
+		void SetPosition( const Vector3D& inPos );
+		void SetRotation( const Angle3D& inRot );
 		void SetScale( const Vector3D& inScale );
-
-		/*
-			Component System
-		*/
-	private:
-
-		std::vector< size_t > m_DisallowedComponentClasses;
-		std::vector< std::string > m_DisallowedComponentNames;
-		std::map< std::string, std::shared_ptr< Component > > m_Components;
-		std::map< std::string, std::weak_ptr< Component > > m_FullComponentList;
-
-	public:
-
-		template< typename T >
-		std::weak_ptr< T > CreateRootComponent( const std::string& ComponentName )
-		{
-			// First, check for valid name
-			if( ComponentName.size() <= 0 )
-			{
-				std::cout << "[ERROR] Entity: Tried to create a component with no valid name!\n";
-				return std::weak_ptr< T >();
-			}
-
-			// Check if there is a component with this name already
-			auto nameCheck = m_Components.find( ComponentName );
-			auto fullNameCheck = m_FullComponentList.find( ComponentName );
-			if( nameCheck != m_Components.end() || fullNameCheck != m_FullComponentList.end() )
-			{
-				std::cout << "[ERROR] Entity: Tried to create a component with a name that already exists!\n";
-				return std::weak_ptr< T >();
-			}
-
-			// Check if this component class or name is disallowed
-			// TODO: Convert component name to lower case?
-			auto componentType = typeid( T ).hash_code();
-
-			for( auto It = m_DisallowedComponentClasses.begin(); It != m_DisallowedComponentClasses.end(); It++ )
-			{
-				if( *It == componentType )
-					return std::weak_ptr< T >();
-			}
-
-			for( auto It = m_DisallowedComponentNames.begin(); It != m_DisallowedComponentNames.end(); It++ )
-			{
-				if( *It == ComponentName )
-					return std::weak_ptr< T >();
-			}
-
-			// Looks like were good to create this root component, first, actually create it
-			auto& Eng = Engine::GetInstance();
-
-			std::shared_ptr< T > newComponent = Eng.CreateObject< T >();
-
-			// Next we need to set up the component
-			std::shared_ptr< Component > compBase = std::dynamic_pointer_cast< Component >( newComponent );
-			if( !compBase )
-			{
-				std::cout << "[ERROR] Entity: Failed to CreateRootComponent.. failed to downcast new component to Component base class!\n";
-				return std::weak_ptr< T >();
-			}
-
-			compBase->m_Owner	= GetWeakPtr< Entity >();
-			compBase->m_World	= GetWorld();
-			compBase->m_Name	= ComponentName;
-			
-			// Store component
-			m_Components[ ComponentName ] = compBase;
-			m_FullComponentList[ ComponentName ] = std::weak_ptr< Component >( compBase );
-
-			// Perform Init
-			compBase->PerformAttach();
-
-			std::cout << "[DEBUG] Entity: Created root component named \"";
-			std::cout << ComponentName;
-			std::cout << "\"\n\t";
-			std::cout << "Parent Entity: ";
-			std::cout << GetID();
-			std::cout << "\n";
-
-			return newComponent;
-		}
-
-		template< typename T >
-		std::weak_ptr< T > CreateChildComponent( std::weak_ptr< Component > WeakParent, const std::string& ComponentName )
-		{
-			// Ensure name is valid
-			if( ComponentName.size() <= 0 )
-			{
-				std::cout << "[ERROR] Entity: Tried to create a component with no valid name!\n";
-				return std::weak_ptr< T >();
-			}
-
-			// Ensure parent is valid
-			auto Parent = WeakParent.lock();
-			if( !Parent || !Parent->IsValid() )
-			{
-				std::cout << "[ERROR] Entity: Tried to create a component with an invalid parent!\n";
-				return std::weak_ptr< T >();
-			}
-
-			// Check if this component name is already in use
-			auto nameCheck = Parent->m_Children.find( ComponentName );
-			auto fullNameCheck = m_FullComponentList.find( ComponentName );
-			if( nameCheck != Parent->m_Children.end() || fullNameCheck != m_FullComponentList.end() )
-			{
-				std::cout << "[ERROR] Entity: Tried to create a component (child) with a name that is already in use!\n";
-				return std::weak_ptr< T >();
-			}
-
-			// Ensure parent belongs to this entity
-			auto parentOwner = Parent->GetOwner().lock();
-			if( !parentOwner || !parentOwner->IsAlive() || parentOwner->GetID() != GetID() )
-			{
-				std::cout << "[ERROR] Entity: Tried to create a component, and attach to a component that doesnt belong to this entity!\n";
-				return std::weak_ptr< T >();
-			}
-
-			// Check if this component name or class is disallowed
-			auto compType = typeid( T ).hash_code();
-
-			for( auto It = m_DisallowedComponentClasses.begin(); It != m_DisallowedComponentClasses.end(); It++ )
-			{
-				if( *It == compType )
-					return std::weak_ptr< T >();
-			}
-
-			for( auto It = m_DisallowedComponentNames.begin(); It != m_DisallowedComponentNames.end(); It++ )
-			{
-				if( *It == ComponentName )
-					return std::weak_ptr< T >();
-			}
-
-			// Create new component
-			auto& Eng = Engine::GetInstance();
-			std::shared_ptr< T > newComponent = Eng.CreateObject< T >();
-
-			// Setup component
-			std::shared_ptr< Component > compBase = std::dynamic_pointer_cast< Component >( newComponent );
-
-			if( !compBase )
-			{
-				std::cout << "[ERROR] Entity: Failed to CreateComponent.. failed to downcast new component to Component base class!\n";
-				return std::weak_ptr< T >();
-			}
-
-			compBase->m_Owner	= GetWeakPtr< Entity >();
-			compBase->m_World	= GetWorld();
-			compBase->m_Name	= ComponentName;
-			compBase->m_Parent	= std::weak_ptr< Component >( Parent );
-
-			// Store this component reference
-			Parent->m_Children[ ComponentName ] = compBase;
-			m_FullComponentList[ ComponentName ] = std::weak_ptr< Component >( compBase );
-
-			// Perform init and return the new component
-			compBase->PerformAttach();
-
-			std::cout << "[DEBUG] Entity: Created child component named \"";
-			std::cout << ComponentName;
-			std::cout << "\"\n\t";
-			std::cout << "Parent Entity: ";
-			std::cout << parentOwner->GetID();
-			std::cout << "\n\t";
-			std::cout << "Parent Component: ";
-			std::cout << Parent->GetName();
-			std::cout << "\n";
-
-			return newComponent;
-		}
-
-		void DoNotCreateBaseClassComponent( const std::string& Name )
-		{
-			m_DisallowedComponentNames.push_back( Name );
-		}
-
-		template< typename T >
-		void DoNotCreateBaseClassComponentClass()
-		{
-			m_DisallowedComponentClasses.push_back( typeid( T ).hash_code() );
-		}
-
-		bool RemoveComponent( std::weak_ptr< Component > Target );
+		void SetTransform( const Transform3D& inTrans );
 
 		friend class World;
 
-		/*
-			Rendering Stuff
-		*/
-	private:
+		/*-------------------------------------------------------
+			Hook Transmission
+		-------------------------------------------------------*/
+		void TransmitComponentFunction( bool bIncludeChildEnts, std::function< void( Component* ) > inFunc )
+		{
+			if( inFunc )
+			{
+				// Transmit to components of child entities
+				if( bIncludeChildEnts )
+				{
+					for( auto It = m_Children.begin(); It != m_Children.end(); It++ )
+					{
+						if( *It ) (*It)->TransmitComponentFunction( true, inFunc );
+					}
+				}
 
-		bool m_bRenderingEnabled;
+				// Transmit to our components
+				for( auto It = m_Components.begin(); It != m_Components.end(); It++ )
+				{
+					if( It->second ) It->second->TransmitFunction( inFunc );
+				}
+			}
+		}
 
-	public:
+		template< typename _Arg1 >
+		void TransmitComponentFunction( bool bIncludeChildEnts, std::function< void( Component*, const _Arg1& ) > inFunc, const _Arg1& inArg )
+		{
+			if( inFunc )
+			{
+				// Transmit to components of child entities
+				if( bIncludeChildEnts )
+				{
+					for( auto It = m_Children.begin(); It != m_Children.end(); It++ )
+					{
+						if( *It ) (*It)->TransmitComponentFunction( true, inFunc, inArg );
+					}
+				}
 
-		void DisableRendering();
-		void EnableRendering();
-		bool IsRenderingEnabled() const;
+				// Transmit to our components
+				for( auto It = m_Components.begin(); It != m_Components.end(); It++ )
+				{
+					if( It->second ) It->second->TransmitFunction( inFunc, inArg );
+				}
+			}
+		}
+
+		template< typename _Arg1, typename _Arg2 >
+		void TransmitComponentFunction( bool bIncludeChildEnts, std::function< void( Component*, const _Arg1&, const _Arg2* ) > inFunc, const _Arg1& inArg1, const _Arg2& inArg2 )
+		{
+			if( inFunc )
+			{
+				if( bIncludeChildEnts )
+				{
+					for( auto It = m_Children.begin(); It != m_Children.end(); It++ )
+					{
+						if( *It ) (*It)->TransmitComponentFunction( true, inFunc, inArg1, inArg2 );
+					}
+				}
+
+				for( auto It = m_Components.begin(); It != m_Components.end(); It++ )
+				{
+					if( It->second ) It->second->TransmitFunction( inFunc, inArg1, inArg2 );
+				}
+			}
+		}
+
+		void TransmitEntityFunction( std::function< void( Entity* ) > inFunc )
+		{
+			if( inFunc )
+			{
+				for( auto It = m_Children.begin(); It != m_Children.end(); It++ )
+				{
+					if( *It )
+					{
+						inFunc( It->GetAddress() );
+					}
+				}
+
+				inFunc( this );
+			}
+		}
+
+		template< typename _Arg1 >
+		void TransmitEntityFunction( std::function< void( Entity*, const _Arg1& ) > inFunc, const _Arg1& inArg1 )
+		{
+			if( inFunc )
+			{
+				for( auto It = m_Children.begin(); It != m_Children.end(); It++ )
+				{
+					if( *It )
+					{
+						inFunc( It->GetAddress(), inArg1 );
+					}
+				}
+
+				inFunc( this, inArg1 );
+			}
+		}
+
+		template< typename _Arg1, typename _Arg2 >
+		void TransmitEntityFunction( std::function< void( Entity*, const _Arg1&, const _Arg2& ) > inFunc, const _Arg1& inArg1, const _Arg2& inArg2 )
+		{
+			if( inFunc )
+			{
+				for( auto It = m_Children.begin(); It != m_Children.end(); It++ )
+				{
+					if( *It )
+					{
+						inFunc( It->GetAddress(), inArg1, inArg2 );
+					}
+				}
+
+				inFunc( this, inArg1, inArg2 );
+			}
+		}
 
 	};
 

@@ -367,6 +367,9 @@ namespace Hyperion
 			String::operator=
 		*/
 		void operator=( const String& Other );
+		void operator=( nullptr_t );
+
+		void Clear();
 
 		/*
 			String::IsEmpty

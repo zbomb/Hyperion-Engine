@@ -752,7 +752,8 @@ namespace Hyperion
 		bool DestroyThread( const std::string& );
 		uint32 GetThreadCount();
 
-		void Shutdown();
+		void StopThreads();
+		void Shutdown() override;
 
 		friend class PoolWorkerThread;
 	};

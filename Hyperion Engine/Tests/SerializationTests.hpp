@@ -36,8 +36,8 @@ namespace Tests
 			Ar.WriteUInt32( 0x0120000F );
 			Ar.WriteUInt32( 0x000FA123 );
 
-			HeaderCount = Ar.GetHeaderSize();
-			BodyCount = Ar.GetContentSize();
+			HeaderCount		= (uint32) Ar.GetHeaderSize();
+			BodyCount		= (uint32) Ar.GetContentSize();
 
 			Ar.Flush();
 		}

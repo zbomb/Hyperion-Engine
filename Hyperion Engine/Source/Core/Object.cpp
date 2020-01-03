@@ -4,85 +4,24 @@
 	© 2019, Zachary Berry
 ==================================================================================================*/
 
-#include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/Object.h"
 #include "Hyperion/Core/Engine.h"
-#include "Hyperion/Core/InputManager.h"
 
-#ifdef HYPERION_DEBUG_OBJECT
-#include <iostream>
-#endif
-
-#undef min
 
 namespace Hyperion
 {
-	Object::Object()
-	{
-		m_Identifier	= OBJECT_INVALID;
-		m_TypeHash		= OBJECT_INVALID;
-		m_IsValid		= false;
-		b_RequiresTick	= false;
-		m_LastTick		= std::chrono::time_point< std::chrono::high_resolution_clock >::min();
-	}
+	std::map< uint32, std::shared_ptr< _ObjectState > > __objCache;
+	uint32 __objIdCounter( 0 );
 
-	Object::~Object()
+	void TickObjects()
 	{
-
-	}
-
-	void Object::PerformObjectInit()
-	{
-		Initialize();
-	}
-
-	void Object::PerformObjectShutdown()
-	{
-		// Stop requesting ticks
-		b_RequiresTick = false;
-		Shutdown();
-	}
-
-	void Object::PerformObjectTick()
-	{
-		if( b_RequiresTick )
+		for( auto It = __objCache.begin(); It != __objCache.end(); It++ )
 		{
-			// Check if this is the first tick, if so, then delta will be 0
-			double Delta = 0.0;
-			auto Now = std::chrono::high_resolution_clock::now();
-
-			// Calculate the delta since last tick
-			if( m_LastTick != std::chrono::time_point< std::chrono::high_resolution_clock >::min() )
+			// Validate object before ticking
+			if( It->second && It->second->valid && It->second->ptr )
 			{
-				std::chrono::duration< double > duration = Now - m_LastTick;
-				Delta = duration.count();
+				It->second->ptr->PerformTick();
 			}
-
-			// Call Tick
-			Tick( Delta );
-
-			// Update last tick
-			m_LastTick = Now;
 		}
-	}
-
-	void Object::Initialize()
-	{
-
-	}
-
-	void Object::Shutdown()
-	{
-
-	}
-
-	void Object::Tick( double Delta )
-	{
-
-	}
-
-	void Object::BindUserInput( InputManager* Input )
-	{
-
 	}
 }

@@ -45,16 +45,22 @@
     <ClInclude Include="Include\Hyperion\Core\Threading.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Angle.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Color.h" />
+    <ClInclude Include="Include\Hyperion\Core\Types\ConcurrentQueue.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Point.h" />
+    <ClInclude Include="Include\Hyperion\Core\Types\Transform.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Vector.h" />
     <ClInclude Include="Include\Hyperion\Core\VirtualFileSystem.h" />
     <ClInclude Include="Include\Hyperion\Framework\Component.h" />
     <ClInclude Include="Include\Hyperion\Framework\Entity.h" />
-    <ClInclude Include="Include\Hyperion\Framework\PrimitiveComponent.h" />
     <ClInclude Include="Include\Hyperion\Framework\ViewState.h" />
     <ClInclude Include="Include\Hyperion\Framework\World.h" />
     <ClInclude Include="include\Hyperion\Hyperion.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Renderer.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyBase.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyCamera.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyLight.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyPrimitive.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyScene.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Renderer.h" />
     <ClInclude Include="Include\Hyperion\Renderer\RenderFactory.h" />
@@ -65,6 +71,7 @@
     <ClInclude Include="Tests\EncodingTests.hpp" />
     <ClInclude Include="Tests\FileTests.hpp" />
     <ClInclude Include="Tests\MemoryTests.hpp" />
+    <ClInclude Include="Tests\RenderTests.hpp" />
     <ClInclude Include="Tests\SerializationTests.hpp" />
     <ClInclude Include="Tests\StringTests.hpp" />
   </ItemGroup>
@@ -80,17 +87,14 @@
     <ClCompile Include="Source\Core\Stream.cpp" />
     <ClCompile Include="Source\Core\String.cpp" />
     <ClCompile Include="Source\Core\Threading.cpp" />
-    <ClCompile Include="Source\Core\Types\Angle.cpp" />
-    <ClCompile Include="Source\Core\Types\Color.cpp" />
     <ClCompile Include="Source\Core\Types\Point.cpp" />
-    <ClCompile Include="Source\Core\Types\Vector.cpp" />
     <ClCompile Include="Source\Core\VirtualFileSystem.cpp" />
     <ClCompile Include="Source\Framework\Component.cpp" />
     <ClCompile Include="Source\Framework\Entity.cpp" />
-    <ClCompile Include="Source\Framework\PrimitiveComponent.cpp" />
     <ClCompile Include="Source\Framework\World.cpp" />
     <ClCompile Include="Source\Hyperion.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\DirectX11Renderer.cpp" />
+    <ClCompile Include="Source\Renderer\Proxy\ProxyBase.cpp" />
     <ClCompile Include="Source\Renderer\Proxy\ProxyScene.cpp" />
     <ClCompile Include="Source\Renderer\Renderer.cpp" />
     <ClCompile Include="Source\Renderer\RenderFactory.cpp" />
@@ -196,7 +200,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>
