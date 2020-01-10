@@ -6,9 +6,10 @@
   Component.cpp
   Entity.cpp
   World.cpp
-  DirectX11Renderer.cpp
-  RenderFactory.cpp
+  DirectX11Graphics.cpp
   Renderer.cpp
   Win32FileSystem.cpp
   Generating Code...
+C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\Source\Renderer\DirectX11\DirectX11Graphics.cpp(756,93): warning C4244:  'argument': conversion from 'float' to 'UINT8', possible loss of data
+C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\Source\Renderer\DirectX11\DirectX11Graphics.cpp(278): warning C4715:  'Hyperion::DirectX11Graphics::SetResolution': not all control paths return a value
   Hyperion Engine.vcxproj -> C:\Users\zackb\source\repos\Heartline Editor\Build\Debug\Hyperion.lib

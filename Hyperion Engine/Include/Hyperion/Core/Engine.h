@@ -25,9 +25,6 @@
 #include <iostream>
 #endif
 
-#ifdef HYPERION_OS_WIN32
-#include <Windows.h>
-#endif
 
 namespace Hyperion
 {
@@ -39,7 +36,7 @@ namespace Hyperion
 	class Entity;
 	class World;
 	class InputManager;
-	class RenderMarshal;
+
 
 	enum class EngineStatus
 	{
@@ -171,37 +168,27 @@ namespace Hyperion
 		=======================================================================================================*/
 	private:
 
-		std::shared_ptr< Renderer > m_Renderer;
 		std::unique_ptr< RenderFenceWatcher > m_FenceWatcher;
-
-#ifdef HYPERION_OS_WIN32
-		HWND m_renderTarget;
-#endif
+		IRenderOutput m_RenderOutput;
 
 	public:
 
-		inline std::weak_ptr< Renderer > GetRenderer() { return std::weak_ptr< Renderer >( m_Renderer ); }
-
-#ifdef HYPERION_OS_WIN32
-		void SetRenderTarget( HWND inRenderTarget )
+		bool SetRenderOutput( const IRenderOutput& Output )
 		{
-			m_renderTarget = inRenderTarget;
-			if( m_Renderer )
+			if( !Output )
 			{
-				//m_Renderer->SetRenderTarget( inRenderTarget );
-			}
-		}
-
-		inline HWND GetRenderTarget()
-		{
-			if( m_Renderer )
-			{
-				//return m_Renderer->GetRenderTarget();
+				std::cout << "[ERROR] Engine: Attempt to set invalid render output!\n";
+				return false;
 			}
 
-			return NULL;
+			m_RenderOutput = Output;
+			return true;
 		}
-#endif
+
+		const IRenderOutput& GetRenderOutput()
+		{
+			return m_RenderOutput;
+		}
 
 	};
 

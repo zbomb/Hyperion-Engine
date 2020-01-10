@@ -18,56 +18,19 @@
 namespace Hyperion
 {
 
+	/*
+		Static Definitions
+	*/
+	std::shared_ptr< Thread > TRenderSystem::m_Thread;
+	std::shared_ptr< Renderer > TRenderSystem::m_Renderer;
+	RenderSettings TRenderSystem::m_CurrentSettings;
+	std::atomic< bool > TRenderSystem::m_bIsRunning;
+
 
 	/*
 		Render Thread
 	*/
-	bool TRenderThread::Start()
-	{
-		// Check if were already running
-		if(  m_Thread )
-		{
-			std::cout << "[ERROR] Render Thread: Can not start render thread when its already running!\n";
-			return false;
-		}
-
-		auto threadManager = Engine::GetInstance().GetThreadManager();
-		if( !threadManager )
-		{
-			std::cout << "[ERROR] Render Thread: Failed to start.. couldnt access thread manager!\n";
-			return false;
-		}
-
-		// Ensure there are no other threads running with our identifier
-		threadManager->DestroyThread( THREAD_RENDERER );
-
-		// Setup the parameters for our thread
-		TickedThreadParameters params;
-
-		params.Identifier			= THREAD_RENDERER;
-		params.AllowTasks			= true;
-		params.Deviation			= 0.f;
-		params.Frequency			= 60.f;
-		params.MinimumTasksPerTick	= 3;
-		params.MaximumTasksPerTick	= 0;
-		params.StartAutomatically	= true;
-
-		params.InitFunction			= std::bind( &TRenderThread::Init );
-		params.ShutdownFunction		= std::bind( &TRenderThread::Shutdown );
-		params.TickFunction			= std::bind( &TRenderThread::Tick );
-
-		m_Thread = threadManager->CreateThread( params );
-		if( !m_Thread )
-		{
-			std::cout << "[ERROR] Render Thread: Failed to start.. couldnt create the thread!\n";
-			return false;
-		}
-
-		__gRenderThreadId = m_Thread->GetSystemIdentifier();
-		return true;
-	}
-
-	bool TRenderThread::Stop()
+	bool TRenderSystem::Stop()
 	{
 		if( !m_Thread )
 		{
@@ -91,184 +54,136 @@ namespace Hyperion
 		return true;
 	}
 
-	bool TRenderThread::IsRunning()
+
+	bool TRenderSystem::IsRunning()
 	{
-		return m_Thread ? true : false;
+		return m_bIsRunning;
 	}
 
-	void TRenderThread::Init()
+
+	void TRenderSystem::Init()
 	{
+		HYPERION_VERIFY( m_Renderer, "Failed to init render system.. renderer instance was null!" );
 		std::cout << "[STATE] Render Thread Initializing...\n";
+
+		// We need to perform initialization of the renderer and the graphics API
+		if( !m_Renderer->Initialize() )
+		{
+			std::cout << "[ERROR] Render System: Failed to initialize! Shutting down...\n";
+			Stop();
+			return;
+		}
+
+		m_bIsRunning = true;
 	}
 
-	void TRenderThread::Shutdown()
+
+	void TRenderSystem::Shutdown()
 	{
+		HYPERION_VERIFY( m_Renderer, "Failed to shutdown render system.. render instance was null" );
 		std::cout << "[STATE] Render Thread Shutting Down...\n";
+
+		m_bIsRunning = false;
+
+		m_Renderer->Shutdown();
+		m_Renderer.reset();
 	}
 
-	void TRenderThread::Tick()
-	{
 
+	void TRenderSystem::Tick()
+	{
+		HYPERION_VERIFY( m_Renderer, "Failed to tick renderer.. instance was null!" );
+		
+		m_Renderer->Frame();
+	}
+
+
+	bool TRenderSystem::ValidateSettings( const RenderSettings& inSettings )
+	{
+		return true;
+	}
+
+	const RenderSettings& TRenderSystem::GetCurrentSettings()
+	{
+		return m_CurrentSettings;
+	}
+
+
+	void TRenderSystem::AddCommand( std::unique_ptr< RenderCommandBase >&& inCommand )
+	{
+		if( m_Renderer )
+		{
+			m_Renderer->m_Commands.Push( std::move( inCommand ) );
+		}
 	}
 
 
 
 
-
-	Renderer::Renderer()
-		: m_isRunning( false )
+	Renderer::Renderer( const IRenderOutput& startingOutput, const RenderSettings& startingSettings, const std::shared_ptr< IGraphics >& inAPI )
+		: m_Output( startingOutput ), m_bVSync( startingSettings.bVSync ), m_Resolution( startingSettings.resolution ), m_API( inAPI ), m_Scene( std::make_shared< ProxyScene >() )
 	{
+		// This should already be validate by the TRenderSystem before passing it along
+		HYPERION_VERIFY( m_Output, "Attempt to start renderer with invalid output device" );
+		HYPERION_VERIFY( m_API, "Attempt to start renderer with invalid graphics API" );
 	}
 
 
 	Renderer::~Renderer()
 	{
-		// Shutdown the scene
-		if( m_Scene )
-		{
-			m_Scene->Shutdown();
-			m_Scene.reset();
-		}
 
-		// Shutdown the thread
-		if( m_renderThread )
-		{
-			m_renderThread->Stop();
-		}
-
-		auto& eng = Engine::GetInstance();
-		auto tm = eng.GetThreadManager();
-
-		if( tm )
-			tm->DestroyThread( THREAD_RENDERER );
-
-		m_isRunning = false;
 	}
 
 
-	bool Renderer::Start()
+	bool Renderer::Initialize()
 	{
-		auto& eng = Engine::GetInstance();
-		auto tm = eng.GetThreadManager();
+		// We need to initialize the graphics API
+		// First, set resolution & vsync
+		m_API->SetResolution( m_Resolution );
+		m_API->SetVSync( m_bVSync );
 
-		if( !tm )
+		if( !m_API->Initialize( m_Output ) )
 		{
-			std::cout << "[ERROR] Renderer: Couldnt initialize.. thread manager was null\n";
+			std::cout << "[ERROR] Renderer: Failed to initiliaze graphics api! Crashing game....\n";
+			std::terminate();
 			return false;
 		}
 
-		// Check if were already running
-		if( m_isRunning )
-		{
-			std::cout << "[ERROR] Renderer: Couldnt initialize.. already running\n";
-			return false;
-		}
-
-		// If the render thread is still running.. stop it
-		tm->DestroyThread( THREAD_RENDERER );
-
-		// Create our new render thread
-		TickedThreadParameters params;
-
-		params.Identifier			= THREAD_RENDERER;
-		params.AllowTasks			= true;
-		params.Deviation			= 0.f;
-		params.Frequency			= 60.f;
-		params.MinimumTasksPerTick	= 3;
-		params.MaximumTasksPerTick	= 0;
-		params.StartAutomatically	= true;
-		
-		params.InitFunction			= std::bind( &Renderer::PerformInit, this );
-		params.TickFunction			= std::bind( &Renderer::PerformTick, this );
-		params.ShutdownFunction		= std::bind( &Renderer::PerformShutdown, this );
-
-		m_renderThread = tm->CreateThread( params );
-		if( !m_renderThread )
-		{
-			std::cout << "[ERROR] Renderer: Couldnt initialize.. failed to create render thread\n";
-			return false;
-		}
-
-		m_isRunning			= true;
-		__gRenderThreadId	= m_renderThread->GetSystemIdentifier();
-
+		// Initialize the scene
+		m_Scene->Initialize();
 		return true;
 	}
 
 
-	void Renderer::Stop()
+	void Renderer::Shutdown()
 	{
-		if( !m_isRunning && !m_renderThread )
-		{
-			std::cout << "[WARNING] Renderer: Attempt to stop renderer.. but it wasnt running!\n";
-			return;
-		}
+		// Shutdown the scene
+		m_Scene->Shutdown();
+		m_Scene.reset();
 
-		m_isRunning = false;
-		if( m_renderThread )
-		{
-			m_renderThread->Stop();
-		}
-
-		auto& eng = Engine::GetInstance();
-		auto tm = eng.GetThreadManager();
-
-		if( !tm )
-		{
-			std::cout << "[ERROR] Renderer: Failed to properly shutdown.. couldnt access thread manager to destroy thread!\n";
-			return;
-		}
-
-		tm->DestroyThread( THREAD_RENDERER );
-
+		// We need to shutdown the graphics API
+		m_API->Shutdown();
 	}
 
 
-	void Renderer::PerformInit()
+	void Renderer::Frame()
 	{
-		std::cout << "[DEBUG] Renderer: Performing init...\n";
+		// First, we need to update the proxy scene
+		UpdateScene();
 
-		// Reset the scene
-		if( m_Scene )
-		{
-			m_Scene->Shutdown();
-			m_Scene.reset();
-		}
+		// Next, we need to prepare the API for the frame
+		m_API->BeginFrame();
 
-		m_Scene = std::make_shared< ProxyScene >();
-		m_Scene->Initialize();
+		// TODO: Render scene
 
-		// Initialize derived renderer
-		if( !Init() )
-		{
-			std::cout << "[ERROR] Renderer: Failed to initialize!\n";
-		}
+		m_API->EndFrame();
 	}
 
-	void Renderer::PerformTick()
-	{
-		UpdateProxyScene();
-		Frame();
-	}
 
-	void Renderer::PerformShutdown()
-	{
-		std::cout << "[DEBUG] Renderer: Performing shutdown...\n";
-
-		if( m_Scene )
-		{
-			m_Scene->Shutdown();
-			m_Scene.reset();
-		}
-
-		// Shutdown derived renderer
-		Shutdown();
-	}
-
-	void Renderer::UpdateProxyScene()
+	void Renderer::UpdateScene()
 	{
 		// For now, were just going to run the next frame of commands
-		auto nextCommand = m_CommandQueue.PopValue();
+		auto nextCommand = m_Commands.PopValue();
 		while( nextCommand.first )
 		{
 			// Execute this command
@@ -283,150 +198,6 @@ namespace Hyperion
 				break;
 			}
 		}
-	}
-
-
-	void Renderer::PushCommand( std::unique_ptr< RenderCommandBase >&& inCommand )
-	{
-		// Move the command into the queue
-		m_CommandQueue.Push( std::move( inCommand ) );
-	}
-
-
-	bool Renderer::AddPrimitive( std::shared_ptr< ProxyPrimitive > inPrimitive )
-	{
-		if( m_Scene && inPrimitive )
-		{
-			inPrimitive->Render_Init();
-			return m_Scene->AddPrimitive( inPrimitive );
-		}
-
-		return false;
-	}
-
-	bool Renderer::AddLight( std::shared_ptr< ProxyLight > inLight )
-	{
-		if( m_Scene && inLight )
-		{
-			inLight->Render_Init();
-			return m_Scene->AddLight( inLight );
-		}
-
-		return false;
-	}
-
-	bool Renderer::AddCamera( std::shared_ptr< ProxyCamera > inCamera )
-	{
-		if( m_Scene && inCamera )
-		{
-			inCamera->Render_Init();
-			return m_Scene->AddCamera( inCamera );
-		}
-
-		return false;
-	}
-
-	bool Renderer::RemovePrimitive( std::weak_ptr< ProxyPrimitive > inPrimitive, std::function< void() > inCallback )
-	{
-		if( m_Scene && !inPrimitive.expired() )
-		{
-			// Try to remove this primitive from the map
-			uint32 Identifier = 0;
-			{
-				auto ptr = inPrimitive.lock();
-				Identifier = ptr ? ptr->GetIdentifier() : 0;
-			}
-
-			if( Identifier != 0 )
-			{
-				auto removedPtr = m_Scene->RemovePrimitive( Identifier );
-				if( removedPtr )
-				{
-					removedPtr->BeginShutdown();
-					auto t = Task::Create< void >( [removedPtr, inCallback] ()
-						{
-							removedPtr->Shutdown();
-							if( inCallback )
-							{
-								inCallback();
-							}
-						} );
-
-					return true;
-				}
-			}
-		}
-
-		std::cout << "[WARNING] ProxySystem: Failed to remove a primitive proxy from the scene!\n";
-		return false;
-	}
-
-	bool Renderer::RemoveLight( std::weak_ptr< ProxyLight > inLight, std::function< void() > inCallback )
-	{
-		if( m_Scene && !inLight.expired() )
-		{
-			uint32 Identifier = 0;
-			{
-				auto ptr = inLight.lock();
-				Identifier = ptr ? ptr->GetIdentifier() : 0;
-			}
-
-			if( Identifier != 0 )
-			{
-				auto removedPtr = m_Scene->RemoveLight( Identifier );
-				if( removedPtr )
-				{
-					removedPtr->BeginShutdown();
-					auto t = Task::Create< void >( [removedPtr, inCallback] ()
-						{
-							removedPtr->Shutdown();
-							if( inCallback )
-							{
-								inCallback();
-							}
-						} );
-
-					return true;
-				}
-			}
-		}
-
-		std::cout << "[WARNING] ProxySystem: Failed to remove a light proxy from the scene!\n";
-		return false;
-	}
-
-	bool Renderer::RemoveCamera( std::weak_ptr< ProxyCamera > inCamera, std::function< void() > inCallback )
-	{
-		if( m_Scene && !inCamera.expired() )
-		{
-			uint32 Identifier = 0;
-			{
-				auto ptr = inCamera.lock();
-				Identifier = ptr ? ptr->GetIdentifier() : 0;
-			}
-
-			if( Identifier != 0 )
-			{
-				auto removedPtr = m_Scene->RemoveCamera( Identifier );
-				if( removedPtr )
-				{
-					removedPtr->BeginShutdown();
-					auto t = Task::Create< void >( [removedPtr, inCallback] ()
-						{
-							removedPtr->Shutdown();
-							if( inCallback )
-							{
-								inCallback();
-							}
-						} );
-
-					return true;
-				}
-			}
-		}
-
-		std::cout << "[WARNING] ProxySystem: Failed to remove a camera proxy from the scene!\n";
-		return false;
 	}
 
 

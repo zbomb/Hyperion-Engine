@@ -58,14 +58,8 @@
     <ClInclude Include="Include\Hyperion\Framework\Component.h">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\RenderFactory.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\Renderer.h">
       <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Renderer.h">
-      <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyScene.h">
       <Filter>Renderer\Proxy</Filter>
@@ -205,6 +199,18 @@
     <ClInclude Include="Include\Hyperion\Core\Object.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\IGraphics.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DataTypes.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Graphics.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\RenderComponent.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework\Entity.cpp">
@@ -225,14 +231,8 @@
     <ClCompile Include="Source\Framework\Component.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\RenderFactory.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Renderer\Renderer.cpp">
       <Filter>Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Renderer.cpp">
-      <Filter>Renderer\DirectX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\Renderer\Proxy\ProxyScene.cpp">
       <Filter>Renderer\Proxy</Filter>
@@ -278,6 +278,12 @@
     </ClCompile>
     <ClCompile Include="Source\Renderer\Proxy\ProxyBase.cpp">
       <Filter>Renderer\Proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Graphics.cpp">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\RenderComponent.cpp">
+      <Filter>Framework</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -9,9 +9,9 @@
 #include "Hyperion/Core/Engine.h"
 #include "Hyperion/Framework/Entity.h"
 #include "Hyperion/Framework/World.h"
-#include "Hyperion/Renderer/RenderFactory.h"
 #include "Hyperion/Core/File.h"
 #include "Hyperion/Core/Platform.h"
+#include "Hyperion/Renderer/DirectX11/DirectX11Graphics.h" // Better way to do this?
 #include <typeindex>
 #include <type_traits>
 
@@ -56,10 +56,8 @@ namespace Hyperion
 	void Engine::TickEngine()
 	{
 		// Wait until were within a frame of the renderer
-		if( m_Renderer && m_Renderer->IsRunning() && m_FenceWatcher )
+		if( TRenderSystem::IsRunning() )
 		{
-			// If we dont catch up within a few milliseconds.. then we just timeout and skip this tick
-			// This also prevents this thread from locking up when shutting down
 			if( !m_FenceWatcher->WaitForCount( 1, std::chrono::milliseconds( 3 ), ComparisonType::LESS_THAN_OR_EQUAL ) )
 				return;
 		}
@@ -80,12 +78,12 @@ namespace Hyperion
 		TickObjects();
 
 		// Tell renderer that were finished with ticking
-		if( m_Renderer && m_Renderer->IsRunning() && m_FenceWatcher )
+		if( TRenderSystem::IsRunning() )
 		{
 			auto eofCommand = m_FenceWatcher->CreateCommand();
 			eofCommand->EnableFlag( RENDERER_COMMAND_FLAG_END_OF_FRAME );
 
-			m_Renderer->PushCommand( std::move( eofCommand ) );
+			TRenderSystem::AddCommand( std::move( eofCommand ) );
 		}
 	}
 
@@ -127,9 +125,7 @@ namespace Hyperion
 
 		// Create sub-objects
 		m_ThreadManager		= CreateObject< ThreadManager >();
-		m_Renderer			= IRenderFactory::CreateRenderer( RendererType::DirectX11 );
-
-		m_FenceWatcher = std::make_unique< RenderFenceWatcher >();
+		m_FenceWatcher		= std::make_unique< RenderFenceWatcher >();
 
 		// Create our game thread
 		TickedThreadParameters gameThreadParams;
@@ -153,7 +149,7 @@ namespace Hyperion
 		}
 		
 		// Start the renderer
-		if( !m_renderTarget )
+		if( !m_RenderOutput )
 		{
 			std::cout << "[ERROR] Engine: Failed to startup.. render target wasnt set!\n";
 			Shutdown();
@@ -165,10 +161,11 @@ namespace Hyperion
 		resolution.Width = 1280;
 		resolution.Height = 720;
 
-		m_Renderer->SetRenderTarget( m_renderTarget );
-		m_Renderer->SetVSync( false );
-		m_Renderer->SetScreenResolution( resolution );
-		m_Renderer->Start();
+		RenderSettings settings;
+		settings.bVSync			= false;
+		settings.resolution		= resolution;
+
+		TRenderSystem::Start< DirectX11Graphics >( m_RenderOutput, settings );
 
 		// Create the game world
 		HypPtr< World > newWorld = CreateObject< World >();
@@ -204,10 +201,7 @@ namespace Hyperion
 		ClearActiveWorld();
 
 		// Shutdown renderer
-		if( m_Renderer )
-		{
-			m_Renderer->Stop();
-		}
+		TRenderSystem::Stop();
 
 		// Stop all of our threads.. for now, this is a blocking call and it will call thread shutdown functions
 		if( m_ThreadManager )
