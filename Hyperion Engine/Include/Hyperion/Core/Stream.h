@@ -13,6 +13,7 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/String.h"
+#include "Hyperion/Console/Console.h"
 
 
 namespace Hyperion
@@ -118,7 +119,7 @@ namespace Hyperion
 		{
 			if( !m_Alive )
 			{
-				std::cout << "[ERROR] DataReader: Attempt to read from a stream that doesnt allow reading!\n";
+				Console::WriteLine( "[ERROR] DataReader: Attempt to read from a stream that doesnt allow reading!" );
 			}
 		}
 
@@ -187,7 +188,7 @@ namespace Hyperion
 			if( newSize < startSize )
 			{
 				// Overflow!
-				std::cout << "[ERROR] DataReader: Attempt to read into a vector.. but the vector size overflowed!\n";
+				Console::WriteLine( "[ERROR] DataReader: Attempt to read into a vector.. but the vector size overflowed!" );
 				return ReadResult::Fail;
 			}
 
@@ -294,7 +295,7 @@ namespace Hyperion
 		{
 			if( !m_Alive )
 			{
-				std::cout << "[ERROR] DataWriter: Attempt to write to a stream that doesnt allow writing\n";
+				Console::WriteLine( "[ERROR] DataWriter: Attempt to write to a stream that doesnt allow writing" );
 			}
 		}
 

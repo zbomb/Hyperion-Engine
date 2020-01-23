@@ -41,12 +41,12 @@ namespace Hyperion
 		// Validate Parameters
 		if( !Target || !Target->IsValid() )
 		{
-			std::cout << "[Warning] InputManager: Attempt to bind key to invalid entity!\n";
+			Console::WriteLine( "[Warning] InputManager: Attempt to bind key to invalid entity!" );
 			return;
 		}
 		else if( inParams.Key == Keys::NONE || inParams.Type == KeyEvent::None )
 		{
-			std::cout << "[Warning] InputManager: Attempt to bind invalid key event!\n";
+			Console::WriteLine( "[Warning] InputManager: Attempt to bind invalid key event!" );
 			return;
 		}
 
@@ -70,12 +70,12 @@ namespace Hyperion
 		// Validate Parameters
 		if( !Target )
 		{
-			std::cout << "[Warning] InputManager: Attempt to bind key raw against a null pointer!\n";
+			Console::WriteLine( "[Warning] InputManager: Attempt to bind key raw against a null pointer!" );
 			return;
 		}
 		else if( inParams.Key == Keys::NONE || inParams.Type == KeyEvent::None )
 		{
-			std::cout << "[Warning] InputManager: Attempt to bind invalid key event (raw)!\n";
+			Console::WriteLine( "[Warning] InputManager: Attempt to bind invalid key event (raw)!" );
 			return;
 		}
 
@@ -99,12 +99,12 @@ namespace Hyperion
 		// Validate parameters
 		if( !Target || !Target->IsValid() )
 		{
-			std::cout << "[Warning] InputManager: Attempt to bind axis from an invalid entity!\n";
+			Console::WriteLine( "[Warning] InputManager: Attempt to bind axis from an invalid entity!" );
 			return;
 		}
 		else if( inParams.Axis == InputAxis::None )
 		{
-			std::cout << "[Warning] InputManager: Attempt to bind invalid axis event!\n";
+			Console::WriteLine( "[Warning] InputManager: Attempt to bind invalid axis event!" );
 			return;
 		}
 
@@ -125,12 +125,12 @@ namespace Hyperion
 		// Validate parameters
 		if( !Target )
 		{
-			std::cout << "[Warning] InputManager: Attempt to bind axis raw from an invalid entity!\n";
+			Console::WriteLine( "[Warning] InputManager: Attempt to bind axis raw from an invalid entity!" );
 			return;
 		}
 		else if( inParams.Axis == InputAxis::None )
 		{
-			std::cout << "[Warning] InputManager: Attempt to bind invalid axis raw event!\n";
+			Console::WriteLine( "[Warning] InputManager: Attempt to bind invalid axis raw event!" );
 			return;
 		}
 
@@ -292,7 +292,7 @@ namespace Hyperion
 			auto KeyNumber = (int) Event.Key;
 			if( KeyNumber >= 256 )
 			{
-				std::cout << "[ERROR] InputManager: Key inside of input queue has an out of range value!\n";
+				Console::WriteLine( "[ERROR] InputManager: Key inside of input queue has an out of range value!" );
 				continue;
 			}
 
@@ -540,7 +540,7 @@ namespace Hyperion
 		auto KeyNumber = (unsigned int) inKey;
 		if( KeyNumber >= 256 )
 		{
-			std::cout << "[ERROR] InputManager: Input key is out of range!\n";
+			Console::WriteLine( "[ERROR] InputManager: Input key is out of range!" );
 			return false;
 		}
 

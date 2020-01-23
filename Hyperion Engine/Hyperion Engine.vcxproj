@@ -19,15 +19,23 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Hyperion\Assets\DynamicModelAsset.h" />
+    <ClInclude Include="Include\Hyperion\Assets\MaterialAsset.h" />
+    <ClInclude Include="Include\Hyperion\Assets\StaticModelAsset.h" />
     <ClInclude Include="Include\Hyperion\Assets\TestAsset.h" />
+    <ClInclude Include="Include\Hyperion\Assets\TextureAsset.h" />
+    <ClInclude Include="Include\Hyperion\Console\Console.h" />
+    <ClInclude Include="Include\Hyperion\Console\ConsoleVar.h" />
+    <ClInclude Include="Include\Hyperion\Console\ConsoleVarInstance.h" />
     <ClInclude Include="Include\Hyperion\Constants.h" />
     <ClInclude Include="Include\Hyperion\Core\Asset.h" />
     <ClInclude Include="Include\Hyperion\Core\AssetLoader.h" />
     <ClInclude Include="Include\Hyperion\Core\AssetManager.h" />
     <ClInclude Include="Include\Hyperion\Core\Async.h" />
-    <ClInclude Include="Include\Hyperion\Core\Engine.h" />
     <ClInclude Include="Include\Hyperion\Core\File.h" />
     <ClInclude Include="Include\Hyperion\Core\FileImpl.h" />
+    <ClInclude Include="Include\Hyperion\Core\GameInstance.h" />
+    <ClInclude Include="Include\Hyperion\Core\GameManager.h" />
     <ClInclude Include="Include\Hyperion\Core\InputManager.h" />
     <ClInclude Include="Include\Hyperion\Core\Library\Binary.h" />
     <ClInclude Include="Include\Hyperion\Core\Library\Memory.hpp" />
@@ -40,9 +48,11 @@
     <ClInclude Include="Include\Hyperion\Core\Object.h" />
     <ClInclude Include="Include\Hyperion\Core\Platform.h" />
     <ClInclude Include="Include\Hyperion\Core\PlatformImpl.h" />
+    <ClInclude Include="Include\Hyperion\Core\RenderManager.h" />
     <ClInclude Include="Include\Hyperion\Core\Stream.h" />
     <ClInclude Include="Include\Hyperion\Core\String.h" />
     <ClInclude Include="Include\Hyperion\Core\Threading.h" />
+    <ClInclude Include="Include\Hyperion\Core\ThreadManager.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Angle.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Color.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\ConcurrentQueue.h" />
@@ -50,22 +60,46 @@
     <ClInclude Include="Include\Hyperion\Core\Types\Transform.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Vector.h" />
     <ClInclude Include="Include\Hyperion\Core\VirtualFileSystem.h" />
+    <ClInclude Include="Include\Hyperion\Extern\zlib\zconf.h" />
+    <ClInclude Include="Include\Hyperion\Extern\zlib\zlib.h" />
+    <ClInclude Include="Include\Hyperion\Framework\CameraComponent.h" />
     <ClInclude Include="Include\Hyperion\Framework\Component.h" />
+    <ClInclude Include="Include\Hyperion\Framework\DynamicModelComponent.h" />
     <ClInclude Include="Include\Hyperion\Framework\Entity.h" />
+    <ClInclude Include="Include\Hyperion\Framework\LightComponent.h" />
+    <ClInclude Include="Include\Hyperion\Framework\PrimitiveComponent.h" />
     <ClInclude Include="Include\Hyperion\Framework\RenderComponent.h" />
+    <ClInclude Include="Include\Hyperion\Framework\StaticModelComponent.h" />
+    <ClInclude Include="Include\Hyperion\Framework\TestComponent.h" />
+    <ClInclude Include="Include\Hyperion\Framework\TestEntity.h" />
     <ClInclude Include="Include\Hyperion\Framework\ViewState.h" />
     <ClInclude Include="Include\Hyperion\Framework\World.h" />
     <ClInclude Include="include\Hyperion\Hyperion.h" />
+    <ClInclude Include="Include\Hyperion\Ints.h" />
+    <ClInclude Include="Include\Hyperion\Macros.h" />
+    <ClInclude Include="Include\Hyperion\Material\MaterialInstance.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DataTypes.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Buffer.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Graphics.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Texture.h" />
     <ClInclude Include="Include\Hyperion\Renderer\IGraphics.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyBase.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyCamera.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyLight.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyPrimitive.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyScene.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyTest.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Renderer.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\TextureCache.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Types\IBuffer.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Types\ITexture.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Types\Resource.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Types\Vertex.h" />
+    <ClInclude Include="Include\Hyperion\Streaming\DynamicQualityAssetManager.h" />
+    <ClInclude Include="Include\Hyperion\Tools\Deflate.h" />
+    <ClInclude Include="Include\Hyperion\Tools\ImageLoader.h" />
+    <ClInclude Include="Include\Hyperion\Tools\PNGReader.h" />
     <ClInclude Include="Include\Hyperion\Win32\Win32FileSystem.h" />
     <ClInclude Include="Include\Hyperion\Win32\Win32Platform.h" />
     <ClInclude Include="Tests\AssetTests.hpp" />
@@ -73,33 +107,55 @@
     <ClInclude Include="Tests\EncodingTests.hpp" />
     <ClInclude Include="Tests\FileTests.hpp" />
     <ClInclude Include="Tests\MemoryTests.hpp" />
+    <ClInclude Include="Tests\PNGTests.hpp" />
     <ClInclude Include="Tests\RenderTests.hpp" />
     <ClInclude Include="Tests\SerializationTests.hpp" />
     <ClInclude Include="Tests\StringTests.hpp" />
+    <ClInclude Include="Tests\ZLibTests.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Assets\TestAsset.cpp" />
+    <ClCompile Include="Source\Assets\TextureAsset.cpp" />
+    <ClCompile Include="Source\Console\Console.cpp" />
+    <ClCompile Include="Source\Console\ConsoleVarInstance.cpp" />
     <ClCompile Include="Source\Core\AssetManager.cpp" />
-    <ClCompile Include="Source\Core\Engine.cpp" />
     <ClCompile Include="Source\Core\File.cpp" />
+    <ClCompile Include="Source\Core\GameInstance.cpp" />
+    <ClCompile Include="Source\Core\GameManager.cpp" />
     <ClCompile Include="Source\Core\InputManager.cpp" />
     <ClCompile Include="Source\Core\Library\Binary.cpp" />
     <ClCompile Include="Source\Core\Library\Serialization.cpp" />
     <ClCompile Include="Source\Core\Object.cpp" />
+    <ClCompile Include="Source\Core\RenderManager.cpp" />
     <ClCompile Include="Source\Core\Stream.cpp" />
     <ClCompile Include="Source\Core\String.cpp" />
     <ClCompile Include="Source\Core\Threading.cpp" />
+    <ClCompile Include="Source\Core\ThreadManager.cpp" />
     <ClCompile Include="Source\Core\Types\Point.cpp" />
     <ClCompile Include="Source\Core\VirtualFileSystem.cpp" />
+    <ClCompile Include="Source\Framework\CameraComponent.cpp" />
     <ClCompile Include="Source\Framework\Component.cpp" />
+    <ClCompile Include="Source\Framework\DynamicModelComponent.cpp" />
     <ClCompile Include="Source\Framework\Entity.cpp" />
+    <ClCompile Include="Source\Framework\LightComponent.cpp" />
+    <ClCompile Include="Source\Framework\PrimitiveComponent.cpp" />
     <ClCompile Include="Source\Framework\RenderComponent.cpp" />
+    <ClCompile Include="Source\Framework\StaticModelComponent.cpp" />
+    <ClCompile Include="Source\Framework\TestComponent.cpp" />
+    <ClCompile Include="Source\Framework\TestEntity.cpp" />
     <ClCompile Include="Source\Framework\World.cpp" />
     <ClCompile Include="Source\Hyperion.cpp" />
+    <ClCompile Include="Source\Renderer\DataTypes.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\DirectX11Graphics.cpp" />
     <ClCompile Include="Source\Renderer\Proxy\ProxyBase.cpp" />
     <ClCompile Include="Source\Renderer\Proxy\ProxyScene.cpp" />
+    <ClCompile Include="Source\Renderer\Proxy\ProxyTest.cpp" />
     <ClCompile Include="Source\Renderer\Renderer.cpp" />
+    <ClCompile Include="Source\Renderer\TextureCache.cpp" />
+    <ClCompile Include="Source\Streaming\DynamicQualityAssetManager.cpp" />
+    <ClCompile Include="Source\Tools\Deflate.cpp" />
+    <ClCompile Include="Source\Tools\ImageLoader.cpp" />
+    <ClCompile Include="Source\Tools\PNGReader.cpp" />
     <ClCompile Include="Source\Win32\Win32FileSystem.cpp" />
     <ClCompile Include="Source\Win32\Win32Platform.cpp" />
   </ItemGroup>
@@ -158,22 +214,24 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>Hyperion</TargetName>
-    <IncludePath>C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\DirectXTK\Inc;C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Hyperion\Hyperion Engine\DirectXTK\Inc;D:\Hyperion\Hyperion Engine\Include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)Build\$(Configuration)\</OutDir>
     <IntDir>Build\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetName>Hyperion</TargetName>
-    <IncludePath>C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\DirectXTK\Inc;C:\Users\zackb\source\repos\Hyperion Engine\Hyperion Engine\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Hyperion\Hyperion Engine\DirectXTK\Inc;D:\Hyperion\Hyperion Engine\Include;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)Build\$(Configuration)\</OutDir>
     <IntDir>Build\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>D:\Hyperion\Hyperion Engine\DirectXTK\Inc;D:\Hyperion\Hyperion Engine\Include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>D:\Hyperion\Hyperion Engine\DirectXTK\Inc;D:\Hyperion\Hyperion Engine\Include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -193,8 +251,8 @@
     </Link>
     <Lib>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>zlibstatic.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\Hyperion\Hyperion Engine\Lib</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -215,8 +273,8 @@
     </Link>
     <Lib>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>zlibstatic.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\Hyperion\Hyperion Engine\Lib</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -230,6 +288,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -237,6 +296,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>zlibstatic.lib</AdditionalDependencies>
+    </Lib>
+    <Lib>
+      <AdditionalLibraryDirectories>D:\Hyperion\Hyperion Engine\Lib</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -257,6 +322,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib>
+      <AdditionalDependencies>zlibstatic.lib</AdditionalDependencies>
+    </Lib>
+    <Lib>
+      <AdditionalLibraryDirectories>D:\Hyperion\Hyperion Engine\Lib</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

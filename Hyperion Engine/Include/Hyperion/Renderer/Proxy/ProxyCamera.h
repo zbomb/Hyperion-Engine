@@ -12,29 +12,38 @@
 namespace Hyperion
 {
 
-	struct ProxyCamera : public ProxyBase
+	class ProxyCamera : public ProxyBase
 	{
+
+	protected:
+
+		bool m_Active;
+		float m_FOV, m_AspectRatio;
 
 	public:
 
 		ProxyCamera() = delete;
 		ProxyCamera( uint32 inIdentifier )
-			: ProxyBase( inIdentifier )
+			: ProxyBase( inIdentifier ), m_Active( false )
 		{}
 
-		void Engine_Init()
-		{
+		inline bool IsActive() const { return m_Active; }
+		inline float GetFOV() const { return m_FOV; }
+		inline float GetAspectRatio() const { return m_AspectRatio; }
 
+		void SetActive( bool bIn )
+		{
+			m_Active = bIn;
 		}
 
-		void Render_Init()
+		void SetFOV( float inFOV )
 		{
-
+			m_FOV = inFOV;
 		}
 
-		void Shutdown()
+		void SetAspectRatio( float inAspectRatio )
 		{
-
+			m_AspectRatio = inAspectRatio;
 		}
 
 	};

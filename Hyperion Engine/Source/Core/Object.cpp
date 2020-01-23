@@ -5,7 +5,6 @@
 ==================================================================================================*/
 
 #include "Hyperion/Core/Object.h"
-#include "Hyperion/Core/Engine.h"
 
 
 namespace Hyperion

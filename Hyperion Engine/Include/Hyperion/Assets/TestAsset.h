@@ -19,25 +19,24 @@ namespace Hyperion
 
 	public:
 
-		TestAsset();
-		TestAsset( const String& );
+		TestAsset() = delete;
+		TestAsset( const String & = nullptr );
 		~TestAsset();
 
-		virtual String GetAssetName() const;
+		virtual String GetAssetType() const;
 
 		String m_Data;
-
 	};
 
 	template<>
-	inline std::shared_ptr< Asset > AssetLoader::Load< TestAsset >( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End )
+	inline std::shared_ptr< Asset > AssetLoader::Load< TestAsset >( const AssetPath& Identifier, std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End )
 	{
 		std::vector< byte > rawData( Begin, End );
 		return std::shared_ptr< Asset >( new TestAsset( String( rawData, StringEncoding::ASCII ) ) );
 	}
 
 	template<>
-	inline std::shared_ptr< Asset > AssetLoader::Stream< TestAsset >( AssetStream& inStream )
+	inline std::shared_ptr< Asset > AssetLoader::Stream< TestAsset >( const AssetPath& Identifier, AssetStream& inStream )
 	{
 		// Were going to take this data in as a string
 		std::vector< byte > rawData;
@@ -47,7 +46,7 @@ namespace Hyperion
 			inStream.SeekBegin();
 			if( inStream.ReadBytes( rawData, (size_t)inStream.GetSize() ) != AssetStream::ReadResult::Success )
 			{
-				std::cout << "[TestAsset] Error: Failed to stream.. (AssetStream read error)\n";
+				Console::WriteLine( "[TestAsset] Error: Failed to stream.. (AssetStream read error)" );
 			}
 		}
 

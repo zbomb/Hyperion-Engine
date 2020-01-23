@@ -13,6 +13,7 @@
 #include "Hyperion/Core/Library/UTF16.hpp"
 
 
+
 namespace Hyperion
 {
 	/*
@@ -22,6 +23,7 @@ namespace Hyperion
 	std::map< LanguageID, LanguageInfo > Localization::m_Languages;
 	LanguageID Localization::m_LastLangID( LANG_NONE );
 	LanguageInfo Localization::Language_None{ { 0x44, 0x65, 0x66, 0x61, 0x75, 0x6C, 0x74 }, "none", LANG_NONE };
+
 
 
 	/*=========================================================================================================
@@ -59,7 +61,7 @@ namespace Hyperion
 			}
 			else
 			{
-				std::cout << "[ERROR] Localized String Cache: Found invalid Instance in cache... returning null!\n";
+				Console::WriteLine( "[ERROR] Localized String Cache: Found invalid Instance in cache... returning null!" );
 				return nullptr;
 			}
 		}
@@ -76,7 +78,7 @@ namespace Hyperion
 		auto Entry = m_Values.find( In->m_LocalizationKey );
 		if( Entry == m_Values.end() )
 		{
-			std::cout << "[ERROR] Localized String Cache: Couldnt find string data in the cache!\n";
+			Console::WriteLine( "[ERROR] Localized String Cache: Couldnt find string data in the cache!" );
 					
 			// Still, decrement ref counter
 			if( In->m_RefCount > 0 )
@@ -101,7 +103,7 @@ namespace Hyperion
 			}
 			else
 			{
-				std::cout << "[ERROR] Localized String Cache: Bad string instance found in cache... removing...\n";
+				Console::WriteLine( "[ERROR] Localized String Cache: Bad string instance found in cache... removing..." );
 				m_Values.erase( Entry );
 			}
 		}
@@ -179,7 +181,7 @@ namespace Hyperion
 		if( In.Key.size() <= 0  )
 		{
 			// Invalid Language
-			std::cout << "[ERROR] Localization Dictionary: Attempt to register invalid language!\n";
+			Console::WriteLine( "[ERROR] Localization Dictionary: Attempt to register invalid language!" );
 			return LANG_NONE;
 		}
 
@@ -189,7 +191,7 @@ namespace Hyperion
 		// Check if this key already exists
 		if( LanguageExists( In.Key ) )
 		{
-			std::cout << "[ERROR] Localization Dictionary: Attempt to register language with existing name!\n";
+			Console::WriteLine( "[ERROR] Localization Dictionary: Attempt to register language with existing name!" );
 			return LANG_NONE;
 		}
 
@@ -209,14 +211,14 @@ namespace Hyperion
 		// Validate this language (LANG_NONE) is allowed
 		if( Lang != LANG_NONE && !LanguageExists( Lang ) )
 		{
-			std::cout << "[ERROR] Localization Dictionary: Attempt to create/update definition, but invalid language specified!\n";
+			Console::WriteLine( "[ERROR] Localization Dictionary: Attempt to create/update definition, but invalid language specified!" );
 			return false;
 		}
 
 		// Ensure key is valid
 		if( Key.size() <= 0 )
 		{
-			std::cout << "[ERROR] Localization Dictionary: Attempt to create/update definition, but the key is empty!\n";
+			Console::WriteLine( "[ERROR] Localization Dictionary: Attempt to create/update definition, but the key is empty!" );
 			return false;
 		}
 
@@ -247,7 +249,7 @@ namespace Hyperion
 		// Validate key
 		if( Key.size() <= 0 )
 		{
-			std::cout << "[ERROR] Localization Dictionary: Attempt to lookup definition, with a null key!\n";
+			Console::WriteLine( "[ERROR] Localization Dictionary: Attempt to lookup definition, with a null key!" );
 			return nullptr;
 		}
 
@@ -296,7 +298,7 @@ namespace Hyperion
 	{
 		if( Key.size() <= 0 )
 		{
-			std::cout << "[ERROR] Localization Dictionary: Attempt to clear definition, with a null key!\n";
+			Console::WriteLine( "[ERROR] Localization Dictionary: Attempt to clear definition, with a null key!" );
 			return false;
 		}
 
@@ -329,43 +331,44 @@ namespace Hyperion
 	*/
 	void Localization::DebugCache()
 	{
-		std::cout << "\n==================================== LOCALIZATION CACHE BEGIN ====================================\n";
-		std::cout << "------> Definition Count: " << Cache::m_Values.size() << "\n";
-		std::cout << "------> Language Count: " << m_Languages.size() << "\n";
-		std::cout << "------> Language List: \n\n";
+		Console::Write( "\n============================== LOCALIZATION CACHE BEGIN ==============================\n",
+						"-------> Definition Count: ", Cache::m_Values.size(), "\n",
+						"-------> Language Count: ", m_Languages.size(), "\n",
+						"-------> Language List: \n\n" );
+
 
 		for( auto It = m_Languages.begin(); It != m_Languages.end(); It++ )
 		{
-			std::cout << "\t---> Langugae \"" << It->second.Key << "\"\n\t\t";
-			std::cout << "Identifier: " << It->second.Identifier << "\n";
+			Console::Write( "\t---> Language \"", It->second.Key, "\"\n\t\tIdentifier: ", It->second.Identifier, "\n" );
 		}
 
-		std::cout << "\n------> Definition List:\n\n";
+		Console::Write( "\n------> Definition List:\n\n" );
 			
 		for( auto It = Cache::m_Values.begin(); It != Cache::m_Values.end(); It++ )
 		{
 			if( !It->second )
 			{
-				std::cout << "\t---> Null Definition\n";
-				std::cout << "\t\tKey: " << It->first << "\n";
+				Console::Write( "\t---> Null Definition\n",
+								"\t\tKey: ", It->first, "\n" );
 			}
 			else
 			{
-				std::cout << "\t---> Definition\n";
-				std::cout << "\t\tKey: " << It->second->m_LocalizationKey << "\n";
-				std::cout << "\t\tLangID: " << It->second->m_Lang << "\n";
+				Console::Write( "\t---> Definition\n",
+								"\t\tKey: ", It->second->m_LocalizationKey, "\n",
+								"\t\tLangID: ", It->second->m_Lang, "\n" );
+
 				if( It->second->m_Data )
 				{
-					std::cout << "\t\tValue: " << String::GetSTLString( *It->second->m_Data ) << "\n\n";
+					Console::Write( "\t\tValue: ", String::GetSTLString( *It->second->m_Data ), "\n\n" );
 				}
 				else
 				{
-					std::cout << "\t\tValue: NULL\n\n";
+					Console::Write( "\t\tValue: NULL\n\n" );
 				}
 			}
 		}
 
-		std::cout << "==================================== LOCALIZATION CACHE END ====================================\n";
+		Console::Write( "==================================== LOCALIZATION CACHE END ====================================\n" );
 	}
 
 	/*=========================================================================================================
@@ -844,7 +847,7 @@ namespace Hyperion
 		{
 			if( !Encoding::UTF8::BinaryToCodes( Source, CodePoints ) )
 			{
-				std::cout << "[ERROR] String Library: UTF-8 Decode failed!\n";
+				Console::Write( "[ERROR] String Library: UTF-8 Decode failed!\n" );
 			}
 		}
 		else if( SourceEncoding == StringEncoding::UTF16 )
@@ -853,20 +856,20 @@ namespace Hyperion
 			{
 				if( !Encoding::UTF16::BinaryToCodes( Source, CodePoints, bLittleEndian ) )
 				{
-					std::cout << "[ERROR] String: UTF-16 decode failed!\n";
+					Console::Write( "[ERROR] String: UTF-16 decode failed!\n" );
 				}
 			}
 			else
 			{
 				if( !Encoding::UTF16::BinaryToCodes( Source, CodePoints ) )
 				{
-					std::cout << "[ERROR] String Library: UTF-16 Decode failed!\n";
+					Console::Write( "[ERROR] String Library: UTF-16 Decode failed!\n" );
 				}
 			}
 		}
 		else
 		{
-			std::cout << "[ERROR] String Library: Attempt to decode an unsupported encoding type!\n";
+			Console::Write( "[ERROR] String Library: Attempt to decode an unsupported encoding type!\n" );
 			return Output;
 		}
 
@@ -890,26 +893,26 @@ namespace Hyperion
 
 			if( bOverflow )
 			{
-				std::cout << "[ERROR] String Library: Attempt to encode character in ASCII, that overflowed! This character was ignored\n";
+				Console::Write( "[ERROR] String Library: Attempt to encode character in ASCII, that overflowed! This character was ignored\n" );
 			}
 		}
 		else if( TargetEncoding == StringEncoding::UTF8 )
 		{
 			if( !Encoding::UTF8::CodesToBinary( CodePoints, Output ) )
 			{
-				std::cout << "[ERROR] String Library: Failed to encode UTF-8 String!\n";
+				Console::Write( "[ERROR] String Library: Failed to encode UTF-8 String!\n" );
 			}
 		}
 		else if( TargetEncoding == StringEncoding::UTF16 )
 		{
 			if( !Encoding::UTF16::CodesToBinary( CodePoints, Output ) )
 			{
-				std::cout << "[ERROR] String Library: Failed to encode UTF-16 string!\n";
+				Console::Write( "[ERROR] String Library: Failed to encode UTF-16 string!\n" );
 			}
 		}
 		else
 		{
-			std::cout << "[ERROR] String Library: Attempt to encode string in a unsupported format!\n";
+			Console::Write( "[ERROR] String Library: Attempt to encode string in a unsupported format!\n" );
 			return Output;
 		}
 
@@ -1254,6 +1257,342 @@ namespace Hyperion
 		}
 	}
 
+	bool String::IsWhitespace( const Char& inChar )
+	{
+		return(
+			( inChar >= 9 && inChar <= 13 ) ||
+			inChar == 32 ||
+			inChar == 133 ||
+			inChar == 160 );
+	}
+
+	bool String::IsWhitespace( const String& inStr )
+	{
+		// If were empty, then return false
+		if( IsEmpty( inStr ) )
+			return false;
+
+		for( auto It = inStr.begin(); It != inStr.end(); It++ )
+		{
+			if( !IsWhitespace( *It ) )
+				return false;
+		}
+
+		return true;
+	}
+
+	bool String::IsWhitespaceOrEmpty( const String& inStr )
+	{
+		return( IsWhitespace( inStr ) || IsEmpty( inStr ) );
+	}
+
+	String String::TrimBegin( const String& inStr )
+	{
+		String::iterator whitespaceEnd = inStr.begin();
+		for( auto It = inStr.begin(); It != inStr.end(); It++ )
+		{
+			if( !IsWhitespace( *It ) )
+			{
+				whitespaceEnd = It;
+				break;
+			}
+		}
+
+		if( whitespaceEnd == inStr.begin() )
+		{
+			return inStr;
+		}
+		else
+		{
+			return String( whitespaceEnd, inStr.end() );
+		}
+	}
+
+	String String::TrimEnd( const String& inStr )
+	{
+		// We need to find the last non-whitespace character in this string
+		String::iterator lastNonWhitespace = inStr.end();
+		for( auto It = inStr.begin(); It != inStr.end(); It++ )
+		{
+			if( !IsWhitespace( *It ) )
+			{
+				lastNonWhitespace = It;
+			}
+		}
+
+		// Advance our iterator.. this way the string range includes the final non whitespace character
+		if( lastNonWhitespace != inStr.end() )
+		{
+			std::advance( lastNonWhitespace, 1 );
+		}
+
+		// Now, our string goes from the start of the string, until the last non-whitespace character
+		if( lastNonWhitespace == inStr.end() )
+		{
+			return inStr;
+		}
+		else
+		{
+			return String( inStr.begin(), lastNonWhitespace );
+		}
+	}
+
+	String String::TrimBoth( const String& inStr )
+	{
+		bool firstNonWhiteSpaceFound = false;
+		String::iterator firstNonWhiteSpace = inStr.begin();
+		String::iterator lastNonWhiteSpace = inStr.end();
+
+		for( auto It = inStr.begin(); It != inStr.end(); It++ )
+		{
+			// Find the begining of the non-whitespace character
+			if( !IsWhitespace( *It ) )
+			{
+				if( !firstNonWhiteSpaceFound )
+				{
+					firstNonWhiteSpace = It;
+					firstNonWhiteSpaceFound = true;
+				}
+
+				lastNonWhiteSpace = It;
+			}
+		}
+
+		// Advance the last non-whitespace character so we include the final character in the output string
+		if( lastNonWhiteSpace != inStr.end() )
+		{
+			std::advance( lastNonWhiteSpace, 1 );
+		}
+
+		return String( firstNonWhiteSpace, lastNonWhiteSpace );
+	}
+
+
+	bool String::IsNumeric( const Char& inChar )
+	{
+		// We want to check if this character is a number
+		return( inChar >= 48 && inChar <= 57 );
+	}
+
+	bool String::IsNumeric( const String& inStr )
+	{
+		if( inStr.IsEmpty() )
+			return false;
+
+		for( auto It = inStr.begin(); It != inStr.end(); It++ )
+		{
+			if( !String::IsNumeric( *It ) )
+				return false;
+		}
+
+		return true;
+	}
+
+	bool String::ToUInt( const String& inStr, uint32& outVal )
+	{
+		// Trim any trailing or leading whitespace
+		String str = String::TrimBoth( inStr );
+
+		if( str.IsEmpty() )
+			return false;
+
+		std::vector< uint8 > digits;
+		for( auto It = str.begin(); It != str.end(); It++ )
+		{
+			Char thisChar = *It;
+			if( thisChar >= 48 && thisChar <= 57 )
+			{
+				digits.push_back( (uint8) ( thisChar - 48 ) );
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		// Now, we iterate throught he digits and build the number
+		outVal = 0;
+		uint32 digitCount = (uint32)digits.size();
+
+		for( uint32 i = 0; i < digitCount; i++ )
+		{
+			uint32 thisDigitNumber	= digitCount - i - 1;
+			uint8 thisDigitValue	= digits.at( i );
+
+			outVal += ( Pow( 10, thisDigitNumber ) * thisDigitValue );
+		}
+
+		return true;
+	}
+
+	bool String::ToInt( const String& inStr, int32& outVal )
+	{
+		// Trim any trailing or leading whitespace
+		String str = String::TrimBoth( inStr );
+
+		if( str.IsEmpty() )
+			return false;
+
+		// Check if we have a '+' or '-' symbol
+		auto firstChar = *( str.begin() );
+		bool bNegative = false;
+
+		if( firstChar == 45 )
+		{
+			bNegative = true;
+
+			auto begin = str.begin();
+			std::advance( begin, 1 );
+
+			// If this is the only character.. then we have an invalid number
+			if( begin == str.end() )
+				return false;
+
+			// Next, build a number from all other characters
+			str = String( begin, str.end() );
+		}
+		else if( firstChar == 43 )
+		{
+			auto begin = str.begin();
+			std::advance( begin, 1 );
+
+			// If this is the only character, then we have an invalid number
+			if( begin == str.end() )
+				return false;
+
+			str = String( begin, str.end() );
+		}
+
+		// Now that we have the symbol trimmed, and figured out if were positive or negative
+		// we can use the uint function and apply the sign
+		uint32 baseNumber = 0;
+		if( !String::ToUInt( str, baseNumber ) )
+		{
+			return false;
+		}
+
+		// Convert unsigned int, to signed int, with possible negative
+		if( bNegative )
+		{
+			if( baseNumber > (uint32)std::numeric_limits< int32 >::max() )
+			{
+				Console::WriteLine( "[ERROR] String: Attempt to read an int32 from string, but there was overflow!" );
+				return false;
+			}
+
+			int32 outValue = baseNumber;
+			outValue *= -1;
+
+			return outValue;
+		}
+		else
+		{
+			return baseNumber;
+		}
+	}
+
+	/*
+		String::Explode
+	*/
+	std::vector< String > String::Explode( const String& Source, const Char& Where )
+	{
+		std::vector< String > Output;
+
+		// Basically, we need to iterate through the string, looking for this character
+		String::iterator lastSplit = Source.begin();
+		for( auto It = Source.begin(); It != Source.end(); It++ )
+		{
+			// Check if we found the character
+			if( *It == Where )
+			{
+				String newStr( lastSplit, It );
+				Output.push_back( newStr );
+
+				// We want the next iteration to start after the comma
+				std::advance( It, 1 );
+
+				// If we hit the end of the string then break out of the loop
+				if( It == Source.end() )
+					break;
+
+				// Otherwise.. store this position as the start of the next split
+				lastSplit = It;
+			}
+		}
+
+		// Now, check if there was any remaining string data since the last split
+		if( lastSplit != Source.end() )
+		{
+			String newStr( lastSplit, Source.end() );
+			Output.push_back( newStr );
+		}
+
+		return Output;
+	}
+
+
+	bool String::IsUpper( Char inChar )
+	{
+		// This really only works for english, maybe we should think about other languages?
+		// These functions would get quite large though
+		return( inChar >= 65 && inChar <= 90 );
+	}
+
+
+	bool String::IsLower( Char inChar )
+	{
+		return( inChar >= 97 && inChar <= 122 );
+	}
+
+
+	String String::ToLower( const String& inStr )
+	{
+		// Optimized method, the code point for ascii characters is unique
+		// So, we can just look for the code points and replace them with new ones 
+		std::vector< byte > newData;
+		auto thisData = inStr.Data();
+
+		if( thisData )
+		{
+			for( auto It = thisData->begin(); It != thisData->end(); It++ )
+			{
+				auto pointValue = *It;
+				if( pointValue >= 65 && pointValue <= 90 )
+				{
+					pointValue += 32;
+				}
+
+				newData.push_back( pointValue );
+			}
+		}
+
+		return String( newData, StringEncoding::UTF8 );
+	}
+
+	String String::ToUpper( const String& inStr )
+	{
+		std::vector< byte > newData;
+		auto thisData = inStr.Data();
+
+		if( thisData )
+		{
+			for( auto It = thisData->begin(); It != thisData->end(); It++ )
+			{
+				auto pointValue = *It;
+				if( pointValue >= 97 && pointValue <= 122 )
+				{
+					pointValue -= 32;
+				}
+
+				newData.push_back( pointValue );
+			}
+		}
+
+		return String( newData, StringEncoding::UTF8 );
+	}
+
+
+
 	/*
 		String::Equals
 	*/
@@ -1366,7 +1705,7 @@ namespace Hyperion
 		// Ensure were not using a localized string as the default
 		if( inDefault.IsLocalized() )
 		{
-			std::cout << "[ERROR] String Library: Attempt to create a localized string using another localized string as the fallback/default!\n";
+			Console::WriteLine( "[ERROR] String Library: Attempt to create a localized string using another localized string as the fallback/default!" );
 			return String( std::make_shared< LocalizedStringData >( inKey ) );
 		}
 
@@ -1641,4 +1980,23 @@ namespace Hyperion
 	{
 		return m_ThisChar;
 	}
+
+	/*
+		Specialized ToString Definitions
+	*/
+	String ToString( const char* in )
+	{
+		return String( in );
+	}
+
+	String ToString( const std::string& in )
+	{
+		return String( in );
+	}
+
+	String ToString( const String& in )
+	{
+		return in;
+	}
+
 }

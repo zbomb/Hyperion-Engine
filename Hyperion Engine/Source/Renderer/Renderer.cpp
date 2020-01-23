@@ -9,142 +9,51 @@
 #include "Hyperion/Renderer/Proxy/ProxyPrimitive.h"
 #include "Hyperion/Renderer/Proxy/ProxyLight.h"
 #include "Hyperion/Renderer/Proxy/ProxyCamera.h"
-#include "Hyperion/Core/Engine.h"
-#include "Hyperion/Core/Async.h"
-#include <iostream>
+#include "Hyperion/Core/RenderManager.h"
+#include "Hyperion/Core/ThreadManager.h"
+#include "Hyperion/Core/Asset.h"
+#include "Hyperion/Assets/TextureAsset.h"
 
+/*
+	Include various graphics APIs?
+*/
+#if HYPERION_OS_WIN32
+#include "Hyperion/Renderer/DirectX11/DirectX11Graphics.h"
+#endif
 
 
 namespace Hyperion
 {
 
-	/*
-		Static Definitions
-	*/
-	std::shared_ptr< Thread > TRenderSystem::m_Thread;
-	std::shared_ptr< Renderer > TRenderSystem::m_Renderer;
-	RenderSettings TRenderSystem::m_CurrentSettings;
-	std::atomic< bool > TRenderSystem::m_bIsRunning;
 
-
-	/*
-		Render Thread
-	*/
-	bool TRenderSystem::Stop()
+	Renderer::Renderer( std::shared_ptr< IGraphics >& inAPI, const IRenderOutput& inOutput, const ScreenResolution& inRes, bool bVSync )
+		: m_API( inAPI ), m_Output( inOutput ), m_Resolution( inRes ), m_bVSync( bVSync ), m_Scene( std::make_shared< ProxyScene >() )
 	{
-		if( !m_Thread )
-		{
-			std::cout << "[ERROR] Render Thread: Attempt to stop renderer.. but the render thread is not running!\n";
-			return false;
-		}
-
-		// Stop and destroy the thread
-		m_Thread->Stop();
-
-		auto threadManager = Engine::GetInstance().GetThreadManager();
-		if( !threadManager )
-		{
-			std::cout << "[ERROR] Render Thread: Failed to completley stop renderer.. couldnt access the thread manager to delete the stopped thread!\n";
-			m_Thread.reset();
-
-			return false;
-		}
-
-		threadManager->DestroyThread( THREAD_RENDERER );
-		return true;
-	}
-
-
-	bool TRenderSystem::IsRunning()
-	{
-		return m_bIsRunning;
-	}
-
-
-	void TRenderSystem::Init()
-	{
-		HYPERION_VERIFY( m_Renderer, "Failed to init render system.. renderer instance was null!" );
-		std::cout << "[STATE] Render Thread Initializing...\n";
-
-		// We need to perform initialization of the renderer and the graphics API
-		if( !m_Renderer->Initialize() )
-		{
-			std::cout << "[ERROR] Render System: Failed to initialize! Shutting down...\n";
-			Stop();
-			return;
-		}
-
-		m_bIsRunning = true;
-	}
-
-
-	void TRenderSystem::Shutdown()
-	{
-		HYPERION_VERIFY( m_Renderer, "Failed to shutdown render system.. render instance was null" );
-		std::cout << "[STATE] Render Thread Shutting Down...\n";
-
-		m_bIsRunning = false;
-
-		m_Renderer->Shutdown();
-		m_Renderer.reset();
-	}
-
-
-	void TRenderSystem::Tick()
-	{
-		HYPERION_VERIFY( m_Renderer, "Failed to tick renderer.. instance was null!" );
-		
-		m_Renderer->Frame();
-	}
-
-
-	bool TRenderSystem::ValidateSettings( const RenderSettings& inSettings )
-	{
-		return true;
-	}
-
-	const RenderSettings& TRenderSystem::GetCurrentSettings()
-	{
-		return m_CurrentSettings;
-	}
-
-
-	void TRenderSystem::AddCommand( std::unique_ptr< RenderCommandBase >&& inCommand )
-	{
-		if( m_Renderer )
-		{
-			m_Renderer->m_Commands.Push( std::move( inCommand ) );
-		}
-	}
-
-
-
-
-	Renderer::Renderer( const IRenderOutput& startingOutput, const RenderSettings& startingSettings, const std::shared_ptr< IGraphics >& inAPI )
-		: m_Output( startingOutput ), m_bVSync( startingSettings.bVSync ), m_Resolution( startingSettings.resolution ), m_API( inAPI ), m_Scene( std::make_shared< ProxyScene >() )
-	{
-		// This should already be validate by the TRenderSystem before passing it along
-		HYPERION_VERIFY( m_Output, "Attempt to start renderer with invalid output device" );
-		HYPERION_VERIFY( m_API, "Attempt to start renderer with invalid graphics API" );
+		HYPERION_VERIFY( m_API != nullptr, "Failed to load graphics api!" );
 	}
 
 
 	Renderer::~Renderer()
 	{
-
+		Shutdown();
 	}
 
 
 	bool Renderer::Initialize()
 	{
-		// We need to initialize the graphics API
-		// First, set resolution & vsync
+		if( !m_API )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to initialize.. graphics api was null!" );
+			return false;
+		}
+
+		// We need to setup and init our graphics api
 		m_API->SetResolution( m_Resolution );
 		m_API->SetVSync( m_bVSync );
 
 		if( !m_API->Initialize( m_Output ) )
 		{
-			std::cout << "[ERROR] Renderer: Failed to initiliaze graphics api! Crashing game....\n";
+			Console::WriteLine( "[ERROR] Renderer: Failed to initialize graphics API!" );
 			std::terminate();
 			return false;
 		}
@@ -158,11 +67,16 @@ namespace Hyperion
 	void Renderer::Shutdown()
 	{
 		// Shutdown the scene
-		m_Scene->Shutdown();
-		m_Scene.reset();
+		if( m_Scene )
+		{
+			m_Scene.reset();
+		}
 
 		// We need to shutdown the graphics API
-		m_API->Shutdown();
+		if( m_API )
+		{
+			m_API.reset();
+		}
 	}
 
 
@@ -197,8 +111,227 @@ namespace Hyperion
 			{
 				break;
 			}
+
+			// Pop the next command in the list
+			nextCommand = m_Commands.PopValue();
 		}
 	}
 
+
+	void Renderer::AddCommand( std::unique_ptr< RenderCommandBase >&& inCommand )
+	{
+		m_Commands.Push( std::move( inCommand ) );
+	}
+
+
+	bool Renderer::AddPrimitive( std::shared_ptr< ProxyPrimitive >& inPrimitive )
+	{
+		if( !m_Scene )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to add primitive.. scene was null!" );
+			return false;
+		}
+
+		// Check if a primitive already exists with this identifier
+		auto ptr = m_Scene->RemovePrimitive( inPrimitive->GetIdentifier() );
+		if( ptr )
+		{
+			ShutdownProxy( ptr );
+		}
+
+		if( m_Scene->AddPrimitive( inPrimitive ) )
+		{
+			inPrimitive->RenderInit();
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+
+	bool Renderer::AddLight( std::shared_ptr< ProxyLight >& inLight )
+	{
+		if( !m_Scene )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to add light.. scene was null!" );
+			return false;
+		}
+
+		auto ptr = m_Scene->RemoveLight( inLight->GetIdentifier() );
+		if( ptr )
+		{
+			ShutdownProxy( ptr );
+		}
+
+		if( m_Scene->AddLight( inLight ) )
+		{
+			inLight->RenderInit();
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+
+	bool Renderer::AddCamera( std::shared_ptr< ProxyCamera >& inCamera )
+	{
+		if( !m_Scene )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to add camera.. scene was null!" );
+			return false;
+		}
+
+		auto ptr = m_Scene->RemoveCamera( inCamera->GetIdentifier() );
+		if( ptr )
+		{
+			ShutdownProxy( ptr );
+		}
+
+		if( m_Scene->AddCamera( inCamera ) )
+		{
+			inCamera->RenderInit();
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+
+	void Renderer::ShutdownProxy( const std::shared_ptr< ProxyBase >& inProxy )
+	{
+		if( inProxy )
+		{
+			// Call begin shutdown directly on render thread
+			inProxy->BeginShutdown();
+
+			// Create task on pool to finalize shutdown of the proxy so we dont block the render thread
+			ThreadManager::CreateTask< void >(
+				[ inProxy ] ()
+				{
+					if( inProxy )
+					{
+						inProxy->Shutdown();
+					}
+
+				} );
+		}
+	}
+
+
+	bool Renderer::RemovePrimitive( uint32 inIdentifier )
+	{
+		if( !m_Scene )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to remove primitive.. scene was null!" );
+			return false;
+		}
+
+		auto ptr = m_Scene->RemovePrimitive( inIdentifier );
+		if( ptr )
+		{
+			ShutdownProxy( ptr );
+			return true;
+		}
+		else
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to remove primitive.. couldnt find! Id = ", inIdentifier );
+			return false;
+		}
+	}
+
+
+	bool Renderer::RemoveLight( uint32 inIdentifier )
+	{
+		if( !m_Scene )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to remove light.. scene was null!" );
+			return false;
+		}
+
+		auto ptr = m_Scene->RemoveLight( inIdentifier );
+		if( ptr )
+		{
+			ShutdownProxy( ptr );
+			return true;
+		}
+
+		return false;
+	}
+
+
+	bool Renderer::RemoveCamera( uint32 inIdentifier )
+	{
+		if( !m_Scene )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to remove camera.. scene was null!" );
+			return false;
+		}
+
+		auto ptr = m_Scene->RemoveCamera( inIdentifier );
+		if( ptr )
+		{
+			ShutdownProxy( ptr );
+			return true;
+		}
+
+		return false;
+	}
+
+
+	Transform3D Renderer::GetViewTransform()
+	{
+		if( m_Scene )
+		{
+			auto camera = m_Scene->GetActiveCamera();
+			if( camera )
+			{
+				return camera->GetTransform();
+			}
+		}
+
+		return Transform3D(
+			Vector3D( 0.f, 0.f, 0.f ),
+			Angle3D( 0.f, 0.f, 0.f ),
+			Vector3D( 0.f, 0.f, 0.f )
+		);
+	}
+
+	std::shared_ptr< ITexture2D > Renderer::Load2DTexture( const std::shared_ptr< RawImageData >& inData )
+	{
+		HYPERION_VERIFY( m_API, "API Instance was null!" );
+
+		if( !inData )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to load 2d texture.. raw image data was null" );
+			return nullptr;
+		}
+
+		Texture2DParameters params;
+
+		params.CanCPURead	= false;
+		params.Dynamic		= false;
+		params.Format		= TextureFormat::RGBA_8BIT_UNORM;
+		params.Height		= inData->Height;
+		params.Width		= inData->Width;
+		params.MipLevels	= 1;
+		params.Target		= TextureBindTarget::Shader;
+		params.RowDataSize	= inData->Width * 4;
+		params.Data			= inData->Data.data();
+
+		auto ret = m_API->CreateTexture2D( params );
+		if( !ret )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to load 2d texture, api call returned null!" );
+			return nullptr;
+		}
+
+		return ret;
+	}
 
 }

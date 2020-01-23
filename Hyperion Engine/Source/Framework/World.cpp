@@ -6,6 +6,8 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Framework/World.h"
+#include "Hyperion/Core/RenderManager.h"
+#include "Hyperion/Framework/CameraComponent.h"
 
 
 namespace Hyperion
@@ -22,19 +24,19 @@ namespace Hyperion
 
 	void World::Initialize()
 	{
-		std::cout << "[DEBUG] World: Initialize...\n";
+		Console::WriteLine( "[DEBUG] World: Initialize..." );
 	}
 
 	void World::Shutdown()
 	{
-		std::cout << "[DEBUG] World: Shutdown...\n";
+		Console::WriteLine( "[DEBUG] World: Shutdown..." );
 
 		// If were active
 		if( m_bSpawned )
 		{
 			if( !DespawnWorld() )
 			{
-				std::cout << "[ERROR] World: Failed to automatically despawn world on destruction!\n";
+				Console::WriteLine( "[ERROR] World: Failed to automatically despawn world on destruction!" );
 			}
 		}
 	}
@@ -50,6 +52,9 @@ namespace Hyperion
 
 		m_bSpawned = true;
 		OnSpawn();
+
+		// Setup this world in the renderer
+		
 
 		// Spawn all entities
 		for( auto It = m_ActiveEnts.begin(); It != m_ActiveEnts.end(); It++ )
@@ -94,7 +99,7 @@ namespace Hyperion
 		// Validate the entity
 		if( !inEnt || !inEnt->IsValid() || inEnt->GetWorld() )
 		{
-			std::cout << "[WARNING] World: Attempt to add invalid entity (or already added to a world)\n";
+			Console::WriteLine( "[WARNING] World: Attempt to add invalid entity (or already added to a world)" );
 			return false;
 		}
 
@@ -117,7 +122,7 @@ namespace Hyperion
 		// Validate Entity
 		if( !inEnt || !inEnt->IsValid() || inEnt->GetWorld() )
 		{
-			std::cout << "[Warning] World: Attempt to add an invalid/existing entity to this world!\n";
+			Console::WriteLine( "[Warning] World: Attempt to add an invalid/existing entity to this world!" );
 			return false;
 		}
 
@@ -144,14 +149,14 @@ namespace Hyperion
 		// Validate the entity
 		if( !inEnt || !inEnt->IsValid() )
 		{
-			std::cout << "[Warning] World: Attempt to remove an invalid entity from this world\n";
+			Console::WriteLine( "[Warning] World: Attempt to remove an invalid entity from this world" );
 			return false;
 		}
 
 		auto listEntry = m_ActiveEnts.find( inEnt->GetIdentifier() );
 		if( listEntry == m_ActiveEnts.end() )
 		{
-			std::cout << "[Warning] World: Attempt to remove an entity that doesnt belong to this world!\n";
+			Console::WriteLine( "[Warning] World: Attempt to remove an entity that doesnt belong to this world!" );
 			return false;
 		}
 
@@ -179,6 +184,29 @@ namespace Hyperion
 		}
 
 		return listEntry->second;
+	}
+
+	void World::SetActiveCamera( const HypPtr< CameraComponent >& inCamera )
+	{
+		if( inCamera && inCamera->IsActive() && inCamera->GetWorld() == AquirePointer< World >() )
+		{
+			if( m_ActiveCamera && m_ActiveCamera->IsValid() )
+			{
+				m_ActiveCamera->SetActiveCamera( false );
+			}
+
+			m_ActiveCamera = inCamera;
+			m_ActiveCamera->SetActiveCamera( true );
+		}
+	}
+
+	void World::OnCameraUpdated()
+	{
+		// Update our cached view state
+		if( m_ActiveCamera && m_ActiveCamera->IsActive() && m_ActiveCamera->GetWorld() == AquirePointer< World >() )
+		{
+			m_ActiveCamera->GetViewState( m_CachedViewState );
+		}
 	}
 
 

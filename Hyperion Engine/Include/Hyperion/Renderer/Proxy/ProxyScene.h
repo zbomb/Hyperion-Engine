@@ -21,9 +21,10 @@ namespace Hyperion
 {
 	typedef uint32 ProxyID;
 
-	struct ProxyPrimitive;
-	struct ProxyLight;
-	struct ProxyCamera;
+	class ProxyPrimitive;
+	class ProxyLight;
+	class ProxyCamera;
+
 
 	class ProxyScene
 	{
@@ -34,7 +35,12 @@ namespace Hyperion
 		std::map< ProxyID, std::shared_ptr< ProxyLight > > m_Lights;
 		std::map< ProxyID, std::shared_ptr< ProxyCamera > > m_Cameras;
 
+		std::shared_ptr< ProxyCamera > m_ActiveCamera;
+
 	public:
+
+		ProxyScene();
+		~ProxyScene();
 
 		void Initialize();
 		void Shutdown();
@@ -50,6 +56,10 @@ namespace Hyperion
 		std::shared_ptr< ProxyPrimitive > FindPrimitive( uint32 Identifier );
 		std::shared_ptr< ProxyLight > FindLight( uint32 Identifier );
 		std::shared_ptr< ProxyCamera > FindCamera( uint32 Identifier );
+
+		std::shared_ptr< ProxyCamera > GetActiveCamera();
+		void SetActiveCamera( std::shared_ptr< ProxyCamera > inPtr );
+		void OnCameraUpdate();
 
 	};
 

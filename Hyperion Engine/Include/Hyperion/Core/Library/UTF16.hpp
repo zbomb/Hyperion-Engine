@@ -256,7 +256,7 @@ namespace Encoding
 					// We need to seek further ahread and read in the following surrogate
 					if( It + 2 == End || It + 3 == End )
 					{
-						std::cout << "[ERROR] UTF-16 Decoder: Found surrogate half.. but hit the end of stream before reading the following half!\n";
+						Console::WriteLine( "[ERROR] UTF-16 Decoder: Found surrogate half.. but hit the end of stream before reading the following half!" );
 						break;
 					}
 
@@ -265,14 +265,14 @@ namespace Encoding
 
 					if( NextResult == SurrogateType::Invalid )
 					{
-						std::cout << "[ERROR] UTF-16 Decoder: Found surrogate half.. but next surrogate was invalid!\n";
+						Console::WriteLine( "[ERROR] UTF-16 Decoder: Found surrogate half.. but next surrogate was invalid!" );
 
 						// Advance It by and extra two places, so we skip over this next surrogate on the next iteration
 						std::advance( It, 2 );
 					}
 					else if( NextResult == SurrogateType::Single )
 					{
-						std::cout << "[ERROR] UTF-16 Decoder: Found surrogate half.. but next surrogate was not a pair!\n";
+						Console::WriteLine( "[ERROR] UTF-16 Decoder: Found surrogate half.. but next surrogate was not a pair!" );
 						// In this case, were not going to advance, so we can read in the single on the next iteration
 					}
 					else if( NextResult == SurrogateType::Pair )

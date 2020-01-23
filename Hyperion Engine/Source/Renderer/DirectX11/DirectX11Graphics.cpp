@@ -5,6 +5,8 @@
 ==================================================================================================*/
 
 #include "Hyperion/Renderer/DirectX11/DirectX11Graphics.h"
+#include "Hyperion/Renderer/DirectX11/DirectX11Buffer.h"
+#include "Hyperion/Renderer/DirectX11/DirectX11Texture.h"
 
 
 
@@ -42,7 +44,7 @@ namespace Hyperion
 			IDXGIOutput* output = nullptr;
 			if( FAILED( m_SwapChain->GetContainingOutput( &output ) ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to get reoslution list.. couldnt get output device\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to get reoslution list.. couldnt get output device" );
 				return false;
 			}
 
@@ -50,7 +52,7 @@ namespace Hyperion
 			uint32 numberModes = 0;
 			if( FAILED( output->GetDisplayModeList( DXGI_FORMAT_R8G8B8A8_UNORM, 0, &numberModes, NULL ) ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to get reoslution list.. couldnt get display modes list\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to get reoslution list.. couldnt get display modes list" );
 				output->Release();
 				return false;
 			}
@@ -62,7 +64,7 @@ namespace Hyperion
 			// Fill out this array
 			if( FAILED( output->GetDisplayModeList( DXGI_FORMAT_R8G8B8A8_UNORM, 0, &numberModes, supportedModes ) ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to get resolution list.. couldnt fill display modes list!\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to get resolution list.. couldnt fill display modes list!" );
 				output->Release();
 				delete[] supportedModes;
 				return false;
@@ -88,7 +90,7 @@ namespace Hyperion
 
 			if( !bFoundMode )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to update resolution.. selected resolution of " << inResolution.Width << "x" << inResolution.Height << " is invalid!\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. selected resolution of ", inResolution.Width, "x", inResolution.Height, " is invalid!" );
 				return false;
 			}
 
@@ -111,14 +113,14 @@ namespace Hyperion
 					// Resize our swap chain target
 					if( FAILED( m_SwapChain->ResizeTarget( &targetMode ) ) )
 					{
-						std::cout << "[ERROR] DX11Renderer: Failed to update reoslution.. couldnt resize swap chain target\n";
+						Console::WriteLine( "[ERROR] DX11Renderer: Failed to update reoslution.. couldnt resize swap chain target" );
 						return false;
 					}
 
 					// Set swap chain to fullscreen
 					if( FAILED( m_SwapChain->SetFullscreenState( TRUE, NULL ) ) )
 					{
-						std::cout << "[ERROR] DX11Renderer: Failed to update reoslution.. couldnt set fullscreen state\n";
+						Console::WriteLine( "[ERROR] DX11Renderer: Failed to update reoslution.. couldnt set fullscreen state" );
 						return false;
 					}
 				}
@@ -127,7 +129,7 @@ namespace Hyperion
 					// Disable fullscreen
 					if( FAILED( m_SwapChain->SetFullscreenState( FALSE, NULL ) ) )
 					{
-						std::cout << "[ERROR] DX11Renderer: Failed to update resolution.. couldnt exit fullscreen mode\n";
+						Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. couldnt exit fullscreen mode" );
 						return false;
 					}
 
@@ -135,7 +137,7 @@ namespace Hyperion
 					RECT newSize = { 0, 0, (long) targetMode.Width, (long) targetMode.Height };
 					if( !AdjustWindowRectEx( &newSize, WS_OVERLAPPEDWINDOW, false, WS_EX_OVERLAPPEDWINDOW ) )
 					{
-						std::cout << "[ERROR] DX11Renderer: Failed to update resolution.. couldnt resize window when exiting fullscreen\n";
+						Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. couldnt resize window when exiting fullscreen" );
 						return false;
 					}
 
@@ -147,7 +149,7 @@ namespace Hyperion
 			// Resize the target
 			if( FAILED( m_SwapChain->ResizeTarget( &targetMode ) ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to update reoslution.. couldnt resize swap chain target\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update reoslution.. couldnt resize swap chain target" );
 				return false;
 			}
 
@@ -159,19 +161,19 @@ namespace Hyperion
 			// Resize the swap chain buffers
 			if( FAILED( m_SwapChain->ResizeBuffers( 0, 0, 0, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH ) ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to update resolution.. couldnt update swap chain buffer size\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. couldnt update swap chain buffer size" );
 				return false;
 			}
 
 			if( FAILED( m_SwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), (void**)m_BackBuffer.GetAddressOf() ) ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to update resolution.. coudlnt recreate back buffer\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. coudlnt recreate back buffer" );
 				return false;
 			}
 
 			if( FAILED( m_Device->CreateRenderTargetView( m_BackBuffer.Get(), NULL, m_RenderTargetView.GetAddressOf() ) ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to update resolution.. couldnt create render target view\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. couldnt create render target view" );
 				return false;
 			}
 
@@ -196,7 +198,7 @@ namespace Hyperion
 			HRESULT res = m_Device->CreateTexture2D( &depthBufferDesc, NULL, m_DepthStencilBuffer.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to update resolution.. couldnt create depth buffer\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. couldnt create depth buffer" );
 				throw std::exception();
 			}
 
@@ -226,7 +228,7 @@ namespace Hyperion
 			res = m_Device->CreateDepthStencilState( &depthStencilDesc, m_DepthStencilState.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to update resolution.. couldnt create depth stencil state\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. couldnt create depth stencil state" );
 				throw std::exception();
 			}
 
@@ -244,7 +246,7 @@ namespace Hyperion
 			res = m_Device->CreateDepthStencilView( m_DepthStencilBuffer.Get(), &depthViewDesc, m_DepthStencilView.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to update resolution.. couldnt create depth stencil view\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. couldnt create depth stencil view" );
 				throw std::exception();
 			}
 
@@ -292,7 +294,7 @@ namespace Hyperion
 			IDXGIOutput* output = nullptr;
 			if( FAILED( m_SwapChain->GetContainingOutput( &output ) ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to get reoslution list.. couldnt get output device\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to get reoslution list.. couldnt get output device" );
 				return outputList;
 			}
 
@@ -300,7 +302,7 @@ namespace Hyperion
 			uint32 numberModes = 0;
 			if( FAILED( output->GetDisplayModeList( DXGI_FORMAT_R8G8B8A8_UNORM, 0, &numberModes, NULL ) ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to get reoslution list.. couldnt get display modes list\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to get reoslution list.. couldnt get display modes list" );
 				output->Release();
 				return outputList;
 			}
@@ -312,7 +314,7 @@ namespace Hyperion
 			// Fill out this array
 			if( FAILED( output->GetDisplayModeList( DXGI_FORMAT_R8G8B8A8_UNORM, 0, &numberModes, supportedModes ) ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to get resolution list.. couldnt fill display modes list!\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to get resolution list.. couldnt fill display modes list!" );
 				output->Release();
 				delete[] supportedModes;
 				return outputList;
@@ -352,11 +354,11 @@ namespace Hyperion
 	------------------------------------------------------------------------------------------*/
 	bool DirectX11Graphics::Initialize( const IRenderOutput& Output )
 	{
-		std::cout << "[STATUS] DX11: Initializing...\n";
+		Console::WriteLine( "[STATUS] DX11: Initializing..." );
 
-		if( !Output )
+		if( !Output.Value )
 		{
-			std::cout << "[ERROR] DX11: Failed to initialize.. output window invalid!\n";
+			Console::WriteLine( "[ERROR] DX11: Failed to initialize.. output window invalid!" );
 			return false;
 		}
 
@@ -364,17 +366,18 @@ namespace Hyperion
 		ShutdownResources();
 
 		// Initialize our resoource using the parameters we have set
-		if( !InitializeResources( Output.ptr, m_Resolution ) )
+		if( !InitializeResources( Output.Value, m_Resolution ) )
 		{
-			std::cout << "[ERROR] DX11: Failed to initialize.. resources couldnt be initialized...\n";
+			Console::WriteLine( "[ERROR] DX11: Failed to initialize.. resources couldnt be initialized..." );
 			return false;
 		}
 
-		m_Output = Output.ptr;
+		m_Output = Output.Value;
 
 		// Generate view matricies based on resolution
 		GenerateMatricies( m_Resolution, DirectX::XM_PIDIV4, SCREEN_NEAR, SCREEN_FAR );
 
+		m_bRunning = true;
 		return true;
 	}
 
@@ -384,10 +387,20 @@ namespace Hyperion
 	------------------------------------------------------------------------------------------*/
 	void DirectX11Graphics::Shutdown()
 	{
-		std::cout << "[STATUS] DX11: Shutting down...\n";
+		if( !m_bRunning )
+			return;
+
+		Console::WriteLine( "[STATUS] DX11: Shutting down..." );
 
 		// Shutdown any open resources
 		ShutdownResources();
+		m_bRunning = false;
+	}
+
+
+	bool DirectX11Graphics::IsRunning() const
+	{
+		return m_bRunning;
 	}
 
 
@@ -410,7 +423,7 @@ namespace Hyperion
 			HRESULT res = CreateDXGIFactory( __uuidof( IDXGIFactory ), (void**) &ptrFactory );
 			if( FAILED( res ) || !ptrFactory )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create graphics interface factory\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create graphics interface factory" );
 				throw std::exception();
 			}
 
@@ -418,14 +431,14 @@ namespace Hyperion
 			res = ptrFactory->EnumAdapters( 0, &ptrAdapter );
 			if( FAILED( res ) || !ptrAdapter )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt enumerate adapters\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt enumerate adapters" );
 				throw std::exception();
 			}
 
 			res = ptrAdapter->EnumOutputs( 0, &ptrOutput );
 			if( FAILED( res ) || !ptrOutput )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt enum outputs!\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt enum outputs!" );
 				throw std::exception();
 			}
 
@@ -433,7 +446,7 @@ namespace Hyperion
 			res = ptrOutput->GetDisplayModeList( DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, NULL );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt get display modes list\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt get display modes list" );
 				throw std::exception();
 			}
 
@@ -441,13 +454,13 @@ namespace Hyperion
 			res = ptrOutput->GetDisplayModeList( DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, ptrDisplayModes );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt fill display mode list\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt fill display mode list" );
 				throw std::exception();
 			}
 
 			if( numModes <= 0 )
 			{
-				std::cout << "[ERROR] DX11Renderer: There are no supported display modes! Failed to initialize\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: There are no supported display modes! Failed to initialize" );
 				throw std::exception();
 			}
 
@@ -468,8 +481,9 @@ namespace Hyperion
 			if( !bResolutionSupported )
 			{
 				// We need to default to one of the modes in the list
-				std::cout << "[WARNING] DX11Renderer: Selected resolution wasnt supported.. defaulting!\n";
-				selectedMode = ptrDisplayModes[ 0 ];
+				Console::WriteLine( "[WARNING] DX11Renderer: Selected resolution (", Resolution.Width, "x", Resolution.Height, ") wasnt supported.. defaulting!" );
+				selectedMode = ptrDisplayModes[ numModes - 1 ];
+				Console::WriteLine( "[WARNING] DX11Renderer: Defaulting to resolution (", selectedMode.Width, "x", selectedMode.Height, ")" );
 			}
 
 			// Update stored resolution to the supported one
@@ -483,7 +497,7 @@ namespace Hyperion
 			res = ptrAdapter->GetDesc( &videoCardDescription );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. coudlnt read video card information\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. coudlnt read video card information" );
 				throw std::exception();
 			}
 
@@ -502,6 +516,17 @@ namespace Hyperion
 
 			ptrFactory->Release();
 			ptrFactory = nullptr;
+
+			// Resize window to match our target resolution
+			RECT newSize = { 0, 0, (long) Resolution.Width, (long) Resolution.Height };
+			if( !AdjustWindowRectEx( &newSize, WS_OVERLAPPEDWINDOW, false, WS_EX_OVERLAPPEDWINDOW ) )
+			{
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to resize window during initialization!\n" );
+				throw std::exception();
+			}
+
+			// Center the window
+			SetWindowPos( m_Output, HWND_TOP, 0, 0, newSize.right - newSize.left, newSize.bottom - newSize.top, SWP_NOMOVE );
 
 			// Create swap chain
 			DXGI_SWAP_CHAIN_DESC swapChainDesc;
@@ -538,7 +563,7 @@ namespace Hyperion
 
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create swap chain and device!\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create swap chain and device!" );
 				throw std::exception();
 			}
 
@@ -548,7 +573,7 @@ namespace Hyperion
 
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt get pointer to the back buffe\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt get pointer to the back buffe" );
 				throw std::exception();
 			}
 
@@ -556,7 +581,7 @@ namespace Hyperion
 			res = m_Device->CreateRenderTargetView( m_BackBuffer.Get(), NULL, m_RenderTargetView.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create render target view\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create render target view" );
 				throw std::exception();
 			}
 
@@ -582,7 +607,7 @@ namespace Hyperion
 			res = m_Device->CreateTexture2D( &depthBufferDesc, NULL, m_DepthStencilBuffer.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create depth buffer\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create depth buffer" );
 				throw std::exception();
 			}
 
@@ -609,7 +634,7 @@ namespace Hyperion
 			res = m_Device->CreateDepthStencilState( &depthStencilDesc, m_DepthStencilState.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create depth stencil state\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create depth stencil state" );
 				throw std::exception();
 			}
 
@@ -627,7 +652,7 @@ namespace Hyperion
 			res = m_Device->CreateDepthStencilView( m_DepthStencilBuffer.Get(), &depthViewDesc, m_DepthStencilView.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create depth stencil view\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create depth stencil view" );
 				throw std::exception();
 			}
 
@@ -653,7 +678,7 @@ namespace Hyperion
 			res = m_Device->CreateRasterizerState( &rasterDesc, m_RasterizerState.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create rasterizer\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create rasterizer" );
 				throw std::exception();
 			}
 
@@ -694,7 +719,7 @@ namespace Hyperion
 			res = m_Device->CreateDepthStencilState( &depthDisabledDesc, m_DepthDisabledState.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create depth disabled state\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create depth disabled state" );
 				throw std::exception();
 			}
 
@@ -714,7 +739,7 @@ namespace Hyperion
 			res = m_Device->CreateBlendState( &blendDesc, m_BlendState.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create normal blend state\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create normal blend state" );
 				throw std::exception();
 			}
 
@@ -723,7 +748,7 @@ namespace Hyperion
 			res = m_Device->CreateBlendState( &blendDesc, m_BlendDisabledState.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				std::cout << "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create alpha disabled blend state\n";
+				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create alpha disabled blend state" );
 				throw std::exception();
 			}
 
@@ -741,7 +766,7 @@ namespace Hyperion
 			return false;
 		}
 
-		std::cout << "[GOOD] DX11Renderer: Resource initialization complete!\n";
+		Console::WriteLine( "[GOOD] DX11Renderer: Resource initialization complete!" );
 		return true;
 	}
 
@@ -754,7 +779,7 @@ namespace Hyperion
 		// Clear render target and depth stencil before rendering the next frame
 		FLOAT backgroundColor[ 4 ] = { 0.f, 0.f, 0.f, 0.f };
 		m_DeviceContext->ClearRenderTargetView( m_RenderTargetView.Get(), backgroundColor );
-		m_DeviceContext->ClearDepthStencilView( m_DepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.f, 0.f );
+		m_DeviceContext->ClearDepthStencilView( m_DepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.f, 0 );
 	}
 
 
@@ -825,7 +850,7 @@ namespace Hyperion
 		}
 		else
 		{
-			std::cout << "[ERROR] DX11Renderer: Failed to enable alpha blending\n";
+			Console::WriteLine( "[ERROR] DX11Renderer: Failed to enable alpha blending" );
 		}
 	}
 
@@ -844,7 +869,7 @@ namespace Hyperion
 		}
 		else
 		{
-			std::cout << "[ERROR] DX11Renderer: Failed to disable alpha blending\n";
+			Console::WriteLine( "[ERROR] DX11Renderer: Failed to disable alpha blending" );
 		}
 	}
 
@@ -865,7 +890,7 @@ namespace Hyperion
 		}
 		else
 		{
-			std::cout << "[ERROR] DX11Renderer: Failed to check if alpha blending is enabled\n";
+			Console::WriteLine( "[ERROR] DX11Renderer: Failed to check if alpha blending is enabled" );
 			return false;
 		}
 
@@ -884,7 +909,7 @@ namespace Hyperion
 		}
 		else
 		{
-			std::cout << "[ERROR] DX11Renderer: Failed to enable Z buffer\n";
+			Console::WriteLine( "[ERROR] DX11Renderer: Failed to enable Z buffer" );
 		}
 	}
 
@@ -900,7 +925,7 @@ namespace Hyperion
 		}
 		else
 		{
-			std::cout << "[ERROR] DX11Renderer: Failed to dsiable Z buffer\n";
+			Console::WriteLine( "[ERROR] DX11Renderer: Failed to dsiable Z buffer" );
 		}
 	}
 
@@ -919,7 +944,7 @@ namespace Hyperion
 		}
 		else
 		{
-			std::cout << "[ERROR] DX11Renderer: Failed to check if Z buffer is enabled\n";
+			Console::WriteLine( "[ERROR] DX11Renderer: Failed to check if Z buffer is enabled" );
 			return true;
 		}
 
@@ -927,8 +952,271 @@ namespace Hyperion
 	}
 
 
+	std::shared_ptr< IBuffer > DirectX11Graphics::CreateBuffer( const BufferParameters& inParams )
+	{
+		if( !m_Device )
+		{
+			Console::WriteLine( "[ERROR] DX11 API: Failed to create buffer.. device isnt valid" );
+			return nullptr;
+		}
+
+		// Validate parameters
+		if( inParams.Size > 0 && inParams.Data == nullptr )
+		{
+			Console::WriteLine( "[ERROR] DX11 API: Failed to create buffer, provided data was invalid!" );
+			return nullptr;
+		}
+
+		// Create buffer object
+		std::shared_ptr< DirectX11Buffer > newBuffer( new DirectX11Buffer( inParams.Type ) );
+
+		D3D11_BUFFER_DESC Desc;
+		ZeroMemory( &Desc, sizeof( Desc ) );
+
+		switch( inParams.Type )
+		{
+		case BufferType::Vertex:
+			Desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+			break;
+		case BufferType::Index:
+			Desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+			break;
+		case BufferType::Constant:
+			Desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			break;
+		case BufferType::ShaderResource:
+			Desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+			break;
+		case BufferType::StreamOutput:
+			Desc.BindFlags = D3D11_BIND_STREAM_OUTPUT;
+			break;
+		}
+
+		if( inParams.Dynamic )
+		{
+			Desc.Usage = D3D11_USAGE_DYNAMIC;
+			Desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		}
+		else
+		{
+			Desc.Usage = D3D11_USAGE_DEFAULT;
+		}
+
+		if( inParams.CanCPURead )
+		{
+			Desc.CPUAccessFlags |= D3D11_CPU_ACCESS_READ;
+		}
+
+		Desc.ByteWidth = inParams.Size;
+		
+		// Create subresource data
+		D3D11_SUBRESOURCE_DATA Data;
+		ZeroMemory( &Data, sizeof( Data ) );
+
+		Data.pSysMem = inParams.Data;
+
+		// Create buffer
+		if( FAILED( m_Device->CreateBuffer( &Desc, &Data, newBuffer->GetAddress() ) ) )
+		{
+			Console::WriteLine( "[ERROR] DX11 API: Failed to create buffer!" );
+			return nullptr;
+		}
+
+		if( !newBuffer->IsValid() )
+		{
+			Console::WriteLine( "[ERROR] DX11 API: Newly created buffer was not valid!" );
+			return nullptr;
+		}
+
+		return newBuffer;
+	}
+
+	// TODO: Aallow multiple bind flags, instead of just a single one
+	D3D11_BIND_FLAG TranslateBindFlags( TextureBindTarget inTarget )
+	{
+		switch( inTarget )
+		{
+		case TextureBindTarget::Shader:
+			return D3D11_BIND_SHADER_RESOURCE;
+		case TextureBindTarget::Output:
+			return D3D11_BIND_STREAM_OUTPUT;
+		case TextureBindTarget::DepthStencil:
+			return D3D11_BIND_DEPTH_STENCIL;
+		default:
+			return D3D11_BIND_SHADER_RESOURCE;
+		}
+	}
+
+	std::shared_ptr< ITexture1D > DirectX11Graphics::CreateTexture1D( const Texture1DParameters& inParams )
+	{
+		if( !m_Device )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create 1D texture.. device state was null!" );
+			return nullptr;
+		}
+
+		// Convert texture parameters into a texture description
+		D3D11_TEXTURE1D_DESC Desc;
+		ZeroMemory( &Desc, sizeof( Desc ) );
+
+		Desc.Width		= inParams.Width;
+		Desc.MipLevels	= 1;
+		Desc.ArraySize	= 1;
+		Desc.MiscFlags	= 0;
+
+		Desc.Format		= TextureFormatToDXGIFormat( inParams.Format );
+		Desc.BindFlags	= TranslateBindFlags( inParams.Target );
+
+		Desc.CPUAccessFlags = 0;
+		if( inParams.Dynamic )
+		{
+			Desc.Usage				= D3D11_USAGE_DYNAMIC;
+			Desc.CPUAccessFlags		|= D3D11_CPU_ACCESS_WRITE;
+		}
+		else
+		{
+			Desc.Usage = D3D11_USAGE_DEFAULT;
+		}
+
+		if( inParams.CanCPURead )
+		{
+			Desc.CPUAccessFlags |= D3D11_CPU_ACCESS_READ;
+		}
+
+		// Now that we have the format built, lets create the structure for the starting data (if any)
+		D3D11_SUBRESOURCE_DATA Data;
+		ZeroMemory( &Data, sizeof( Data ) );
+
+		Data.pSysMem = inParams.Data;
+
+		// Finally, lets create the texture
+		std::shared_ptr< DirectX11Texture1D > Output( new DirectX11Texture1D( inParams ) );
+		if( FAILED( m_Device->CreateTexture1D( &Desc, &Data, Output->GetAddress() ) ) )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create 1D texture! API Call failed" );
+			return nullptr;
+		}
+		
+		return Output;
+	}
 
 
+	std::shared_ptr< ITexture2D > DirectX11Graphics::CreateTexture2D( const Texture2DParameters& inParams )
+	{
+		if( !m_Device )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create 2D texture.. device state was null!" );
+			return nullptr;
+		}
 
+		// Convert texture parameters into a texture description
+		D3D11_TEXTURE2D_DESC Desc;
+		ZeroMemory( &Desc, sizeof( Desc ) );
+
+		Desc.Width			= inParams.Width;
+		Desc.Height			= inParams.Height;
+		Desc.MipLevels		= inParams.MipLevels;
+		Desc.ArraySize		= 1;
+		Desc.MiscFlags		= 0;
+
+		Desc.Format		= TextureFormatToDXGIFormat( inParams.Format );
+		Desc.BindFlags	= TranslateBindFlags( inParams.Target );
+
+		// TODO: Implement multi-sampling in the generic api interface layer
+		Desc.SampleDesc.Count		= 1;
+		Desc.SampleDesc.Quality		= 0;
+
+		Desc.CPUAccessFlags = 0;
+		if( inParams.Dynamic )
+		{
+			Desc.Usage = D3D11_USAGE_DYNAMIC;
+			Desc.CPUAccessFlags |= D3D11_CPU_ACCESS_WRITE;
+		}
+		else
+		{
+			Desc.Usage = D3D11_USAGE_DEFAULT;
+		}
+
+		if( inParams.CanCPURead )
+		{
+			Desc.CPUAccessFlags |= D3D11_CPU_ACCESS_READ;
+		}
+
+		// Now that we have the format built, lets create the structure for the starting data (if any)
+		D3D11_SUBRESOURCE_DATA Data;
+		ZeroMemory( &Data, sizeof( Data ) );
+
+		Data.pSysMem			= inParams.Data;
+		Data.SysMemPitch		= inParams.RowDataSize;
+		Data.SysMemSlicePitch	= 0;
+
+		// Finally, lets create the texture
+		std::shared_ptr< DirectX11Texture2D > Output( new DirectX11Texture2D( inParams ) );
+		if( FAILED( m_Device->CreateTexture2D( &Desc, &Data, Output->GetAddress() ) ) )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create 2D texture! API Call failed" );
+			return nullptr;
+		}
+
+		return Output;
+	}
+
+
+	std::shared_ptr< ITexture3D > DirectX11Graphics::CreateTexture3D( const Texture3DParameters& inParams )
+	{
+		if( !m_Device )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create 3D texture.. device state was null!" );
+			return nullptr;
+		}
+
+		// Convert texture parameters into a texture description
+		D3D11_TEXTURE3D_DESC Desc;
+		ZeroMemory( &Desc, sizeof( Desc ) );
+
+		Desc.Width		= inParams.Width;
+		Desc.Height		= inParams.Height;
+		Desc.Depth		= inParams.Depth;
+
+		Desc.MipLevels = 1;
+		Desc.MiscFlags = 0;
+
+		Desc.Format = TextureFormatToDXGIFormat( inParams.Format );
+		Desc.BindFlags = TranslateBindFlags( inParams.Target );
+
+		Desc.CPUAccessFlags = 0;
+		if( inParams.Dynamic )
+		{
+			Desc.Usage = D3D11_USAGE_DYNAMIC;
+			Desc.CPUAccessFlags |= D3D11_CPU_ACCESS_WRITE;
+		}
+		else
+		{
+			Desc.Usage = D3D11_USAGE_DEFAULT;
+		}
+
+		if( inParams.CanCPURead )
+		{
+			Desc.CPUAccessFlags |= D3D11_CPU_ACCESS_READ;
+		}
+
+		// Now that we have the format built, lets create the structure for the starting data (if any)
+		D3D11_SUBRESOURCE_DATA Data;
+		ZeroMemory( &Data, sizeof( Data ) );
+
+		Data.pSysMem			= inParams.Data;
+		Data.SysMemPitch		= inParams.RowDataSize;
+		Data.SysMemSlicePitch	= inParams.LayerDataSize;
+
+		// Finally, lets create the texture
+		std::shared_ptr< DirectX11Texture3D > Output( new DirectX11Texture3D( inParams ) );
+		if( FAILED( m_Device->CreateTexture3D( &Desc, &Data, Output->GetAddress() ) ) )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create 3D texture! API Call failed" );
+			return nullptr;
+		}
+
+		return Output;
+	}
 
 }

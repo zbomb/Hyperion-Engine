@@ -41,3 +41,7 @@
 
 *.rsp
 Hyperion Engine/Boost/*
+
+*.ipch
+*/ipch/*
+*/v16/*

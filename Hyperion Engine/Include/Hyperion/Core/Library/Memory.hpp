@@ -51,9 +51,9 @@ namespace Hyperion
 
 				auto newPair = m_Values.emplace( In, newInstance );
 #ifdef HYPERION_FLYWEIGHT_DEBUG
-				std::cout << "[DEBUG] Flyweight: Created new instance for value!\n\t";
-				std::cout << "Value: " << std::to_string( In ) << "\n\t";
-				std::cout << "Type Count: " << m_Values.size() << "\n";
+				Console::Write( "[DEBUG] Flyweight: Created new instance for value!\n\t" );
+				Console::Write( "Value: ", std::to_string( In ), "\n\t" );
+				Console::Write( "Type Count: ", m_Values.size(), "\n" );
 #endif
 				return newPair.first->second;
 			}
@@ -65,16 +65,16 @@ namespace Hyperion
 					Iter->second->m_RefCount++;
 
 #ifdef HYPERION_FLYWEIGHT_DEBUG
-					std::cout << "[DEBUG] Flyweight Cache: Found value in cache!\n\t";
-					std::cout << "Value: " << std::to_string( In ) << "\n\t";
-					std::cout << "Ref Count: " << Iter->second->m_RefCount << "\n\t";
-					std::cout << "Type Count: " << m_Values.size() << "\n";
+					Console::Write( "[DEBUG] Flyweight Cache: Found value in cache!\n\t" );
+					Console::Write( "Value: ", std::to_string( In ), "\n\t" );
+					Console::Write( "Ref Count: ", Iter->second->m_RefCount, "\n\t" );
+					Console::Write( "Type Count: ", m_Values.size(), "\n" );
 #endif
 					return Iter->second;
 				}
 				else
 				{
-					std::cout << "[ERROR] Flyweight Cache: Found invalid entry in cache.. returning null!\n";
+					Console::WriteLine( "[ERROR] Flyweight Cache: Found invalid entry in cache.. returning null!" );
 					return nullptr;
 				}
 			}
@@ -86,7 +86,7 @@ namespace Hyperion
 			if( !In )
 			{
 #ifdef HYPERION_FLYWEIGHT_DEBUG
-				std::cout << "[DEBUG] Flyweight Cache: Free called on null value.. might be intended\n";
+				Console::WriteLine( "[DEBUG] Flyweight Cache: Free called on null value.. might be intended" );
 #endif
 				return;
 			}
@@ -96,7 +96,7 @@ namespace Hyperion
 			if( Iter == m_Values.end() )
 			{
 				// Bad condition
-				std::cout << "[ERROR] Flyweight Cache: Failed to free value.. couldnt find cache entry by key!\n";
+				Console::WriteLine( "[ERROR] Flyweight Cache: Failed to free value.. couldnt find cache entry by key!" );
 
 				// Were still going to decrement the instance ref counter
 				if( In->m_RefCount > 0 )
@@ -109,10 +109,10 @@ namespace Hyperion
 					if( Iter->second->m_RefCount <= 1 )
 					{
 #ifdef HYPERION_FLYWEIGHT_DEBUG
-						std::cout << "[DEBUG] Flyweight Cache: Removing cached value.. ref count < 1\n\t";
-						std::cout << "Value: " << std::to_string( *Iter->second->m_Ref ) << "\n\t";
-						std::cout << "Ref Count: " << Iter->second->m_RefCount - 1 << "\n\t";
-						std::cout << "Type Count: " << m_Values.size() << "\n";
+						Console::Write( "[DEBUG] Flyweight Cache: Removing cached value.. ref count < 1\n\t" );
+						Console::Write( "Value: ", std::to_string( *Iter->second->m_Ref ), "\n\t" );
+						Console::Write( "Ref Count: ", Iter->second->m_RefCount - 1, "\n\t" );
+						Console::Write( "Type Count: ", m_Values.size(), "\n" );
 #endif
 						// Destroy instance
 						m_Values.erase( Iter );
@@ -122,10 +122,10 @@ namespace Hyperion
 						Iter->second->m_RefCount--;
 
 #ifdef HYPERION_FLYWEIGHT_DEBUG
-						std::cout << "[DEBUG] Flyweight Cache: Decrementing value ref count...\n\t";
-						std::cout << "Value: " << std::to_string( *Iter->second->m_Ref.get() ) << "\n\t";
-						std::cout << "Ref Count: " << Iter->second->m_RefCount << "\n\t";
-						std::cout << "Type Count: " << m_Values.size() << "\n";
+						Console::Write( "[DEBUG] Flyweight Cache: Decrementing value ref count...\n\t" );
+						Console::Write( "Value: ", std::to_string( *Iter->second->m_Ref.get() ), "\n\t" );
+						Console::Write( "Ref Count: ", Iter->second->m_RefCount, "\n\t" );
+						Console::Write( "Type Count: ", m_Values.size(), "\n" );
 #endif
 
 					}
@@ -133,7 +133,7 @@ namespace Hyperion
 				else
 				{
 					// Bad Instance!
-					std::cout << "[ERROR] Flyweight Cache: Failed to properly free value.. bad instance found... removing from cache!\n";
+					Console::WriteLine( "[ERROR] Flyweight Cache: Failed to properly free value.. bad instance found... removing from cache!" );
 					m_Values.erase( Iter );
 				}
 			}
@@ -150,18 +150,18 @@ namespace Hyperion
 #ifdef HYPERION_FLYWEIGHT_DEBUG
 		static void DebugCache()
 		{
-			std::cout << "------------ FLYWEIGHT CACHE DEBUG BEGIN ------------\n";
-			std::cout << "Value Count: " << m_Values.size() << "\n";
-			std::cout << "\nValues:\n\t";
+			Console::WriteLine( "------------ FLYWEIGHT CACHE DEBUG BEGIN ------------" );
+			Console::Write( "Value Count: ", m_Values.size(), "\n" );
+			Console::Write( "\nValues:\n\t" );
 
 			for( auto It = m_Values.begin(); It != m_Values.end(); It++ )
 			{
-				std::cout << "----- Value ------\n\t";
-				std::cout << std::to_string( *It->second->m_Ref.get() ) << "\n\t";
-				std::cout << "Ref Count: " << It->second->m_RefCount << "\n\n\t";
+				Console::Write( "----- Value ------\n\t";
+				Console::Write( std::to_string( *It->second->m_Ref.get() ), "\n\t" );
+				Console::Write( "Ref Count: ", It->second->m_RefCount, "\n\n\t" );
 			}
 
-			std::cout << "\n------------ FLYWEIGHT CACHE DEBUG END ---------------\n";
+			Console::WriteLine( "\n------------ FLYWEIGHT CACHE DEBUG END ---------------" );
 		}
 #endif
 

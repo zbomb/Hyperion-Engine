@@ -32,7 +32,7 @@ namespace Hyperion
 		do
 		{
 			pathBuffer.resize( MAX_PATH + bytesCopied );
-			bytesCopied = GetModuleFileName( NULL, pathBuffer.data(), pathBuffer.size() );
+			bytesCopied = GetModuleFileName( NULL, pathBuffer.data(), (DWORD)pathBuffer.size() );
 		}
 		while( bytesCopied >= pathBuffer.size() );
 
@@ -61,7 +61,7 @@ namespace Hyperion
 		{
 			// We need a path so we will use the ExecPath as a default
 			m_UserPath = String( execPath.generic_u8string(), StringEncoding::UTF8 );
-			std::cout << "[ERROR] Win32PlatformServices: Failed to get the documents directory for current user! Defaulting to game directory...\n";
+			Console::WriteLine( "[ERROR] Win32PlatformServices: Failed to get the documents directory for current user! Defaulting to game directory..." );
 		}
 
 		// Make sure we free the memory allocated by the winapi call

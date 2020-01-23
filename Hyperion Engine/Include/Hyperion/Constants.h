@@ -5,7 +5,10 @@
 ==================================================================================================*/
 
 #pragma once
+
+#include "Hyperion/Ints.h"
 #include <string>
+
 
 namespace Hyperion
 {

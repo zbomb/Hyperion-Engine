@@ -63,7 +63,7 @@ namespace Hyperion
 		}
 		else
 		{
-			std::cout << "[Warning] AssetStream: Atempt to seek to an out of range position!\n";
+			Console::WriteLine( "[Warning] AssetStream: Atempt to seek to an out of range position!" );
 		}
 	}
 
@@ -157,14 +157,14 @@ namespace Hyperion
 		auto f = IFileSystem::OpenFile( FilePath( chunkIdentifier, PathRoot::Assets ), FileMode::Read );
 		if( !f )
 		{
-			std::cout << "[ERROR] VirtualFileSystem: Asset chunk file wasnt found!\n";
+			Console::WriteLine( "[ERROR] VirtualFileSystem: Asset chunk file wasnt found!" );
 			return nullptr;
 		}
 
 		// Now, ensure the offsets are correct
 		if( f->Size() < End )
 		{
-			std::cout << "[ERROR] VitualFileSystem: Asset chunk file size was less than the requested end offset!\n";
+			Console::WriteLine( "[ERROR] VitualFileSystem: Asset chunk file size was less than the requested end offset!" );
 			return nullptr;
 		}
 
@@ -187,7 +187,7 @@ namespace Hyperion
 		auto f = IFileSystem::OpenFile( FilePath( manifestInfo.second.second.ChunkFile, PathRoot::Assets ), FileMode::Read );
 		if( !f )
 		{
-			std::cout << "[ERROR] VirtualFileSystem: Asset chunk file wasnt found.. but the manifest entry appeared valid!\n";
+			Console::WriteLine( "[ERROR] VirtualFileSystem: Asset chunk file wasnt found.. but the manifest entry appeared valid!" );
 			return false;
 		}
 
@@ -197,7 +197,7 @@ namespace Hyperion
 
 		if( f->Size() < endOffset )
 		{
-			std::cout << "[ERROR] VirtualFileSystem: Asset chunk file size was less than the requested end offset!\n";
+			Console::WriteLine( "[ERROR] VirtualFileSystem: Asset chunk file size was less than the requested end offset!" );
 			return false;
 		}
 
@@ -208,12 +208,12 @@ namespace Hyperion
 		auto res = r.ReadBytes( outData, (size_t) dataLength );
 		if( res == DataReader::ReadResult::Fail )
 		{
-			std::cout << "[ERROR] VirtualFileSystem: Failed to read asset from chunk file!\n";
+			Console::WriteLine( "[ERROR] VirtualFileSystem: Failed to read asset from chunk file!" );
 			return false;
 		}
 		else if( res == DataReader::ReadResult::End )
 		{
-			std::cout << "[ERROR] VirtualFileSystem: Failed to read asset from chunk file.. hit end of file!\n";
+			Console::WriteLine( "[ERROR] VirtualFileSystem: Failed to read asset from chunk file.. hit end of file!" );
 			return false;
 		}
 		else
@@ -244,7 +244,7 @@ namespace Hyperion
 		auto f = IFileSystem::OpenFile( FilePath( groupEntry.second.ChunkFile, PathRoot::Assets ), FileMode::Read );
 		if( !f )
 		{
-			std::cout << "[ERROR] VirtualFileSystem: Failed to batch read group.. couldnt open the chunk file!\n";
+			Console::WriteLine( "[ERROR] VirtualFileSystem: Failed to batch read group.. couldnt open the chunk file!" );
 			return false;
 		}
 
@@ -271,7 +271,7 @@ namespace Hyperion
 		// Validate offsets
 		if( groupBegin < 0 || groupEnd < 0 || f->Size() < groupEnd )
 		{
-			std::cout << "[ERROR] VirtualFileSystem: Failed to batch read group.. invalid offsets calculated!\n";
+			Console::WriteLine( "[ERROR] VirtualFileSystem: Failed to batch read group.. invalid offsets calculated!" );
 			return false;
 		}
 
@@ -283,12 +283,12 @@ namespace Hyperion
 		auto result = reader.ReadBytes( groupData, (size_t)( groupEnd - groupBegin ) );
 		if( result == DataReader::ReadResult::Fail )
 		{
-			std::cout << "[ERROR] VirtualFileSystem: Failed to batch read group.. i/o operation failed!\n";
+			Console::WriteLine( "[ERROR] VirtualFileSystem: Failed to batch read group.. i/o operation failed!" );
 			return false;
 		}
 		else if( result == DataReader::ReadResult::End )
 		{
-			std::cout << "[ERROR] VirtualFileSystem: Failed to batch read group.. hit the end of the chunk file!\n";
+			Console::WriteLine( "[ERROR] VirtualFileSystem: Failed to batch read group.. hit the end of the chunk file!" );
 			return false;
 		}
 

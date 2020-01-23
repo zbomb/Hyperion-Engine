@@ -19,6 +19,7 @@
 namespace Hyperion
 {
 
+
 	class AssetManager
 	{
 
@@ -52,7 +53,7 @@ namespace Hyperion
 					std::shared_ptr< T > castedAsset = std::dynamic_pointer_cast< T >( entry->second->m_Ref );
 					if( castedAsset )
 					{
-						return AssetRef< T >( castedAsset, entry->second );
+						return AssetRef< T >( castedAsset, entry->second, AssetPath( entry->first, AssetLocation:: );
 					}
 					else
 					{
@@ -99,7 +100,7 @@ namespace Hyperion
 									std::shared_ptr< T > casted_asset = std::dynamic_pointer_cast< T >( new_state->m_Ref );
 									if( casted_asset )
 									{
-										return AssetRef< T >( casted_asset, new_state );
+										return AssetRef< T >( casted_asset, new_state, new_entry->first );
 									}
 								}
 							}
@@ -114,7 +115,7 @@ namespace Hyperion
 							std::shared_ptr< T > casted_asset = std::dynamic_pointer_cast< T >( state->m_Ref );
 							if( casted_asset )
 							{
-								return AssetRef< T >( casted_asset, state );
+								return AssetRef< T >( casted_asset, state, entry->first );
 							}
 
 							return nullptr;
@@ -130,6 +131,7 @@ namespace Hyperion
 				newEntry->m_Loaded		= false;
 				newEntry->m_Ref			= nullptr;
 				newEntry->m_RefCount	= 0;
+				newEntry->m_Location	= AssetLocation::FileSystem;
 			}
 
 			std::shared_ptr< T > newAsset = nullptr;
@@ -140,7 +142,8 @@ namespace Hyperion
 				auto streamResult = VirtualFileSystem::StreamFile( assetIdentifier );
 				if( streamResult )
 				{
-					std::shared_ptr< Asset > assetRef = AssetLoader::StreamFromIdentifier( assetIdentifier, *streamResult );
+					std::shared_ptr< Asset > assetRef = AssetLoader::StreamFromFileName( assetIdentifier, *streamResult );
+					assetRef->m_Path = AssetPath( assetIdentifier, AssetLocation::Virtual );
 					
 					// Now we need to try and cast to the desired type
 					newAsset = std::dynamic_pointer_cast< T >( assetRef );
@@ -166,7 +169,10 @@ namespace Hyperion
 						auto f_size = file->Size();
 						AssetStream stream( std::move( file ), 0, f_size );
 
-						newAsset = std::dynamic_pointer_cast< T >( AssetLoader::StreamFromIdentifier( assetIdentifier, stream ) );
+						auto gasset = AssetLoader::StreamFromFileName( AssetPath( assetIdentifier, AssetLocation::FileSystem ), stream );
+						gasset->m_Path = AssetPath( assetIdentifier, AssetLocation::FileSystem );
+
+						newAsset = std::dynamic_pointer_cast<T>( gasset );
 					}
 				}
 			}
@@ -184,9 +190,10 @@ namespace Hyperion
 					i->m_Loaded		= true;
 					i->m_Ref		= newAsset;
 					i->m_RefCount	= 0;
+					i->m_Location	= bCheckDisk ? AssetLocation::FileSystem : AssetLocation::Virtual;
 					
 					// Somehow the entry went missing, so were going to recreate it and return
-					return AssetRef< T >( newAsset, i );
+					return AssetRef< T >( newAsset, i, AssetLocation( entry->first, i->m_Location ) );
 				}
 				else
 				{
@@ -195,13 +202,14 @@ namespace Hyperion
 					i->m_Loaded		= true;
 					i->m_Ref		= newAsset;
 					i->m_RefCount	= 0;
+					i->m_Location	= bCheckDisk ? AssetLocation::FileSystem : AssetLocation::Virtual;
 
 					// Release the lock and trigger CV, we dont have to worry about the AssetInstance being erased
 					// because its a shared_ptr, so we can safely unlock before building the asset ref were returning
 					lock.unlock();
 
 					i->m_Wait.notify_all();
-					return AssetRef< T >( newAsset, i );
+					return AssetRef< T >( newAsset, i, AssetLocation( entry->first, i->m_Location ) );
 				}
 			}
 		}
@@ -217,11 +225,11 @@ namespace Hyperion
 			* Can be called from any thread.. thread-safe!
 		*/
 		template< typename T >
-		static AssetRef< T > LoadSync( const String& assetIdentifier, bool bCheckDisk = true )
+		static AssetRef< T > LoadSync( const String& inAssetIdentifier, bool bCheckDisk = true )
 		{
 			// Verify the identifier argument, needs to be a basic string (non localized), lowercase, and not empty
-			HYPERION_VERIFY_BASICSTR( assetIdentifier );
-			// TODO: ToLower( assetIdentifier );
+			HYPERION_VERIFY_BASICSTR( inAssetIdentifier );
+			auto assetIdentifier = inAssetIdentifier.TrimBoth().ToLower();
 
 			if( assetIdentifier.IsEmpty() ) return nullptr;
 
@@ -236,7 +244,7 @@ namespace Hyperion
 				return quick_res;
 			}
 
-			return Impl_LoadUnique< T >( assetIdentifier, bCheckDisk );;
+			return Impl_LoadUnique< T >( assetIdentifier, bCheckDisk );
 		}
 
 		/*

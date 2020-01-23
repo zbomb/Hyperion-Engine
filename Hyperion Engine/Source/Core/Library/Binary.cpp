@@ -30,54 +30,15 @@ namespace Hyperion
 		*/
 		void Binary::PrintHex( const std::vector< byte >::const_iterator Begin, const std::vector< byte >::const_iterator End )
 		{
-			std::ios_base::fmtflags normalFlags( std::cout.flags() );
-
-			// We want to print out 8 bytes on a tabbed line
-			uint32 Count = 0;
-			std::cout << "\t";
-
-			for( auto It = Begin; It != End; It++ )
-			{
-				Count++;
-				if( Count > 8 )
-				{
-					Count = 1;
-					std::cout << "\n\t";
-				}
-
-				std::cout << std::hex << std::setfill( '0' ) << std::setw( 2 ) << static_cast< uint16 >( *It );
-				std::cout << " ";
-			}
-
-			std::cout << "\n";
-			std::cout.setf( normalFlags );
+			// TODO: Need to reimplement with new console system!
 		}
 
 		/*
 			Binary::PrintBin
 		*/
-		void Binary::PrintBin( const std::vector< byte >::iterator Begin, const std::vector< byte >::iterator End )
+		void Binary::PrintBin( const std::vector< byte >::const_iterator Begin, const std::vector< byte >::const_iterator End )
 		{
-			// We want to print out 4 bytes per line, since these will be much longer
-			// We also want to put a space between bytes
-			uint32 Count = 0;
-			std::cout << "\t";
-
-			for( auto It = Begin; It != End; It++ )
-			{
-				Count++;
-				if( Count > 4 )
-				{
-					Count = 1;
-					std::cout << "\n\t";
-				}
-
-				std::bitset< 8 > Bits( *It );
-				std::cout << Bits;
-				std::cout << " ";
-			}
-
-			std::cout << "\n";
+			// TODO: Need to reimplement with new console system
 		}
 
 		/*
@@ -202,12 +163,12 @@ namespace Hyperion
 		/*
 			Binary::DeserializeFloat
 		*/
-		bool Binary::DeserializeFloat( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, float& Output, bool bIsLittleEndian /* = false */  )
+		bool Binary::DeserializeFloat( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, float& Output, bool bIsLittleEndian /* = false */  )
 		{
 			// Ensure we are being passed exactly 4 bytes
 			if( std::distance( Begin, End ) != 4 )
 			{
-				std::cout << "[ERROR] Binary: Attempt to deserialize float, but was not passed exactly 4 bytes!\n";
+				Console::WriteLine( "[ERROR] Binary: Attempt to deserialize float, but was not passed exactly 4 bytes!" );
 				return false;
 			}
 
@@ -276,7 +237,7 @@ namespace Hyperion
 				{
 					// Mantissa out of range
 					// Set value to 0?
-					std::cout << "[ERROR] Binary: Failed to deserialize float.. mantissa was out of range!\n";
+					Console::WriteLine( "[ERROR] Binary: Failed to deserialize float.. mantissa was out of range!" );
 					Output = 0.f;
 					return false;
 				}
@@ -316,7 +277,7 @@ namespace Hyperion
 			// BitCount number of bits into an int32 and return it, as long as the BitCount is valid
 			if( BitCount > 32 || BitCount < 2 )
 			{
-				std::cout << "[ERROR] Binary: ReadSignedBinary was called with an invalid BitCount!\n";
+				Console::WriteLine( "[ERROR] Binary: ReadSignedBinary was called with an invalid BitCount!" );
 				return 0;
 			}
 
@@ -346,12 +307,12 @@ namespace Hyperion
 
 			if( BitCount > 32 || BitCount < 2 )
 			{
-				std::cout << "[ERROR] Binary: GenerateSignedBinary was called with an invalid BitCount (" << (uint32)BitCount << "!\n";
+				Console::WriteLine( "[ERROR] Binary: GenerateSignedBinary was called with an invalid BitCount (", (uint32)BitCount, "!" );
 				return 0;
 			}
 			else if( Input > MaxValue || Input < MinValue )
 			{
-				std::cout << "[ERROR] Binary: GenerateSignedBinary was called with an input that doesnt match the bit count!\n\tWith a " << (uint32)BitCount << "-bit int.. Max=" << MaxValue << " Min=" << MinValue << "\n";
+				Console::WriteLine( "[ERROR] Binary: GenerateSignedBinary was called with an input that doesnt match the bit count!\n\tWith a ", (uint32)BitCount, "-bit int.. Max=", MaxValue, " Min=", MinValue, "" );
 				return 0;
 			}
 
@@ -381,6 +342,11 @@ namespace Hyperion
 
 				return Output;
 			}
+		}
+
+		void Binary::DeserializeFloat( std::vector< byte >::const_iterator Begin, float& Out, bool bReadAsLittleEndian )
+		{
+			DeserializeFloat( Begin, Begin + 4, Out, bReadAsLittleEndian );
 		}
 
 		/*
@@ -512,7 +478,7 @@ namespace Hyperion
 		/*
 			Binary::DeserilalizeDouble
 		*/
-		bool Binary::DeserializeDouble( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, double& Output, bool bReadAsLittleEndian /* = false */  )
+		bool Binary::DeserializeDouble( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, double& Output, bool bReadAsLittleEndian /* = false */  )
 		{
 			// Set default output value
 			Output = 0.0;
@@ -520,7 +486,7 @@ namespace Hyperion
 			// Validate the iterator distance
 			if( std::distance( Begin, End ) != 8 )
 			{
-				std::cout << "[ERROR] Binary: Attempt to deserialize double.. but the distance between iterators is not 8!\n";
+				Console::WriteLine( "[ERROR] Binary: Attempt to deserialize double.. but the distance between iterators is not 8!" );
 				return false;
 			}
 
@@ -606,7 +572,7 @@ namespace Hyperion
 				// Ensure Mantissa is within valid range
 				if( Mantissa < 0.5 || Mantissa > 1.0 )
 				{
-					std::cout << "[ERROR] Binary: Failed to deserialize double.. mantissa was out of range!\n";
+					Console::WriteLine( "[ERROR] Binary: Failed to deserialize double.. mantissa was out of range!" );
 					return false;
 				}
 
@@ -628,6 +594,11 @@ namespace Hyperion
 			return true;
 		}
 
+		void Binary::DeserializeDouble( std::vector< byte >::const_iterator Begin, double& Out, bool bReadAsLittleEndian )
+		{
+			DeserializeDouble( Begin, Begin + 8, Out, bReadAsLittleEndian );
+		}
+
 		/*
 			Binary::SerializeUInt8
 		*/
@@ -639,7 +610,7 @@ namespace Hyperion
 		/*
 			Binary::DeserializeUInt8
 		*/
-		void Binary::DeserializeUInt8( std::vector< byte >::iterator Where, uint8& Output )
+		void Binary::DeserializeUInt8( std::vector< byte >::const_iterator Where, uint8& Output )
 		{
 			Output = (uint8) *Where;
 		}
@@ -655,7 +626,7 @@ namespace Hyperion
 		/*
 			Binary::DeserializeInt8
 		*/
-		void Binary::DeserializeInt8( std::vector< byte >::iterator Where, int8& Output )
+		void Binary::DeserializeInt8( std::vector< byte >::const_iterator Where, int8& Output )
 		{
 			DeserializeUInt8( Where, (uint8&) Output );
 		}
@@ -701,13 +672,13 @@ namespace Hyperion
 		/*
 			Binary::DeserializeUInt16
 		*/
-		bool Binary::DeserializeUInt16( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, uint16& Out, bool bReadAsLittleEndian /* = false */  )
+		bool Binary::DeserializeUInt16( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, uint16& Out, bool bReadAsLittleEndian /* = false */  )
 		{
 			Out = 0;
 
 			if( std::distance( Begin, End ) != 2 )
 			{
-				std::cout << "[ERROR] Binary: Attempt to deserialize uint16, but given byte list is not equal to 2 in length!\n";
+				Console::WriteLine( "[ERROR] Binary: Attempt to deserialize uint16, but given byte list is not equal to 2 in length!" );
 				return false;
 			}
 
@@ -728,6 +699,11 @@ namespace Hyperion
 			return true;
 		}
 
+		void Binary::DeserializeUInt16( std::vector< byte >::const_iterator Begin, uint16& Out, bool bReadAsLittleEndian )
+		{
+			DeserializeUInt16( Begin, Begin + 2, Out, bReadAsLittleEndian );
+		}
+
 		/*
 			Binary::SerializeInt16
 		*/
@@ -739,9 +715,14 @@ namespace Hyperion
 		/*
 			Binary::DeserializeInt16
 		*/
-		bool Binary::DeserializeInt16( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, int16& Out, bool bReadAsLittleEndian /* = false */  )
+		bool Binary::DeserializeInt16( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, int16& Out, bool bReadAsLittleEndian /* = false */  )
 		{
 			return DeserializeUInt16( Begin, End, (uint16&) Out, bReadAsLittleEndian );
+		}
+
+		void Binary::DeserializeInt16( std::vector< byte >::const_iterator Begin, int16& Out, bool bReadAsLittleEndian )
+		{
+			DeserializeInt16( Begin, Begin + 2, Out, bReadAsLittleEndian );
 		}
 
 		/*
@@ -789,13 +770,13 @@ namespace Hyperion
 		/*
 			Binary::DeserializeUInt32
 		*/
-		bool Binary::DeserializeUInt32( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, uint32& Out, bool bReadAsLittleEndian /* = false */  )
+		bool Binary::DeserializeUInt32( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, uint32& Out, bool bReadAsLittleEndian /* = false */  )
 		{
 			Out = 0;
 
 			if( std::distance( Begin, End ) != 4 )
 			{
-				std::cout << "[ERROR] Binary: Attempt to read 32-bit integer, but the distance between the iterators given was not 4 bytes!\n";
+				Console::WriteLine( "[ERROR] Binary: Attempt to read 32-bit integer, but the distance between the iterators given was not 4 bytes!" );
 				return false;
 			}
 
@@ -822,6 +803,12 @@ namespace Hyperion
 			return true;
 		}
 
+		void Binary::DeserializeUInt32( std::vector< byte >::const_iterator Begin, uint32& Out, bool bReadAsLittleEndian )
+		{
+			DeserializeUInt32( Begin, Begin + 4, Out, bReadAsLittleEndian );
+		}
+
+
 		/*
 			Binary::SerializeInt32
 		*/
@@ -833,9 +820,14 @@ namespace Hyperion
 		/*
 			Binary::DeserializeInt32
 		*/
-		bool Binary::DeserializeInt32( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, int32& Out, bool bReadAsLittleEndian /* = false */  )
+		bool Binary::DeserializeInt32( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, int32& Out, bool bReadAsLittleEndian /* = false */  )
 		{
 			return DeserializeUInt32( Begin, End, (uint32&) Out, bReadAsLittleEndian );
+		}
+
+		void Binary::DeserializeInt32( std::vector< byte >::const_iterator Begin, int32& Out, bool bReadAsLittleEndian )
+		{
+			DeserializeInt32( Begin, Begin + 4, Out, bReadAsLittleEndian );
 		}
 
 		/*
@@ -886,14 +878,14 @@ namespace Hyperion
 		/*
 			Binary::DeserializeUInt16
 		*/
-		bool Binary::DeserializeUInt64( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, uint64& Out, bool bReadAsLittleEndian /* = false */  )
+		bool Binary::DeserializeUInt64( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, uint64& Out, bool bReadAsLittleEndian /* = false */  )
 		{
 			Out = 0;
 
 			// Check byte count
 			if( std::distance( Begin, End ) != 8 )
 			{
-				std::cout << "[ERROR] Binary: Attempt to deserialize uint64 with the wrong number of bytes!\n";
+				Console::WriteLine( "[ERROR] Binary: Attempt to deserialize uint64 with the wrong number of bytes!" );
 				return false;
 			}
 
@@ -927,6 +919,11 @@ namespace Hyperion
 			return true;
 		}
 
+		void Binary::DeserializeUInt64( std::vector< byte >::const_iterator Begin, uint64& Out, bool bReadAsLittleEndian )
+		{
+			DeserializeUInt64( Begin, Begin + 8, Out, bReadAsLittleEndian );
+		}
+
 		/*
 			Binary::SerializeInt64
 		*/
@@ -938,9 +935,14 @@ namespace Hyperion
 		/*
 			Binary::DeserializeInt64
 		*/
-		bool Binary::DeserializeInt64( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, int64& Out, bool bReadAsLittleEndian /* = false */  )
+		bool Binary::DeserializeInt64( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, int64& Out, bool bReadAsLittleEndian /* = false */  )
 		{
 			return DeserializeUInt64( Begin, End, (uint64&) Out, bReadAsLittleEndian );
+		}
+
+		void Binary::DeserializeInt64( std::vector< byte >::const_iterator Begin, int64& Out, bool bReadAsLittleEndian )
+		{
+			DeserializeInt64( Begin, Begin + 8, Out, bReadAsLittleEndian );
 		}
 
 		/*
@@ -954,7 +956,7 @@ namespace Hyperion
 		/*
 			Binary::DeserializeBoolean
 		*/
-		void Binary::DeserializeBoolean( std::vector< byte >::iterator Where, bool& Out )
+		void Binary::DeserializeBoolean( std::vector< byte >::const_iterator Where, bool& Out )
 		{
 			Out = ( *Where == 0x00 ) ? false : true;
 		}

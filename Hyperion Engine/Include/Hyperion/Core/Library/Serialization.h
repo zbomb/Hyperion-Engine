@@ -422,7 +422,7 @@ namespace Hyperion
 			auto StartResult = ReadComplexTypeStart( ArchiveType::Table, ArchiveControlByte::TableStart, ArchiveTableType::Vector );
 			if( StartResult == ReadResult::BadHeader || StartResult == ReadResult::EndOfBuffer )
 			{
-				std::cout << "[ERROR] ArchiveReader: Failed to read start of vector.. end of buffer? Closing...\n";
+				Console::WriteLine( "[ERROR] ArchiveReader: Failed to read start of vector.. end of buffer? Closing..." );
 				Close();
 				return StartResult;
 			}
@@ -443,7 +443,7 @@ namespace Hyperion
 				auto valueInfo = PeekHeaderByte( 0 );
 				if( valueInfo.Error )
 				{
-					std::cout << "[ERROR] ArchiveReader: Failed to read vector contents... Hit end of buffer? Non-recoverable...\n";
+					Console::WriteLine( "[ERROR] ArchiveReader: Failed to read vector contents... Hit end of buffer? Non-recoverable..." );
 					Close();
 					return ReadResult::EndOfBuffer;
 				}
@@ -456,7 +456,7 @@ namespace Hyperion
 
 				if( valueInfo.Func != ArchiveControlByte::TableValue )
 				{
-					std::cout << "[ERROR] ArchiveReader: Failed to read vector contents... control code wasnt TABLE_VALUE...\n";
+					Console::WriteLine( "[ERROR] ArchiveReader: Failed to read vector contents... control code wasnt TABLE_VALUE..." );
 					Close();
 					return ReadResult::BadHeader;
 				}
@@ -464,7 +464,7 @@ namespace Hyperion
 				// We want to ensure the type matches the type we expect
 				if( !DoesTypeCodeMatch< T >( valueInfo.Type ) )
 				{
-					std::cout << "[ERROR] ArchiveReader: Failed to read vector contents.. type doesnt match expected type!\n";
+					Console::WriteLine( "[ERROR] ArchiveReader: Failed to read vector contents.. type doesnt match expected type!" );
 					bError = true;
 					break;
 				}
@@ -476,7 +476,7 @@ namespace Hyperion
 				// Check if this was successful
 				if( ElemResult != ReadResult::Success )
 				{
-					std::cout << "[ERROR] ArchiveReader: Failed to read vector contents.. element read failed!\n";
+					Console::WriteLine( "[ERROR] ArchiveReader: Failed to read vector contents.. element read failed!" );
 					bError = true;
 					break;
 				}
@@ -486,7 +486,7 @@ namespace Hyperion
 			auto SeekResult = SeekComplexTypeEnd( ArchiveControlByte::TableEnd );
 			if( SeekResult != ReadResult::Success )
 			{
-				std::cout << "[ERROR] ArchiveReader: Failed to skeep end of vector! Closing...\n";
+				Console::WriteLine( "[ERROR] ArchiveReader: Failed to skeep end of vector! Closing..." );
 				Close();
 				return ReadResult::BadHeader;
 			}
@@ -506,7 +506,7 @@ namespace Hyperion
 			auto StartResult = ReadComplexTypeStart( ArchiveType::Table, ArchiveControlByte::TableStart, ArchiveTableType::Map );
 			if( StartResult == ReadResult::BadHeader || StartResult == ReadResult::EndOfBuffer )
 			{
-				std::cout << "[ERROR] ArchiveReader: Failed to read start of map.. closing...\n";
+				Console::WriteLine( "[ERROR] ArchiveReader: Failed to read start of map.. closing..." );
 				Close();
 				return StartResult;
 			}
@@ -529,7 +529,7 @@ namespace Hyperion
 				// Check if the bytes were read in properly
 				if( keyInfo.Error || valueInfo.Error )
 				{
-					std::cout << "[ERROR] Failed to read map contents.. Hit end of buffer? Closing...\n";
+					Console::WriteLine( "[ERROR] Failed to read map contents.. Hit end of buffer? Closing..." );
 					Close();
 					return ReadResult::EndOfBuffer;
 				}
@@ -542,7 +542,7 @@ namespace Hyperion
 
 				if( keyInfo.Func != ArchiveControlByte::TableKey || valueInfo.Func != ArchiveControlByte::TableValue )
 				{
-					std::cout << "[ERROR] Failed to read map contents... key/value pairs arent aligned? Closing...\n";
+					Console::WriteLine( "[ERROR] Failed to read map contents... key/value pairs arent aligned? Closing..." );
 					Close();
 					return ReadResult::BadHeader;
 				}
@@ -550,7 +550,7 @@ namespace Hyperion
 				// Ensure types match properly
 				if( !DoesTypeCodeMatch< T >( keyInfo.Type ) || !DoesTypeCodeMatch< U >( valueInfo.Type ) )
 				{
-					std::cout << "[ERROR] Failed to read map contents... key/value types arent correct! Skipping...\n";
+					Console::WriteLine( "[ERROR] Failed to read map contents... key/value types arent correct! Skipping..." );
 					bError = true;
 					break;
 				}
@@ -560,7 +560,7 @@ namespace Hyperion
 				auto KeyResult = ReadValue_Internal( Key );
 				if( KeyResult != ReadResult::Success )
 				{
-					std::cout << "[ERROR] ArchiveReader: Failed to read key for map! Skipping...\n";
+					Console::WriteLine( "[ERROR] ArchiveReader: Failed to read key for map! Skipping..." );
 					bError = true;
 					break;
 				}
@@ -568,7 +568,7 @@ namespace Hyperion
 				auto ValueResult = ReadValue_Internal( Out[ Key ] );
 				if( ValueResult != ReadResult::Success )
 				{
-					std::cout << "[ERROR] ArchiveReader: Failed to read value for map! Skipping...\n";
+					Console::WriteLine( "[ERROR] ArchiveReader: Failed to read value for map! Skipping..." );
 					bError = true;
 					break;
 				}
@@ -578,7 +578,7 @@ namespace Hyperion
 			auto SeekResult = SeekComplexTypeEnd( ArchiveControlByte::TableEnd );
 			if( SeekResult != ReadResult::Success )
 			{
-				std::cout << "[ERROR] ArchiveReader: Failed to seek to end of map! Closing...\n";
+				Console::WriteLine( "[ERROR] ArchiveReader: Failed to seek to end of map! Closing..." );
 				Close();
 				return ReadResult::BadHeader;
 			}

@@ -6,13 +6,16 @@
 
 #pragma once
 
-#include <stdint.h>
 #include <iostream>
+
 
 // Debug Defines
 #define HYPERION_DEBUG
 #define HYPERION_DEBUG_OBJECT
 #define HYPERION_DEBUG_RENDERER
+
+// External Defines
+
 
 /*
 	Engine Configuration
@@ -51,44 +54,19 @@ static_assert( true, "[HYPERION] Couldnt detect the OS this is targetting!" );
 #define HYPERION_SUPPORT_DIRECTX
 #endif
 
-typedef int8_t		int8;
-typedef uint8_t		uint8;
-typedef int16_t		int16;
-typedef uint16_t	uint16;
-typedef int32_t		int32;
-typedef uint32_t	uint32;
-typedef int64_t		int64;
-typedef uint64_t	uint64;
-typedef uint8_t		byte;
-typedef uint32		Char;
-
-
-// Assert Macro
-#ifndef NDEBUG
-	#define HYPERION_VERIFY( condition, message ) \
-	do { \
-		if( !( condition ) ) { \
-			std::cerr << "Hyperion Verify Failed: \"" << #condition << "\" failed in \"" \
-				<< __FILE__ << " line " << __LINE__ << ": " << message << std::endl; \
-			std::terminate(); \
-		} \
-	} while( false )
-#elif
-#define HYPERION_VERIFY( condition, message ) do { } while( false )
-#endif
-
-// Attributes
-#define HYPERION_NODISCARD [[nodiscard]]
-#define HYPERION_UNUSED [[maybe_unused]]
-
 
 #include "Hyperion/Constants.h"
+#include "Hyperion/Ints.h"
+#include "Hyperion/Macros.h"
+#include "Hyperion/Console/Console.h"
 #include "Hyperion/Core/Types/Angle.h"
 #include "Hyperion/Core/Types/Color.h"
 #include "Hyperion/Core/Types/Point.h"
 #include "Hyperion/Core/Types/Vector.h"
 
+#include <sstream>
 #include <thread>
+#include <string>
 
 
 
@@ -97,13 +75,10 @@ typedef uint32		Char;
 */
 namespace Hyperion
 {
-	static std::thread::id __gGameThreadId;
-	static std::thread::id __gRenderThreadId;
-	static std::thread::id __gRenderMarshalThreadId;;
 
 	bool IsGameThread();
 	bool IsRenderThread();
-	bool IsRenderMarshalThread();
+	bool IsWorkerThread();
 
 	enum class ComparisonType
 	{
@@ -133,5 +108,7 @@ namespace Hyperion
 			return false;
 		}
 	}
+
+	uint32 Pow( uint32 base, uint32 exp );
 
 }

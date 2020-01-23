@@ -12,7 +12,7 @@
 namespace Hyperion
 {
 
-	struct ProxyPrimitive : public ProxyBase
+	class ProxyPrimitive : public ProxyBase
 	{
 
 	public:
@@ -21,21 +21,6 @@ namespace Hyperion
 		ProxyPrimitive( uint32 inIdentifier )
 			: ProxyBase( inIdentifier )
 		{}
-
-		void Engine_Init()
-		{
-
-		}
-
-		void Render_Init()
-		{
-
-		}
-
-		void Shutdown()
-		{
-
-		}
 
 	};
 

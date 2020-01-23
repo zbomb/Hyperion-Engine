@@ -8,9 +8,6 @@
     <Filter Include="Framework">
       <UniqueIdentifier>{ceeacff1-e10d-44dc-ae7b-43f0d075bd52}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Lib">
-      <UniqueIdentifier>{f0ca69c6-629b-4328-879f-62d184b3d2f2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Tests">
       <UniqueIdentifier>{3c1089af-1688-4565-9a50-3a2e59d6e5f5}</UniqueIdentifier>
     </Filter>
@@ -38,19 +35,40 @@
     <Filter Include="Assets">
       <UniqueIdentifier>{d57b6cae-c17d-4528-968d-09065e2c0fae}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Console">
+      <UniqueIdentifier>{5c820a59-d7b8-4d80-b1d4-beb7544699ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\Types">
+      <UniqueIdentifier>{74b40527-1a5d-4fdb-a23f-27549b9be0c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tools">
+      <UniqueIdentifier>{08f86eec-a400-4d06-a8cd-4182b3b7fe69}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Extern">
+      <UniqueIdentifier>{9f563a9d-0ef0-4a97-9aca-c505fff3b1cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Extern\zlib">
+      <UniqueIdentifier>{2f7a4a6c-8a0d-4352-bdc1-c99e77206b0f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Root">
+      <UniqueIdentifier>{f0ca69c6-629b-4328-879f-62d184b3d2f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Streaming">
+      <UniqueIdentifier>{cdd81bf6-f0e7-4a46-83cf-e6513608978d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Material">
+      <UniqueIdentifier>{3dc133cc-c866-4489-9d48-688fb74a3e5e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Hyperion\Hyperion.h">
-      <Filter>Lib</Filter>
+      <Filter>Root</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Framework\Entity.h">
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Framework\World.h">
       <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Engine.h">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\InputManager.h">
       <Filter>Core</Filter>
@@ -71,7 +89,7 @@
       <Filter>Tests</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Constants.h">
-      <Filter>Lib</Filter>
+      <Filter>Root</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Library\Mutex.hpp">
       <Filter>Core\Library</Filter>
@@ -211,6 +229,117 @@
     <ClInclude Include="Include\Hyperion\Framework\RenderComponent.h">
       <Filter>Framework</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\GameInstance.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Console\Console.h">
+      <Filter>Console</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\GameManager.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\RenderManager.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\ThreadManager.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Console\ConsoleVarInstance.h">
+      <Filter>Console</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Console\ConsoleVar.h">
+      <Filter>Console</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Ints.h">
+      <Filter>Root</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Macros.h">
+      <Filter>Root</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\PrimitiveComponent.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\CameraComponent.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\LightComponent.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyTest.h">
+      <Filter>Renderer\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\TestComponent.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\TestEntity.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Buffer.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Types\Vertex.h">
+      <Filter>Renderer\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Types\IBuffer.h">
+      <Filter>Renderer\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Types\ITexture.h">
+      <Filter>Renderer\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Assets\TextureAsset.h">
+      <Filter>Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Texture.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Types\Resource.h">
+      <Filter>Renderer\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Extern\zlib\zconf.h">
+      <Filter>Extern\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Extern\zlib\zlib.h">
+      <Filter>Extern\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Tools\Deflate.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\ZLibTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Tools\PNGReader.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\TextureCache.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\PNGTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Tools\ImageLoader.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Streaming\DynamicQualityAssetManager.h">
+      <Filter>Streaming</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Assets\MaterialAsset.h">
+      <Filter>Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Assets\StaticModelAsset.h">
+      <Filter>Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Assets\DynamicModelAsset.h">
+      <Filter>Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\DynamicModelComponent.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\StaticModelComponent.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Material\MaterialInstance.h">
+      <Filter>Material</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework\Entity.cpp">
@@ -218,9 +347,6 @@
     </ClCompile>
     <ClCompile Include="Source\Framework\World.cpp">
       <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Core\Engine.cpp">
-      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Source\Core\Object.cpp">
       <Filter>Core</Filter>
@@ -238,7 +364,7 @@
       <Filter>Renderer\Proxy</Filter>
     </ClCompile>
     <ClCompile Include="Source\Hyperion.cpp">
-      <Filter>Lib</Filter>
+      <Filter>Root</Filter>
     </ClCompile>
     <ClCompile Include="Source\Core\Types\Point.cpp">
       <Filter>Core\Types</Filter>
@@ -283,6 +409,69 @@
       <Filter>Renderer\DirectX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\Framework\RenderComponent.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Console\Console.cpp">
+      <Filter>Console</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\GameManager.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\RenderManager.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\ThreadManager.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Console\ConsoleVarInstance.cpp">
+      <Filter>Console</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\GameInstance.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\PrimitiveComponent.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\CameraComponent.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\LightComponent.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\Proxy\ProxyTest.cpp">
+      <Filter>Renderer\Proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\TestComponent.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DataTypes.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\TestEntity.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tools\Deflate.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tools\PNGReader.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\TextureCache.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Assets\TextureAsset.cpp">
+      <Filter>Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tools\ImageLoader.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Streaming\DynamicQualityAssetManager.cpp">
+      <Filter>Streaming</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\StaticModelComponent.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\DynamicModelComponent.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
   </ItemGroup>

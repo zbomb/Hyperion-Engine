@@ -15,6 +15,16 @@
 
 namespace Hyperion
 {
+	ProxyScene::ProxyScene()
+	{
+
+	}
+
+
+	ProxyScene::~ProxyScene()
+	{
+		Shutdown();
+	}
 
 
 	/*
@@ -24,7 +34,7 @@ namespace Hyperion
 	*/
 	void ProxyScene::Initialize()
 	{
-		std::cout << "[DEBUG] ProxyScene: Initializing...\n";
+		Console::WriteLine( "[DEBUG] ProxyScene: Initializing..." );
 	}
 
 	/*
@@ -34,7 +44,7 @@ namespace Hyperion
 	*/
 	void ProxyScene::Shutdown()
 	{
-		std::cout << "[DEBUG] ProxyScene: Shutdown...\n";
+		Console::WriteLine( "[DEBUG] ProxyScene: Shutdown..." );
 
 		// Shutdown all of our resources sync
 		for( auto It = m_Primitives.begin(); It != m_Primitives.end(); It++ )
@@ -76,15 +86,15 @@ namespace Hyperion
 	{
 		if( !inPrimitive )
 		{
-			std::cout << "[WARNING] ProxySystem: Attempt to add null primitive to the primitive list!\n";
+			Console::WriteLine( "[WARNING] ProxySystem: Attempt to add null primitive to the primitive list!" );
 			return false;
 		}
 
 		auto identifier = inPrimitive->GetIdentifier();
 		auto current_entry = m_Primitives.find( identifier );
-		if( current_entry == m_Primitives.end() )
+		if( current_entry != m_Primitives.end() )
 		{
-			std::cout << "[WARNING] ProxySystem: Attempt to add primitive with duplicate id!\n";
+			Console::WriteLine( "[WARNING] ProxySystem: Attempt to add primitive with duplicate id!" );
 			return false;
 		}
 
@@ -96,15 +106,15 @@ namespace Hyperion
 	{
 		if( !inLight )
 		{
-			std::cout << "[WARNING] ProxySystem: Attempt to add null light to the light list!\n";
+			Console::WriteLine( "[WARNING] ProxySystem: Attempt to add null light to the light list!" );
 			return false;
 		}
 
 		auto identifier = inLight->GetIdentifier();
 		auto current_entry = m_Lights.find( identifier );
-		if( current_entry == m_Lights.end() )
+		if( current_entry != m_Lights.end() )
 		{
-			std::cout << "[WARNING] ProxySystem: Attempt to add light with duplicate id!\n";
+			Console::WriteLine( "[WARNING] ProxySystem: Attempt to add light with duplicate id!" );
 			return false;
 		}
 
@@ -116,15 +126,15 @@ namespace Hyperion
 	{
 		if( !inCamera )
 		{
-			std::cout << "[WARNING] ProxySystem: Attempt to add null camera to the camera list!\n";
+			Console::WriteLine( "[WARNING] ProxySystem: Attempt to add null camera to the camera list!" );
 			return false;
 		}
 
 		auto identifier = inCamera->GetIdentifier();
 		auto current_entry = m_Cameras.find( identifier );
-		if( current_entry == m_Cameras.end() )
+		if( current_entry != m_Cameras.end() )
 		{
-			std::cout << "[WARNING] ProxySystem: Attempt to add camera with duplicate id!\n";
+			Console::WriteLine( "[WARNING] ProxySystem: Attempt to add camera with duplicate id" );
 			return false;
 		}
 
@@ -202,6 +212,28 @@ namespace Hyperion
 		}
 
 		return entry->second;
+	}
+
+
+	void ProxyScene::SetActiveCamera( std::shared_ptr< ProxyCamera > inPtr )
+	{
+		if( m_ActiveCamera != inPtr )
+		{
+			m_ActiveCamera = inPtr;
+			// TODO: Call something?
+		}
+	}
+
+
+	std::shared_ptr< ProxyCamera > ProxyScene::GetActiveCamera()
+	{
+		return m_ActiveCamera;
+	}
+
+
+	void ProxyScene::OnCameraUpdate()
+	{
+		// TODO
 	}
 
 }

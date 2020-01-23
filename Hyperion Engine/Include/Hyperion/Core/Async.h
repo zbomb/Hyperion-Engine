@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "Hyperion/Core/Threading.h"
-#include "Hyperion/Core/Engine.h"
+#include "Hyperion/Core/ThreadManager.h"
+
 
 namespace Hyperion
 { 
@@ -19,16 +19,7 @@ namespace Hyperion
 		template< typename T >
 		static TaskHandle< T > Create( std::function< T( void ) > inFunc, std::string inTargetThread = "pool" )
 		{
-			auto tm = Engine::GetInstance().GetThreadManager();
-			if( tm )
-			{
-				return tm->CreateTask( inFunc, inTargetThread );
-			}
-			else
-			{
-				std::cout << "[ERROR] TaskLibrary: Failed to create new task because the thread manager was null!\n";
-				return nullptr;
-			}
+			return ThreadManager::CreateTask< T >( inFunc, inTargetThread );
 		}
 
 		static void WaitAll( TaskHandleBase& first )

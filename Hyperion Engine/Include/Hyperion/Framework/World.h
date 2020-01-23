@@ -7,13 +7,20 @@
 #pragma once
 
 #include "Hyperion/Core/Object.h"
+#include "Hyperion/Framework/ViewState.h"
 #include "Hyperion/Framework/Entity.h"
-#include "Hyperion/Core/Engine.h"
+
 #include <map>
 #include <memory>
 
+
 namespace Hyperion
 {
+	/*
+		Forward Declarations
+	*/
+	class CameraComponent;
+
 
 	class World : public Object
 	{
@@ -42,6 +49,9 @@ namespace Hyperion
 
 		std::map< uint32, HypPtr< Entity > > m_ActiveEnts;
 
+		ViewState m_CachedViewState;
+		HypPtr< CameraComponent > m_ActiveCamera;
+
 	public:
 
 		inline bool IsSpawned() const	{ return m_bSpawned; }
@@ -56,6 +66,10 @@ namespace Hyperion
 
 		HypPtr< Entity > GetEntity( uint32 inIdentifier );
 
+		void SetActiveCamera( const HypPtr< CameraComponent >& inCamera );
+		void OnCameraUpdated();
+		const ViewState& GetViewState() const { return m_CachedViewState; }
+
 	protected:
 
 		virtual void OnSpawn();
@@ -65,11 +79,7 @@ namespace Hyperion
 		virtual void OnEntityAdded( const HypPtr< Entity >& inEnt );
 		virtual void OnEntityRemoved( const HypPtr< Entity >& inEnt );
 
-
-
-
-
-		friend class Engine;
+		friend class GameInstance;
 
 	};
 

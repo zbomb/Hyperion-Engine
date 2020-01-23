@@ -9,26 +9,19 @@
 
 namespace Hyperion
 {
-
-	TestAsset::TestAsset()
-	{
-
-	}
-
 	TestAsset::~TestAsset()
 	{
 
 	}
 
-	TestAsset::TestAsset( const String& In )
-		: m_Data( In )
+	TestAsset::TestAsset( const String& Data )
+		: m_Data( Data )
 	{
 
 	}
 
-	String TestAsset::GetAssetName() const
+	String TestAsset::GetAssetType() const
 	{
-		return "#test_asset";
+		return "Test";
 	}
-
 }

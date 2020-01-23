@@ -8,12 +8,13 @@
 
 // Hyperion Includes
 #include "Hyperion/Hyperion.h"
+#include "Hyperion/Core/Types/Transform.h"
 
 
 namespace Hyperion
 {
 
-	struct ProxyBase
+	class ProxyBase
 	{
 		
 	protected:
@@ -28,12 +29,16 @@ namespace Hyperion
 			: m_Identifier( inIdentifier )
 		{}
 
-		virtual void Engine_Init() = 0;
-		virtual void Render_Init() = 0;
+		Transform3D m_Transform;
+
+		virtual void GameInit() = 0;
+		virtual void RenderInit() = 0;
 
 		virtual void BeginShutdown() = 0;
 		virtual void Shutdown() = 0;
 		inline uint32 GetIdentifier() const { return m_Identifier; }
+
+		inline Transform3D GetTransform() const { return m_Transform; }
 	};
 
 }

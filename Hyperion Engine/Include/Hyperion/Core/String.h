@@ -6,7 +6,9 @@
 
 #pragma once
 
-#include "Hyperion/Hyperion.h"
+#include "Hyperion/Ints.h"
+#include "Hyperion/Macros.h"
+#include "Hyperion/Constants.h"
 
 #include <map>
 #include <unordered_map>
@@ -22,6 +24,10 @@
 #define STRING_DEBUG_LEVEL 0
 #define HYPERION_VERIFY_BASICSTR( _STR_ ) HYPERION_VERIFY( Hyperion::String::IsBasic( _STR_ ), "This function only allows basic strings!" )
 #define HYPERION_VERIFY_LOCALSTR( _STR_ ) HYPERION_VERIFY( Hyperion::String::IsLocalized( _STR_ ), "This function only allows localized strings!" )
+
+
+
+
 
 namespace Hyperion
 {
@@ -490,6 +496,32 @@ namespace Hyperion
 		*/
 		static int Compare( const String& lhs, const String& rhs );
 
+		static bool IsNumeric( const Char& inChar );
+		static bool IsNumeric( const String& inStr );
+
+		static bool ToUInt( const String& inStr, uint32& outVal );
+		static bool ToInt( const String& inStr, int32& outVal );
+
+		static bool IsWhitespace( const Char& inChar );
+		static bool IsWhitespace( const String& inStr );
+
+		static bool IsWhitespaceOrEmpty( const String& inStr );
+
+		static String TrimBegin( const String& inStr );
+		static String TrimEnd( const String& inStr );
+		static String TrimBoth( const String& inStr );
+
+		static bool IsUpper( Char inChar );
+		static bool IsLower( Char inChar );
+
+		static String ToLower( const String& inStr );
+		static String ToUpper( const String& inStr );
+
+		/*
+			String::Explode
+		*/
+		static std::vector< String > Explode( const String& Source, const Char& Where );
+
 		/*
 			Member Functions For String Library Functions
 		*/
@@ -508,6 +540,17 @@ namespace Hyperion
 		inline bool Equals( const String& Other ) const { return String::Equals( *this, Other ); }
 		inline bool IsLocalized() const { return String::IsLocalized( *this ); }
 		inline bool IsBasic() const { return String::IsBasic( *this ); }
+		inline bool IsWhitespace() const { return String::IsWhitespace( *this ); }
+		inline bool IsWhitespaceOrEmpty() const { return String::IsWhitespaceOrEmpty( *this ); }
+		inline String TrimBegin() const { return String::TrimBegin( *this ); }
+		inline String TrimEnd() const { return String::TrimEnd( *this ); }
+		inline String TrimBoth() const { return String::TrimBoth( *this ); }
+		inline std::vector< String > Explode( const Char& Where ) const { return String::Explode( *this, Where ); }
+		inline bool ToUInt( uint32& outVal ) const { return String::ToUInt( *this, outVal ); }
+		inline bool ToInt( int32& outVal ) const { return String::ToInt( *this, outVal ); }
+		inline String ToLower() const { return String::ToLower( *this ); }
+		inline String ToUpper() const { return String::ToUpper( *this ); }
+
 
 		/*
 			Operator Overloads
@@ -525,6 +568,20 @@ namespace Hyperion
 			return l << GetSTLString( r );
 		}
 	};
+
+	/*
+		ToString Methods
+	*/
+	String ToString( const char* in );
+	String ToString( const String& in );
+	String ToString( const std::string& in );
+
+	template< typename T >
+	String ToString( const T& in )
+	{
+		return String( std::to_string( in ) );
+	}
+
 }
 
 constexpr size_t __hyperion_str_hash_bias__ = 2166136261U;
@@ -533,6 +590,7 @@ constexpr size_t __hyperion_str_hash_prime__ = 16777619U;
 
 namespace std
 {
+
 	template<>
 	struct hash< Hyperion::String >
 	{

@@ -10,7 +10,7 @@
 
 #include "Hyperion/Win32/Win32FileSystem.h"
 #include "Hyperion/Core/Platform.h"
-#include "Hyperion/Core/Engine.h"
+#include "Hyperion/Core/GameManager.h"
 
 #include <sys/stat.h>
 
@@ -276,9 +276,8 @@ namespace Hyperion
 		else if( Root == PathRoot::Documents )
 		{
 			auto docPath = Platform::GetUserDataPath();
-			auto& eng = Engine::GetInstance();
 
-			docPath = docPath.Append( "/" ).Append( eng.GetDocumentsFolderName() );
+			docPath = docPath.Append( "/" ).Append( GameManager::GetInstance()->GetDocumentsFolderName() );
 			if( !inStr.IsEmpty() )
 			{
 				docPath = docPath.Append( "/" ).Append( inStr );

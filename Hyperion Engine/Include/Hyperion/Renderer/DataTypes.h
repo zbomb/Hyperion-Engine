@@ -8,6 +8,11 @@
 
 
 #include "Hyperion/Hyperion.h"
+#include "Hyperion/Renderer/Proxy/ProxyBase.h"
+#include "Hyperion/Renderer/Proxy/ProxyPrimitive.h"
+#include "Hyperion/Renderer/Proxy/ProxyLight.h"
+#include "Hyperion/Renderer/Proxy/ProxyCamera.h"
+#include "Hyperion/Renderer/Proxy/ProxyScene.h"
 
 // For HWND
 #if HYPERION_OS_WIN32
@@ -18,6 +23,9 @@
 #include <mutex>
 
 
+#define HYPERION_RENDER_COMMAND( _func_ ) RenderManager::AddCommand( std::make_unique< RenderCommand >( _func_, 0 ) )
+
+
 namespace Hyperion
 {
 
@@ -25,53 +33,51 @@ namespace Hyperion
 		Forward Declarations
 	*/
 	class Renderer;
+	class ProxyPrimitive;
+	class ProxyLight;
+	class ProxyCamera;
+
 
 	constexpr float SCREEN_NEAR		= 0.1f;
 	constexpr float SCREEN_FAR		= 1000.f;
+
+	class IRenderOutput
+	{
+	public:
+
+		#if HYPERION_OS_WIN32
+
+		HWND Value;
+
+		#else
+
+		void* Value;
+
+		#endif
+
+		IRenderOutput()
+		{
+			Value = nullptr;
+		}
+
+		IRenderOutput( const IRenderOutput& inOther )
+		{
+			Value = inOther.Value;
+		}
+
+		~IRenderOutput()
+		{
+			Value = nullptr;
+		}
+
+	};
+
 
 	struct ScreenResolution
 	{
 		uint32 Width;
 		uint32 Height;
 		bool FullScreen;
-	};
-
-
-	struct RenderSettings
-	{
-		ScreenResolution resolution;
-		bool bVSync;
-	};
-
-
-	class IRenderOutput
-	{
-
-	public:
-
-#if HYPERION_OS_WIN32
-
-		IRenderOutput()
-			: ptr( nullptr )
-		{}
-
-		~IRenderOutput()
-		{
-			ptr = nullptr;
-		}
-
-		HWND ptr;
-
-		IRenderOutput( const IRenderOutput& inOther )
-			: ptr( inOther.ptr )
-		{}
-
-		operator bool() const
-		{
-			return ptr != nullptr;
-		}
-#endif
-
 	};
 
 
@@ -110,7 +116,7 @@ namespace Hyperion
 		std::function< void( Renderer& ) > Func;
 
 		RenderCommand() = delete;
-		RenderCommand( std::function< void( Renderer& ) > inFunc, uint32 inFlags )
+		RenderCommand( std::function< void( Renderer& ) > inFunc, uint32 inFlags = 0 )
 			: Func( inFunc )
 		{
 			Flags = inFlags;
@@ -177,6 +183,135 @@ namespace Hyperion
 		}
 
 	};
+
+	struct AddPrimitiveProxyCommand : public RenderCommandBase
+	{
+
+	private:
+
+		std::shared_ptr< ProxyPrimitive > m_Payload;
+
+	public:
+
+		AddPrimitiveProxyCommand() = delete;
+		AddPrimitiveProxyCommand( const std::shared_ptr< ProxyPrimitive >& inProxy )
+			: m_Payload( inProxy )
+		{}
+
+		bool IsValid() const
+		{
+			return m_Payload ? true : false;
+		}
+
+		void Execute( Renderer& inRenderer ) override;
+
+	};
+
+
+	struct AddLightProxyCommand : public RenderCommandBase
+	{
+
+	private:
+
+		std::shared_ptr< ProxyLight > m_Payload;
+
+	public:
+
+		AddLightProxyCommand() = delete;
+		AddLightProxyCommand( const std::shared_ptr< ProxyLight >& inProxy )
+			: m_Payload( inProxy )
+		{}
+
+		bool IsValid() const
+		{
+			return m_Payload ? true : false;
+		}
+
+		void Execute( Renderer& inRenderer ) override;
+
+	};
+
+
+	struct AddCameraProxyCommand : public RenderCommandBase
+	{
+
+	private:
+
+		std::shared_ptr< ProxyCamera > m_Payload;
+
+	public:
+
+		AddCameraProxyCommand() = delete;
+		AddCameraProxyCommand( const std::shared_ptr< ProxyCamera >& inProxy )
+			: m_Payload( inProxy )
+		{}
+
+		bool IsValid() const
+		{
+			return m_Payload ? true : false;
+		}
+
+		void Execute( Renderer& inRenderer ) override;
+
+	};
+
+
+	struct RemovePrimitiveProxyCommand : public RenderCommandBase
+	{
+
+	private:
+
+		uint32 m_Identifier;
+
+	public:
+
+		RemovePrimitiveProxyCommand() = delete;
+		RemovePrimitiveProxyCommand( uint32 inIdentifier )
+			: m_Identifier( inIdentifier )
+		{}
+		
+		void Execute( Renderer& inRenderer ) override;
+
+	};
+
+
+	struct RemoveLightProxyCommand : public RenderCommandBase
+	{
+
+	private:
+
+		uint32 m_Identifier;
+
+	public:
+
+		RemoveLightProxyCommand() = delete;
+		RemoveLightProxyCommand( uint32 inIdentifier )
+			: m_Identifier( inIdentifier )
+		{}
+
+		void Execute( Renderer& inRenderer ) override;
+
+	};
+
+
+	struct RemoveCameraProxyCommand : public RenderCommandBase
+	{
+
+	private:
+
+		uint32 m_Identifier;
+
+	public:
+
+		RemoveCameraProxyCommand() = delete;
+		RemoveCameraProxyCommand( uint32 inIdentifier )
+			: m_Identifier( inIdentifier )
+		{}
+
+		void Execute( Renderer& inRenderer ) override;
+
+	};
+
 
 	struct RenderFenceWatcher
 	{
@@ -260,7 +395,15 @@ namespace Hyperion
 				return nullptr;
 			}
 		}
+
+		void Reset()
+		{
+			state = std::make_shared< RenderFenceState >();
+		}
 	};
+
+
+
 
 
 

@@ -7,7 +7,7 @@
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Framework/Entity.h"
 #include "Hyperion/Framework/World.h"
-#include "Hyperion/Core/InputManager.h"
+#include "Hyperion/Core/GameManager.h"
 #include <iostream>
 
 namespace Hyperion
@@ -38,8 +38,7 @@ namespace Hyperion
 		OnCreate();
 
 		// Bind Input
-		auto& eng = Engine::GetInstance();
-		BindUserInput( eng.GetInputManager() );
+		BindUserInput( GameManager::GetInputManager() );
 	}
 
 
@@ -54,14 +53,14 @@ namespace Hyperion
 		{
 			if( !RemoveFromParent() )
 			{
-				std::cout << "[ERROR] Entity: Failed to remove self from parent during shutdown!\n";
+				Console::WriteLine( "[ERROR] Entity: Failed to remove self from parent during shutdown!" );
 			}
 		}
 		else if( m_World.IsValid() )
 		{
 			if( !m_World->RemoveEntity( AquirePointer< Entity >() ) )
 			{
-				std::cout << "[ERROR] Entity: Failed to remove self from world during shutdown!\n";
+				Console::WriteLine( "[ERROR] Entity: Failed to remove self from world during shutdown!" );
 			}
 		}
 
@@ -91,8 +90,7 @@ namespace Hyperion
 		m_Components.clear();
 
 		// Clear Bindings
-		auto& eng = Engine::GetInstance();
-		eng.GetInputManager().ClearBindings( AquirePointer< Entity >() );
+		GameManager::GetInputManager().ClearBindings( AquirePointer< Entity >() );
 
 		m_bIsSpawned = false;
 		OnDestroy();
@@ -125,7 +123,7 @@ namespace Hyperion
 		// Validate world
 		if( !m_World || !m_World->IsValid() )
 		{
-			std::cout << "[ERROR] Entity: Attempt to spawn this entity without having a valid world set!\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to spawn this entity without having a valid world set!" );
 			return;
 		}
 
@@ -174,19 +172,19 @@ namespace Hyperion
 		// Validate the child entity
 		if( !inChild || !inChild->IsValid() )
 		{
-			std::cout << "[ERROR] Entity: Attempt to add an invalid sub-entity!\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to add an invalid sub-entity!" );
 			return false;
 		}
 
 		if( inChild->GetParent() )
 		{
-			std::cout << "[ERROR] Entity: Attempt to add a sub-entity that is already attached to another entity!\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to add a sub-entity that is already attached to another entity!" );
 			return false;
 		}
 
 		if( inChild->IsSpawned() )
 		{
-			std::cout << "[ERROR] Entity: Attempt to add a sub-entity that is already spawned into the world!\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to add a sub-entity that is already spawned into the world!" );
 			return false;
 		}
 
@@ -222,7 +220,7 @@ namespace Hyperion
 	{
 		if( !inTarget || !inTarget->IsValid() )
 		{
-			std::cout << "[ERROR] Entity: Attempt to remove invalid child from this entity!\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to remove invalid child from this entity!" );
 			return false;
 		}
 
@@ -230,7 +228,7 @@ namespace Hyperion
 
 		if( inTarget->GetParent() != thisPointer )
 		{
-			std::cout << "[ERROR] Entity: Attempt to remove child from this entity that doesnt belong to this entity!\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to remove child from this entity that doesnt belong to this entity!" );
 			return false;
 		}
 
@@ -275,7 +273,7 @@ namespace Hyperion
 			}
 		}
 
-		std::cout << "[ERROR] Entity: Attempt to remove sub-entity but couldnt find based on the object identifier!\n";
+		Console::WriteLine( "[ERROR] Entity: Attempt to remove sub-entity but couldnt find based on the object identifier!" );
 		return false;
 	}
 
@@ -287,7 +285,7 @@ namespace Hyperion
 		// First, we want to ensure the parameters are valid
 		if( !inComponent || inComponent->IsAttached() || !inComponent->IsValid() )
 		{
-			std::cout << "[ERROR] Entity: Attempt to attach an invalid component!\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to attach an invalid component!" );
 			return false;
 		}
 
@@ -297,14 +295,14 @@ namespace Hyperion
 		{
 			if( !inParent->IsValid() || inParent->GetOwner() != thisPointer )
 			{
-				std::cout << "[ERROR] Entity: Attempt to attach a component to this entity, but the parent component specified is invalid\n";
+				Console::WriteLine( "[ERROR] Entity: Attempt to attach a component to this entity, but the parent component specified is invalid" );
 				return false;
 			}
 		}
 
 		if( inIdentifier.IsEmpty() || m_AllComponents.find( inIdentifier ) != m_AllComponents.end() )
 		{
-			std::cout << "[ERROR] Entity: Attempt to attach a component with an invalid/existing identifier\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to attach a component with an invalid/existing identifier" );
 			return false;
 		}
 
@@ -358,21 +356,21 @@ namespace Hyperion
 		// Validate the target component
 		if( !inTarget )
 		{
-			std::cout << "[ERROR] Entity: Attempt to detach a component from this entity that is not valid!\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to detach a component from this entity that is not valid!" );
 			return false;
 		}
 
 		auto thisPointer = AquirePointer< Entity >();
 		if( inTarget->m_Owner != thisPointer )
 		{
-			std::cout << "[ERROR] Entity: Attempt to detach a component that doesnt belong to this entity!\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to detach a component that doesnt belong to this entity!" );
 			return false;
 		}
 
 		// Now, if this component has children.. were going to remove all of them first
 		if( inTarget->m_Children.size() > 0 )
 		{
-			std::cout << "[WARNING] Entity: Detaching a component with subcomponents.. this means all subcomponents will also be detached from their parents\n";
+			Console::WriteLine( "[WARNING] Entity: Detaching a component with subcomponents.. this means all subcomponents will also be detached from their parents" );
 		}
 
 		for( auto It = inTarget->m_Children.begin(); It != inTarget->m_Children.end(); )
@@ -459,14 +457,14 @@ namespace Hyperion
 	{
 		if( inIdentifier.IsEmpty() )
 		{
-			std::cout << "[ERROR] Entity: Attempt to remove a component from this entity with a null identifier string\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to remove a component from this entity with a null identifier string" );
 			return false;
 		}
 
 		auto listEntry = m_AllComponents.find( inIdentifier );
 		if( listEntry == m_AllComponents.end() )
 		{
-			std::cout << "[ERROR] Entity: Attempt to remove component from this entity by string identifier.. but it couldnt be found!\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to remove component from this entity by string identifier.. but it couldnt be found!" );
 			return false;
 		}
 
@@ -487,7 +485,7 @@ namespace Hyperion
 			}
 		}
 
-		std::cout << "[ERROR] Entity: Attempt to remove a component from this entity by object identifier.. but it couldnt be found!\n";
+		Console::WriteLine( "[ERROR] Entity: Attempt to remove a component from this entity by object identifier.. but it couldnt be found!" );
 		return false;
 	}
 
@@ -501,7 +499,7 @@ namespace Hyperion
 
 		if( !parentEntity || !parentEntity->IsValid() )
 		{
-			std::cout << "[ERROR] Entity: Attempt to remove self from parent.. but there is no parent!\n";
+			Console::WriteLine( "[ERROR] Entity: Attempt to remove self from parent.. but there is no parent!" );
 			return false;
 		}
 

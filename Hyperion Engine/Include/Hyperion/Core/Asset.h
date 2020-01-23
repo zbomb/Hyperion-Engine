@@ -13,14 +13,78 @@
 
 namespace Hyperion
 {
+	enum class AssetLocation
+	{
+		FileSystem = 0,
+		Virtual = 1
+	};
+
+	class AssetPath
+	{
+
+		String m_Path;
+		AssetLocation m_Location;
+
+	public:
+
+		AssetPath()
+			: m_Path(), m_Location( AssetLocation::FileSystem )
+		{}
+
+		AssetPath( const String& inPath, AssetLocation inLocation )
+			: m_Path( inPath ), m_Location( inLocation )
+		{}
+
+		AssetPath( const AssetPath& inOther )
+			: m_Path( inOther.m_Path ), m_Location( inOther.m_Location )
+		{}
+
+		AssetPath( AssetPath&& inOther )
+			: m_Path( std::move( inOther.m_Path ) ), m_Location( std::move( inOther.m_Location ) )
+		{}
+
+		AssetPath& operator=( const AssetPath& inOther )
+		{
+			m_Path = inOther.m_Path;
+			m_Location = inOther.m_Location;
+
+			return *this;
+		}
+
+		AssetPath& operator=( AssetPath&& inOther )
+		{
+			m_Path = std::move( inOther.m_Path );
+			m_Location = std::move( inOther.m_Location );
+
+			return *this;
+		}
+
+		inline bool IsValid() const { return !m_Path.IsWhitespaceOrEmpty(); }
+		inline String GetPath() const { return m_Path; }
+		inline AssetLocation GetLocation() const { return m_Location; }
+
+		void Reset()
+		{
+			m_Path.Clear();
+			m_Location = AssetLocation::FileSystem;
+		}
+
+	};
 
 	class Asset
 	{
 
+	protected:
+
+		AssetPath m_Path;
+
 	public:
 
-		virtual String GetAssetName() const = 0;
+		virtual String GetAssetType() const = 0;
+		inline AssetPath GetAssetPath() const { return m_Path; }
 
+		friend class AssetLoader;
+		friend class AssetManager;
 	};
 
 	class GenericAsset : public Asset
@@ -35,9 +99,9 @@ namespace Hyperion
 			: m_Data( Begin, End )
 		{}
 
-		virtual String GetAssetName() const
+		virtual String GetAssetType() const
 		{
-			return "#asset_generic";
+			return "GenericAsset";
 		}
 
 		std::vector< byte > m_Data;
@@ -48,6 +112,7 @@ namespace Hyperion
 		std::shared_ptr< Asset > m_Ref;
 		std::atomic< int > m_RefCount;
 		bool m_Cached;
+		AssetLocation m_Location;
 
 		std::condition_variable_any m_Wait;
 		bool m_Loaded;
@@ -91,7 +156,7 @@ namespace Hyperion
 	private:
 
 		std::shared_ptr< _Ty > m_Ptr;
-
+		AssetPath m_Path;
 
 	public:
 
@@ -107,20 +172,21 @@ namespace Hyperion
 			Convert from nullptr
 		*/
 		AssetRef( nullptr_t )
-			: AssetRefBase(), m_Ptr( nullptr )
+			: AssetRefBase(), m_Ptr( nullptr ), m_Identifier( nullptr )
 		{}
 
 		/*
 			Construct from raw elements, handles ref counting properly
 		*/
-		AssetRef( const std::shared_ptr< _Ty >& inRef, const std::shared_ptr< AssetInstance >& inInst )
+		AssetRef( const std::shared_ptr< _Ty >& inRef, const std::shared_ptr< AssetInstance >& inInst, const AssetPath& inPath )
+			: m_Path( inPath )
 		{
 			// Ensure both pointers are valid
 			if( inRef && inInst )
 			{
 				// Assign our pointers
-				m_Ptr	= inRef;
-				m_Inst	= inInst;
+				m_Ptr			= inRef;
+				m_Inst			= inInst;
 
 				_IncRefCount();
 			}
@@ -130,7 +196,7 @@ namespace Hyperion
 			Copy constructor, increments ref counter
 		*/
 		AssetRef( const AssetRef& Other )
-			: AssetRef( Other.m_Ptr, Other.m_Inst )
+			: AssetRef( Other.m_Ptr, Other.m_Inst, Other.m_Path )
 		{
 		}
 
@@ -138,7 +204,7 @@ namespace Hyperion
 			Move constructor, doesnt increment ref counter
 		*/
 		AssetRef( AssetRef&& Other ) noexcept
-			: AssetRefBase( std::move( Other.m_Inst ) ), m_Ptr( std::move( Other.m_Ptr ) )
+			: AssetRefBase( std::move( Other.m_Inst ) ), m_Ptr( std::move( Other.m_Ptr ) ), m_Path( std::move( Other.m_Path ) )
 		{
 		}
 
@@ -158,15 +224,18 @@ namespace Hyperion
 			m_Ptr.reset();
 			_DecRefCount();
 			m_Inst.reset();
+			m_Path.Reset();
 		}
 
 		/*
 			Assign, changes the referenced asset, similar to assignment operator
 		*/
-		void Assign( const std::shared_ptr< _Ty >& inRef, const std::shared_ptr< AssetInstance >& inInst )
+		void Assign( const std::shared_ptr< _Ty >& inRef, const std::shared_ptr< AssetInstance >& inInst, const AssetPath& inPath )
 		{
 			// Copy the current instance pointer
 			std::shared_ptr< AssetInstance > instCopy( m_Inst );
+
+			m_Path = inPath;
 
 			// Assign the new pointers 
 			if( inRef && inInst )
@@ -197,6 +266,8 @@ namespace Hyperion
 			// First, copy the current instance pointer
 			std::shared_ptr< AssetInstance > instCopy( m_Inst );
 
+			m_Path = Other.m_Path;
+
 			// Next, copy the pointer and instance in from the other assetref
 			if( Other.m_Ptr && Other.m_Inst )
 			{
@@ -223,6 +294,8 @@ namespace Hyperion
 		AssetRef& operator=( AssetRef&& Other )
 		{
 			std::shared_ptr< AssetInstance > instCopy( m_Inst );
+
+			m_Path = std::move( Other.m_Path );
 
 			if( Other.m_Ptr && Other.m_Inst )
 			{
@@ -271,7 +344,7 @@ namespace Hyperion
 			else if( lhsValid != rhsValid ) return false;
 			else
 			{
-				return m_Ptr == Other.m_Ptr && m_Inst == Other.m_Inst;
+				return m_Inst == Other.m_Inst;
 			}
 		}
 
@@ -283,20 +356,20 @@ namespace Hyperion
 		/*
 			Pointer accessor
 		*/
-		_Ty* operator->()
+		_Ty* operator->() const noexcept
 		{
 			if( m_Ptr && m_Inst )
 			{
 				return m_Ptr.get();
 			}
 
-			return nullptr; // Throws exception!
+			return nullptr;
 		}
 
 		/*
 			Reference accessor
 		*/
-		_Ty& operator*()
+		_Ty& operator*() const noexcept
 		{
 			return *( operator->() );
 		}
@@ -307,6 +380,11 @@ namespace Hyperion
 		inline operator bool() const
 		{
 			return IsValid();
+		}
+
+		inline AssetPath GetPath() const
+		{
+			return m_Path;
 		}
 
 

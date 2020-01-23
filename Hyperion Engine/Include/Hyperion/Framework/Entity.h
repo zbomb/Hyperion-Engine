@@ -8,7 +8,6 @@
 
 #include "Hyperion/Core/Object.h"
 #include "Hyperion/Framework/Component.h"
-#include "Hyperion/Core/Engine.h"
 #include "Hyperion/Core/Types/Transform.h"
 
 #include <vector>

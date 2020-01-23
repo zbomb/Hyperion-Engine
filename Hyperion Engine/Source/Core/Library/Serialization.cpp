@@ -282,7 +282,7 @@ namespace Hyperion
 		// We need to verify the source buffer, and get the starting position of the header and body
 		if( m_SourceBuffer.size() < 10 )
 		{
-			std::cout << "[ERROR] ArchiveReader: Failed to read archive from source buffer... not enough data!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: Failed to read archive from source buffer... not enough data!" );
 			return false;
 		}
 
@@ -306,7 +306,7 @@ namespace Hyperion
 		else
 		{
 			// Identifier Byte Not Found!
-			std::cout << "[ERROR] ArchiveReader: Failed to read archive from source buffer.. invalid format (header indentifier missing)!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: Failed to read archive from source buffer.. invalid format (header indentifier missing)!" );
 			return false;
 		}
 
@@ -316,7 +316,7 @@ namespace Hyperion
 		if( !Binary::DeserializeUInt32( It, It + 4, HeaderLength, m_ByteOrder == ByteOrder::LittleEndian ) )
 		{
 			// Couldnt read header length.. we could possibly recover from this, but for now were going to error out
-			std::cout << "[ERROR] ArchiveReader: Failed to read archive from source buffer.. invalid header length\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: Failed to read archive from source buffer.. invalid header length" );
 			return false;
 		}
 
@@ -326,7 +326,7 @@ namespace Hyperion
 		byte StartByte = *( It++ );
 		if( StartByte != (byte) ArchiveControlByte::HeaderStart )
 		{
-			std::cout << "[ERROR] ArchiveReader: Failed to read archive from source buffer.. missing header start byte!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: Failed to read archive from source buffer.. missing header start byte!" );
 			return false;
 		}
 
@@ -479,7 +479,7 @@ namespace Hyperion
 		// Now, lets try and read the control byte.. we want to make sure its a valid value first
 		if( !IsValidControl( controlByte ) )
 		{
-			std::cout << "[ERROR] ArchiveReader: Invalid header control byte found!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: Invalid header control byte found!" );
 			Output.Error = true;
 			return Output;
 		}
@@ -492,7 +492,7 @@ namespace Hyperion
 		{
 			if( !IsValidTableType( typeByte ) )
 			{
-				std::cout << "[ERROR] ArchiveReader: Invalid table type byte found!\n";
+				Console::WriteLine( "[ERROR] ArchiveReader: Invalid table type byte found!" );
 				Output.Error = true;
 				return Output;
 			}
@@ -503,7 +503,7 @@ namespace Hyperion
 		{
 			if( !IsValidType( typeByte ) )
 			{
-				std::cout << "[ERROR] ArchiveReader: Invalid type byte found!\n";
+				Console::WriteLine( "[ERROR] ArchiveReader: Invalid type byte found!" );
 				Output.Error = true;
 				return Output;
 			}
@@ -524,7 +524,7 @@ namespace Hyperion
 		// Check state
 		if( m_State != State::Reading )
 		{
-			std::cout << "[ERROR] ArchiveReader: Attempt to read value outside of reading state! (EndOfBuffer?)\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: Attempt to read value outside of reading state! (EndOfBuffer?)" );
 			return ReadResult::EndOfBuffer;
 		}
 
@@ -555,7 +555,7 @@ namespace Hyperion
 
 		if( endIter > m_ContentEnd )
 		{
-			std::cout << "[ERROR] ArchiveReader: Tried to read value that went past the end of the content buffer!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: Tried to read value that went past the end of the content buffer!" );
 			Close();
 			return ReadResult::EndOfBuffer;
 		}
@@ -584,7 +584,7 @@ namespace Hyperion
 
 		if( !Binary::DeserializeFloat( floatStart, floatEnd, Out, m_ByteOrder == ByteOrder::LittleEndian ) )
 		{
-			std::cout << "[ERROR] ArchiveReader: Failed to deserialize float from archive!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: Failed to deserialize float from archive!" );
 			return ReadResult::ReadFailed;
 		}
 
@@ -609,7 +609,7 @@ namespace Hyperion
 
 		if( !Binary::DeserializeDouble( doubleStart, doubleEnd, Out, m_ByteOrder == ByteOrder::LittleEndian ) )
 		{
-			std::cout << "[ERROR] ArchiveReader: failed to deserialize double from archive!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: failed to deserialize double from archive!" );
 			return ReadResult::ReadFailed;
 		}
 
@@ -699,7 +699,7 @@ namespace Hyperion
 
 		if( !Binary::DeserializeInt16( dataStart, dataEnd, Out, m_ByteOrder == ByteOrder::LittleEndian ) )
 		{
-			std::cout << "[ERROR] ArchiveReader: failed to deserialize int16 from archive!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: failed to deserialize int16 from archive!" );
 			return ReadResult::ReadFailed;
 		}
 
@@ -725,7 +725,7 @@ namespace Hyperion
 
 		if( !Binary::DeserializeUInt16( dataStart, dataEnd, Out, m_ByteOrder == ByteOrder::LittleEndian ) )
 		{
-			std::cout << "[ERROR] ArchiveReader: failed to deserialize uint16 from archive!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: failed to deserialize uint16 from archive!" );
 			return ReadResult::ReadFailed;
 		}
 
@@ -751,7 +751,7 @@ namespace Hyperion
 
 		if( !Binary::DeserializeInt32( dataStart, dataEnd, Out, m_ByteOrder == ByteOrder::LittleEndian ) )
 		{
-			std::cout << "[ERROR] ArchiveReader: failed to deserialize int32 from archive!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: failed to deserialize int32 from archive!" );
 			return ReadResult::ReadFailed;
 		}
 
@@ -777,7 +777,7 @@ namespace Hyperion
 
 		if( !Binary::DeserializeUInt32( dataStart, dataEnd, Out, m_ByteOrder == ByteOrder::LittleEndian ) )
 		{
-			std::cout << "[ERROR] ArchiveReader: failed to deserialize int32 from archive!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: failed to deserialize int32 from archive!" );
 			return ReadResult::ReadFailed;
 		}
 
@@ -803,7 +803,7 @@ namespace Hyperion
 
 		if( !Binary::DeserializeInt64( dataStart, dataEnd, Out, m_ByteOrder == ByteOrder::LittleEndian ) )
 		{
-			std::cout << "[ERROR] ArchiveReader: failed to deserialize int64 from archive!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: failed to deserialize int64 from archive!" );
 			return ReadResult::ReadFailed;
 		}
 
@@ -829,7 +829,7 @@ namespace Hyperion
 
 		if( !Binary::DeserializeUInt64( dataStart, dataEnd, Out, m_ByteOrder == ByteOrder::LittleEndian ) )
 		{
-			std::cout << "[ERROR] ArchiveReader: failed to deserialize uint64 from archive!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: failed to deserialize uint64 from archive!" );
 			return ReadResult::ReadFailed;
 		}
 
@@ -975,7 +975,7 @@ namespace Hyperion
 		// Check what happened
 		if( Result == ReadResult::BadHeader || Result == ReadResult::EndOfBuffer )
 		{
-			std::cout << "[ERROR] ArchiveReader: Failed to read start bytes for serializable object.. closing!\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: Failed to read start bytes for serializable object.. closing!" );
 			Close();
 			return Result;
 		}
@@ -997,7 +997,7 @@ namespace Hyperion
 
 		if( SeekResult != ReadResult::Success )
 		{
-			std::cout << "[ERROR] ArchiveReader: Failed to seek end of object! Hit end of buffer? Closing...\n";
+			Console::WriteLine( "[ERROR] ArchiveReader: Failed to seek end of object! Hit end of buffer? Closing..." );
 			Close();
 			return SeekResult;
 		}

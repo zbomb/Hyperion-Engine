@@ -8,26 +8,45 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Framework/Component.h"
+#include "Hyperion/Renderer/Proxy/ProxyBase.h"
+#include "Hyperion/Core/RenderManager.h"
 
 
 namespace Hyperion
 {
-
+	enum class RenderComponentState
+	{
+		Clean,
+		Dirty,
+		Stale
+	};
 
 	class RenderComponent : public Component
 	{
 
-	public:
+	private:
+
+		RenderComponentState m_RenderState;
+
+	protected:
+
+		virtual bool PerformProxyCreation() = 0;
+		virtual bool UpdateProxy() = 0;
 
 		void MarkDirty();
-
 		void MarkStale();
-		
-		void AddToRenderer();
 
-		void RemoveFromRenderer();
+		virtual void AddToRenderer() = 0;
+		virtual void RemoveFromRenderer() = 0;
 
+		virtual void OnSpawn( const HypPtr< World >& inWorld ) override;
+		virtual void OnDespawn( const HypPtr< World >& inWorld ) override;
 
+	public:
+
+		inline RenderComponentState GetRenderState() const { return m_RenderState; }
+
+		friend class GameInstance; // So it can reach in and mark this component as clean
 	};
 
 }

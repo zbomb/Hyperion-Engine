@@ -9,7 +9,7 @@
 // Hyperion Includes
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/Memory.h"
-#include "Hyperion/Core/Object.h"
+#include "Hyperion/Console/Console.h"
 
 #include <memory>
 #include <thread>
@@ -205,6 +205,8 @@ namespace Hyperion
 
 		bool Start();
 		bool Stop();
+
+		std::thread::id GetSystemIdentifier();
 
 	};
 
@@ -409,7 +411,7 @@ namespace Hyperion
 		{
 			if( !state )
 			{
-				std::cout << "[WARNING] TaskHandle: Attempt to create a task handle pointing to a null task instance!\n";
+				Console::Write( "[WARNING] TaskHandle: Attempt to create a task handle pointing to a null task instance!" );
 			}
 		}
 
@@ -582,7 +584,7 @@ namespace Hyperion
 		{
 			if( !state )
 			{
-				std::cout << "[WARNING] TaskHandle: Attempt to create a task handle pointing to a null task instance!\n";
+				Console::Write( "[WARNING] TaskHandle: Attempt to create a task handle pointing to a null task instance!" );
 			}
 		}
 
@@ -678,83 +680,6 @@ namespace Hyperion
 		static void WaitForNextTask();
 
 		friend class ThreadManager;
-		friend class PoolWorkerThread;
-	};
-
-
-	class ThreadManager : public Object
-	{
-
-	protected:
-
-		std::map< std::string, std::shared_ptr< TickedThread > > m_TickedThreads;
-		std::map< std::string, std::shared_ptr< CustomThread > > m_CustomThreads;
-
-		std::vector< std::shared_ptr< PoolWorkerThread > > m_WorkerPool;
-
-	public:
-
-		ThreadManager();
-
-		template< typename T >
-		TaskHandle< T > CreateTask( std::function< T( void ) > inFunc, std::string inTargetThread = "pool" )
-		{
-			// Validate input function
-			if( !inFunc )
-			{
-				std::cout << "[ERROR] TaskManager: Failed to create task.. null function provided!\n";
-				return TaskHandle< T >( nullptr );
-			}
-
-			// Create a new task instance
-			auto inst = std::make_unique< TaskInstance< T > >( inFunc );
-
-			// Then, create a new task handle pointing to this instance to return to the caller
-			TaskHandle< T > handle( *inst );
-
-			if( inTargetThread == THREAD_POOL )
-			{
-				// Aquire lock on the task list
-				{
-					std::lock_guard< std::mutex > lock( TaskPool::m_TaskMutex );
-
-					// Insert into the queue and notify any threads waiting
-					TaskPool::m_TaskList.push( std::move( inst ) );
-					TaskPool::m_TaskBool = true;
-				}
-
-				// The boolean will be reset by whichever worker thread wakes up from this call
-				TaskPool::m_TaskCV.notify_one();
-			}
-			else
-			{
-				// Find the thread, and inject the task
-				auto thread = GetThread( inTargetThread );
-				if( !thread )
-				{
-					std::cout << "[ERROR] TaskManager: Failed to create task.. invalid target thread '" << inTargetThread << "'\n";
-					return TaskHandle< T >( nullptr );
-				}
-
-				if( !thread->InjectTask( std::move( inst ) ) )
-				{
-					std::cout << "[ERROR] Taskmanager: Failed to create task.. thread '" << inTargetThread << "' did not accept the task\n";
-					return TaskHandle< T >( nullptr );
-				}
-			}
-
-			return handle;
-		}
-		
-		std::shared_ptr< Thread > CreateThread( const TickedThreadParameters& );
-		std::shared_ptr< Thread > CreateThread( const CustomThreadParameters& );
-		std::shared_ptr< Thread > GetThread( const std::string& );
-		bool DestroyThread( const std::string& );
-		uint32 GetThreadCount();
-
-		void StopThreads();
-		void Shutdown() override;
-
 		friend class PoolWorkerThread;
 	};
 

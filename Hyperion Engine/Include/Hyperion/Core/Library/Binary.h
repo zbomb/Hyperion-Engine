@@ -40,7 +40,7 @@ namespace Hyperion
 			Binary::PrintBin
 			* Writes a series of bytes to the console in binary
 		*/
-		static void PrintBin( const std::vector< byte >::iterator Begin, const std::vector< byte >::iterator End );
+		static void PrintBin( const std::vector< byte >::const_iterator Begin, const std::vector< byte >::const_iterator End );
 
 		/*
 			Binary::SerializeFloat
@@ -59,8 +59,9 @@ namespace Hyperion
 			* If the float is stored in memory using little-endian, set bIsLittleEndian to true
 			* The SerializeFloat function stores as big-endian
 		*/
-		static bool DeserializeFloat( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, float& Output, bool bIsLittleEndian = false );
-		
+		static bool DeserializeFloat( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, float& Output, bool bIsLittleEndian = false );
+		static void DeserializeFloat( std::vector< byte >::const_iterator Begin, float& Output, bool bIsLittleEndian = false );
+
 		/*
 			Binary::ReadSignedBinary
 			* Reads a signed integer that takes up an unusual number of bits
@@ -86,7 +87,9 @@ namespace Hyperion
 			Binary::DeserilalizeDouble
 			* Takes in 8 bytes from a byte vector, and returns a double
 		*/
-		static bool DeserializeDouble( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, double& Output, bool bReadAsLittleEndian = false );
+		static bool DeserializeDouble( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, double& Output, bool bReadAsLittleEndian = false );
+		static void DeserializeDouble( std::vector< byte >::const_iterator Begin, double& Output, bool bReadAsLittleEndian = false );
+
 
 		/*
 			Binary::SerializeUInt8
@@ -98,7 +101,7 @@ namespace Hyperion
 			Binary::DeserializeUInt8
 			* Reads a uint8 from the vector position indicated
 		*/
-		static void DeserializeUInt8( std::vector< byte >::iterator Where, uint8& Output );
+		static void DeserializeUInt8( std::vector< byte >::const_iterator Where, uint8& Output );
 
 		/*
 			Binary::SerializeInt8;
@@ -110,7 +113,7 @@ namespace Hyperion
 			Binary::DeserializeInt8
 			* Takes a byte from the byte vector iterator, and returns it as an int8
 		*/
-		static void DeserializeInt8( std::vector< byte >::iterator Where, int8& Output );
+		static void DeserializeInt8( std::vector< byte >::const_iterator Where, int8& Output );
 
 		/*
 			Binary::SerializeUInt16
@@ -123,7 +126,9 @@ namespace Hyperion
 			Binary::DeserializeUInt16
 			* Takes in two bytes from a byte vector, and outputs an unsigned 16-bit integer
 		*/
-		static bool DeserializeUInt16( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, uint16& Out, bool bReadAsLittleEndian = false );
+		static bool DeserializeUInt16( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, uint16& Out, bool bReadAsLittleEndian = false );
+		static void DeserializeUInt16( std::vector< byte >::const_iterator Begin, uint16& Out, bool bReadAsLittleEndian = false );
+
 
 		/*
 			Binary::SerializeInt16
@@ -135,7 +140,9 @@ namespace Hyperion
 			Binary::DeserializeInt16
 			* Takles 2 bytes from the target byte vector, and reads it as a 16-bit signed integer
 		*/
-		static bool DeserializeInt16( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, int16& Out, bool bReadAsLittleEndian = false );
+		static bool DeserializeInt16( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, int16& Out, bool bReadAsLittleEndian = false );
+		static void DeserializeInt16( std::vector< byte >::const_iterator Begin, int16& Out, bool bReadAsLittleEndian = false );
+
 
 		/*
 			Binary::SerializeUInt32
@@ -146,7 +153,8 @@ namespace Hyperion
 		/*
 			Binary::DeserializeUInt32
 		*/
-		static bool DeserializeUInt32( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, uint32& Out, bool bReadAsLittleEndian = false );
+		static bool DeserializeUInt32( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, uint32& Out, bool bReadAsLittleEndian = false );
+		static void DeserializeUInt32( std::vector< byte >::const_iterator Begin, uint32& Out, bool bReadAsLittleEndian = false );
 
 		/*
 			Binary::SerializeInt32
@@ -156,7 +164,9 @@ namespace Hyperion
 		/*
 			Binary::DeserializeInt32
 		*/
-		static bool DeserializeInt32( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, int32& Out, bool bReadAsLittleEndian = false );
+		static bool DeserializeInt32( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, int32& Out, bool bReadAsLittleEndian = false );
+		static void DeserializeInt32( std::vector< byte >::const_iterator Begin, int32& Out, bool bReadAsLittleEndian = false );
+
 
 		/*
 			Binary::SerializeUInt64
@@ -166,7 +176,9 @@ namespace Hyperion
 		/*
 			Binary::DeserializeUInt16
 		*/
-		static bool DeserializeUInt64( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, uint64& Out, bool bReadAsLittleEndian = false );
+		static bool DeserializeUInt64( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, uint64& Out, bool bReadAsLittleEndian = false );
+		static void DeserializeUInt64( std::vector< byte >::const_iterator Begin, uint64& Out, bool bReadAsLittleEndian = false );
+
 
 		/*
 			Binary::SerializeInt64
@@ -176,7 +188,9 @@ namespace Hyperion
 		/*
 			Binary::DeserializeInt64
 		*/
-		static bool DeserializeInt64( std::vector< byte >::iterator Begin, std::vector< byte >::iterator End, int64& Out, bool bReadAsLittleEndian = false );
+		static bool DeserializeInt64( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, int64& Out, bool bReadAsLittleEndian = false );
+		static void DeserializeInt64( std::vector< byte >::const_iterator Begin, int64& Out, bool bReadAsLittleEndian = false );
+
 
 		/*
 			Binary::SerializeBoolean
@@ -186,7 +200,7 @@ namespace Hyperion
 		/*
 			Binary::DeserializeBoolean
 		*/
-		static void DeserializeBoolean( std::vector< byte >::iterator Where, bool& Out );
+		static void DeserializeBoolean( std::vector< byte >::const_iterator Where, bool& Out );
 
 	};
 }

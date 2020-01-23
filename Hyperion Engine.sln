@@ -1,0 +1,65 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hyperion Engine", "Hyperion Engine\Hyperion Engine.vcxproj", "{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hyperion Test", "Hyperion Test\Hyperion Test.vcxproj", "{C0B82769-0DD7-4847-8170-7F0A863E6035}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7} = {1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Itanium = Debug|Itanium
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Itanium = Release|Itanium
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+		ReleaseWithoutAsm|Itanium = ReleaseWithoutAsm|Itanium
+		ReleaseWithoutAsm|x64 = ReleaseWithoutAsm|x64
+		ReleaseWithoutAsm|x86 = ReleaseWithoutAsm|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.Debug|Itanium.ActiveCfg = Debug|Win32
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.Debug|x64.ActiveCfg = Debug|x64
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.Debug|x64.Build.0 = Debug|x64
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.Debug|x86.ActiveCfg = Debug|Win32
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.Debug|x86.Build.0 = Debug|Win32
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.Release|Itanium.ActiveCfg = Release|Win32
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.Release|x64.ActiveCfg = Release|x64
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.Release|x64.Build.0 = Release|x64
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.Release|x86.ActiveCfg = Release|Win32
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.Release|x86.Build.0 = Release|Win32
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.ReleaseWithoutAsm|Itanium.ActiveCfg = Release|Win32
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.ReleaseWithoutAsm|Itanium.Build.0 = Release|Win32
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.ReleaseWithoutAsm|x64.ActiveCfg = Release|x64
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.ReleaseWithoutAsm|x64.Build.0 = Release|x64
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.ReleaseWithoutAsm|x86.ActiveCfg = Release|Win32
+		{1E287EF7-D71C-48DD-A865-EE3F81C2D1B7}.ReleaseWithoutAsm|x86.Build.0 = Release|Win32
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.Debug|Itanium.ActiveCfg = Debug|Win32
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.Debug|x64.ActiveCfg = Debug|x64
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.Debug|x64.Build.0 = Debug|x64
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.Debug|x86.ActiveCfg = Debug|Win32
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.Debug|x86.Build.0 = Debug|Win32
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.Release|Itanium.ActiveCfg = Release|Win32
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.Release|x64.ActiveCfg = Release|x64
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.Release|x64.Build.0 = Release|x64
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.Release|x86.ActiveCfg = Release|Win32
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.Release|x86.Build.0 = Release|Win32
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.ReleaseWithoutAsm|Itanium.ActiveCfg = Release|Win32
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.ReleaseWithoutAsm|Itanium.Build.0 = Release|Win32
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.ReleaseWithoutAsm|x64.ActiveCfg = Release|x64
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.ReleaseWithoutAsm|x64.Build.0 = Release|x64
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.ReleaseWithoutAsm|x86.ActiveCfg = Release|Win32
+		{C0B82769-0DD7-4847-8170-7F0A863E6035}.ReleaseWithoutAsm|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0805569C-D7DB-4DBB-A68E-27FAB8EC93A4}
+	EndGlobalSection
+EndGlobal

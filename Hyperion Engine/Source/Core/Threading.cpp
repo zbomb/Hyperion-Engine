@@ -5,7 +5,6 @@
 ==================================================================================================*/
 
 #include "Hyperion/Core/Threading.h"
-#include "Hyperion/Core/Engine.h"
 
 #include <chrono>
 
@@ -37,12 +36,12 @@ namespace Hyperion
 		// Check state to see if we can start this thread
 		if( m_State || m_Handle )
 		{
-			std::cout << "[ERROR] ThreadManager: Attempt to start thread '" << m_Identifier << "' while it was already running\n";
+			Console::Write( "[ERROR] ThreadManager: Attempt to start thread '", m_Identifier, "' while it was already running\n" );
 			return false;
 		}
 		else if( !m_Main )
 		{
-			std::cout << "[ERROR] ThreadManager: Attempt to start thread '" << m_Identifier << "' without a valid main function\n";
+			Console::Write( "[ERROR] ThreadManager: Attempt to start thread '", m_Identifier, "' without a valid main function\n" );
 			return false;
 		}
 
@@ -72,7 +71,7 @@ namespace Hyperion
 			}
 			else
 			{
-				std::cout << "[ERROR] ThreadManager: Failed to properly stop thread '" << m_Identifier << "' because it wasnt joinable!\n";
+				Console::Write( "[ERROR] ThreadManager: Failed to properly stop thread '", m_Identifier, "' because it wasnt joinable!\n" );
 				return false;
 			}
 		}
@@ -207,12 +206,12 @@ namespace Hyperion
 		// Check if the thread is already running
 		if( m_State || m_Handle )
 		{
-			std::cout << "[ERROR] ThreadManager: Attempt to start thread '" << m_Identifier << "' but its already running\n";
+			Console::Write( "[ERROR] ThreadManager: Attempt to start thread '", m_Identifier, "' but its already running\n" );
 			return false;
 		}
 		else if( !m_MainFunc )
 		{
-			std::cout << "[ERROR] ThreadManager: Attempt to start thread '" << m_Identifier << "' but the thread function isnt bound\n";
+			Console::Write( "[ERROR] ThreadManager: Attempt to start thread '", m_Identifier, "' but the thread function isnt bound\n" );
 			return false;
 		}
 
@@ -242,7 +241,7 @@ namespace Hyperion
 			}
 			else
 			{
-				std::cout << "[ERROR] ThreadManager: Failed to properly stop thread '" << m_Identifier << "' because it wasnt joinable!\n";
+				Console::Write( "[ERROR] ThreadManager: Failed to properly stop thread '", m_Identifier, "' because it wasnt joinable!\n" );
 				return false;
 			}
 		}
@@ -339,7 +338,7 @@ namespace Hyperion
 		// Check if the thread is already running
 		if( m_State || m_Handle )
 		{
-			std::cout << "[ERROR] Threading: Attempt to start a pool worker thread thats already running!\n";
+			Console::Write( "[ERROR] Threading: Attempt to start a pool worker thread thats already running!\n" );
 			return false;
 		}
 
@@ -365,12 +364,25 @@ namespace Hyperion
 			}
 			else
 			{
-				std::cout << "[ERROR] ThreadManager: Failed to stop worker thread.. wasnt joinable!\n";
+				Console::Write( "[ERROR] ThreadManager: Failed to stop worker thread.. wasnt joinable!\n" );
 				return false;
 			}
 		}
 
 		return true;
+	}
+
+	/*----------------------------------------------------------------------------
+		PoolWorkerThread::GetSystemIdentifier
+	----------------------------------------------------------------------------*/
+	std::thread::id PoolWorkerThread::GetSystemIdentifier()
+	{
+		if( m_Handle )
+		{
+			return m_Handle->get_id();
+		}
+
+		return std::thread::id();
 	}
 
 	/*----------------------------------------------------------------------------
@@ -411,199 +423,5 @@ namespace Hyperion
 		}
 	}
 
-
-	/*----------------------------------------------------------------------------
-		ThreadManager::ThreadManager
-	----------------------------------------------------------------------------*/
-	ThreadManager::ThreadManager()
-	{
-		// We need to create the threads used for the task pool
-		// This should give us the number of CPU threads minus one
-		// If this function cant determine the number, we default to 3
-		// TODO: Performance testing to determine the optimal number of threads for the pool
-		auto tc = std::thread::hardware_concurrency();
-		if( tc == 0 ) tc = 3; else tc--;
-
-		std::cout << "Thread Manager: Initializing with " << tc << " worker threads in the pool\n";
-
-		for( uint32 i = 0; i < tc; i++ )
-		{
-			// Create and start worker thread, then add to the list
-			auto newWorker = std::make_shared< PoolWorkerThread >();
-			newWorker->Start();
-
-			m_WorkerPool.push_back( newWorker );
-		}
-	}
-
-	/*----------------------------------------------------------------------------
-		ThreadManager::CreateThread
-	----------------------------------------------------------------------------*/
-	std::shared_ptr< Thread > ThreadManager::CreateThread( const TickedThreadParameters& params )
-	{
-		// Validate the parameters
-		if( params.Identifier.size() == 0 )
-		{
-			std::cout << "[ERROR] ThreadManager: Attempt to create a thread without a valid identifier\n";
-			return nullptr;
-		}
-		else if( !params.TickFunction )
-		{
-			std::cout << "[ERROR] ThreadManager: Failed to create thread '" << params.Identifier << "' because the tick function was not specified\n";
-			return nullptr;
-		}
-		else if( params.MinimumTasksPerTick > params.MaximumTasksPerTick && params.MaximumTasksPerTick != 0 )
-		{
-			std::cout << "[ERROR] ThreadManager: Failed to create thread '" << params.Identifier << "' because the minimum task count is greater than the maximum task count\n";
-			return nullptr;
-		}
-		else if( GetThread( params.Identifier ) )
-		{
-			std::cout << "[ERROR] ThreadManager: Failed to create thread '" << params.Identifier << "' because a thread with that identifier already exists\n";
-			return nullptr;
-		}
-
-		// Next, create the thread in-place
-		auto& newThread = m_TickedThreads[ params.Identifier ] = std::shared_ptr< TickedThread >( new TickedThread( params ) );
-
-		// And were going to run it automatically if desired
-		if( params.StartAutomatically )
-		{
-			newThread->Start();
-		}
-
-		return newThread;
-	}
-
-	std::shared_ptr< Thread > ThreadManager::CreateThread( const CustomThreadParameters& params )
-	{
-		// Validate the parameters
-		if( params.Identifier.size() == 0 )
-		{
-			std::cout << "[ERROR] ThreadManager: Attempt to create a thread without a valid identifier\n";
-			return nullptr;
-		}
-		else if( !params.ThreadFunction )
-		{
-			std::cout << "[ERROR] ThreadManager: Failed to create thread '" << params.Identifier << "' because the tick function was not specified\n";
-			return nullptr;
-		}
-		else if( GetThread( params.Identifier ) )
-		{
-			std::cout << "[ERROR] ThreadManager: Failed to create thread '" << params.Identifier << "' because a thread with that identifier already exists\n";
-			return nullptr;
-		}
-
-		// Create thread in-place
-		auto& newThread = m_CustomThreads[ params.Identifier ] = std::shared_ptr< CustomThread >( new CustomThread( params ) );
-
-		if( params.StartAutomatically )
-		{
-			newThread->Start();
-		}
-
-		return newThread;
-	}
-
-	std::shared_ptr< Thread > ThreadManager::GetThread( const std::string& identifier )
-	{
-		if( identifier.size() == 0 )
-			return nullptr;
-
-		// Check both lists for the target 
-		auto it = m_TickedThreads.find( identifier );
-		if( it != m_TickedThreads.end() )
-		{
-			return it->second;
-		}
-
-		auto cit = m_CustomThreads.find( identifier );
-		if( cit != m_CustomThreads.end() )
-		{
-			return cit->second;
-		}
-
-		return nullptr;
-	}
-
-	bool ThreadManager::DestroyThread( const std::string& identifier )
-	{
-		if( identifier.size() == 0 )
-			return false;
-
-		// Attempt to find an iterator to the thread
-		auto it = m_TickedThreads.find( identifier );
-		if( it != m_TickedThreads.end() )
-		{
-			if( it->second && it->second->IsRunning() )
-			{
-				it->second->Stop();
-			}
-
-			m_TickedThreads.erase( it );
-			return true;
-		}
-		else
-		{
-			auto cit = m_CustomThreads.find( identifier );
-			if( cit != m_CustomThreads.end() )
-			{
-				if( cit->second && cit->second->IsRunning() )
-				{
-					cit->second->Stop();
-				}
-
-				m_CustomThreads.erase( cit );
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	uint32 ThreadManager::GetThreadCount()
-	{
-		return static_cast< uint32 >( m_TickedThreads.size() + m_CustomThreads.size() );
-	}
-
-
-	void ThreadManager::StopThreads()
-	{
-		// Shutdown all open threads
-		for( auto& pair : m_TickedThreads )
-		{
-			if( pair.second && pair.second->IsRunning() )
-			{
-				pair.second->Stop();
-			}
-		}
-
-		for( auto& pair : m_CustomThreads )
-		{
-			if( pair.second && pair.second->IsRunning() )
-			{
-				pair.second->Stop();
-			}
-		}
-
-		// Shutdown thread pool workers
-		for( auto& worker : m_WorkerPool )
-		{
-			if( worker )
-			{
-				worker->Stop();
-			}
-		}
-
-		// Clear the thread maps
-		m_TickedThreads.clear();
-		m_CustomThreads.clear();
-		m_WorkerPool.clear();
-	}
-
-	void ThreadManager::Shutdown()
-	{
-		StopThreads();
-	}
 
 }

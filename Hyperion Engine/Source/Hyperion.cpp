@@ -6,19 +6,41 @@
 
 
 #include "Hyperion/Hyperion.h"
+#include "Hyperion/Core/GameManager.h"
+#include "Hyperion/Core/RenderManager.h"
+#include "Hyperion/Core/ThreadManager.h"
 
 
-bool Hyperion::IsGameThread()
+namespace Hyperion
 {
-	return std::this_thread::get_id() == __gGameThreadId;
-}
+	bool IsGameThread()
+	{
+		return( std::this_thread::get_id() == GameManager::GetThreadId() );
+	}
 
-bool Hyperion::IsRenderThread()
-{
-	return std::this_thread::get_id() == __gRenderThreadId;
-}
+	bool IsRenderThread()
+	{
+		return( std::this_thread::get_id() == RenderManager::GetThreadId() );
+	}
 
-bool Hyperion::IsRenderMarshalThread()
-{
-	return std::this_thread::get_id() == __gRenderMarshalThreadId;
+	bool IsWorkerThread()
+	{
+		return ThreadManager::IsWorkerThread( std::this_thread::get_id() );
+	}
+
+
+	uint32 Pow( uint32 base, uint32 exp )
+	{
+		uint32 output = 1;
+
+		for( uint32 i = 0; i < exp; i++ )
+		{
+			if( i == 0 )
+				output = base;
+			else
+				output *= base;
+		}
+
+		return output;
+	}
 }

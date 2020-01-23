@@ -6,6 +6,7 @@
 
 #include "Hyperion/Core/File.h"
 
+
 #if HYPERION_OS_WIN32
 #include "Hyperion/Win32/Win32FileSystem.h"
 #elif HYPERION_OS_MAC

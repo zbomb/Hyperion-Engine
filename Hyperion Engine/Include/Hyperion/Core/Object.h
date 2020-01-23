@@ -555,7 +555,7 @@ namespace Hyperion
 			auto cacheEntry = __objCache.find( id );
 			if( cacheEntry == __objCache.end() )
 			{
-				std::cout << "[ERROR] Object System: Couldnt find cache entry for object (id: " << id << ") when destroying!\n";
+				Console::WriteLine( "[ERROR] Object System: Couldnt find cache entry for object (id: ", id, ") when destroying!" );
 			}
 			else
 			{

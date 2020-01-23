@@ -12,7 +12,7 @@
 namespace Hyperion
 {
 
-	struct ProxyLight : public ProxyBase
+	class ProxyLight : public ProxyBase
 	{
 
 	public:
@@ -21,21 +21,6 @@ namespace Hyperion
 		ProxyLight( uint32 inIdentifier )
 			: ProxyBase( inIdentifier )
 		{}
-
-		void Engine_Init()
-		{
-
-		}
-
-		void Render_Init()
-		{
-
-		}
-
-		void Shutdown()
-		{
-
-		}
 
 	};
 

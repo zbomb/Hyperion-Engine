@@ -13,6 +13,8 @@
 #include "Hyperion/Renderer/IGraphics.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
 #include "Hyperion/Core/String.h"
+#include "Hyperion/Renderer/Types/IBuffer.h"
+#include "Hyperion/Renderer/Types/ITexture.h"
 
 
 
@@ -66,7 +68,6 @@ namespace Hyperion
 		void ShutdownResources();
 		void GenerateMatricies( const ScreenResolution& inRes, float inFOV, float inNear, float inFar );
 
-
 	public:
 
 		DirectX11Graphics();
@@ -77,6 +78,8 @@ namespace Hyperion
 
 		bool Initialize( const IRenderOutput& Output ) override;
 		void Shutdown() override;
+
+		bool IsRunning() const override;
 
 		void BeginFrame() override;
 		void EndFrame() override;
@@ -91,6 +94,11 @@ namespace Hyperion
 
 		std::vector< ScreenResolution > GetAvailableResolutions() override;
 
+		std::shared_ptr< IBuffer > CreateBuffer( const BufferParameters& inParams ) override;
+		
+		std::shared_ptr< ITexture1D > CreateTexture1D( const Texture1DParameters& inParams ) override;
+		std::shared_ptr< ITexture2D > CreateTexture2D( const Texture2DParameters& inParams ) override;
+		std::shared_ptr< ITexture3D > CreateTexture3D( const Texture3DParameters& inParams ) override;
 
 	};
 

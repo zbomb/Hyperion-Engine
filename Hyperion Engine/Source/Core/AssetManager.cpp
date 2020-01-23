@@ -15,12 +15,15 @@ namespace Hyperion
 	std::shared_mutex AssetManager::m_CacheMutex;
 	std::unordered_map< String, std::shared_ptr< AssetInstance > > AssetManager::m_Assets;
 	std::vector< String > AssetManager::m_CachedGroups;
-	std::map< String, 
-			std::pair< 
-				std::function< std::shared_ptr< Asset >( std::vector< byte >::const_iterator, std::vector< byte >::const_iterator ) >,
-				std::function< std::shared_ptr< Asset >( AssetStream& ) > 
-			>
-		> AssetLoader::m_LoadFuncMap;
+
+	std::map< size_t,
+		std::pair<
+		std::function< std::shared_ptr< Asset >( const AssetPath&, std::vector< byte >::const_iterator, std::vector< byte >::const_iterator ) >,
+		std::function< std::shared_ptr< Asset >( const AssetPath&, AssetStream& ) >
+		>
+	> AssetLoader::m_TypeToLoadMap;
+
+	std::map< String, size_t > AssetLoader::m_ExtensionToTypeMap;
 
 
 
@@ -29,7 +32,7 @@ namespace Hyperion
 		if( m_Inst )
 		{
 			auto newRefCount = ++( m_Inst->m_RefCount );
-			std::cout << "[DEBUG] AssetRefBase: Incrementing... new ref count: " << newRefCount << "\n";
+			//Console::WriteLine( "[DEBUG] AssetRefBase: Incrementing... new ref count: ", newRefCount, "" );
 		}
 	}
 
@@ -39,7 +42,7 @@ namespace Hyperion
 		{
 			// Decrement ref counter atomically
 			auto newRefCount = --( Target->m_RefCount );
-			std::cout << "[DEBUG] AssetRefBase: Decrementing.. new ref count: " << newRefCount << "\n";
+			//Console::WriteLine( "[DEBUG] AssetRefBase: Decrementing.. new ref count: ", newRefCount, "" );
 
 			if( newRefCount <= 0 && !Target->m_Cached )
 			{
@@ -51,11 +54,11 @@ namespace Hyperion
 
 
 
-	bool AssetManager::CacheGroupSync( const String& groupIdentifier, bool bBatchRead /* = false */ )
+	bool AssetManager::CacheGroupSync( const String& inGroupIdentifier, bool bBatchRead /* = false */ )
 	{
 		// Verify input string, and convert to lowercase
-		HYPERION_VERIFY_BASICSTR( groupIdentifier );
-		// TODO: ToLower( groupIdentifier );
+		HYPERION_VERIFY_BASICSTR( inGroupIdentifier );
+		auto groupIdentifier = inGroupIdentifier.TrimBoth().ToLower();
 
 		// Aquire shared lock to read the group list
 		// Check if this group is already cached
@@ -103,6 +106,7 @@ namespace Hyperion
 						entry->second->m_Loaded		= false;
 						entry->second->m_Ref		= nullptr;
 						entry->second->m_RefCount	= 0;
+						entry->second->m_Location	= AssetLocation::Virtual;
 
 						instancesToLoad[ It->first ] = entry->second;
 					}
@@ -116,6 +120,7 @@ namespace Hyperion
 					i->m_Loaded		= false;
 					i->m_Ref		= nullptr;
 					i->m_RefCount	= 0;
+					i->m_Location	= AssetLocation::Virtual;
 
 					instancesToLoad[ It->first ] = i;
 				}
@@ -137,7 +142,8 @@ namespace Hyperion
 					if( dataEntry != assetData.end() )
 					{
 						// Load this asset from the raw data we read from disk
-						auto asset_ptr = AssetLoader::LoadFromIdentifier( It->first, dataEntry->second.begin(), dataEntry->second.end() );
+						auto asset_ptr = AssetLoader::LoadFromFileName( AssetPath( It->first, AssetLocation::Virtual ), dataEntry->second.begin(), dataEntry->second.end() );
+						asset_ptr->m_Path = AssetPath( It->first, AssetLocation::Virtual );
 
 						// Erase this data from the list of asset data, swap forces deallocation
 						std::vector< byte >().swap( dataEntry->second );
@@ -148,14 +154,14 @@ namespace Hyperion
 						}
 						else
 						{
-							std::cout << "[ERROR] AssetManager: Failed to load an asset while caching a group.. '" << It->first << "' couldnt be loaded!\n";
+							Console::WriteLine( "[ERROR] AssetManager: Failed to load an asset while caching a group.. '", It->first, "' couldnt be loaded!" );
 						}
 					}
 				}
 			}
 			else
 			{
-				std::cout << "[ERROR] AssetManager: Failed to batch read asset group '" << groupIdentifier << "', attempting to load indivisually\n";
+				Console::WriteLine( "[ERROR] AssetManager: Failed to batch read asset group '", groupIdentifier, "', attempting to load indivisually" );
 				bBatchFallback = true;
 			}
 		}
@@ -173,16 +179,18 @@ namespace Hyperion
 				auto assetStream = VirtualFileSystem::StreamChunkSection( manifestEntry.second.ChunkFile, assetManifest.Begin, assetManifest.Begin + assetManifest.Length );
 				if( !assetStream )
 				{
-					std::cout << "[ERROR] AssetManager: Failed to load an asset while caching a group.. '" << It->first << "' couldnt be loaded from the virtual file system\n";
+					Console::WriteLine( "[ERROR] AssetManager: Failed to load an asset while caching a group.. '", It->first, "' couldnt be loaded from the virtual file system" );
 					continue;
 				}
 
-				auto assetRef = AssetLoader::StreamFromIdentifier( It->first, *assetStream );
+				auto assetRef = AssetLoader::StreamFromFileName( AssetPath( It->first, AssetLocation::Virtual ), *assetStream );
 				if( !assetRef )
 				{
-					std::cout << "[ERROR] AssetManager: Failed to load an asset while caching a group.. '" << It->first << "' couldnt be constructed from raw data\n";
+					Console::WriteLine( "[ERROR] AssetManager: Failed to load an asset while caching a group.. '", It->first, "' couldnt be constructed from raw data" );
 					continue;
 				}
+
+				assetRef->m_Path = AssetPath( It->first, AssetLocation::Virtual );
 
 				// Store the loaded asset into a list, so we can update the cache once finished
 				loadedAssets[ It->first ] = assetRef;
@@ -233,14 +241,14 @@ namespace Hyperion
 	bool AssetManager::IsGroupCached( const String& groupIdentifier )
 	{
 		HYPERION_VERIFY_BASICSTR( groupIdentifier );
-		// TODO: ToLower( groupIdentifier );
+		auto id = groupIdentifier.TrimBoth().ToLower();
 
 		{
 			std::shared_lock< std::shared_mutex > lock( m_CacheMutex );
 
 			for( const auto& g : m_CachedGroups )
 			{
-				if( g.Equals( groupIdentifier ) )
+				if( g.Equals( id ) )
 					return true;
 			}
 		}
@@ -252,7 +260,7 @@ namespace Hyperion
 	bool AssetManager::FreeGroupSync( const String& groupIdentifier )
 	{
 		HYPERION_VERIFY_BASICSTR( groupIdentifier );
-		// TODO: ToLower( groupIdentifier );
+		auto id = groupIdentifier.TrimBoth().ToLower();
 
 		{
 			// Aquire unique lock on the cache
@@ -262,7 +270,7 @@ namespace Hyperion
 			bool bFound = false;
 			for( auto It = m_CachedGroups.begin(); It != m_CachedGroups.end(); )
 			{
-				if( It->Equals( groupIdentifier ) )
+				if( It->Equals( id ) )
 				{
 					It = m_CachedGroups.erase( It );
 					bFound = true;
@@ -276,7 +284,7 @@ namespace Hyperion
 			if( !bFound ) { return false; }
 
 			// Next, find the list of assets in this group
-			auto manifest = VirtualFileSystem::FindGroupEntry( groupIdentifier );
+			auto manifest = VirtualFileSystem::FindGroupEntry( id );
 			if( !manifest.first ) { return false; }
 
 			// Loop through the list of assets, and uncache each one
@@ -316,18 +324,21 @@ namespace Hyperion
 	TaskHandle< bool > AssetManager::FreeGroupAsync( const String& Identifier )
 	{
 		HYPERION_VERIFY_BASICSTR( Identifier );
-		return Task::Create< bool >( std::bind( &AssetManager::FreeGroupSync, Identifier ) );
+		auto id = Identifier.TrimBoth().ToLower();
+
+		return Task::Create< bool >( std::bind( &AssetManager::FreeGroupSync, id ) );
 	}
 
 
-	AssetManager::CacheState AssetManager::IsAssetCached( const String& assetIdentifier )
+	AssetManager::CacheState AssetManager::IsAssetCached( const String& fileName )
 	{
-		HYPERION_VERIFY_BASICSTR( assetIdentifier );
+		HYPERION_VERIFY_BASICSTR( fileName );
+		auto id = fileName.TrimBoth().ToLower();
 
 		{
 			std::shared_lock< std::shared_mutex > lock( m_CacheMutex );
 
-			auto entry = m_Assets.find( assetIdentifier );
+			auto entry = m_Assets.find( id );
 			if( entry != m_Assets.end() )
 			{
 				if( entry->second )
@@ -361,12 +372,12 @@ namespace Hyperion
 			// Check for null instances
 			if( !It->second )
 			{
-				std::cout << "[DEBUG] Destroying null asset instance\n";
+				Console::WriteLine( "[DEBUG] Destroying null asset instance" );
 				It = m_Assets.erase( It );
 			}
 			else if( It->second == targetInstance && It->second->m_RefCount <= 0 && !It->second->m_Cached && It->second->m_Loaded )
 			{
-				std::cout << "[DEBUG] Destroying ref count 0 asset instance\n";
+				Console::WriteLine( "[DEBUG] Destroying ref count 0 asset instance" );
 				It = m_Assets.erase( It );
 			}
 			else

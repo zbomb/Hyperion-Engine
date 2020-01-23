@@ -61,7 +61,7 @@ namespace Hyperion
 		{
 			if( !RemoveFromParent() )
 			{
-				std::cout << "[ERROR] Component: Failed to remove self from parent during shutdown!\n";
+				Console::WriteLine( "[ERROR] Component: Failed to remove self from parent during shutdown!" );
 			}
 		}
 
@@ -90,7 +90,7 @@ namespace Hyperion
 		// Ensure a valid world is set and we have a parent
 		if( !m_World || !m_World->IsValid() || !m_Owner || !m_Owner->IsValid() )
 		{
-			std::cout << "[ERROR] Component: Attempt to spawn component without a valid world and entity set!\n";
+			Console::WriteLine( "[ERROR] Component: Attempt to spawn component without a valid world and entity set!" );
 			return;
 		}
 
@@ -127,7 +127,7 @@ namespace Hyperion
 		auto thisOwner = GetOwner();
 		if( !thisOwner || !thisOwner->IsValid() )
 		{
-			std::cout << "[ERROR] Component: Attemp to remove this component from its owner.. but the owner was not valid!\n";
+			Console::WriteLine( "[ERROR] Component: Attemp to remove this component from its owner.. but the owner was not valid!" );
 			return false;
 		}
 
