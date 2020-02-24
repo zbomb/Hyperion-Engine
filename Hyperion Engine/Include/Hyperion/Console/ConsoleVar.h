@@ -230,4 +230,79 @@ namespace Hyperion
 		}
 
 	};
+
+
+	template<>
+	class ConsoleVar< float >
+	{
+
+	private:
+
+		std::shared_ptr< ConsoleVarInstance< float > > m_Instance;
+		float m_Default;
+
+	public:
+
+		ConsoleVar() = delete;
+		ConsoleVar( const ConsoleVar& ) = delete;
+		ConsoleVar( ConsoleVar&& ) = delete;
+
+		ConsoleVar( const String& inKey, const String& inDescription, float inDefault, float inMin, float inMax,
+					std::function< void( float ) > inCallback = nullptr, const std::string& inThread = THREAD_POOL )
+			: m_Default( inDefault )
+		{
+			auto newVar = std::make_shared< ConsoleVarInstance< float > >( inKey, inDescription, inDefault, inMin, inMax, inCallback, inThread );
+			if( Console::CreateVar( newVar ) )
+			{
+				m_Instance = newVar;
+			}
+		}
+
+		~ConsoleVar()
+		{
+			m_Instance.reset();
+		}
+
+		bool IsValid() const
+		{
+			return m_Instance ? true : false;
+		}
+
+		float GetValue()
+		{
+			return m_Instance ? m_Instance->GetValue() : m_Default;
+		}
+
+		float GetDefault()
+		{
+			return m_Default;
+		}
+
+		bool SetValue( float inValue )
+		{
+			return m_Instance ? m_Instance->SetValue( inValue, true ) : false;
+		}
+
+		String GetKey()
+		{
+			return m_Instance ? m_Instance->GetKey() : "";
+		}
+
+		String GetDescription()
+		{
+			return m_Instance ? m_Instance->GetDescription() : "";
+		}
+
+		int32 GetMinValue()
+		{
+			return m_Instance ? m_Instance->GetMinValue() : 0;
+		}
+
+		int32 GetMaxValue()
+		{
+			return m_Instance ? m_Instance->GetMaxValue() : 0;
+		}
+
+	};
+
 }

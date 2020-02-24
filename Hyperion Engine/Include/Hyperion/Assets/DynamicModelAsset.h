@@ -6,9 +6,7 @@
 
 #pragma once
 
-#include "Hyperion/Hyperion.h"
-#include "Hyperion/Core/Asset.h"
-#include "Hyperion/Core/AssetLoader.h"
+#include "Hyperion/Assets/ModelAsset.h"
 
 
 namespace Hyperion

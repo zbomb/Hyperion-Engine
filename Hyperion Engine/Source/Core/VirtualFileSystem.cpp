@@ -19,6 +19,7 @@ namespace Hyperion
 	AssetManifestEntry VirtualFileSystem::m_InvalidAssetEntry;
 	std::unordered_map< String, GroupManifestEntry > VirtualFileSystem::m_Manifest;
 	std::unordered_map< String, String > VirtualFileSystem::m_AssetIndex;
+	std::map< String, std::unique_ptr< File > > VirtualFileSystem::m_ChunkHandles;
 
 	/*-----------------------------------------------------------
 		AssetStream
@@ -127,6 +128,84 @@ namespace Hyperion
 	}
 
 
+	bool VirtualFileSystem::ProcessManifest( std::unique_ptr< File >& inFile, const String& chunkName )
+	{
+		return true;
+	}
+
+
+	void VirtualFileSystem::MountChunks()
+	{
+		// We can only mount chunks once, so ensure this hasnt already occured
+		if( m_ChunkHandles.size() > 0 )
+		{
+			Console::WriteLine( "[ERROR] VFS: Attempt to mount chunks more than once!" );
+			return;
+		}
+
+		// We want to go through, open all chunk files and read in the manifest info
+		FilePath dirPath( "", PathRoot::Assets );
+		auto dir = IFileSystem::OpenDirectory( dirPath, true );
+
+		if( dir && dir->IsValid() )
+		{
+			// Find valid chunk/manifest pairings
+			auto files = dir->GetSubFiles();
+			for( auto& f : files )
+			{
+				auto extStr = f.Extension().ToString().ToLower();
+				auto stemStr = f.Stem().ToString().ToLower();
+
+				if( extStr == ".hvfc" )
+				{
+					// Check for matching manifest
+					FilePath manifestPath( dirPath );
+					manifestPath += stemStr;
+					manifestPath += ".hvfm";
+
+					auto manifest = IFileSystem::OpenFile( manifestPath, FileMode::Read );
+					if( !manifest || !manifest->IsValid() )
+					{
+						Console::WriteLine( "[ERROR] VFS: Failed to mount chunk '", stemStr, "' because a matching manifest was not found" );
+						continue;
+					}
+
+					// Ensure we can open the chunk file
+					auto chunkFile = IFileSystem::OpenFile( f, FileMode::Read );
+					if( !chunkFile || !chunkFile->IsValid() )
+					{
+						Console::WriteLine( "[ERROR] VFS: Failed to mount chunk '", stemStr, "' because the .hvfc file couldnt be opened" );
+						continue;
+					}
+
+					// We can read manifest into our structure, and insert open chunk file into list
+					if( !ProcessManifest( manifest, stemStr ) )
+					{
+						Console::WriteLine( "[ERROR] VFS: Failed to mount chunk '", stemStr, "' because the manifest was invalid" );
+						continue;
+					}
+
+					// Insert open file handle into chunk handle map
+					m_ChunkHandles.emplace( stemStr, std::move( chunkFile ) );
+
+					Console::WriteLine( "[STATUS] VFS: Chunk Mounted! '", stemStr, "'" );
+				}
+			}
+		}
+
+		Console::WriteLine( "[STATUS] VFS: ", m_ChunkHandles.size(), " chunks mounted!" );
+	}
+
+
+	void VirtualFileSystem::UnMountChunks()
+	{
+		m_AssetIndex.clear();
+		m_Manifest.clear();
+		m_ChunkHandles.clear();
+
+		Console::WriteLine( "[STATUS] VFS: Chunks unmounted!" );
+	}
+
 	
 	bool VirtualFileSystem::FileExists( const String& relativePath )
 	{
@@ -136,10 +215,10 @@ namespace Hyperion
 	std::unique_ptr< AssetStream > VirtualFileSystem::StreamFile( const String& relativePath )
 	{
 		HYPERION_VERIFY_BASICSTR( relativePath );
-		// TODO: ToLower( relativePath );
+		auto relPath = relativePath.ToLower().TrimBoth();
 
 		// We need to get the asset and group manifests for this asset
-		auto manifestInfo = FindAssetAndGroupEntry( relativePath );
+		auto manifestInfo = FindAssetAndGroupEntry( relPath );
 		if( !manifestInfo.first )
 		{
 			return nullptr;
@@ -152,9 +231,9 @@ namespace Hyperion
 	std::unique_ptr< AssetStream > VirtualFileSystem::StreamChunkSection( const String& chunkIdentifier, std::streamoff Begin, std::streamoff End )
 	{
 		HYPERION_VERIFY_BASICSTR( chunkIdentifier );
-		// TODO: ToLower( chunkIdentifier );
+		auto identifier = chunkIdentifier.ToLower().TrimBoth();
 
-		auto f = IFileSystem::OpenFile( FilePath( chunkIdentifier, PathRoot::Assets ), FileMode::Read );
+		auto f = IFileSystem::OpenFile( FilePath( identifier, PathRoot::Assets ), FileMode::Read );
 		if( !f )
 		{
 			Console::WriteLine( "[ERROR] VirtualFileSystem: Asset chunk file wasnt found!" );
@@ -174,10 +253,10 @@ namespace Hyperion
 	bool VirtualFileSystem::ReadFile( const String& relativePath, std::vector< byte >& outData )
 	{
 		HYPERION_VERIFY_BASICSTR( relativePath );
-		// TODO: ToLower( relativePath );
+		auto relPath = relativePath.ToLower().TrimBoth();
 
 		// First, we need to get the manifest information
-		auto manifestInfo = FindAssetAndGroupEntry( relativePath );
+		auto manifestInfo = FindAssetAndGroupEntry( relPath );
 		if( !manifestInfo.first )
 		{
 			return false;
@@ -318,10 +397,9 @@ namespace Hyperion
 	std::pair< bool, GroupManifestEntry& > VirtualFileSystem::FindGroupEntry( const String& groupIdentifier )
 	{
 		HYPERION_VERIFY_BASICSTR( groupIdentifier );
+		auto groupId = groupIdentifier.ToLower().TrimBoth();
 
-		// TODO: ToLower( groupIdentifier );
-
-		auto groupEntry = m_Manifest.find( groupIdentifier );
+		auto groupEntry = m_Manifest.find( groupId );
 		if( groupEntry == m_Manifest.end() )
 		{
 			// Group not found!
@@ -337,15 +415,15 @@ namespace Hyperion
 	{
 		HYPERION_VERIFY_BASICSTR( assetIdentifier );
 		HYPERION_VERIFY_BASICSTR( groupIdentifier );
-
-		// TODO: ToLower( assetIdentifier ), ToLower( groupIdentifier );
+		auto assetId = assetIdentifier.ToLower().TrimBoth();
+		auto groupId = groupIdentifier.ToLower().TrimBoth();
 
 		// First, we need to find the target group
-		auto groupEntry = m_Manifest.find( groupIdentifier );
+		auto groupEntry = m_Manifest.find( groupId );
 		if( groupEntry == m_Manifest.end() ) return std::pair< bool, AssetManifestEntry& >( false, m_InvalidAssetEntry );
 
 		// Now try and find this asset in the group
-		auto assetEntry = groupEntry->second.Assets.find( assetIdentifier );
+		auto assetEntry = groupEntry->second.Assets.find( assetId );
 		if( assetEntry == groupEntry->second.Assets.end() ) return std::pair< bool, AssetManifestEntry& >( false, m_InvalidAssetEntry );
 
 		return std::pair< bool, AssetManifestEntry& >( true, assetEntry->second );
@@ -354,11 +432,10 @@ namespace Hyperion
 	std::pair< bool, AssetManifestEntry& > VirtualFileSystem::FindAssetEntry( const String& assetIdentifier )
 	{
 		HYPERION_VERIFY_BASICSTR( assetIdentifier );
-
-		// TODO: ToLower( assetIdentifier )
+		auto assetId = assetIdentifier.ToLower().TrimBoth();
 
 		// Use the secondary index to quickly find the proper group
-		auto targetGroup = m_AssetIndex.find( assetIdentifier );
+		auto targetGroup = m_AssetIndex.find( assetId );
 		if( targetGroup == m_AssetIndex.end() ) return std::pair< bool, AssetManifestEntry& >( false, m_InvalidAssetEntry );
 
 		return FindAssetEntry( assetIdentifier, targetGroup->second );
@@ -367,11 +444,10 @@ namespace Hyperion
 	std::pair< bool, std::pair< AssetManifestEntry&, GroupManifestEntry& > > VirtualFileSystem::FindAssetAndGroupEntry( const String& assetIdentifier )
 	{
 		HYPERION_VERIFY_BASICSTR( assetIdentifier );
-
-		// TODO: ToLower( assetIdentifier );
+		auto assetId = assetIdentifier.ToLower().TrimBoth();
 
 		// Use secondary index to find group name
-		auto targetGroup = m_AssetIndex.find( assetIdentifier );
+		auto targetGroup = m_AssetIndex.find( assetId );
 		if( targetGroup == m_AssetIndex.end() ) return std::pair( false, std::pair< AssetManifestEntry&, GroupManifestEntry& >( m_InvalidAssetEntry, m_InvalidGroupEntry ) );
 
 		// Next we need to get a reference to the group
@@ -379,7 +455,7 @@ namespace Hyperion
 		if( groupEntry == m_Manifest.end() ) return std::pair( false, std::pair< AssetManifestEntry&, GroupManifestEntry& >( m_InvalidAssetEntry, m_InvalidGroupEntry ) );
 
 		// Finally, find the asset in this group
-		auto assetEntry = groupEntry->second.Assets.find( assetIdentifier );
+		auto assetEntry = groupEntry->second.Assets.find( assetId );
 		if( assetEntry == groupEntry->second.Assets.end() ) return std::pair( false, std::pair< AssetManifestEntry&, GroupManifestEntry& >( m_InvalidAssetEntry, m_InvalidGroupEntry ) );
 
 		// Return all of these references to the caller

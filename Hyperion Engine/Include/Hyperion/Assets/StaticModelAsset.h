@@ -6,9 +6,9 @@
 
 #pragma once
 
-#include "Hyperion/Hyperion.h"
-#include "Hyperion/Core/Asset.h"
-#include "Hyperion/Core/AssetLoader.h"
+#include "Hyperion/Assets/ModelAsset.h"
+#include "Hyperion/Library/Geometry.h"
+
 
 
 namespace Hyperion
@@ -22,6 +22,7 @@ namespace Hyperion
 	{
 
 		AssetRef< MaterialAsset > m_DefaultMaterial;
+		BoundingSphere m_BoundingSphere;
 
 	public:
 
@@ -33,7 +34,8 @@ namespace Hyperion
 
 		String GetAssetType() const final { return "static_model"; }
 
-		inline AssetRef< MaterialAsset > GetDefaultMaterial() const { return m_DefaultMaterial; }
+		inline const AssetRef< MaterialAsset >& GetDefaultMaterial() const { return m_DefaultMaterial; }
+		inline const BoundingSphere& GetBoundingSphere() const { return m_BoundingSphere; }
 
 	};
 

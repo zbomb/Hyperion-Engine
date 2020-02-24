@@ -108,7 +108,4 @@ namespace Hyperion
 			return false;
 		}
 	}
-
-	uint32 Pow( uint32 base, uint32 exp );
-
 }

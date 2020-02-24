@@ -311,7 +311,7 @@ namespace Hyperion
 		return false;
 	}
 
-
+	/*
 	bool GameInstance::SetActiveCamera( const HypPtr< CameraComponent >& inCamera )
 	{
 		if( !inCamera || !inCamera->IsValid() )
@@ -341,5 +341,6 @@ namespace Hyperion
 
 		return true;
 	}
+	*/
 
 }

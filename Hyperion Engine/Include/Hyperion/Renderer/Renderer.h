@@ -48,6 +48,7 @@ namespace Hyperion
 		std::shared_ptr< IGraphics > m_API;
 		std::shared_ptr< ProxyScene > m_Scene;
 
+		ConcurrentQueue< std::unique_ptr< RenderCommandBase > > m_ImmediateCommands;
 		ConcurrentQueue< std::unique_ptr< RenderCommandBase > > m_Commands;
 
 		bool Initialize();
@@ -72,6 +73,7 @@ namespace Hyperion
 		Renderer& operator=( const Renderer& ) = delete;
 		Renderer& operator=( Renderer&& ) = delete;
 
+		void AddImmediateCommand( std::unique_ptr< RenderCommandBase >&& inCommand );
 		void AddCommand( std::unique_ptr< RenderCommandBase >&& inCommand );
 
 		bool AddPrimitive( std::shared_ptr< ProxyPrimitive >& );
@@ -84,6 +86,7 @@ namespace Hyperion
 
 		inline std::shared_ptr< ProxyScene > GetScene() const { return m_Scene; }
 
+		// DEPRECATED 
 		std::shared_ptr< ITexture2D > Load2DTexture( const std::shared_ptr< RawImageData >& inData );
 
 		friend class RenderManager;

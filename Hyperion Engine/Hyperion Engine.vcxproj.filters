@@ -59,6 +59,9 @@
     <Filter Include="Material">
       <UniqueIdentifier>{3dc133cc-c866-4489-9d48-688fb74a3e5e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Library">
+      <UniqueIdentifier>{f46563e8-0e82-4012-bd71-33ba2307fc6c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Hyperion\Hyperion.h">
@@ -310,17 +313,11 @@
     <ClInclude Include="Include\Hyperion\Tools\PNGReader.h">
       <Filter>Tools</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\TextureCache.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="Tests\PNGTests.hpp">
       <Filter>Tests</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Tools\ImageLoader.h">
       <Filter>Tools</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Streaming\DynamicQualityAssetManager.h">
-      <Filter>Streaming</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Assets\MaterialAsset.h">
       <Filter>Assets</Filter>
@@ -339,6 +336,42 @@
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Material\MaterialInstance.h">
       <Filter>Material</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Geometry.h">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Math.h">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Material\MaterialAsset.h">
+      <Filter>Material</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Streaming\AdaptiveAssetManager.h">
+      <Filter>Streaming</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Assets\ModelAsset.h">
+      <Filter>Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Streaming\AdaptiveModel.h">
+      <Filter>Streaming</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Streaming\AdaptiveStaticModel.h">
+      <Filter>Streaming</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Streaming\AdaptiveTexture.h">
+      <Filter>Streaming</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Streaming\AdaptiveDynamicModel.h">
+      <Filter>Streaming</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Streaming\AdaptiveBase.h">
+      <Filter>Streaming</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Streaming\DataTypes.h">
+      <Filter>Streaming</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Streaming\Events.h">
+      <Filter>Streaming</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -456,23 +489,32 @@
     <ClCompile Include="Source\Tools\PNGReader.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\TextureCache.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Assets\TextureAsset.cpp">
       <Filter>Assets</Filter>
     </ClCompile>
     <ClCompile Include="Source\Tools\ImageLoader.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Streaming\DynamicQualityAssetManager.cpp">
-      <Filter>Streaming</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Framework\StaticModelComponent.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
     <ClCompile Include="Source\Framework\DynamicModelComponent.cpp">
       <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Library\Geometry.cpp">
+      <Filter>Library</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Library\Math.cpp">
+      <Filter>Library</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Material\MaterialInstance.cpp">
+      <Filter>Material</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Material\MaterialAsset.cpp">
+      <Filter>Material</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Streaming\AdaptiveAssetManager.cpp">
+      <Filter>Streaming</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

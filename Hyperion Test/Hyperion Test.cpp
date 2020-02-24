@@ -8,6 +8,7 @@
 #include "Hyperion/Core/ThreadManager.h"
 #include "Hyperion/Core/RenderManager.h"
 #include "Hyperion/Console/Console.h"
+#include "Hyperion/Core/VirtualFileSystem.h"
 #include "Tests.hpp"
 
 #include <windowsx.h>
@@ -16,6 +17,7 @@
 #include <fcntl.h>
 #include <io.h>
 #include <fstream>
+#include <excpt.h>
 
 
 
@@ -47,14 +49,8 @@ Hyperion::Keys TranslateKeyboardButton( MSG& );
 
 
 
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPWSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+int Impl_Main( HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow )
 {
-    UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(lpCmdLine);
-
     // Process command line arguments
     std::vector< Hyperion::String > args;
 
@@ -118,8 +114,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // First, check for invalid resolution, and update the console value to a decent default (screen size)
     if( res.Width < 480 || res.Height < 360 )
     {
-        res.Width   = ScreenW;
-        res.Height  = ScreenH;
+        res.Width = ScreenW;
+        res.Height = ScreenH;
 
         Hyperion::Console::SetVar( "r_resolution", Hyperion::ToString( res.Width ) + "," + Hyperion::ToString( res.Height ), false );
         Hyperion::Console::WriteLine( "[Warning] Win32: Invalid resolution selected.. defaulting to screen size (", res.Width, ", ", res.Height, ")" );
@@ -130,27 +126,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // For Windowed: The selected resolution
     UINT windowWidth;
     UINT windowHeight;
-    
+
     if( ifs == 0 )
     {
         // Windowed Mode
-        windowWidth     = res.Width;
-        windowHeight    = res.Height;
+        windowWidth = res.Width;
+        windowHeight = res.Height;
     }
     else
     {
         // Fullscreen Mode
-        windowWidth     = ScreenW;
-        windowHeight    = ScreenH;
+        windowWidth = ScreenW;
+        windowHeight = ScreenH;
     }
 
     Hyperion::Console::WriteLine( "[State] Win32: Creating game window.. Resolution = ", res.Width, "x", res.Height, " Window Size = ", windowWidth, "x", windowHeight, " Fullscreen? ", ( ifs == 0 ) ? "false" : "true" );
 
 
     // Initialize global strings
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_HYPERIONTEST, szWindowClass, MAX_LOADSTRING);
-    MyRegisterClass(hInstance);
+    LoadStringW( hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING );
+    LoadStringW( hInstance, IDC_HYPERIONTEST, szWindowClass, MAX_LOADSTRING );
+    MyRegisterClass( hInstance );
 
     // Perform application initialization:
     if( !InitInstance( hInstance, nCmdShow, windowWidth, windowHeight ) || !hWindow )
@@ -158,7 +154,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_HYPERIONTEST));
+    HACCEL hAccelTable = LoadAccelerators( hInstance, MAKEINTRESOURCE( IDC_HYPERIONTEST ) );
 
     // TODO: Feed console any command line arguments
 
@@ -189,6 +185,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return -1;
     }
 
+    // Mount virtual file chunks
+    Hyperion::VirtualFileSystem::MountChunks();
+
     // Get reference to the input manager
     Hyperion::InputManager& im = Hyperion::GameManager::GetInputManager();
 
@@ -203,9 +202,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     MSG msg;
 
     // Main message loop:
-    while (GetMessage(&msg, nullptr, 0, 0))
+    while( GetMessage( &msg, nullptr, 0, 0 ) )
     {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+        if( !TranslateAccelerator( msg.hwnd, hAccelTable, &msg ) )
         {
             // Check for user input
             bool bHandled = false;
@@ -261,6 +260,67 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     }
 
     return (int) msg.wParam;
+}
+
+
+int HandleCrash( EXCEPTION_POINTERS* Exceptions )
+{
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+
+int Impl_MainWrapper( HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow )
+{
+    int ErrRet = 0;
+
+ #if _WIN64
+    __try
+ #endif
+    {
+        ErrRet = Impl_Main( hInstance, lpCmdLine, nCmdShow );
+    }
+#if _WIN64
+    __except( HandleCrash( GetExceptionInformation() ), EXCEPTION_CONTINUE_SEARCH )
+    {
+        (void) ( 0 );
+    }
+#endif
+
+    return ErrRet;
+}
+
+
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
+                     _In_opt_ HINSTANCE hPrevInstance,
+                     _In_ LPWSTR    lpCmdLine,
+                     _In_ int       nCmdShow)
+{
+    UNREFERENCED_PARAMETER( hPrevInstance );
+    int ErrRet = 0;
+
+    __try
+    {
+        ErrRet = Impl_Main( hInstance, lpCmdLine, nCmdShow );
+    }
+#if _WIN64
+    __except( EXCEPTION_EXECUTE_HANDLER )
+#else
+    __except( HandleCrash( GetExceptionInformation() ) )
+#endif
+    {
+        // TODO: Better handling
+        MessageBoxW( NULL, L"Hyperion Engine Crash!", L"There was an uncaught exception", MB_OK );
+    }
+
+    // Ensure engine is fully shutdown, if there was an exception thrown, shutdown might have not happened
+    Hyperion::GameManager::GetInputManager().ReleaseMouse();
+
+    Hyperion::GameManager::Stop();
+    Hyperion::RenderManager::Stop();
+    Hyperion::ThreadManager::Stop();
+    Hyperion::Console::Stop();
+
+    return ErrRet;
 }
 
 

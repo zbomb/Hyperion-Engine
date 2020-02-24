@@ -167,10 +167,4 @@ namespace Hyperion
 		m_InputManager.ClearAllBindings();
 	}
 
-
-	const ViewState& GameManager::GetViewState()
-	{
-		return m_CachedViewState;
-	}
-
 }

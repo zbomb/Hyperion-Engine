@@ -74,14 +74,24 @@ namespace Hyperion
 	class Asset
 	{
 
+	private:
+
+		static uint32 m_nextIdentifier;
+
 	protected:
 
 		AssetPath m_Path;
+		uint32 m_Identifier;
 
 	public:
 
+		Asset()
+			: m_Identifier( m_nextIdentifier++ )
+		{}
+
 		virtual String GetAssetType() const = 0;
 		inline AssetPath GetAssetPath() const { return m_Path; }
+		inline uint32 GetAssetIdentifier() const { return m_Identifier; }
 
 		friend class AssetLoader;
 		friend class AssetManager;
@@ -211,7 +221,7 @@ namespace Hyperion
 		/*
 			Destructor
 		*/
-		~AssetRef()
+		virtual ~AssetRef()
 		{
 			Clear();
 		}

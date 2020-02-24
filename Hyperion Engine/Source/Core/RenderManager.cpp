@@ -48,6 +48,7 @@ namespace Hyperion
 	std::shared_ptr< Thread > RenderManager::m_Thread( nullptr );
 	std::shared_ptr< Renderer > RenderManager::m_Instance( nullptr );
 	IRenderOutput RenderManager::m_OutputWindow;
+	std::atomic< ScreenResolution > m_CachedResolution;
 
 	std::mutex m_InitMutex;
 	std::condition_variable m_InitCV;
@@ -148,6 +149,15 @@ namespace Hyperion
 	}
 
 
+	void RenderManager::AddImmediateCommand( std::unique_ptr< RenderCommandBase >&& inCommand )
+	{
+		if( m_Instance )
+		{
+			m_Instance->AddImmediateCommand( std::move( inCommand ) );
+		}
+	}
+
+
 	void RenderManager::AddCommand( std::unique_ptr< RenderCommandBase >&& inCommand )
 	{
 		if( m_Instance )
@@ -159,12 +169,12 @@ namespace Hyperion
 
 	void RenderManager::OnResolutionUpdated()
 	{
-
+		// TODO
 	}
 
 	void RenderManager::OnVSyncUpdated()
 	{
-
+		// TODO
 	}
 
 	std::shared_ptr< IGraphics > RenderManager::CreateAPI( const String& inStr )
@@ -248,6 +258,7 @@ namespace Hyperion
 			DEBUG
 		*/
 		resolution.FullScreen = false;
+		m_CachedResolution.store( resolution );
 
 		// Now that we have the console settings read in, and the api created, lets setup the renderer
 		m_Instance = std::make_shared< Renderer >( apiInst, m_OutputWindow, resolution, bVSync );
@@ -280,6 +291,10 @@ namespace Hyperion
 
 	}
 	
+	ScreenResolution RenderManager::GetActiveResolution()
+	{
+		return m_CachedResolution.load();
+	}
 
 	std::shared_ptr< ITexture2D > RenderManager::Load2DTexture( const std::shared_ptr< RawImageData >& inData )
 	{

@@ -96,7 +96,15 @@ namespace Hyperion
 		R_32BIT_FLOAT = 56,
 		RG_32BIT_FLOAT = 57,
 		RGB_32BIT_FLOAT = 58,
-		RGBA_32BIT_FLOAT = 59
+		RGBA_32BIT_FLOAT = 59,
+
+		/*
+			Compressed Types
+		*/
+		RGB_DXT_1 = 60,
+		RGBA_DXT_5 = 61,
+		RGB_BC_7 = 62,
+		RGBA_BC_7 = 63
 	};
 
 

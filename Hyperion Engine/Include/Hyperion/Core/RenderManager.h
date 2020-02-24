@@ -34,6 +34,7 @@ namespace Hyperion
 		static std::shared_ptr< Renderer > m_Instance;
 
 		static IRenderOutput m_OutputWindow;
+		static std::atomic< ScreenResolution > m_CachedResolution;
 
 		static void Init();
 		static void Tick();
@@ -54,13 +55,16 @@ namespace Hyperion
 		static bool IsRunning();
 		inline static const IRenderOutput& GetOutputTarget() { return m_OutputWindow; }
 
+		static void AddImmediateCommand( std::unique_ptr< RenderCommandBase >&& inCommand );
 		static void AddCommand( std::unique_ptr< RenderCommandBase >&& inCommand );
 
 		static void OnResolutionUpdated();
 		static void OnVSyncUpdated();
 
 		static ScreenResolution ReadResolution( const String& inStr, uint32 inFullscreen, bool bPrintError = true );
+		static ScreenResolution GetActiveResolution();
 
+		// DEPRECATED
 		static std::shared_ptr< ITexture2D > Load2DTexture( const std::shared_ptr< RawImageData >& inData );
 
 	};

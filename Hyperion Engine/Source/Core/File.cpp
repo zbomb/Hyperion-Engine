@@ -270,7 +270,7 @@ namespace Hyperion
 		return m_Buffer ? true : false;
 	}
 
-	std::streampos File::Size() const
+	uint64 File::Size() const
 	{
 		if( !m_Buffer )
 			return 0;

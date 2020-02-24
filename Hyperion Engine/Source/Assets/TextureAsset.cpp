@@ -19,8 +19,8 @@ namespace Hyperion
 	uint64 TextureAsset::m_NextIdentifier( 1 );
 
 
-	TextureAsset::TextureAsset( const AssetPath& inPath )
-		: m_Path( inPath ), m_Identifier( m_NextIdentifier++ )
+	TextureAsset::TextureAsset()
+		: m_Identifier( m_NextIdentifier++ )
 	{
 	}
 
@@ -34,11 +34,6 @@ namespace Hyperion
 		return "Texture";
 	}
 
-	AssetPath TextureAsset::GetAssetPath() const
-	{
-		return m_Path;
-	}
-
 	uint32 TextureAsset::GetWidth() const
 	{
 		return 0;
@@ -47,6 +42,33 @@ namespace Hyperion
 	uint32 TextureAsset::GetHeight() const
 	{
 		return 0;
+	}
+
+	bool TextureAsset::IsValidTexture() const
+	{
+		// Check for valid format
+		if( m_Header.Format == TextureAssetFormat::NONE )
+		{
+			return false;
+		}
+
+		// Check for valid root LOD level
+		if( m_Header.LODs.size() == 0 )
+		{
+			return false;
+		}
+
+		// Validate resolution & size values
+		auto& rootLOD = m_Header.LODs.at( 0 );
+
+		if( rootLOD.Width == 0 || rootLOD.Height == 0 || rootLOD.Size == 0 )
+		{
+			return false;
+		}
+
+		// Seems valid 'enough'
+		// In the future, we might decide to do further validation, but this is good enough for most situations
+		return true;
 	}
 
 

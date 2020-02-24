@@ -24,6 +24,7 @@ namespace Hyperion
 	> AssetLoader::m_TypeToLoadMap;
 
 	std::map< String, size_t > AssetLoader::m_ExtensionToTypeMap;
+	uint32 Asset::m_nextIdentifier( 1 );
 
 
 

@@ -107,12 +107,28 @@ namespace Hyperion
 		}
 
 		/*
+			Static Functions
+		*/
+		static float Distance( const Vector2D& First, const Vector2D& Second )
+		{
+			float sqX = powf( Second.X - First.X, 2.f );
+			float sqY = powf( Second.Y - First.Y, 2.f );
+
+			return sqrtf( sqX + sqY );
+		}
+
+		/*
 			Member Functions
 		*/
 		void Clear()
 		{
 			X = 0.f;
 			Y = 0.f;
+		}
+
+		inline float Distance( const Vector2D& Other )
+		{
+			return Vector2D::Distance( *this, Other );
 		}
 
 	};
@@ -223,6 +239,18 @@ namespace Hyperion
 		}
 
 		/*
+			Static Functions
+		*/
+		static float Distance( const Vector3D& First, const Vector3D& Second )
+		{
+			float sqX = powf( Second.X - First.X, 2.f );
+			float sqY = powf( Second.Y - First.Y, 2.f );
+			float sqZ = powf( Second.Z - First.Z, 2.f );
+
+			return sqrtf( sqX + sqY + sqZ );
+		}
+
+		/*
 			Member Function
 		*/
 		void Clear()
@@ -230,6 +258,11 @@ namespace Hyperion
 			X = 0.f;
 			Y = 0.f;
 			Z = 0.f;
+		}
+
+		inline float Distance( const Vector3D& Other )
+		{
+			return Vector3D::Distance( *this, Other );
 		}
 	};
 
@@ -347,6 +380,19 @@ namespace Hyperion
 		}
 
 		/*
+			Static Functions
+		*/
+		static float Distance( const Vector4D& First, const Vector4D& Second )
+		{
+			float sqX = powf( Second.X - First.X, 2.f );
+			float sqY = powf( Second.Y - First.Y, 2.f );
+			float sqZ = powf( Second.Z - First.Z, 2.f );
+			float sqW = powf( Second.W - First.W, 2.f );
+
+			return sqrtf( sqX + sqY + sqZ + sqW );
+		}
+
+		/*
 			Member Functions
 		*/
 		void Clear()
@@ -355,6 +401,11 @@ namespace Hyperion
 			Y = 0.f;
 			Z = 0.f;
 			W = 0.f;
+		}
+
+		float Distance( const Vector4D& Other )
+		{
+			return Vector4D::Distance( *this, Other );
 		}
 
 	};

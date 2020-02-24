@@ -90,6 +90,9 @@ namespace Hyperion
 
 		static std::unordered_map< String, GroupManifestEntry > m_Manifest;
 		static std::unordered_map< String, String > m_AssetIndex;
+		static std::map< String, std::unique_ptr< File > > m_ChunkHandles;
+
+		static bool ProcessManifest( std::unique_ptr< File >& inFile, const String& chunkName );
 
 	public:
 
@@ -108,6 +111,9 @@ namespace Hyperion
 		static std::pair< bool, AssetManifestEntry& > FindAssetEntry( const String& assetIdentifier );
 		static std::pair< bool, AssetManifestEntry& > FindAssetEntry( const String& assetIdentifier, const String& groupIdentifier );
 		static std::pair< bool, std::pair< AssetManifestEntry&, GroupManifestEntry& > > FindAssetAndGroupEntry( const String& assetIdentifier );
+
+		static void MountChunks();
+		static void UnMountChunks();
 
 
 	};

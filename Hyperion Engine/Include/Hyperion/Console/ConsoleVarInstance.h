@@ -90,7 +90,7 @@ namespace Hyperion
 		int32 m_Max;
 		String m_Key;
 		String m_Description;
-		std::function< void( uint32 ) > m_Callback;
+		std::function< void( int32 ) > m_Callback;
 		std::string m_CallbackThread;
 
 	public:
@@ -148,8 +148,44 @@ namespace Hyperion
 
 	};
 
-	/*
-		TODO: ConsoleVarInstance< float > & ConsoleVarInstance< bool > 
-	*/
+
+
+	template<>
+	class ConsoleVarInstance< float > : public ConsoleVarInstanceBase
+	{
+
+	private:
+
+		std::shared_mutex m_Mutex;
+		float m_Value;
+		float m_Min;
+		float m_Max;
+		String m_Key;
+		String m_Description;
+		std::function< void( float ) > m_Callback;
+		std::string m_CallbackThread;
+
+	public:
+
+		ConsoleVarInstance() = delete;
+		ConsoleVarInstance( const String& inKey, const String& inDescription, float inDefault, float inMin, float inMax,
+							std::function< void( float ) > inCallback, const std::string& callbackThread = THREAD_POOL );
+
+		inline String GetKey() const final { return m_Key; }
+		inline String GetDescription() const final { return m_Description; }
+
+		String GetValueAsString() final;
+
+		bool SetValueFromString( const String& inStr, bool bCallback ) final;
+
+
+		bool SetValue( float inValue, bool bCallback );
+
+		float GetValue();
+
+		inline float GetMinValue() const { return m_Min; }
+		inline float GetMaxValue() const { return m_Max; }
+
+	};
 
 }

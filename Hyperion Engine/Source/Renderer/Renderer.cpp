@@ -96,6 +96,21 @@ namespace Hyperion
 
 	void Renderer::UpdateScene()
 	{
+		// Execute all immediate commands
+		// Were going to run them until the list is empty
+		auto nextImmediateCommand = m_ImmediateCommands.PopValue();
+		while( nextImmediateCommand.first )
+		{
+			// Execute
+			if( nextImmediateCommand.second )
+			{
+				nextImmediateCommand.second->Execute( *this );
+			}
+
+			// Pop next command
+			nextImmediateCommand = m_ImmediateCommands.PopValue();
+		}
+
 		// For now, were just going to run the next frame of commands
 		auto nextCommand = m_Commands.PopValue();
 		while( nextCommand.first )
@@ -117,6 +132,11 @@ namespace Hyperion
 		}
 	}
 
+
+	void Renderer::AddImmediateCommand( std::unique_ptr< RenderCommandBase >&& inCommand )
+	{
+		m_ImmediateCommands.Push( std::move( inCommand ) );
+	}
 
 	void Renderer::AddCommand( std::unique_ptr< RenderCommandBase >&& inCommand )
 	{

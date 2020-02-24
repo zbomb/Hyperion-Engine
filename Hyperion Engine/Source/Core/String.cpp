@@ -11,6 +11,7 @@
 #include "Hyperion/Core/String.h"
 #include "Hyperion/Core/Library/UTF8.hpp"
 #include "Hyperion/Core/Library/UTF16.hpp"
+#include "Hyperion/Library/Math.h"
 
 
 
@@ -1419,7 +1420,7 @@ namespace Hyperion
 			uint32 thisDigitNumber	= digitCount - i - 1;
 			uint8 thisDigitValue	= digits.at( i );
 
-			outVal += ( Pow( 10, thisDigitNumber ) * thisDigitValue );
+			outVal += ( Math::Pow( 10, thisDigitNumber ) * thisDigitValue );
 		}
 
 		return true;
@@ -1490,6 +1491,28 @@ namespace Hyperion
 			return baseNumber;
 		}
 	}
+
+
+	/*
+		String::ToFloat
+	*/
+	bool String::ToFloat( const String& inStr, float& outVal )
+	{
+		// Trim input
+		String str = inStr.TrimBoth();
+
+		if( str.IsEmpty() )
+		{
+			return false;
+		}
+
+		// Use stringstream to cast to a float, since we can check if its valid, and not just return 0.f if its not
+		std::istringstream sstream( String::GetSTLString( str ) );
+		sstream >> outVal;
+
+		return sstream.eof() && !sstream.fail();
+	}
+
 
 	/*
 		String::Explode

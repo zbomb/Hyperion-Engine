@@ -189,7 +189,7 @@ namespace Hyperion
 		virtual bool CanReadStream() const;
 		virtual bool CanWriteStream() const;
 		bool IsValid() const;
-		std::streampos Size() const;
+		uint64 Size() const;
 		std::unique_ptr< MetaData > GetMetaData();
 
 		inline FileMode GetMode() const			{ return m_Mode; }

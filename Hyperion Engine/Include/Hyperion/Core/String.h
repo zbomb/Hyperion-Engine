@@ -501,6 +501,7 @@ namespace Hyperion
 
 		static bool ToUInt( const String& inStr, uint32& outVal );
 		static bool ToInt( const String& inStr, int32& outVal );
+		static bool ToFloat( const String& inStr, float& outVal );
 
 		static bool IsWhitespace( const Char& inChar );
 		static bool IsWhitespace( const String& inStr );
@@ -548,6 +549,7 @@ namespace Hyperion
 		inline std::vector< String > Explode( const Char& Where ) const { return String::Explode( *this, Where ); }
 		inline bool ToUInt( uint32& outVal ) const { return String::ToUInt( *this, outVal ); }
 		inline bool ToInt( int32& outVal ) const { return String::ToInt( *this, outVal ); }
+		inline bool ToFloat( float& outVal ) const { return String::ToFloat( *this, outVal ); }
 		inline String ToLower() const { return String::ToLower( *this ); }
 		inline String ToUpper() const { return String::ToUpper( *this ); }
 
