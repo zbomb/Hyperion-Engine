@@ -516,5 +516,14 @@
     <ClCompile Include="Source\Streaming\AdaptiveAssetManager.cpp">
       <Filter>Streaming</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Streaming\AdaptiveTexture.cpp">
+      <Filter>Streaming</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Streaming\AdaptiveStaticModel.cpp">
+      <Filter>Streaming</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Streaming\AdaptiveDynamicModel.cpp">
+      <Filter>Streaming</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

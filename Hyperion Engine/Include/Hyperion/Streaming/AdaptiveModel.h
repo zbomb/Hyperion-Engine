@@ -21,4 +21,9 @@ namespace Hyperion
 
 	};
 
+	struct AdaptiveModelLoadRequest
+	{
+
+	};
+
 }

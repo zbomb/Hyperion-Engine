@@ -56,12 +56,19 @@ namespace Hyperion
 
 		virtual std::vector< ScreenResolution > GetAvailableResolutions() = 0;
 
+		virtual bool AllowAsyncTextureCreation() const = 0;
+
 		virtual std::shared_ptr< IBuffer > CreateBuffer( const BufferParameters& ) = 0;
 
-		// Use these to create empty textures
+		// Texture Creation
 		virtual std::shared_ptr< ITexture1D > CreateTexture1D( const Texture1DParameters& ) = 0;
 		virtual std::shared_ptr< ITexture2D > CreateTexture2D( const Texture2DParameters& ) = 0;
 		virtual std::shared_ptr< ITexture3D > CreateTexture3D( const Texture3DParameters& ) = 0;
+
+		// Texture Copying
+		virtual bool CopyTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Dest ) = 0;
+		virtual bool CopyLODTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Dest,
+									   uint32 SourceX, uint32 SourceY, uint32 Width, uint32 Height, uint32 DestX, uint32 DestY, uint8 SourceLevel, uint8 TargetLevel ) = 0;
 
 		friend class TextureCache;
 	};

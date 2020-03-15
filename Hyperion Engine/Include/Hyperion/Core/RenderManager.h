@@ -8,6 +8,7 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Renderer/Renderer.h"
+#include "Hyperion/Assets/TextureAsset.h"
 
 
 #if HYPERION_OS_WIN32
@@ -64,9 +65,7 @@ namespace Hyperion
 		static ScreenResolution ReadResolution( const String& inStr, uint32 inFullscreen, bool bPrintError = true );
 		static ScreenResolution GetActiveResolution();
 
-		// DEPRECATED
-		static std::shared_ptr< ITexture2D > Load2DTexture( const std::shared_ptr< RawImageData >& inData );
-
+		inline static Renderer& GetRenderer() { return *m_Instance; }
 	};
 
 }

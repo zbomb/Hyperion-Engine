@@ -134,6 +134,17 @@ namespace Hyperion
 		case TextureFormat::RGBA_32BIT_FLOAT:
 			return DXGI_FORMAT_R32G32B32A32_FLOAT;
 
+			// Compressed Types
+		case TextureFormat::RGB_DXT_1:
+			return DXGI_FORMAT_BC1_UNORM;
+		case TextureFormat::RGB_BC_7:
+			return DXGI_FORMAT_BC7_UNORM;
+		case TextureFormat::RGBA_DXT_5:
+			return DXGI_FORMAT_BC3_UNORM;
+		case TextureFormat::RGBA_BC_7:
+			return DXGI_FORMAT_BC7_UNORM;
+
+
 		default:
 			return DXGI_FORMAT_UNKNOWN;
 		}
@@ -212,6 +223,16 @@ namespace Hyperion
 		TextureFormat GetFormat() const final
 		{
 			return m_Parameters.Format;
+		}
+
+		void Swap( ITexture1D& Other ) final
+		{
+			DirectX11Texture1D* casted = dynamic_cast< DirectX11Texture1D* >( &Other );
+			HYPERION_VERIFY( casted != nullptr, "Attempt to swap textures from different apis?" );
+
+			auto tmp = m_Texture;
+			m_Texture = casted->m_Texture;
+			casted->m_Texture = tmp;
 		}
 
 		friend class DirectX11Graphics;
@@ -297,6 +318,16 @@ namespace Hyperion
 		TextureFormat GetFormat() const final
 		{
 			return m_Parameters.Format;
+		}
+
+		void Swap( ITexture2D& Other )
+		{
+			auto casted = dynamic_cast<DirectX11Texture2D*>( &Other );
+			HYPERION_VERIFY( casted != nullptr, "Attempt to swap textures from different apis!" );
+
+			auto tmp = m_Texture;
+			m_Texture = casted->m_Texture;
+			casted->m_Texture = tmp;
 		}
 
 		friend class DirectX11Graphics;
@@ -386,6 +417,16 @@ namespace Hyperion
 		TextureFormat GetFormat() const final
 		{
 			return m_Parameters.Format;
+		}
+
+		void Swap( ITexture3D& Other )
+		{
+			auto casted = dynamic_cast<DirectX11Texture3D*>( &Other );
+			HYPERION_VERIFY( casted != nullptr, "Attempt to swap textures from different apis!" );
+
+			auto tmp = m_Texture;
+			m_Texture = casted->m_Texture;
+			casted->m_Texture = tmp;
 		}
 
 		friend class DirectX11Graphics;

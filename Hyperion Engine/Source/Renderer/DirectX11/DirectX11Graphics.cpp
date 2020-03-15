@@ -1143,16 +1143,24 @@ namespace Hyperion
 		}
 
 		// Now that we have the format built, lets create the structure for the starting data (if any)
-		D3D11_SUBRESOURCE_DATA Data;
-		ZeroMemory( &Data, sizeof( Data ) );
+		std::vector< D3D11_SUBRESOURCE_DATA > DataArray;
+		DataArray.resize( inParams.Data.size() );
 
-		Data.pSysMem			= inParams.Data;
-		Data.SysMemPitch		= inParams.RowDataSize;
-		Data.SysMemSlicePitch	= 0;
+		for( auto i = 0; i < DataArray.size(); i++ )
+		{
+			auto& data = DataArray.at( i );
+			ZeroMemory( &data, sizeof( data ) );
+
+			auto& source = inParams.Data.at( i );
+			
+			data.pSysMem			= source.Data;
+			data.SysMemPitch		= source.RowDataSize;
+			data.SysMemSlicePitch	= 0;
+		}
 
 		// Finally, lets create the texture
 		std::shared_ptr< DirectX11Texture2D > Output( new DirectX11Texture2D( inParams ) );
-		if( FAILED( m_Device->CreateTexture2D( &Desc, &Data, Output->GetAddress() ) ) )
+		if( FAILED( m_Device->CreateTexture2D( &Desc, DataArray.data(), Output->GetAddress() ) ) )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to create 2D texture! API Call failed" );
 			return nullptr;
@@ -1217,6 +1225,57 @@ namespace Hyperion
 		}
 
 		return Output;
+	}
+
+
+	bool DirectX11Graphics::CopyTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Target )
+	{
+		// First, verify everything and get the casted pointers we need
+		if( !Source || !Source->IsValid() || !Target || !Target->IsValid() )
+		{
+			Console::WriteLine( "[WARNING] DirectX11: Failed to copy texture, either source or destination was null/invalid" );
+			return false;
+		}
+
+		// Wish there was a way where we didnt have to perform as many casts and checks for each api call?
+		DirectX11Texture2D* SourcePtr = dynamic_cast<DirectX11Texture2D*>( Source.get() );
+		DirectX11Texture2D* TargetPtr = dynamic_cast<DirectX11Texture2D*>( Target.get() );
+
+		HYPERION_VERIFY( SourcePtr != nullptr && TargetPtr != nullptr, "Attempt to copy textures from a different graphics api!?" );
+		HYPERION_VERIFY( m_DeviceContext, "Attempt to copy textures before initialization or after shutdown?" );
+
+		// Next, call the API function to perform the copy
+		m_DeviceContext->CopyResource( SourcePtr->Get(), TargetPtr->Get() );
+		return true;
+	}
+
+	bool DirectX11Graphics::CopyLODTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Dest,
+										   uint32 SourceX, uint32 SourceY, uint32 Width, uint32 Height, uint32 DestX, uint32 DestY, uint8 SourceMip, uint8 DestMip )
+	{
+		if( !Source || !Dest || !Source->IsValid() || !Dest->IsValid() )
+		{
+			Console::WriteLine( "[WARNING] DirectX11: Failed to copy texture regions, either source or destination was null!" );
+			return false;
+		}
+
+		DirectX11Texture2D* SourcePtr = dynamic_cast< DirectX11Texture2D* >( Source.get() );
+		DirectX11Texture2D* DestPtr = dynamic_cast< DirectX11Texture2D* >( Dest.get() );
+
+		HYPERION_VERIFY( SourcePtr != nullptr && DestPtr != nullptr, "Attempt to copy textures from a different graphics api?" );
+		HYPERION_VERIFY( m_DeviceContext, "Attempt to copy textures before initialization or after shutdown?" );
+
+		// Next, could perform further validation, but lets just go ahead for now
+		D3D11_BOX Box;
+		
+		Box.left	= SourceX;
+		Box.right	= SourceX + Width;
+		Box.top		= SourceY;
+		Box.bottom	= SourceY + Height;
+		Box.front	= 0;
+		Box.back	= 1;
+		
+		m_DeviceContext->CopySubresourceRegion( DestPtr->Get(), DestMip, DestX, DestY, 0, SourcePtr->Get(), SourceMip, &Box );
+		return true;
 	}
 
 }

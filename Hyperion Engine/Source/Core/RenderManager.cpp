@@ -296,15 +296,4 @@ namespace Hyperion
 		return m_CachedResolution.load();
 	}
 
-	std::shared_ptr< ITexture2D > RenderManager::Load2DTexture( const std::shared_ptr< RawImageData >& inData )
-	{
-		if( !m_Instance )
-		{
-			Console::WriteLine( "[ERROR] RenderManager: Failed to load texture, instance was null" );
-			return nullptr;
-		}
-
-		return m_Instance->Load2DTexture( inData );
-	}
-
 }

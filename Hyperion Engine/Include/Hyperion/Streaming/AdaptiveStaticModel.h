@@ -7,6 +7,7 @@
 #pragma once
 
 #include "Hyperion/Streaming/AdaptiveModel.h"
+#include "Hyperion/Assets/StaticModelAsset.h"
 
 
 namespace Hyperion
@@ -14,6 +15,16 @@ namespace Hyperion
 
 	class AdaptiveStaticModel : public AdaptiveModel
 	{
+
+	private:
+
+
+	public:
+
+		AdaptiveStaticModel( const AssetRef< StaticModelAsset >& inAsset );
+		~AdaptiveStaticModel();
+
+		AdaptiveStaticModel() = delete;
 
 	};
 

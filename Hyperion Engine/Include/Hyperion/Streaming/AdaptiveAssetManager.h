@@ -26,27 +26,17 @@ namespace Hyperion
 	extern ConsoleVar< float > g_CVar_TextureLODMult_DynamicModel;
 	extern ConsoleVar< float > g_CVar_TextureLODMult_Level;
 	extern ConsoleVar< float > g_CVar_TextureLODMult_Character;
+	extern ConsoleVar< uint32 > g_CVar_TextureMaxResidentMemory;
 
 
 	// Forward Declarations
 	class AdaptiveTexture;
 	class AdaptiveModel;
 
-
-	class AdaptiveAssetManagerTextureLoadRequest
-	{
-
-	public:
-
-	};
-
-
-	class AdaptiveAssetManagerModelLoadRequest
-	{
-
-	public:
-
-	};
+	struct AdaptiveTextureRequestBase;
+	struct AdaptiveTextureLoadRequest;
+	struct AdaptiveTextureUnloadRequest;
+	struct AdaptiveModelLoadRequest;
 	
 
 	class AdaptiveAssetManager
@@ -63,11 +53,15 @@ namespace Hyperion
 		std::vector< std::weak_ptr< AdaptiveTexture > > m_SortedTextures;
 		std::vector< std::weak_ptr< AdaptiveModel > > m_SortedModels;
 
-		std::vector< std::unique_ptr< AdaptiveAssetManagerTextureLoadRequest > > m_TextureLoadQueue;
-		std::vector< std::unique_ptr< AdaptiveAssetManagerModelLoadRequest > > m_ModelLoadQueue;
+		std::deque< std::shared_ptr< AdaptiveTextureLoadRequest > > m_TextureLoadQueue;
+		std::deque< std::shared_ptr< AdaptiveTextureUnloadRequest > > m_TextureUnloadQueue;
+
+		std::vector< std::shared_ptr< AdaptiveModelLoadRequest > > m_ModelLoadQueue;
 
 		std::mutex m_TextureMutex;
 		std::mutex m_ModelMutex;
+
+		uint32 m_MemoryUsage;
 
 		std::map< uint32, std::shared_ptr< AdaptiveAssetManagerObjectInfo > > m_Objects;
 
@@ -90,11 +84,14 @@ namespace Hyperion
 		void PerformTexturePass();
 		void PerformModelPass();
 
+		void SortTextures();
 		void SortTextureLoadRequests();
+		void SortTextureUnloadRequests();
+		void FinishDestroyTexture( AdaptiveTexture& inTexture );
 
 
-		void TextureWorkerThread( CustomThread& );
-		void ModelWorkerThread( CustomThread& );
+		void TextureWorker_Main( CustomThread& );
+		void ModelWorker_Main( CustomThread& );
 
 		// Friend in all event classes
 		friend class AdaptiveAssetManagerSpawnEvent;
@@ -103,6 +100,21 @@ namespace Hyperion
 		friend class AdaptiveAssetManagerObjectUpdateEvent;
 		friend class AdaptiveAssetManagerCameraUpdateEvent;
 		friend class AdaptiveAssetManagerWorldResetEvent;
+
+		// Helper functions for texture worker
+		void TextureWorker_SelectRequests( std::shared_ptr< AdaptiveTextureLoadRequest >& outLoad, 
+										   std::vector< std::shared_ptr< AdaptiveTexture > >& outForceDrops, std::vector< std::shared_ptr< AdaptiveTextureUnloadRequest > >& outPureDrops );
+
+		bool TextureWorker_PerformLoad( const std::shared_ptr< AdaptiveTextureLoadRequest >& inRequest );
+
+
+		std::deque< std::shared_ptr< AdaptiveTextureLoadRequest > >::iterator TextureWorker_PopNextLoadRequest();
+
+		bool TextureWorker_DropLevelFromLoad( std::shared_ptr< AdaptiveTextureLoadRequest >& inReq );
+
+		bool TextureWorker_GenerateForceDropList( uint32 dropCount, float loadPriority, uint32 neededMemory, 
+												  const std::vector< std::shared_ptr< AdaptiveTextureUnloadRequest > >& selectedUnloads, 
+												  std::vector< std::shared_ptr< AdaptiveTexture > >& outList );
 
 	public:
 
@@ -115,6 +127,22 @@ namespace Hyperion
 		void OnPrimitiveUpdate( AdaptiveAssetManagerObjectUpdateEvent& inEvent );
 		void OnCameraUpdate( AdaptiveAssetManagerCameraUpdateEvent& inEvent );
 		void OnWorldReset( AdaptiveAssetManagerWorldResetEvent& inEvent );
+	};
+
+
+	struct AdaptiveAssetManagerTextureSort
+	{
+		inline bool operator()( const std::shared_ptr< AdaptiveTexture >& lhs, const std::shared_ptr< AdaptiveTexture >& rhs );
+	};
+
+	struct AdaptiveAssetManagerTextureLoadRequestSort
+	{
+		inline bool operator()( const std::shared_ptr< AdaptiveTextureLoadRequest >& lhs, const std::shared_ptr< AdaptiveTextureLoadRequest >& rhs );
+	};
+
+	struct AdaptiveAssetManagerTextureUnloadRequestSort
+	{
+		inline bool operator()( const std::shared_ptr< AdaptiveTextureUnloadRequest >& lhs, const std::shared_ptr< AdaptiveTextureUnloadRequest >& rhs );
 	};
 
 }

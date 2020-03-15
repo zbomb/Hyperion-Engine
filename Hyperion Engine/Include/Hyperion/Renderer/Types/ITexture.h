@@ -8,6 +8,7 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Renderer/Types/Resource.h"
+#include "Hyperion/Renderer/DataTypes.h"
 
 
 namespace Hyperion
@@ -24,6 +25,8 @@ namespace Hyperion
 
 	enum class TextureFormat
 	{
+		NONE = 0,
+
 		/*
 		 * 8-bit Types
 		*/
@@ -136,13 +139,21 @@ namespace Hyperion
 		const void* Data;
 	};
 
+	struct Texture2DMipData
+	{
+		const void* Data;
+		uint32 RowDataSize;
+
+		Texture2DMipData()
+			: Data( nullptr ), RowDataSize( 0 )
+		{}
+	};
 
 	struct Texture2DParameters
 	{
 		Texture2DParameters()
 			: Width( 0 ), Height( 0 ), MipLevels( 0 ), Dynamic( false ), CanCPURead( false ),
-			Target( TextureBindTarget::Shader ), Format( TextureFormat::RGBA_8BIT_UNORM ), Data( nullptr ),
-			RowDataSize( 0 )
+			Target( TextureBindTarget::Shader ), Format( TextureFormat::RGBA_8BIT_UNORM )
 
 		{}
 
@@ -154,10 +165,8 @@ namespace Hyperion
 		TextureBindTarget Target;
 		TextureFormat Format;
 
-		const void* Data;
-		uint32 RowDataSize;
+		std::vector< Texture2DMipData > Data;
 	};
-
 
 	struct Texture3DParameters
 	{
@@ -210,6 +219,8 @@ namespace Hyperion
 		inline uint32 GetHeight() const final { return 0; }
 		inline uint32 GetDepth() const final { return 0; }
 
+		virtual void Swap( ITexture1D& ) = 0;
+
 	};
 
 	class ITexture2D : public ITextureBase
@@ -221,6 +232,8 @@ namespace Hyperion
 		inline uint8 GetDimensions() const final { return 2; }
 		inline uint32 GetDepth() const final { return 0; }
 
+		virtual void Swap( ITexture2D& ) = 0;
+
 	};
 
 	class ITexture3D : public ITextureBase
@@ -230,6 +243,8 @@ namespace Hyperion
 
 		virtual ~ITexture3D() {};
 		inline uint8 GetDimensions() const final { return 3; }
+
+		virtual void Swap( ITexture3D& ) = 0;
 
 	};
 

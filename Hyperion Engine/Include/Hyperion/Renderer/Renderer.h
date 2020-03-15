@@ -51,6 +51,8 @@ namespace Hyperion
 		ConcurrentQueue< std::unique_ptr< RenderCommandBase > > m_ImmediateCommands;
 		ConcurrentQueue< std::unique_ptr< RenderCommandBase > > m_Commands;
 
+		std::map< uint32, std::shared_ptr< ITexture2D > > m_TextureCache;
+
 		bool Initialize();
 		void Shutdown();
 		void Frame();
@@ -86,8 +88,10 @@ namespace Hyperion
 
 		inline std::shared_ptr< ProxyScene > GetScene() const { return m_Scene; }
 
-		// DEPRECATED 
-		std::shared_ptr< ITexture2D > Load2DTexture( const std::shared_ptr< RawImageData >& inData );
+		bool IncreaseTextureAssetLOD( AssetRef< TextureAsset >& inAsset, uint8 inMaxLevel, const std::vector< std::vector< byte > >& inData );
+		bool LowerTextureAssetLOD( AssetRef< TextureAsset >& inAsset, uint8 inMaxLevel );
+		void RemoveTextureAsset( uint32 inIdentifier );
+		void ClearTextureAssetCache();
 
 		friend class RenderManager;
 

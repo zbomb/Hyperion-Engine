@@ -22,7 +22,6 @@ namespace Hyperion
 	std::unique_ptr< RenderFenceWatcher > GameManager::m_FenceWatcher( std::make_unique< RenderFenceWatcher >() );
 	std::chrono::time_point< std::chrono::high_resolution_clock > GameManager::m_LastTick;
 	InputManager GameManager::m_InputManager;
-	ViewState GameManager::m_CachedViewState;
 
 
 	bool GameManager::Start( uint32 inFlags /* = 0 */, std::shared_ptr< InstanceFactoryBase > inFactory /* = nullptr */ )

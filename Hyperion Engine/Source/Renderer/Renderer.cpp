@@ -322,36 +322,349 @@ namespace Hyperion
 		);
 	}
 
-	std::shared_ptr< ITexture2D > Renderer::Load2DTexture( const std::shared_ptr< RawImageData >& inData )
-	{
-		HYPERION_VERIFY( m_API, "API Instance was null!" );
 
-		if( !inData )
+	bool Renderer::IncreaseTextureAssetLOD( AssetRef< TextureAsset >& inAsset, uint8 inMaxLevel, const std::vector< std::vector< byte > >& inData )
+	{
+		HYPERION_VERIFY( m_API, "Failed to update texture asset, API was null!" );
+
+		if( !inAsset.IsValid() || !inAsset->IsValidTexture() )
 		{
-			Console::WriteLine( "[ERROR] Renderer: Failed to load 2d texture.. raw image data was null" );
-			return nullptr;
+			Console::WriteLine( "[ERROR] Failed to update texture asset, the provided asset reference was invalid!" );
+			return false;
 		}
 
+		uint32 textureIdentifier	= inAsset->GetIdentifier();
+		auto textureHeader			= inAsset->GetHeader();
+		auto texturePath			= inAsset->GetAssetPath().GetPath();
+
+		// Ensure 'inMaxLevel' is a valid value
+		if( textureHeader.LODs.size() <= inMaxLevel )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Attempt to load invalid LOD level for texture \"", texturePath, "\" at LOD = ", inMaxLevel, " where the number of levels is only ", textureHeader.LODs.size() );
+			return false;
+		}
+
+		// Calculate how many LODs were going to be loading
+		uint8 lodCount = (uint8) ( textureHeader.LODs.size() - inMaxLevel );
+
+		// Ensure we have the correct number of data blocks
+		if( inData.size() != lodCount )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to add LODs to texture, invalid data!" );
+			return false;
+		}
+
+		auto& maxLOD = textureHeader.LODs.at( inMaxLevel );
+
+		// Now, we need to create a new texture, and supply it with this data
 		Texture2DParameters params;
 
 		params.CanCPURead	= false;
 		params.Dynamic		= false;
-		params.Format		= TextureFormat::RGBA_8BIT_UNORM;
-		params.Height		= inData->Height;
-		params.Width		= inData->Width;
-		params.MipLevels	= 1;
+		params.Format		= ConvertAssetToTextureFormat( textureHeader.Format );
+		params.Width		= maxLOD.Width;
+		params.Height		= maxLOD.Height;
+		params.MipLevels	= lodCount;
 		params.Target		= TextureBindTarget::Shader;
-		params.RowDataSize	= inData->Width * 4;
-		params.Data			= inData->Data.data();
 
-		auto ret = m_API->CreateTexture2D( params );
-		if( !ret )
+		// Now we need to build the data for the D3D11 subresource structure
+		for( uint8 i = 0; i < lodCount; i++ )
 		{
-			Console::WriteLine( "[ERROR] Renderer: Failed to load 2d texture, api call returned null!" );
-			return nullptr;
+			uint8 thisLevel = i + inMaxLevel;
+			auto& lodInfo = textureHeader.LODs.at( thisLevel );
+
+			Texture2DMipData mip;
+
+			mip.Data			= inData.at( i ).data();
+			mip.RowDataSize		= lodInfo.RowSize;
+
+			params.Data.push_back( mip );
 		}
 
-		return ret;
+		// Now, if we are able to create textures async with the current API, we will just do that, and add a command
+		// to swap this texture out with the active one, otherwise, the texture will heave to  be created on the main render thread
+		if( m_API->AllowAsyncTextureCreation() )
+		{
+			auto newTex = m_API->CreateTexture2D( params );
+			if( !newTex )
+			{
+				Console::WriteLine( "[ERROR] Renderer: Failed to add LODs to texture, API call to create the new texture failed!" );
+				return false;
+			}
+
+			AddImmediateCommand(
+				std::make_unique< RenderCommand >(
+					[ this, textureIdentifier, newTex ] ( Renderer& r )
+					{
+						// How swap out the textures
+						auto entry = m_TextureCache.find( textureIdentifier );
+						if( entry == m_TextureCache.end() )
+						{
+							m_TextureCache.emplace( textureIdentifier, newTex );
+						}
+						else
+						{
+							if( entry->second )
+							{
+								// Were not going to just assign the pointer
+								// We are going to swap the contained API ref inside the pointer, so any existing
+								// texture pointers dont break after this operation is complete
+								entry->second->Swap( *newTex );
+
+								if( newTex->IsValid() )
+								{
+									newTex->Shutdown();
+								}
+							}
+							else
+							{
+								entry->second = newTex;
+							}
+						}
+
+					} )
+			);
+		}
+		else
+		{
+			// Now, everything we do has to be on the render thread, so we have to pass the data through to create the texture
+			AddImmediateCommand(
+				std::make_unique< RenderCommand >(
+					[ this, textureIdentifier, params ] ( Renderer& r )
+					{
+						// First, create the texture
+						auto newTex = m_API->CreateTexture2D( params );
+						if( !newTex )
+						{
+							Console::WriteLine( "[ERROR] Renderer: Failed to add LODs to texture asset, API call to create the new texture failed (on render thread)!" );
+						}
+						else
+						{
+							// Hotswap the textures
+							auto entry = m_TextureCache.find( textureIdentifier );
+							if( entry == m_TextureCache.end() )
+							{
+								m_TextureCache.emplace( textureIdentifier, newTex );
+							}
+							else
+							{
+								// We want to keep the same pointer in the cache, so existing references dont break
+								// So, were going to swap the underlying API object inside the pointers instead
+								if( entry->second )
+								{
+									entry->second->Swap( *newTex );
+
+									if( newTex->IsValid() )
+									{
+										newTex->Shutdown();
+									}
+								}
+								else
+								{
+									entry->second = newTex;
+								}
+							}
+						}
+
+					} )
+			);
+		}
+
+		return true;
+	}
+
+	
+	bool Renderer::LowerTextureAssetLOD( AssetRef< TextureAsset >& inAsset, uint8 inMaxLevel )
+	{
+		HYPERION_VERIFY( m_API, "Failed to update texture asset, API was null!" );
+
+		if( !inAsset.IsValid() || !inAsset->IsValidTexture() )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to lower texture asset LOD, the asset supplied was invalid" );
+			return false;
+		}
+
+		auto textureIdentifier	= inAsset->GetIdentifier();
+		auto textureHeader		= inAsset->GetHeader();
+		auto texturePath		= inAsset->GetAssetPath().GetPath();
+
+		if( textureHeader.LODs.size() <= inMaxLevel )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to lower texture asset LOD, the target LOD level was invalid!" );
+			return false;
+		}
+
+		uint8 lodCount	= (uint8) ( textureHeader.LODs.size() - inMaxLevel );
+		auto& maxLOD	= textureHeader.LODs.at( inMaxLevel );
+
+		// Setup parameters to create the new texture
+		Texture2DParameters params;
+
+		params.CanCPURead	= false;
+		params.Dynamic		= false;
+		params.Format		= ConvertAssetToTextureFormat( textureHeader.Format );
+		params.Width		= maxLOD.Width;
+		params.Height		= maxLOD.Height;
+		params.MipLevels	= lodCount;
+		params.Target		= TextureBindTarget::Shader;
+
+		// Were not going to provide initial data, instead, were going to copy the data from the existing texture
+		// But we still need to check if we can create the texture 'off-thread' or not
+		if( m_API->AllowAsyncTextureCreation() )
+		{
+			auto newTex = m_API->CreateTexture2D( params );
+			if( !newTex )
+			{
+				Console::WriteLine( "[ERROR] Renderer: Failed to lower texture LOD, API call to create the texture failed!" );
+				return false;
+			}
+
+			// Now, we need a render command to copy the existing texture into our new one
+			AddImmediateCommand(
+				std::make_unique< RenderCommand >(
+					[ this, textureIdentifier, inMaxLevel, textureHeader, lodCount, newTex ] ( Renderer& r ) mutable
+					{
+						auto entry = m_TextureCache.find( textureIdentifier );
+						if( entry == m_TextureCache.end() || !entry->second || !entry->second->IsValid() )
+						{
+							// How can we feed this back into the algorithm?
+							// Or recover from this error? i.e. Tell the AA thread this texture is misssing?
+							Console::WriteLine( "[ERROR] Renderer: Attempt to lower texture LOD, but the target texture is not loaded/valid on the render thread!" );
+						}
+						else
+						{
+							// Now, we need to copy each level into the new texture
+							auto oldTex = entry->second;
+							auto oldLodCount = oldTex->GetMipLevels();
+							bool bFailed = false;
+
+							for( uint8 i = inMaxLevel; i < textureHeader.LODs.size(); i++ )
+							{
+								auto& lodInfo = textureHeader.LODs.at( i );
+								auto newTexIndex = lodCount - ( textureHeader.LODs.size() - i );
+								auto oldTexIndex = oldLodCount - ( textureHeader.LODs.size() - i );
+
+								if( !m_API->CopyLODTexture2D( oldTex, newTex,
+															  0, 0,
+															  lodInfo.Width, lodInfo.Height,
+															  0, 0,
+															  oldTexIndex, newTexIndex ) )
+								{
+									Console::WriteLine( "[ERROR] Renderer: Attempt to lower texture LOD, but one of the mip levels couldnt be copied!" );
+									bFailed = true;
+									break;
+								}
+							}
+
+							if( !bFailed )
+							{
+								// Texture hotswap
+								entry->second->Swap( *newTex );
+								newTex->Shutdown();
+								newTex.reset();
+							}
+							else
+							{
+								// TODO: Feedback into AA system
+							}
+						}
+					} )
+			);
+		}
+		else
+		{
+			AddImmediateCommand(
+				std::make_unique< RenderCommand >(
+					[ this, textureIdentifier, params, inMaxLevel, textureHeader, lodCount ] ( Renderer& r ) mutable
+					{
+						// First, lets check if the existing texture is valid
+						auto entry = m_TextureCache.find( textureIdentifier );
+						if( entry == m_TextureCache.end() || !entry->second || !entry->second->IsValid() )
+						{
+							Console::WriteLine( "[ERROR] Renderer: Attempt to lower texture LOD.. but the target texture was invalid/null!" );
+							// TODO: Feedback to the AA system?
+						}
+						else
+						{
+							// Next, create the new texture
+							auto newTex = m_API->CreateTexture2D( params );
+							if( !newTex )
+							{
+								Console::WriteLine( "[ERROR] Renderer: Attempt to lower texture LOD.. but couldnt create new texture (on render thread)!" );
+								// TODO: Feedback to AA system?
+							}
+							else
+							{
+								auto oldTex			= entry->second;
+								auto oldLODCount	= oldTex->GetMipLevels();
+								bool bFailed		= false;
+
+								for( uint8 i = inMaxLevel; i < textureHeader.LODs.size(); i++ )
+								{
+									auto& lodInfo		= textureHeader.LODs.at( i );
+									auto newTexIndex	= lodCount - ( textureHeader.LODs.size() - i );
+									auto oldTexIndex	= oldLODCount - ( textureHeader.LODs.size() - i );
+
+									if( !m_API->CopyLODTexture2D( oldTex, newTex,
+																  0, 0,
+																  lodInfo.Width, lodInfo.Height,
+																  0, 0,
+																  oldTexIndex, newTexIndex ) )
+									{
+										Console::WriteLine( "[ERROR] Renderer: Attempt to lower texture LOD.. but the API copy call failed when copying to new texture!" );
+										bFailed = true;
+										break;
+									}
+								}
+
+								if( !bFailed )
+								{
+									// Texture hotswap
+									entry->second->Swap( *newTex );
+									newTex->Shutdown();
+									newTex.reset();
+								}
+								else
+								{
+									// TODO: Feedback into AA system
+								}
+							}
+						}
+					} )
+			);
+		}
+
+		return true;
+	}
+
+	
+	void Renderer::RemoveTextureAsset( uint32 inIdentifier )
+	{
+		AddImmediateCommand(
+			std::make_unique< RenderCommand >(
+				[ this, inIdentifier ] ( Renderer& r )
+				{
+					// First, lets try and find the entry
+					auto entry = m_TextureCache.find( inIdentifier );
+					if( entry != m_TextureCache.end() )
+					{
+						m_TextureCache.erase( entry );
+					}
+
+				} )
+		);
+	}
+
+
+	void Renderer::ClearTextureAssetCache()
+	{
+		AddImmediateCommand(
+			std::make_unique< RenderCommand >(
+				[ this ] ( Renderer& r )
+				{
+					m_TextureCache.clear();
+				} )
+		);
 	}
 
 }

@@ -94,12 +94,17 @@ namespace Hyperion
 
 		std::vector< ScreenResolution > GetAvailableResolutions() override;
 
+		inline bool AllowAsyncTextureCreation() const override { return true; }
+
 		std::shared_ptr< IBuffer > CreateBuffer( const BufferParameters& inParams ) override;
 		
 		std::shared_ptr< ITexture1D > CreateTexture1D( const Texture1DParameters& inParams ) override;
 		std::shared_ptr< ITexture2D > CreateTexture2D( const Texture2DParameters& inParams ) override;
 		std::shared_ptr< ITexture3D > CreateTexture3D( const Texture3DParameters& inParams ) override;
 
+		bool CopyTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Target ) override;
+		bool CopyLODTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Dest,
+							uint32 SourceX, uint32 SourceY, uint32 Width, uint32 Height, uint32 DestX, uint32 DestY, uint8 SourceMip, uint8 DestMip ) override;
 	};
 
 }

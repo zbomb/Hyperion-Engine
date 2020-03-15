@@ -166,6 +166,9 @@
     <ClCompile Include="Source\Renderer\Proxy\ProxyTest.cpp" />
     <ClCompile Include="Source\Renderer\Renderer.cpp" />
     <ClCompile Include="Source\Streaming\AdaptiveAssetManager.cpp" />
+    <ClCompile Include="Source\Streaming\AdaptiveDynamicModel.cpp" />
+    <ClCompile Include="Source\Streaming\AdaptiveStaticModel.cpp" />
+    <ClCompile Include="Source\Streaming\AdaptiveTexture.cpp" />
     <ClCompile Include="Source\Tools\Deflate.cpp" />
     <ClCompile Include="Source\Tools\ImageLoader.cpp" />
     <ClCompile Include="Source\Tools\PNGReader.cpp" />
