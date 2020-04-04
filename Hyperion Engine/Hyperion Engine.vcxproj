@@ -33,8 +33,6 @@
     <ClInclude Include="Include\Hyperion\Core\AssetLoader.h" />
     <ClInclude Include="Include\Hyperion\Core\AssetManager.h" />
     <ClInclude Include="Include\Hyperion\Core\Async.h" />
-    <ClInclude Include="Include\Hyperion\Core\File.h" />
-    <ClInclude Include="Include\Hyperion\Core\FileImpl.h" />
     <ClInclude Include="Include\Hyperion\Core\GameInstance.h" />
     <ClInclude Include="Include\Hyperion\Core\GameManager.h" />
     <ClInclude Include="Include\Hyperion\Core\InputManager.h" />
@@ -60,9 +58,16 @@
     <ClInclude Include="Include\Hyperion\Core\Types\Point.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Transform.h" />
     <ClInclude Include="Include\Hyperion\Core\Types\Vector.h" />
-    <ClInclude Include="Include\Hyperion\Core\VirtualFileSystem.h" />
     <ClInclude Include="Include\Hyperion\Extern\zlib\zconf.h" />
     <ClInclude Include="Include\Hyperion\Extern\zlib\zlib.h" />
+    <ClInclude Include="Include\Hyperion\File\FilePath.h" />
+    <ClInclude Include="Include\Hyperion\File\IDirectory.h" />
+    <ClInclude Include="Include\Hyperion\File\IFile.h" />
+    <ClInclude Include="Include\Hyperion\File\IFileServices.h" />
+    <ClInclude Include="Include\Hyperion\File\NetworkFileSystem.h" />
+    <ClInclude Include="Include\Hyperion\File\PhysicalFileSystem.h" />
+    <ClInclude Include="Include\Hyperion\File\UnifiedFileSystem.h" />
+    <ClInclude Include="Include\Hyperion\File\VirtualFileSystem.h" />
     <ClInclude Include="Include\Hyperion\Framework\CameraComponent.h" />
     <ClInclude Include="Include\Hyperion\Framework\Component.h" />
     <ClInclude Include="Include\Hyperion\Framework\DynamicModelComponent.h" />
@@ -108,6 +113,8 @@
     <ClInclude Include="Include\Hyperion\Streaming\DataTypes.h" />
     <ClInclude Include="Include\Hyperion\Streaming\Events.h" />
     <ClInclude Include="Include\Hyperion\Tools\Deflate.h" />
+    <ClInclude Include="Include\Hyperion\Tools\HHTReader.h" />
+    <ClInclude Include="Include\Hyperion\Tools\HVBReader.h" />
     <ClInclude Include="Include\Hyperion\Tools\ImageLoader.h" />
     <ClInclude Include="Include\Hyperion\Tools\PNGReader.h" />
     <ClInclude Include="Include\Hyperion\Win32\Win32FileSystem.h" />
@@ -129,7 +136,6 @@
     <ClCompile Include="Source\Console\Console.cpp" />
     <ClCompile Include="Source\Console\ConsoleVarInstance.cpp" />
     <ClCompile Include="Source\Core\AssetManager.cpp" />
-    <ClCompile Include="Source\Core\File.cpp" />
     <ClCompile Include="Source\Core\GameInstance.cpp" />
     <ClCompile Include="Source\Core\GameManager.cpp" />
     <ClCompile Include="Source\Core\InputManager.cpp" />
@@ -142,7 +148,12 @@
     <ClCompile Include="Source\Core\Threading.cpp" />
     <ClCompile Include="Source\Core\ThreadManager.cpp" />
     <ClCompile Include="Source\Core\Types\Point.cpp" />
-    <ClCompile Include="Source\Core\VirtualFileSystem.cpp" />
+    <ClCompile Include="Source\File\FilePath.cpp" />
+    <ClCompile Include="Source\File\IFileServices.cpp" />
+    <ClCompile Include="Source\File\NetworkFileSystem.cpp" />
+    <ClCompile Include="Source\File\PhysicalFileSystem.cpp" />
+    <ClCompile Include="Source\File\UnifiedFileSystem.cpp" />
+    <ClCompile Include="Source\File\VirtualFileSystem.cpp" />
     <ClCompile Include="Source\Framework\CameraComponent.cpp" />
     <ClCompile Include="Source\Framework\Component.cpp" />
     <ClCompile Include="Source\Framework\DynamicModelComponent.cpp" />
@@ -170,6 +181,8 @@
     <ClCompile Include="Source\Streaming\AdaptiveStaticModel.cpp" />
     <ClCompile Include="Source\Streaming\AdaptiveTexture.cpp" />
     <ClCompile Include="Source\Tools\Deflate.cpp" />
+    <ClCompile Include="Source\Tools\HHTReader.cpp" />
+    <ClCompile Include="Source\Tools\HVBReader.cpp" />
     <ClCompile Include="Source\Tools\ImageLoader.cpp" />
     <ClCompile Include="Source\Tools\PNGReader.cpp" />
     <ClCompile Include="Source\Win32\Win32FileSystem.cpp" />

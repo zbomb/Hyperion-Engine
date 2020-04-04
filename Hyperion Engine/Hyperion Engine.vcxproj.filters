@@ -62,6 +62,9 @@
     <Filter Include="Library">
       <UniqueIdentifier>{f46563e8-0e82-4012-bd71-33ba2307fc6c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="File">
+      <UniqueIdentifier>{16f5991a-7bf3-4919-8151-8b43c24b787c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Hyperion\Hyperion.h">
@@ -139,9 +142,6 @@
     <ClInclude Include="Include\Hyperion\Core\Library\Binary.h">
       <Filter>Core\Library</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\File.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Stream.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -163,9 +163,6 @@
     <ClInclude Include="Include\Hyperion\Core\Platform.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\FileImpl.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Asset.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -173,9 +170,6 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\AssetManager.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\VirtualFileSystem.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Tests\AssetTests.hpp">
@@ -373,6 +367,36 @@
     <ClInclude Include="Include\Hyperion\Streaming\Events.h">
       <Filter>Streaming</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Hyperion\File\NetworkFileSystem.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\File\PhysicalFileSystem.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\File\UnifiedFileSystem.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\File\VirtualFileSystem.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\File\FilePath.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\File\IFileServices.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\File\IFile.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\File\IDirectory.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Tools\HVBReader.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Tools\HHTReader.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework\Entity.cpp">
@@ -411,9 +435,6 @@
     <ClCompile Include="Source\Core\String.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Core\File.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Core\Stream.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -424,9 +445,6 @@
       <Filter>Win32</Filter>
     </ClCompile>
     <ClCompile Include="Source\Core\AssetManager.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Core\VirtualFileSystem.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Source\Assets\TestAsset.cpp">
@@ -524,6 +542,30 @@
     </ClCompile>
     <ClCompile Include="Source\Streaming\AdaptiveDynamicModel.cpp">
       <Filter>Streaming</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\File\NetworkFileSystem.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\File\PhysicalFileSystem.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\File\UnifiedFileSystem.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\File\VirtualFileSystem.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\File\FilePath.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\File\IFileServices.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tools\HVBReader.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tools\HHTReader.cpp">
+      <Filter>Tools</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

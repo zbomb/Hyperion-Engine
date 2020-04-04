@@ -6,13 +6,24 @@
 
 #pragma once
 
-#include "Hyperion/Core/FileImpl.h"
+#include "Hyperion/File/IFileServices.h"
 
 
 
 namespace Hyperion
 {
 
+	class Win32FileServices : public IFileServices
+	{
+
+	public:
+
+		String GetLocalPathLocation( LocalPath inLocal ) final;
+
+	};
+
+
+	/*
 	class Win32FileSystem : public IFileServices
 	{
 	private:
@@ -39,5 +50,6 @@ namespace Hyperion
 		virtual std::unique_ptr< MetaData > GetDirectoryMetaData( const FilePath& inPath ) override;
 
 	};
+	*/
 
 }

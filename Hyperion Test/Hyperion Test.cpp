@@ -8,7 +8,7 @@
 #include "Hyperion/Core/ThreadManager.h"
 #include "Hyperion/Core/RenderManager.h"
 #include "Hyperion/Console/Console.h"
-#include "Hyperion/Core/VirtualFileSystem.h"
+#include "Hyperion/File/UnifiedFileSystem.h"
 #include "Tests.hpp"
 
 #include <windowsx.h>
@@ -48,6 +48,16 @@ Hyperion::Keys TranslateMouseButton( MSG&, bool& );
 Hyperion::Keys TranslateKeyboardButton( MSG& );
 
 
+class EngineContainer
+{
+
+public:
+
+    EngineContainer
+
+};
+
+
 
 int Impl_Main( HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow )
 {
@@ -81,8 +91,11 @@ int Impl_Main( HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow )
         BindCrtHandlesToStdHandles( true, true, true );
     }
 
-    // Begin engine init
-    // First, we need to load the console, so other systems can access settings
+    // Begin engine initialization
+    // First, we need to startup the file system
+    Hyperion::UnifiedFileSystem::Initialize();
+
+    // Next, we need to start the console
     if( !Hyperion::Console::Start( Hyperion::FLAG_CONSOLE_OS_OUTPUT ) )
     {
         MessageBox( hWindow, L"Hyperion engine failed to initialize! Couldnt start console!", L"Hyperion Error!", MB_OK );
@@ -185,9 +198,6 @@ int Impl_Main( HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow )
         return -1;
     }
 
-    // Mount virtual file chunks
-    Hyperion::VirtualFileSystem::MountChunks();
-
     // Get reference to the input manager
     Hyperion::InputManager& im = Hyperion::GameManager::GetInputManager();
 
@@ -252,6 +262,7 @@ int Impl_Main( HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow )
     Hyperion::RenderManager::Stop();
     Hyperion::ThreadManager::Stop();
     Hyperion::Console::Stop();
+    Hyperion::UnifiedFileSystem::Shutdown();
 
     // If we created a console window, we need to free it
     if( bHasOSConsoleFlag )
@@ -319,6 +330,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     Hyperion::RenderManager::Stop();
     Hyperion::ThreadManager::Stop();
     Hyperion::Console::Stop();
+    Hyperion::UnifiedFileSystem::Shutdown();
 
     return ErrRet;
 }

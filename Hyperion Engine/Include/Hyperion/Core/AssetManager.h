@@ -6,6 +6,41 @@
 
 #pragma once
 
+#include "Hyperion/Hyperion.h"
+
+
+namespace Hyperion
+{
+
+	class AssetManager
+	{
+
+	private:
+		
+		static std::map< uint32, String > m_HashTable;
+
+	public:
+
+		static bool RegisterAsset( uint32 inHash, const String& inPath );
+
+
+	};
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 #include "Hyperion/Core/Asset.h"
 #include "Hyperion/Core/String.h"
 #include "Hyperion/Core/VirtualFileSystem.h"
@@ -223,7 +258,7 @@ namespace Hyperion
 			* Loads an asset from either the virtual file system or disk
 			* If bCheckDisk is false, only the VFS will be checked for the asset
 			* Can be called from any thread.. thread-safe!
-		*/
+		
 		template< typename T >
 		static AssetRef< T > LoadSync( const String& inAssetIdentifier, bool bCheckDisk = true )
 		{
@@ -249,7 +284,7 @@ namespace Hyperion
 
 		/*
 			LoadAsync
-		*/
+		
 		template< typename T >
 		static TaskHandle< AssetRef< T > > LoadAsync( const String& Identifier, bool bCheckDisk = true )
 		{
@@ -262,32 +297,32 @@ namespace Hyperion
 
 		/*
 			CacheGroupSync
-		*/
+		
 		static bool CacheGroupSync( const String& groupIdentifier, bool bBatchRead = false );
 
 		/*
 			CacheGroupAsync
-		*/
+		
 		static TaskHandle< bool > CacheGroupAsync( const String& groupIdentifier, bool bBatchRead = false );
 
 		/*
 			IsGroupCached
-		*/
+		
 		static bool IsGroupCached( const String& groupIdentifier );
 
 		/*
 			FreeGroupSync
-		*/
+		
 		static bool FreeGroupSync( const String& groupIdentifier );
 
 		/*
 			FreeGroupAsync
-		*/
+		
 		static TaskHandle< bool > FreeGroupAsync( const String& groupIdentifier );
 
 		/*
 			IsAssetCached
-		*/
+		
 
 		enum class CacheState
 		{
@@ -302,3 +337,4 @@ namespace Hyperion
 	};
 
 }
+*/

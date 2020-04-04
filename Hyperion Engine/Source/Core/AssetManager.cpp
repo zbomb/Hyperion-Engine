@@ -7,11 +7,43 @@
 #include "Hyperion/Core/AssetManager.h"
 
 
+
+namespace Hyperion
+{
+
+	std::map< uint32, String > AssetManager::m_HashTable;
+
+
+	bool AssetManager::RegisterAsset( uint32 inIdentifier, const String& inPath )
+	{
+		if( inIdentifier == ASSET_INVALID )
+		{
+			Console::WriteLine( "[WARNING] AssetManager: Attempt to register an asset '", inPath, "' but this filename is invalid" );
+			return false;
+		}
+
+		auto currentEntry = m_HashTable.find( inIdentifier );
+		if( currentEntry != m_HashTable.end() )
+		{
+			Console::WriteLine( "[WARNING] AssetManager: Attempt to register an asset '", inPath, "' but there is an asset identifier collision! The other asset is '", 
+								*currentEntry, "', you have to rename one of these assets to resolve the collision" );
+			return false;
+		}
+		
+		m_HashTable.emplace( inIdentifier, inPath );
+		return true;
+	}
+
+}
+
+
+
+/*
 namespace Hyperion
 {
 	/*
 		Static Member Definitions
-	*/
+	
 	std::shared_mutex AssetManager::m_CacheMutex;
 	std::unordered_map< String, std::shared_ptr< AssetInstance > > AssetManager::m_Assets;
 	std::vector< String > AssetManager::m_CachedGroups;
@@ -55,7 +87,7 @@ namespace Hyperion
 
 
 
-	bool AssetManager::CacheGroupSync( const String& inGroupIdentifier, bool bBatchRead /* = false */ )
+	bool AssetManager::CacheGroupSync( const String& inGroupIdentifier, bool bBatchRead /* = false  )
 	{
 		// Verify input string, and convert to lowercase
 		HYPERION_VERIFY_BASICSTR( inGroupIdentifier );
@@ -232,7 +264,7 @@ namespace Hyperion
 		return true;
 	}
 
-	TaskHandle< bool > AssetManager::CacheGroupAsync( const String& Identifier, bool bBatchRead /* = false */ )
+	TaskHandle< bool > AssetManager::CacheGroupAsync( const String& Identifier, bool bBatchRead /* = false  )
 	{
 		HYPERION_VERIFY_BASICSTR( Identifier );
 		return Task::Create< bool >( std::bind( &AssetManager::CacheGroupSync, Identifier, bBatchRead ) );
@@ -390,3 +422,4 @@ namespace Hyperion
 	}
 
 }
+*/

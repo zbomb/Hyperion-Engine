@@ -30,6 +30,9 @@ namespace Hyperion
 
 		virtual bool CanWriteStream() const	= 0;
 		virtual bool CanReadStream() const	= 0;
+		virtual bool IsClamped() const = 0;
+		virtual size_t GetClampedRangeBegin() const { return 0; }
+		virtual size_t GetClampedRangeEnd() const { return 0; }
 	};
 
 
@@ -89,6 +92,11 @@ namespace Hyperion
 			return bAllowRead;
 		}
 
+		virtual bool IsClamped() const override final
+		{
+			return false;
+		}
+
 		_VecType::size_type Size()
 		{
 			return m_Buffer.vector().size();
@@ -121,6 +129,11 @@ namespace Hyperion
 			{
 				Console::WriteLine( "[ERROR] DataReader: Attempt to read from a stream that doesnt allow reading!" );
 			}
+
+			if( Target.IsClamped() )
+			{
+				m_Stream.seekg( Target.GetClampedRangeBegin(), _StreamType::beg );
+			}
 		}
 
 		DataReader( const std::unique_ptr< IDataSource >& Target )
@@ -140,7 +153,27 @@ namespace Hyperion
 		{
 			if( m_Alive )
 			{
-				m_Stream.seekg( Offset, _StreamType::beg );
+				if( Offset < 0 )
+				{
+					Console::WriteLine( "[WARNING] DataReader: Attempt to seek before the begining of the stream?" );
+					Offset = 0;
+				}
+
+				size_t finalOffset = (size_t) Offset;
+
+				if( m_Target.IsClamped() )
+				{
+					finalOffset +=  m_Target.GetClampedRangeBegin();
+					size_t endOffset = m_Target.GetClampedRangeEnd();
+
+					if( endOffset > 0 && finalOffset > endOffset )
+					{
+						Console::WriteLine( "[WARNING] DataReader: Attempt to seek past the end of a clamped stream!" );
+						finalOffset = endOffset;
+					}
+				}
+
+				m_Stream.seekg( finalOffset, _StreamType::beg );
 			}
 		}
 
@@ -148,16 +181,50 @@ namespace Hyperion
 		{
 			if( m_Alive )
 			{
-				m_Stream.seekg( Offset, _StreamType::end );
+				if( Offset > 0 )
+				{
+					Console::WriteLine( "[WARNING] DataReader: Attempt to seek past the end of the stream?" );
+					Offset = 0;
+				}
+
+				if( m_Target.IsClamped() )
+				{
+					size_t clampedEnd		= m_Target.GetClampedRangeEnd();
+					size_t clampedBegin		= m_Target.GetClampedRangeBegin();
+
+					if( clampedEnd > 0 )
+					{
+						// Seek back from the clamped 'end' position
+						long long actualOffset = clampedEnd + Offset;
+						if( actualOffset < clampedBegin )
+						{
+							Console::WriteLine( "[WARNING] DataReader: Attempt to seek before the begining clamped stream range!" );
+							actualOffset = clampedBegin;
+						}
+
+						m_Stream.seekg( actualOffset, _StreamType::beg );
+					}
+					else
+					{
+						// Ensure we dont seek before the begining
+						m_Stream.seekg( Offset, _StreamType::end );
+						if( m_Stream.tellg() < clampedBegin )
+						{
+							Console::WriteLine( "[WARNING] DataReader: Attempt to seek before the begining clamped stream range!" );
+							m_Stream.seekg( clampedBegin, _StreamType::beg );
+						}
+					}
+				}
+				else
+				{
+					m_Stream.seekg( Offset, _StreamType::end );
+				}
 			}
 		}
 
 		void SeekOffset( _StreamType::pos_type Offset )
 		{
-			if( m_Alive )
-			{
-				m_Stream.seekg( Offset );
-			}
+			SeekBegin( Offset );
 		}
 
 		_StreamType::pos_type GetOffset()
@@ -179,7 +246,22 @@ namespace Hyperion
 				return ReadResult::Fail;
 			}
 
-			auto res = ReadResult::Success;
+			auto res				= ReadResult::Success;
+			bool bHitClampedEnd		= false;
+
+			// First, if were clamped, we need to check if were going past the end of the stream
+			if( m_Target.IsClamped() )
+			{
+				size_t currentOffset	= m_Stream.tellg();
+				auto endRange			= m_Target.GetClampedRangeEnd();
+
+				if( currentOffset + Count > endRange )
+				{
+					// Hit the end of the clamped stream, so we need to change the 'Count'
+					Count = endRange - currentOffset;
+					bHitClampedEnd = true;
+				}
+			}
 
 			// We need to resize the vector to fit the expected number of bytes being read from the stream
 			auto startSize = Output.size();
@@ -226,6 +308,11 @@ namespace Hyperion
 				{
 					res = ReadResult::Fail;
 				}
+			}
+
+			if( res == ReadResult::Success && bHitClampedEnd )
+			{
+				res = ReadResult::End;
 			}
 
 			return res;
@@ -296,6 +383,10 @@ namespace Hyperion
 			if( !m_Alive )
 			{
 				Console::WriteLine( "[ERROR] DataWriter: Attempt to write to a stream that doesnt allow writing" );
+			}
+			else if( m_Target.IsClamped() )
+			{
+				Console::WriteLine( "[ERROR] DataWriter: Attempt to write to a clamped stream?? This stream should not allow writing!" );
 			}
 		}
 

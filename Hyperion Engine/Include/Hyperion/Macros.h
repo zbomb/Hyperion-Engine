@@ -19,8 +19,20 @@
 			std::terminate(); \
 		} \
 	} while( false )
-#elif
+#else
 #define HYPERION_VERIFY( condition, message ) do { } while( false )
+#endif
+
+// Not Implemented Macro
+#ifndef NDEBUG
+#define HYPERION_NOT_IMPLEMENTED( message ) \
+	do { \
+		std::cerr << "Hyperion Error: Attempt to run code path that is not yet implemented (" << \
+		message << ") in '" << __FILE__ << "' at line " << __LINE__ << std::endl; \
+		std::terminate(); \
+	} while( false )
+#else
+#define HYPERION_NOT_IMPLEMENTED( message ) do { } while( false )
 #endif
 
 // Attributes

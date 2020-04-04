@@ -7,7 +7,6 @@
 #include "Hyperion/Core/RenderManager.h"
 #include "Hyperion/Core/ThreadManager.h"
 #include "Hyperion/Console/Console.h"
-#include "Hyperion/Renderer/TextureCache.h"
 
 /*
 	Graphics API Headers
