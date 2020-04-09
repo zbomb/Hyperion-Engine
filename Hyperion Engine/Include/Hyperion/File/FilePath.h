@@ -105,8 +105,12 @@ namespace Hyperion
 
 		friend std::ostream& operator<<( std::ostream&, const FilePath& );
 		friend class PhysicalDirectory;
+		friend class PhysicalFileSystem;
 
 	};
+
+	template<>
+	String ToString( const FilePath& inPath );
 
 	/*
 		Function to write file path to output stream so we can print them while debugging

@@ -9,9 +9,10 @@
 #include <codecvt>
 
 #include "Hyperion/Core/String.h"
-#include "Hyperion/Core/Library/UTF8.hpp"
-#include "Hyperion/Core/Library/UTF16.hpp"
+#include "Hyperion/Library/UTF8.hpp"
+#include "Hyperion/Library/UTF16.hpp"
 #include "Hyperion/Library/Math.h"
+#include "Hyperion/Library/Binary.h"
 
 
 

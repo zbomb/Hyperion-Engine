@@ -10,17 +10,13 @@
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Console/ConsoleVar.h"
 #include "Hyperion/File/FilePath.h"
+#include "Hyperion/File/IFile.h"
+#include "Hyperion/File/IDirectory.h"
 
 
 
 namespace Hyperion
 {
-	/*
-		Forward Declarations
-	*/
-	class IFile;
-	class IDirectory;
-
 	/*
 		Console Variables
 	*/

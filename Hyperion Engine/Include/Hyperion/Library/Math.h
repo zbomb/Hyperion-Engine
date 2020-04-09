@@ -46,8 +46,8 @@ namespace Math
 		return In < Min ? Min : ( In > Max ? Max : In );
 	}
 
-	static float PIf;
-	static double PId;
+	extern float PIf;
+	extern double PId;
 
 }
 }

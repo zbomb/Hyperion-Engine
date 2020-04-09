@@ -7,6 +7,7 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
+#include "Hyperion/Core/Asset.h"
 
 
 namespace Hyperion
@@ -22,8 +23,52 @@ namespace Hyperion
 	public:
 
 		static bool RegisterAsset( uint32 inHash, const String& inPath );
+		static String GetAssetPath( uint32 inHash );
+		static uint32 GetAssetIdentifier( const String& inPath );
 
+		template< typename _Ty, std::enable_if_t<
+			std::is_base_of< AssetBase, _Ty >::value &&
+			std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
+			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value &&
+			std::is_function< typename _Ty::GetCacheMethod >::value > >
+		static std::shared_ptr< _Ty > Get( uint32 inIdentifier );
 
+		template< typename _Ty, std::enable_if_t<
+			std::is_base_of< AssetBase, _Ty >::value &&
+			std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
+			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value &&
+			std::is_function< typename _Ty::GetCacheMethod >::value > >
+			static std::shared_ptr< _Ty > Get( const String& inPath );
+
+		template< typename _Ty, std::enable_if_t<
+			std::is_base_of< AssetBase, _Ty >::value &&
+			std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
+			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value &&
+			std::is_function< typename _Ty::GetCacheMethod >::value > >
+		static std::shared_ptr< _Ty > GetUnique( uint32 inIdentifier );
+
+		template< typename _Ty, std::enable_if_t<
+			std::is_base_of< AssetBase, _Ty >::value &&
+			std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
+			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value &&
+			std::is_function< typename _Ty::GetCacheMethod >::value > >
+		static std::shared_ptr< _Ty > GetUnique( const String& inPath );
+
+		template< typename _Ty, std::enable_if_t<
+			std::is_base_of< AssetBase, _Ty >::value &&
+			std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
+			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value &&
+			std::is_function< typename _Ty::GetCacheMethod >::value > >
+		static std::shared_ptr< _Ty > GetCached( uint32 inIdentifier );
+
+		template< typename _Ty, std::enable_if_t<
+			std::is_base_of< AssetBase, _Ty >::value &&
+			std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
+			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value &&
+			std::is_function< typename _Ty::GetCacheMethod >::value > >
+		static std::shared_ptr< _Ty > GetCached( const String& inPath );
+
+		
 	};
 
 }

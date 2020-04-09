@@ -88,8 +88,8 @@ namespace Hyperion
 
 		inline std::shared_ptr< ProxyScene > GetScene() const { return m_Scene; }
 
-		bool IncreaseTextureAssetLOD( AssetRef< TextureAsset >& inAsset, uint8 inMaxLevel, const std::vector< std::vector< byte > >& inData );
-		bool LowerTextureAssetLOD( AssetRef< TextureAsset >& inAsset, uint8 inMaxLevel );
+		bool IncreaseTextureAssetLOD( std::shared_ptr< TextureAsset >& inAsset, uint8 inMaxLevel, const std::vector< std::vector< byte > >& inData );
+		bool LowerTextureAssetLOD( std::shared_ptr< TextureAsset >& inAsset, uint8 inMaxLevel );
 		void RemoveTextureAsset( uint32 inIdentifier );
 		void ClearTextureAssetCache();
 

@@ -196,7 +196,7 @@ namespace Hyperion
 					{
 						// Seek back from the clamped 'end' position
 						long long actualOffset = clampedEnd + Offset;
-						if( actualOffset < clampedBegin )
+						if( (size_t) actualOffset < clampedBegin )
 						{
 							Console::WriteLine( "[WARNING] DataReader: Attempt to seek before the begining clamped stream range!" );
 							actualOffset = clampedBegin;
@@ -208,7 +208,7 @@ namespace Hyperion
 					{
 						// Ensure we dont seek before the begining
 						m_Stream.seekg( Offset, _StreamType::end );
-						if( m_Stream.tellg() < clampedBegin )
+						if( (size_t) m_Stream.tellg() < clampedBegin )
 						{
 							Console::WriteLine( "[WARNING] DataReader: Attempt to seek before the begining clamped stream range!" );
 							m_Stream.seekg( clampedBegin, _StreamType::beg );

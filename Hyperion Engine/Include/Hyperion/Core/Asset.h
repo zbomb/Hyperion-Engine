@@ -8,11 +8,67 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/String.h"
+#include "Hyperion/File/FilePath.h"
 
-#include <condition_variable>
+
 
 namespace Hyperion
 {
+
+	enum class AssetCacheMethod
+	{
+		None = 0,
+		Full = 1
+	};
+	
+
+	class AssetBase
+	{
+
+		FilePath m_Path;
+		uint32 m_Identifier;
+
+	public:
+
+		AssetBase( const FilePath& inPath, uint32 inIdentifier )
+			: m_Path( inPath ), m_Identifier( inIdentifier )
+		{}
+
+		AssetBase() = delete;
+		AssetBase( const AssetBase& ) = delete;
+		AssetBase( AssetBase&& ) = delete;
+		AssetBase& operator=( const AssetBase& ) = delete;
+		AssetBase& operator=( AssetBase&& ) = delete;
+
+		inline FilePath GetPath() const { return m_Path; }
+		inline uint32 GetIdentifier() const { return m_Identifier; }
+
+	};
+
+
+	class IAssetCache
+	{
+
+	public:
+
+
+
+	};
+
+
+	class IAssetLoader
+	{
+
+	public:
+
+
+
+	};
+
+
+}
+
+	/*
 	enum class AssetLocation
 	{
 		FileSystem = 0,
@@ -172,7 +228,7 @@ namespace Hyperion
 
 		/*
 			Default constructor
-		*/
+		
 		AssetRef()
 			: AssetRef( nullptr )
 		{
@@ -180,14 +236,14 @@ namespace Hyperion
 
 		/*
 			Convert from nullptr
-		*/
+		
 		AssetRef( nullptr_t )
 			: AssetRefBase(), m_Ptr( nullptr ), m_Identifier( nullptr )
 		{}
 
 		/*
 			Construct from raw elements, handles ref counting properly
-		*/
+		
 		AssetRef( const std::shared_ptr< _Ty >& inRef, const std::shared_ptr< AssetInstance >& inInst, const AssetPath& inPath )
 			: m_Path( inPath )
 		{
@@ -204,7 +260,7 @@ namespace Hyperion
 
 		/*
 			Copy constructor, increments ref counter
-		*/
+		
 		AssetRef( const AssetRef& Other )
 			: AssetRef( Other.m_Ptr, Other.m_Inst, Other.m_Path )
 		{
@@ -212,7 +268,7 @@ namespace Hyperion
 
 		/*
 			Move constructor, doesnt increment ref counter
-		*/
+		
 		AssetRef( AssetRef&& Other ) noexcept
 			: AssetRefBase( std::move( Other.m_Inst ) ), m_Ptr( std::move( Other.m_Ptr ) ), m_Path( std::move( Other.m_Path ) )
 		{
@@ -220,7 +276,7 @@ namespace Hyperion
 
 		/*
 			Destructor
-		*/
+		
 		virtual ~AssetRef()
 		{
 			Clear();
@@ -228,7 +284,7 @@ namespace Hyperion
 
 		/*
 			Clear, decrements ref counter and sets contents to null
-		*/
+		
 		void Clear()
 		{
 			m_Ptr.reset();
@@ -239,7 +295,7 @@ namespace Hyperion
 
 		/*
 			Assign, changes the referenced asset, similar to assignment operator
-		*/
+		
 		void Assign( const std::shared_ptr< _Ty >& inRef, const std::shared_ptr< AssetInstance >& inInst, const AssetPath& inPath )
 		{
 			// Copy the current instance pointer
@@ -270,7 +326,7 @@ namespace Hyperion
 
 		/*
 			Assignment Operator
-		*/
+		
 		AssetRef& operator=( const AssetRef& Other )
 		{
 			// First, copy the current instance pointer
@@ -328,7 +384,7 @@ namespace Hyperion
 
 		/*
 			Nullptr Assignment Overload
-		*/
+		
 		AssetRef& operator=( nullptr_t )
 		{
 			Clear();
@@ -336,7 +392,7 @@ namespace Hyperion
 
 		/*
 			IsValid, requires both components to be valid
-		*/
+		
 		bool IsValid() const
 		{
 			return m_Ptr && m_Inst;
@@ -344,7 +400,7 @@ namespace Hyperion
 
 		/*
 			Equality Operators
-		*/
+		
 		bool operator==( const AssetRef& Other ) const
 		{
 			bool lhsValid = IsValid();
@@ -365,7 +421,7 @@ namespace Hyperion
 
 		/*
 			Pointer accessor
-		*/
+		
 		_Ty* operator->() const noexcept
 		{
 			if( m_Ptr && m_Inst )
@@ -378,7 +434,7 @@ namespace Hyperion
 
 		/*
 			Reference accessor
-		*/
+		
 		_Ty& operator*() const noexcept
 		{
 			return *( operator->() );
@@ -386,7 +442,7 @@ namespace Hyperion
 
 		/*
 			Boolean conversion
-		*/
+		
 		inline operator bool() const
 		{
 			return IsValid();
@@ -404,7 +460,7 @@ namespace Hyperion
 	
 	/*
 		AssetRef Casting
-	*/
+	
 	template< typename _To, typename _From >
 	AssetRef< _To > AssetCast( const AssetRef< _From >& Target )
 	{
@@ -422,3 +478,5 @@ namespace Hyperion
 	}
 
 }
+
+*/

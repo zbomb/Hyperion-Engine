@@ -5,6 +5,7 @@
 ==================================================================================================*/
 
 #include "Hyperion/Console/Console.h"
+#include "Hyperion/File/PhysicalFileSystem.h"
 
 
 namespace Hyperion
@@ -45,6 +46,7 @@ namespace Hyperion
 
 		// Load vars
 		// Load persistent vars
+		LoadConfig();
 
 		return true;
 	}
@@ -63,6 +65,92 @@ namespace Hyperion
 		// Clear Cache
 
 		return true;
+	}
+
+
+	bool Console::LoadConfig()
+	{
+		// Check to see if the file exists
+		FilePath path( String( "config.hcf" ), LocalPath::Game );
+		auto f = PhysicalFileSystem::OpenFile( path, FileMode::Read );
+
+		if( !f || !f->IsValid() )
+		{
+			Console::WriteLine( "[Status] Console: No config file detected!" );
+			return true;
+		}
+		
+		DataReader Reader( f );
+
+		// Now, we want to loop through the file, line by line and read in all console variables
+		std::vector< byte > fileData;
+		if( Reader.ReadBytes( fileData, Reader.Size() ) != DataReader::ReadResult::Success )
+		{
+			Console::WriteLine( "[WARNING] Console: Failed to read config file in! ({GAME}/config.hcf" );
+			return false;
+		}
+
+		// The goal here is to split the file into seperate lines
+		auto It			= fileData.begin();
+		auto lineBegin	= It;
+
+		while( true )
+		{
+			// First, check if we hit the end of the line, or end of the file
+			bool bLineEnd = It == fileData.end();
+			if( bLineEnd || *It == '\n' )
+			{
+				// Ignore empty lines
+				if( It != lineBegin )
+				{
+					ProcessConfigLine( String( std::vector< byte >( lineBegin, It ), StringEncoding::ASCII ) );
+				}
+
+				// Check if we hit the end of the file
+				if( bLineEnd ) { break; }
+				
+				// Now, we want to mark the next character as the begining of the next line
+				lineBegin = It;
+				lineBegin++;
+			}
+
+			It++;
+		}
+
+		return true;
+	}
+
+
+	void Console::ProcessConfigLine( const String& inStr )
+	{
+		if( !inStr.IsWhitespaceOrEmpty() )
+		{
+			// We want to split the line by the first space found in the string
+			// The first part of the line becomes the console var name
+			// The second part of the line becomes the value
+			auto spacePos = inStr.Find( (Char) ' ' );
+			
+			if( spacePos == inStr.end() )
+			{
+				Console::WriteLine( "[WARNING] Console: Invalid line found in config.. there is no valid value! (", inStr, ")" );
+				return;
+			}
+
+			auto valueStart = spacePos;
+			valueStart++;
+
+			if( valueStart == inStr.end() )
+			{
+				Console::WriteLine( "[WARNING] Console: Invalid line found in config.. there is no valid value! (", inStr, ")" );
+				return;
+			}
+
+			String varName( inStr.begin(), spacePos );
+			String varValue( valueStart, inStr.end() );
+
+			// Now, we can process this console value
+			SetVar( varName, varValue, false );
+		}
 	}
 
 

@@ -26,9 +26,6 @@
     <Filter Include="Core\Types">
       <UniqueIdentifier>{bbff4234-7ca3-4e57-a5be-4900dced3599}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Core\Library">
-      <UniqueIdentifier>{78355464-2caa-49c7-bb7c-a4b7aa49f0e7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Win32">
       <UniqueIdentifier>{d58398ab-ceb8-46ea-bb42-7ef9589d7fc2}</UniqueIdentifier>
     </Filter>
@@ -97,9 +94,6 @@
     <ClInclude Include="Include\Hyperion\Constants.h">
       <Filter>Root</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Library\Mutex.hpp">
-      <Filter>Core\Library</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Types\Angle.h">
       <Filter>Core\Types</Filter>
     </ClInclude>
@@ -112,12 +106,6 @@
     <ClInclude Include="Include\Hyperion\Core\Types\Vector.h">
       <Filter>Core\Types</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Library\Serialization.h">
-      <Filter>Core\Library</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Library\Memory.hpp">
-      <Filter>Core\Library</Filter>
-    </ClInclude>
     <ClInclude Include="Tests\MemoryTests.hpp">
       <Filter>Tests</Filter>
     </ClInclude>
@@ -127,20 +115,8 @@
     <ClInclude Include="Tests\EncodingTests.hpp">
       <Filter>Tests</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Library\UTF8.hpp">
-      <Filter>Core\Library</Filter>
-    </ClInclude>
     <ClInclude Include="Tests\StringTests.hpp">
       <Filter>Tests</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Library\UTF16.hpp">
-      <Filter>Core\Library</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Library\UTF32.hpp">
-      <Filter>Core\Library</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Library\Binary.h">
-      <Filter>Core\Library</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Stream.h">
       <Filter>Core</Filter>
@@ -166,17 +142,11 @@
     <ClInclude Include="Include\Hyperion\Core\Asset.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\AssetLoader.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\AssetManager.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Tests\AssetTests.hpp">
       <Filter>Tests</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Assets\TestAsset.h">
-      <Filter>Assets</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Memory.h">
       <Filter>Core</Filter>
@@ -397,6 +367,36 @@
     <ClInclude Include="Include\Hyperion\Tools\HHTReader.h">
       <Filter>Tools</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Hyperion\Tools\HTXReader.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Mutex.hpp">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Serialization.h">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\UTF8.hpp">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\UTF16.hpp">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\UTF32.hpp">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Binary.h">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Memory.hpp">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\TextureTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Tools\HTXWriter.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework\Entity.cpp">
@@ -426,12 +426,6 @@
     <ClCompile Include="Source\Core\Types\Point.cpp">
       <Filter>Core\Types</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Core\Library\Serialization.cpp">
-      <Filter>Core\Library</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Core\Library\Binary.cpp">
-      <Filter>Core\Library</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Core\String.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -446,9 +440,6 @@
     </ClCompile>
     <ClCompile Include="Source\Core\AssetManager.cpp">
       <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Assets\TestAsset.cpp">
-      <Filter>Assets</Filter>
     </ClCompile>
     <ClCompile Include="Source\Core\Threading.cpp">
       <Filter>Core</Filter>
@@ -565,6 +556,18 @@
       <Filter>Tools</Filter>
     </ClCompile>
     <ClCompile Include="Source\Tools\HHTReader.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tools\HTXReader.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Library\Binary.cpp">
+      <Filter>Library</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Library\Serialization.cpp">
+      <Filter>Library</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tools\HTXWriter.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
   </ItemGroup>

@@ -9,6 +9,7 @@
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Renderer/Renderer.h"
 #include "Hyperion/Assets/TextureAsset.h"
+#include "Hyperion/Streaming/AdaptiveAssetManager.h"
 
 
 #if HYPERION_OS_WIN32
@@ -33,6 +34,7 @@ namespace Hyperion
 
 		static std::shared_ptr< Thread > m_Thread;
 		static std::shared_ptr< Renderer > m_Instance;
+		static std::unique_ptr< AdaptiveAssetManager > m_AAManager;
 
 		static IRenderOutput m_OutputWindow;
 		static std::atomic< ScreenResolution > m_CachedResolution;
@@ -66,6 +68,7 @@ namespace Hyperion
 		static ScreenResolution GetActiveResolution();
 
 		inline static Renderer& GetRenderer() { return *m_Instance; }
+		inline static AdaptiveAssetManager& GetStreamingManager() { return *m_AAManager; }
 	};
 
 }

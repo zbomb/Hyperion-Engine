@@ -10,6 +10,9 @@
 
 namespace Hyperion
 {
+	// Static Definitions
+	std::unique_ptr< IFileServices > IFileServices::m_Singleton;
+
 
 	IFileServices& IFileServices::Get()
 	{

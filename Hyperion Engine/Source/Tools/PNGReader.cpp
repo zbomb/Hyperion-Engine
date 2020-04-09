@@ -5,7 +5,7 @@
 ==================================================================================================*/
 
 #include "Hyperion/Tools/PNGReader.h"
-#include "Hyperion/Core/Library/Binary.h"
+#include "Hyperion/Library/Binary.h"
 #include "Hyperion/Tools/Deflate.h"
 
 #include <any>

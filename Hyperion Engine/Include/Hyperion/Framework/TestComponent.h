@@ -14,6 +14,7 @@ namespace Hyperion
 {
 
 	class ProxyTest;
+	class TextureAsset;
 
 
 	class TestComponent : public PrimitiveComponent
@@ -22,6 +23,7 @@ namespace Hyperion
 	protected:
 
 		std::shared_ptr< ProxyTest > m_Proxy;
+		std::shared_ptr< TextureAsset > m_Asset;
 
 		bool UpdateProxy() override;
 		std::shared_ptr< ProxyPrimitive > CreateProxy() override;
@@ -29,6 +31,8 @@ namespace Hyperion
 	public:
 
 		TestComponent();
+
+		inline std::shared_ptr< TextureAsset > GetAsset() const { return m_Asset; }
 
 	protected:
 

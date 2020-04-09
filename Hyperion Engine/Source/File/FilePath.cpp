@@ -83,7 +83,7 @@ namespace Hyperion
 	void FilePath::_Verify()
 	{
 		// There are a couple local paths only accessible by the physical file system, so lets ensure there isnt a mismatch here
-		if( ( m_Local == LocalPath::Root || m_Local == LocalPath::Data ) && ( m_System == FileSystem::Network || m_System == FileSystem::Virtual ) )
+		if( ( m_Local == LocalPath::Root || m_Local == LocalPath::Documents ) && ( m_System == FileSystem::Network || m_System == FileSystem::Virtual ) )
 		{
 			Console::WriteLine( "[WARNING] FileSystem: Invalid file path! Can only access 'root' and 'data' files on disk! Defaulting to disk..." );
 			m_System = FileSystem::Disk;
@@ -174,6 +174,13 @@ namespace Hyperion
 	{
 		m_System = In;
 		_Verify();
+	}
+
+
+	template<>
+	String ToString( const FilePath& inPath )
+	{
+		return inPath.ToString();
 	}
 
 

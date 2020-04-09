@@ -11,16 +11,9 @@
 namespace Hyperion
 {
 
-	AdaptiveDynamicModel::AdaptiveDynamicModel( const AssetRef< DynamicModelAsset >& inAsset )
+	AdaptiveDynamicModel::AdaptiveDynamicModel( const std::shared_ptr< DynamicModelAsset >& inAsset )
 	{
-		if( !inAsset.IsValid() )
-		{
-			Console::WriteLine( "[ERROR] AdaptiveAssetManager: Attempt to create a dynamic model isntance with an invalid asset!" );
-		}
-		else
-		{
-			m_Asset = AssetCast< ModelAsset >( inAsset );
-		}
+		HYPERION_NOT_IMPLEMENTED( "Adaptive Dynamic Model Class" );
 	}
 
 

@@ -17,7 +17,6 @@ namespace Hyperion
 
 	public:
 
-		AssetRef< ModelAsset > m_Asset;
 
 	};
 

@@ -31,11 +31,11 @@ namespace Hyperion
 
 		Transform3D m_Transform;
 
-		virtual void GameInit() = 0;
-		virtual void RenderInit() = 0;
+		virtual void GameInit() {}
+		virtual void RenderInit() {}
 
-		virtual void BeginShutdown() = 0;
-		virtual void Shutdown() = 0;
+		virtual void BeginShutdown() {}
+		virtual void Shutdown() {}
 		inline uint32 GetIdentifier() const { return m_Identifier; }
 
 		inline Transform3D GetTransform() const { return m_Transform; }

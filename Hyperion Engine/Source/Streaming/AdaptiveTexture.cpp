@@ -13,11 +13,10 @@
 namespace Hyperion
 {
 
-
-	AdaptiveTexture::AdaptiveTexture( const AssetRef< TextureAsset >& inAsset )
+	AdaptiveTexture::AdaptiveTexture( const std::shared_ptr< TextureAsset >& inAsset )
 		: m_Asset( inAsset ), m_ActiveLOD( 255 ), m_PendingLOD( 255 ), m_MinimumLOD( 255 ), m_Priority( 1.f )
 	{
-		if( !inAsset.IsValid() || !inAsset->IsValidTexture() )
+		if( !inAsset )
 		{
 			Console::WriteLine( "[ERROR] AdaptiveAssetManager: Attempt to create an adaptive texture with an invalid texture asset!" );
 		}
@@ -32,9 +31,9 @@ namespace Hyperion
 			uint32 memoryCounter	= 0;
 			uint8 minLevel			= 255;
 
-			for( uint8 i = textureHeader.LODs.size() - 1; i >= 0; i-- ) // Loop through LODs from smallest to largest
+			for( uint8 i = (uint8)textureHeader.LODs.size() - 1; i >= 0; i-- ) // Loop through LODs from smallest to largest
 			{
-				memoryCounter += textureHeader.LODs.at( i ).Size;
+				memoryCounter += textureHeader.LODs.at( i ).LODSize;
 				if( memoryCounter <= maxResidentMemory )
 				{
 					minLevel = i;
@@ -62,7 +61,7 @@ namespace Hyperion
 
 	bool AdaptiveTexture::UpdateTargetLOD()
 	{
-		if( m_Updating || !m_Asset.IsValid() || !m_Asset->IsValidTexture() )
+		if( m_Updating || !m_Asset )
 		{
 			return false;
 		}
@@ -75,7 +74,7 @@ namespace Hyperion
 
 		uint8 targetLevel = 255;
 
-		for( uint8 i = list.size() - 1; i >= 0; i-- )
+		for( uint8 i = (uint8)list.size() - 1; i >= 0; i-- )
 		{
 			auto& lod		= list.at( i );
 			float lodSize	= Math::Max( lod.Width, lod.Height );
@@ -99,9 +98,9 @@ namespace Hyperion
 	}
 
 
-	bool AdaptiveTexture::CancelPendingRequest()
+	bool AdaptiveTexture::CancelPendingRequest( bool bForce /* = false */ )
 	{
-		if( m_Updating ) { return false; }
+		if( !bForce && m_Updating ) { return false; }
 
 		m_PendingLOD = m_ActiveLOD;
 		auto req = m_PendingRequest.lock();
@@ -116,13 +115,13 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr< AdaptiveTextureLoadRequest > AdaptiveTexture::GenerateLoadRequest()
+	std::shared_ptr< AdaptiveTextureLoadRequest > AdaptiveTexture::GenerateLoadRequest( const std::shared_ptr< AdaptiveTexture >& inPtr )
 	{
-		if( m_Updating ) { return false; }
+		if( m_Updating ) { return nullptr; }
 
 		if( m_TargetLOD > m_ActiveLOD )
 		{
-			auto newRequest = std::make_shared< AdaptiveTextureLoadRequest >();
+			auto newRequest = std::make_shared< AdaptiveTextureLoadRequest >( inPtr, m_TargetLOD );
 			
 			m_PendingLOD		= m_TargetLOD;
 			m_PendingRequest	= std::weak_ptr( newRequest );
@@ -134,13 +133,13 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr< AdaptiveTextureUnloadRequest > AdaptiveTexture::GenerateDropRequest()
+	std::shared_ptr< AdaptiveTextureUnloadRequest > AdaptiveTexture::GenerateDropRequest( const std::shared_ptr< AdaptiveTexture >& inPtr )
 	{
-		if( m_Updating ) { return false; }
+		if( m_Updating ) { return nullptr; }
 
 		if( m_TargetLOD < m_ActiveLOD )
 		{
-			auto newRequest = std::make_shared< AdaptiveTextureUnloadRequest >();
+			auto newRequest = std::make_shared< AdaptiveTextureUnloadRequest >( inPtr, m_TargetLOD );
 
 			m_PendingLOD		= m_TargetLOD;
 			m_PendingRequest	= std::weak_ptr( newRequest );
@@ -162,7 +161,7 @@ namespace Hyperion
 	{
 		// First, we need to calculate the LOD bias
 		float lodBias = 0.5f;
-		if( m_Asset.IsValid() && m_Asset->IsValidTexture() )
+		if( m_Asset )
 		{
 			auto& list = m_Asset->GetHeader().LODs;
 			if( atLevel < list.size() )
@@ -187,12 +186,12 @@ namespace Hyperion
 
 	uint32 AdaptiveTexture::GetTopLevelMemoryUsage()
 	{
-		if( m_Asset.IsValid() && m_Asset->IsValidTexture() )
+		if( m_Asset )
 		{
 			auto& list = m_Asset->GetHeader().LODs;
 			if( m_ActiveLOD < list.size() )
 			{
-				return list.at( m_ActiveLOD ).Size;
+				return list.at( m_ActiveLOD ).LODSize;
 			}
 		}
 
@@ -202,14 +201,14 @@ namespace Hyperion
 
 	void AdaptiveTexture::PerformDrop( uint8 inLevel )
 	{
-		if( !m_Asset.IsValid() || !m_Asset->IsValidTexture() )
+		if( !m_Asset )
 		{
 			Console::WriteLine( "[ERROR] AdaptiveAssetManager: Failed to update texture data structure during a drop! Asset became invalid??" );
 			return;
 		}
 
 		auto& lodList = m_Asset->GetHeader().LODs;
-		if( inLevel >= lodList.size() && inLevel >= m_MinimumLOD )
+		if( inLevel >= lodList.size() || inLevel > m_MinimumLOD )
 		{
 			Console::WriteLine( "[ERROR] AdaptiveAssetManager: Failed to update texture data structure during a drop! Invalid LOD level??" );
 			return;
@@ -222,8 +221,41 @@ namespace Hyperion
 		m_ActiveMemory = 0;
 		for( uint8 i = inLevel; i < lodList.size(); i++ )
 		{
-			m_ActiveMemory += lodList.at( i ).Size;
+			m_ActiveMemory += lodList.at( i ).LODSize;
 		}
+
+		// Update Priority
+		UpdatePriority();
+	}
+
+
+	void AdaptiveTexture::PerformIncrease( uint8 inLevel )
+	{
+		if( !m_Asset )
+		{
+			Console::WriteLine( "[ERROR] AdaptiveAssetManager: Failed to update texture data structure during increase! Asset became invalid??" );
+			return;
+		}
+
+		auto& lodList = m_Asset->GetHeader().LODs;
+		if( inLevel >= lodList.size() || inLevel > m_MinimumLOD )
+		{
+			Console::WriteLine( "[ERROR] AdaptiveAssetManager: Failed to update texture data structure during increase! Invalid LOD level??" );
+			return;
+		}
+
+		m_ActiveLOD		= inLevel;
+		m_PendingLOD	= inLevel;
+
+		// Recalculate active memory
+		m_ActiveMemory = 0;
+		for( uint8 i = inLevel; i < lodList.size(); i++ )
+		{
+			m_ActiveMemory += lodList.at( i ).LODSize;
+		}
+
+		// Get rid of the active load request
+		m_PendingRequest.reset();
 
 		// Update Priority
 		UpdatePriority();
@@ -232,7 +264,7 @@ namespace Hyperion
 
 	AdaptiveTextureRequestBase::AdaptiveTextureRequestBase( const std::shared_ptr< AdaptiveTexture >& inTarget, uint8 inLevel )
 	{
-		if( inTarget && inTarget->GetAsset().IsValid() )
+		if( inTarget && inTarget->GetAsset() )
 		{
 			m_Target	= inTarget;
 			m_Level		= inLevel;
@@ -271,7 +303,7 @@ namespace Hyperion
 
 			for( uint8 i = inLevel; i < currentLevel; i++ )
 			{
-				m_Memory += header.LODs.at( i ).Size;
+				m_Memory += header.LODs.at( i ).LODSize;
 			}
 		}
 
@@ -321,7 +353,7 @@ namespace Hyperion
 
 			for( uint8 i = currentLevel; i < inLevel; i++ )
 			{
-				m_Memory += header.LODs.at( i ).Size;
+				m_Memory += header.LODs.at( i ).LODSize;
 			}
 		}
 	}

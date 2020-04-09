@@ -54,11 +54,6 @@ namespace Hyperion
 		bool RemoveEntityFromActiveWorld( const HypPtr< Entity >& inEnt );
 
 		/*
-			Misc.
-		*/
-		virtual String GetDocumentsFolderName() { return "hyperion"; }
-
-		/*
 			Hooks
 		*/
 		virtual void OnStart();

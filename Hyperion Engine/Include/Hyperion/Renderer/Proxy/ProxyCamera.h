@@ -7,6 +7,7 @@
 #pragma once
 
 #include "Hyperion/Renderer/Proxy/ProxyBase.h"
+#include "Hyperion/Library/Math.h"
 
 
 namespace Hyperion

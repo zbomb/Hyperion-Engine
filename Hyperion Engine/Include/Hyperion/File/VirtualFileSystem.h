@@ -16,6 +16,9 @@
 namespace Hyperion
 {
 
+	// Forward Declarations
+	class PhysicalFile;
+
 	/*
 		Notes:
 		* Each file bundle has a pool of file handles, that rotate along with the caller opening up files from within the bundle

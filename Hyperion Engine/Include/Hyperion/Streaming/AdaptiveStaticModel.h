@@ -21,7 +21,7 @@ namespace Hyperion
 
 	public:
 
-		AdaptiveStaticModel( const AssetRef< StaticModelAsset >& inAsset );
+		AdaptiveStaticModel( const std::shared_ptr< StaticModelAsset >& inAsset );
 		~AdaptiveStaticModel();
 
 		AdaptiveStaticModel() = delete;

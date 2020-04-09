@@ -23,26 +23,17 @@
     <ClInclude Include="Include\Hyperion\Assets\MaterialAsset.h" />
     <ClInclude Include="Include\Hyperion\Assets\ModelAsset.h" />
     <ClInclude Include="Include\Hyperion\Assets\StaticModelAsset.h" />
-    <ClInclude Include="Include\Hyperion\Assets\TestAsset.h" />
     <ClInclude Include="Include\Hyperion\Assets\TextureAsset.h" />
     <ClInclude Include="Include\Hyperion\Console\Console.h" />
     <ClInclude Include="Include\Hyperion\Console\ConsoleVar.h" />
     <ClInclude Include="Include\Hyperion\Console\ConsoleVarInstance.h" />
     <ClInclude Include="Include\Hyperion\Constants.h" />
     <ClInclude Include="Include\Hyperion\Core\Asset.h" />
-    <ClInclude Include="Include\Hyperion\Core\AssetLoader.h" />
     <ClInclude Include="Include\Hyperion\Core\AssetManager.h" />
     <ClInclude Include="Include\Hyperion\Core\Async.h" />
     <ClInclude Include="Include\Hyperion\Core\GameInstance.h" />
     <ClInclude Include="Include\Hyperion\Core\GameManager.h" />
     <ClInclude Include="Include\Hyperion\Core\InputManager.h" />
-    <ClInclude Include="Include\Hyperion\Core\Library\Binary.h" />
-    <ClInclude Include="Include\Hyperion\Core\Library\Memory.hpp" />
-    <ClInclude Include="Include\Hyperion\Core\Library\Mutex.hpp" />
-    <ClInclude Include="Include\Hyperion\Core\Library\Serialization.h" />
-    <ClInclude Include="Include\Hyperion\Core\Library\UTF16.hpp" />
-    <ClInclude Include="Include\Hyperion\Core\Library\UTF32.hpp" />
-    <ClInclude Include="Include\Hyperion\Core\Library\UTF8.hpp" />
     <ClInclude Include="Include\Hyperion\Core\Memory.h" />
     <ClInclude Include="Include\Hyperion\Core\Object.h" />
     <ClInclude Include="Include\Hyperion\Core\Platform.h" />
@@ -82,8 +73,15 @@
     <ClInclude Include="Include\Hyperion\Framework\World.h" />
     <ClInclude Include="include\Hyperion\Hyperion.h" />
     <ClInclude Include="Include\Hyperion\Ints.h" />
+    <ClInclude Include="Include\Hyperion\Library\Binary.h" />
     <ClInclude Include="Include\Hyperion\Library\Geometry.h" />
     <ClInclude Include="Include\Hyperion\Library\Math.h" />
+    <ClInclude Include="Include\Hyperion\Library\Memory.hpp" />
+    <ClInclude Include="Include\Hyperion\Library\Mutex.hpp" />
+    <ClInclude Include="Include\Hyperion\Library\Serialization.h" />
+    <ClInclude Include="Include\Hyperion\Library\UTF16.hpp" />
+    <ClInclude Include="Include\Hyperion\Library\UTF32.hpp" />
+    <ClInclude Include="Include\Hyperion\Library\UTF8.hpp" />
     <ClInclude Include="Include\Hyperion\Macros.h" />
     <ClInclude Include="Include\Hyperion\Material\MaterialAsset.h" />
     <ClInclude Include="Include\Hyperion\Material\MaterialInstance.h" />
@@ -114,6 +112,8 @@
     <ClInclude Include="Include\Hyperion\Streaming\Events.h" />
     <ClInclude Include="Include\Hyperion\Tools\Deflate.h" />
     <ClInclude Include="Include\Hyperion\Tools\HHTReader.h" />
+    <ClInclude Include="Include\Hyperion\Tools\HTXReader.h" />
+    <ClInclude Include="Include\Hyperion\Tools\HTXWriter.h" />
     <ClInclude Include="Include\Hyperion\Tools\HVBReader.h" />
     <ClInclude Include="Include\Hyperion\Tools\ImageLoader.h" />
     <ClInclude Include="Include\Hyperion\Tools\PNGReader.h" />
@@ -128,10 +128,10 @@
     <ClInclude Include="Tests\RenderTests.hpp" />
     <ClInclude Include="Tests\SerializationTests.hpp" />
     <ClInclude Include="Tests\StringTests.hpp" />
+    <ClInclude Include="Tests\TextureTests.hpp" />
     <ClInclude Include="Tests\ZLibTests.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Assets\TestAsset.cpp" />
     <ClCompile Include="Source\Assets\TextureAsset.cpp" />
     <ClCompile Include="Source\Console\Console.cpp" />
     <ClCompile Include="Source\Console\ConsoleVarInstance.cpp" />
@@ -139,8 +139,6 @@
     <ClCompile Include="Source\Core\GameInstance.cpp" />
     <ClCompile Include="Source\Core\GameManager.cpp" />
     <ClCompile Include="Source\Core\InputManager.cpp" />
-    <ClCompile Include="Source\Core\Library\Binary.cpp" />
-    <ClCompile Include="Source\Core\Library\Serialization.cpp" />
     <ClCompile Include="Source\Core\Object.cpp" />
     <ClCompile Include="Source\Core\RenderManager.cpp" />
     <ClCompile Include="Source\Core\Stream.cpp" />
@@ -166,8 +164,10 @@
     <ClCompile Include="Source\Framework\TestEntity.cpp" />
     <ClCompile Include="Source\Framework\World.cpp" />
     <ClCompile Include="Source\Hyperion.cpp" />
+    <ClCompile Include="Source\Library\Binary.cpp" />
     <ClCompile Include="Source\Library\Geometry.cpp" />
     <ClCompile Include="Source\Library\Math.cpp" />
+    <ClCompile Include="Source\Library\Serialization.cpp" />
     <ClCompile Include="Source\Material\MaterialAsset.cpp" />
     <ClCompile Include="Source\Material\MaterialInstance.cpp" />
     <ClCompile Include="Source\Renderer\DataTypes.cpp" />
@@ -182,6 +182,8 @@
     <ClCompile Include="Source\Streaming\AdaptiveTexture.cpp" />
     <ClCompile Include="Source\Tools\Deflate.cpp" />
     <ClCompile Include="Source\Tools\HHTReader.cpp" />
+    <ClCompile Include="Source\Tools\HTXReader.cpp" />
+    <ClCompile Include="Source\Tools\HTXWriter.cpp" />
     <ClCompile Include="Source\Tools\HVBReader.cpp" />
     <ClCompile Include="Source\Tools\ImageLoader.cpp" />
     <ClCompile Include="Source\Tools\PNGReader.cpp" />

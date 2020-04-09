@@ -12,32 +12,10 @@
 namespace Hyperion
 {
 
-	class DynamicModelAsset : public Asset
+	class DynamicModelAsset : public AssetBase
 	{
 
-	public:
-
-		DynamicModelAsset()
-		{}
-
-		~DynamicModelAsset()
-		{}
-
-		String GetAssetType() const final { return "dynamic_model"; }
 	};
-
-
-	template<>
-	inline std::shared_ptr< Asset > AssetLoader::Load< DynamicModelAsset >( const AssetPath& inFileName, const std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End )
-	{
-		return std::make_shared< DynamicModelAsset >();
-	}
-
-	template<>
-	inline std::shared_ptr< Asset > AssetLoader::Stream< DynamicModelAsset >( const AssetPath& inFileName, AssetStream& inStream )
-	{
-		return std::make_shared< DynamicModelAsset >();
-	}
 
 
 }

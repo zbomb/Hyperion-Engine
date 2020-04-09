@@ -25,6 +25,8 @@
 // and the 2d editor, along with the 2d runtime
 //#define HYPERION_CONFIG_2D
 
+#define HYPERION_DOC_FOLDER "hyperion/"
+
 
 
 //////////////////////////////////////////////

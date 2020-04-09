@@ -29,17 +29,14 @@ namespace Hyperion
 			return String();
 
 		case LocalPath::Game:
-			static String Output = Platform::GetExecutablePath();
-			return Output;
+			return Platform::GetExecutablePath().Append( "/" );
 
 		case LocalPath::Content:
-			static String Output = Platform::GetExecutablePath().Append( "/content" );
-			return Output;
+			return Platform::GetExecutablePath().Append( "/content/" );
 
 		case LocalPath::Documents:
-			static String Output = Platform::GetUserDataPath().Append( "/" ).Append( GameManager::GetInstance()->GetDocumentsFolderName() );
-			return Output;
-
+		default:
+			return Platform::GetUserDataPath().Append( "/" ).Append( HYPERION_DOC_FOLDER );
 		}
 	}
 

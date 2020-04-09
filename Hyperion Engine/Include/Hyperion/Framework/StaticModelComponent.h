@@ -12,8 +12,6 @@
 
 namespace Hyperion
 {
-	class StaticModelAsset;
-	class MaterialInstance;
 
 
 	class StaticModelComponent : public PrimitiveComponent
@@ -23,16 +21,9 @@ namespace Hyperion
 
 		uint32 m_ScreenSize;
 
-		AssetRef< StaticModelAsset > m_ModelAsset;
-		std::shared_ptr< MaterialInstance > m_Material;
-
-
 	public:
 
 		inline uint32 GetScreenSize() const { return m_ScreenSize; }
-
-		inline AssetRef< StaticModelAsset > GetModelAsset() const { return m_ModelAsset; }
-		inline std::shared_ptr< MaterialInstance > GetMaterial() const { return m_Material; }
 
 	};
 

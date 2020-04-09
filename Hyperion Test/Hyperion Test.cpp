@@ -48,16 +48,6 @@ Hyperion::Keys TranslateMouseButton( MSG&, bool& );
 Hyperion::Keys TranslateKeyboardButton( MSG& );
 
 
-class EngineContainer
-{
-
-public:
-
-    EngineContainer
-
-};
-
-
 
 int Impl_Main( HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow )
 {

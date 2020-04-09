@@ -57,6 +57,9 @@ namespace Hyperion
 			PerformWrite( ToString( in ) );
 		}
 
+		static bool LoadConfig();
+		static void ProcessConfigLine( const String& inStr );
+
 	public:
 
 		Console() = delete;
@@ -165,7 +168,8 @@ namespace Hyperion
 				return false;
 			}
 
-			return casted->GetValue();
+			outVal = casted->GetValue();
+			return true;
 		}
 		
 

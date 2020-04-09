@@ -293,14 +293,14 @@ namespace Hyperion
 			return m_Instance ? m_Instance->GetDescription() : "";
 		}
 
-		int32 GetMinValue()
+		float GetMinValue()
 		{
-			return m_Instance ? m_Instance->GetMinValue() : 0;
+			return m_Instance ? m_Instance->GetMinValue() : 0.f;
 		}
 
-		int32 GetMaxValue()
+		float GetMaxValue()
 		{
-			return m_Instance ? m_Instance->GetMaxValue() : 0;
+			return m_Instance ? m_Instance->GetMaxValue() : 0.f;
 		}
 
 	};

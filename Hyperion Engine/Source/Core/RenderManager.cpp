@@ -7,6 +7,7 @@
 #include "Hyperion/Core/RenderManager.h"
 #include "Hyperion/Core/ThreadManager.h"
 #include "Hyperion/Console/Console.h"
+#include "Hyperion/Streaming/AdaptiveAssetManager.h"
 
 /*
 	Graphics API Headers
@@ -22,21 +23,21 @@ namespace Hyperion
 	/*
 		Console Vars
 	*/
-	static ConsoleVar< String > g_CVar_Resolution = ConsoleVar< String >(
+	ConsoleVar< String > g_CVar_Resolution = ConsoleVar< String >(
 		"r_resolution", "Screen Resolution [x, y]", "1280, 720",
 		std::bind( &RenderManager::OnResolutionUpdated ), THREAD_RENDERER
 		);
 
-	static ConsoleVar< String > g_CVar_GraphicsAPI = ConsoleVar< String >(
+	ConsoleVar< String > g_CVar_GraphicsAPI = ConsoleVar< String >(
 		"r_api", "Graphics API, changes wont take effect until restart!", ""
 		);
 
-	static ConsoleVar< uint32 > g_CVar_Fullscreen = ConsoleVar< uint32 >(
+	ConsoleVar< uint32 > g_CVar_Fullscreen = ConsoleVar< uint32 >(
 		"r_fullscreen", "Fullscreen mode, 1: Fullscreen, 0: Windowed",
 		1, 0, 1, std::bind( &RenderManager::OnResolutionUpdated ), THREAD_RENDERER
 		);
 
-	static ConsoleVar< uint32 > g_CVar_VSync = ConsoleVar< uint32 >(
+	ConsoleVar< uint32 > g_CVar_VSync = ConsoleVar< uint32 >(
 		"r_vsync", "Vertical Sync, 1: On, 0: Off",
 		0, 0, 1, std::bind( &RenderManager::OnVSyncUpdated ), THREAD_RENDERER
 		);
@@ -46,8 +47,9 @@ namespace Hyperion
 	*/
 	std::shared_ptr< Thread > RenderManager::m_Thread( nullptr );
 	std::shared_ptr< Renderer > RenderManager::m_Instance( nullptr );
+	std::unique_ptr< AdaptiveAssetManager > RenderManager::m_AAManager( nullptr );
 	IRenderOutput RenderManager::m_OutputWindow;
-	std::atomic< ScreenResolution > m_CachedResolution;
+	std::atomic< ScreenResolution > RenderManager::m_CachedResolution;
 
 	std::mutex m_InitMutex;
 	std::condition_variable m_InitCV;
@@ -99,29 +101,40 @@ namespace Hyperion
 			}
 		}
 
+		// Then, create the adaptive asset manager, which will also create its threads needed
+		m_AAManager = std::make_unique< AdaptiveAssetManager >();
+
 		return true;
 	}
 
 
 	bool RenderManager::Stop()
 	{
+		// Shutdown the AA Manager
+		if( m_AAManager )
+		{
+			m_AAManager.reset();
+		}
+
 		// Check if were running
 		if( !m_Thread )
 		{
 			Console::WriteLine( "[ERROR] RenderManager: Failed to stop.. system was not running!" );
-			return false;
 		}
-
-		// Shutdown & destroy thread
-		if( m_Thread->IsRunning() )
+		else
 		{
-			m_Thread->Stop();
+		// Shutdown & destroy thread
+			if( m_Thread->IsRunning() )
+			{
+				m_Thread->Stop();
+			}
+
+			ThreadManager::DestroyThread( THREAD_RENDERER );
+			m_Thread.reset();
+
+			Console::WriteLine( "[STATUS] RenderManager: Shutdown successfully!" );
 		}
 
-		ThreadManager::DestroyThread( THREAD_RENDERER );
-		m_Thread.reset();
-
-		Console::WriteLine( "[STATUS] RenderManager: Shutdown successfully!" );
 		return true;
 	}
 

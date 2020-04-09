@@ -94,12 +94,12 @@ namespace Hyperion
 		void ModelWorker_Main( CustomThread& );
 
 		// Friend in all event classes
-		friend class AdaptiveAssetManagerSpawnEvent;
-		friend class AdaptiveAssetManagerDespawnEvent;
-		friend class AdaptiveAssetManagerResourceChangeEvent;
-		friend class AdaptiveAssetManagerObjectUpdateEvent;
-		friend class AdaptiveAssetManagerCameraUpdateEvent;
-		friend class AdaptiveAssetManagerWorldResetEvent;
+		friend struct AdaptiveAssetManagerSpawnEvent;
+		friend struct AdaptiveAssetManagerDespawnEvent;
+		friend struct AdaptiveAssetManagerResourceChangeEvent;
+		friend struct AdaptiveAssetManagerObjectUpdateEvent;
+		friend struct AdaptiveAssetManagerCameraUpdateEvent;
+		friend struct AdaptiveAssetManagerWorldResetEvent;
 
 		// Helper functions for texture worker
 		void TextureWorker_SelectRequests( std::shared_ptr< AdaptiveTextureLoadRequest >& outLoad, 
@@ -133,6 +133,7 @@ namespace Hyperion
 	struct AdaptiveAssetManagerTextureSort
 	{
 		inline bool operator()( const std::shared_ptr< AdaptiveTexture >& lhs, const std::shared_ptr< AdaptiveTexture >& rhs );
+		inline bool operator()( const std::weak_ptr< AdaptiveTexture >& lhs, const std::weak_ptr< AdaptiveTexture >& rhs );
 	};
 
 	struct AdaptiveAssetManagerTextureLoadRequestSort

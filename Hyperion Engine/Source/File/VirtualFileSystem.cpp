@@ -203,7 +203,7 @@ namespace Hyperion
 				// Ensure the file was able to be opened
 				if( !targetHandle->m_Handle || !targetHandle->m_Handle->IsValid() )
 				{
-					Console::WriteLine( "[ERROR] VirtualFileSystem: Failed to create a new handle to bundle '", m_Path, "!" );
+					Console::WriteLine( "[ERROR] VirtualFileSystem: Failed to create a new handle to bundle '", m_Path.ToString( true ), "!" );
 					targetHandle.reset();
 
 					return nullptr;
@@ -281,6 +281,7 @@ namespace Hyperion
 			auto bundleIdentifier	= ++m_LastBundleIdentifier;
 			auto& newBundle			= m_BundleManifest[ bundleIdentifier ];
 			newBundle.m_Path		= path;
+			uint32 assetCounter		= 0;
 
 			while( bundleReader.NextFile() )
 			{
@@ -310,7 +311,13 @@ namespace Hyperion
 				if( bDiscoverAssets && Info.AssetIdentifier != 0 )
 				{
 					AssetManager::RegisterAsset( Info.AssetIdentifier, Info.Path );
+					assetCounter++;
 				}
+			}
+
+			if( bDiscoverAssets )
+			{
+				Console::WriteLine( "[Status] FileSystem: Discovered ", assetCounter, " assets on the virtual disk" );
 			}
 
 			// TODO: Add Directory Support
@@ -375,7 +382,7 @@ namespace Hyperion
 		}
 
 		// Now, we can build a virtual file now that we know the offset, length and have a handle
-		return std::make_unique< VirtualFile >( newPath, fileHandle, fileInfo->second );
+		return std::unique_ptr< VirtualFile >( new VirtualFile( newPath, fileHandle, fileInfo->second ) );
 	}
 
 
@@ -418,7 +425,7 @@ namespace Hyperion
 		}
 
 		// Return the directory pointer
-		return std::make_unique< VirtualDirectory >( newPath, dirEntry->second );
+		return std::unique_ptr< VirtualDirectory >( new VirtualDirectory( newPath, dirEntry->second ) );
 	}
 
 

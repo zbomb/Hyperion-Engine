@@ -102,6 +102,11 @@ namespace Hyperion
 			}
 		}
 
+		// Inform streaming manager of the world reset
+		AdaptiveAssetManagerWorldResetEvent Event;
+		RenderManager::GetStreamingManager().OnWorldReset( Event );
+
+
 		m_ActiveWorld->m_bActive = false;
 		m_ActiveWorld->OnSetDeactive();
 
@@ -247,6 +252,9 @@ namespace Hyperion
 
 	void GameInstance::ProcessRenderUpdates()
 	{
+		// We need to accumulate updates for the streaming system as well
+		AdaptiveAssetManagerObjectUpdateEvent Event;
+
 		// Loop through active primitives and process updates
 		for( auto It = m_ActiveRenderComponents.begin(); It != m_ActiveRenderComponents.end(); )
 		{
@@ -278,6 +286,15 @@ namespace Hyperion
 				if( It->second->UpdateProxy() )
 				{
 					It->second->m_RenderState = RenderComponentState::Clean;
+
+					// Create update entry for this component
+					AdaptiveAssetManagerObjectUpdateEntry Entry;
+
+					Entry.Identifier	= It->second->GetIdentifier();
+					Entry.Position		= It->second->GetPosition();
+					Entry.Radius		= 10.f; // TODO TODO TODO 
+
+					Event.Entries.push_back( Entry );
 				}
 				else
 				{
@@ -287,6 +304,8 @@ namespace Hyperion
 
 			It++;
 		}
+
+		RenderManager::GetStreamingManager().OnPrimitiveUpdate( Event );
 	}
 
 

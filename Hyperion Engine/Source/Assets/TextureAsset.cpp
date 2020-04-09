@@ -5,83 +5,102 @@
 ==================================================================================================*/
 
 #include "Hyperion/Assets/TextureAsset.h"
-#include "Hyperion/Core/RenderManager.h"
-#include "Hyperion/Tools/ImageLoader.h"
-#include "Hyperion/Renderer/Types/ITexture.h"
+#include "Hyperion/Tools/HTXReader.h"
 
 
 
 namespace Hyperion
 {
-	// Register our asset type
-	static AssetRegistryEntry< TextureAsset > textureAssetEntry( { "png", "dds", "htex" } );
-
-	uint64 TextureAsset::m_NextIdentifier( 1 );
+	std::map< uint32, std::weak_ptr< TextureAsset > > TextureAssetCache::m_Cache;
+	std::mutex TextureAssetCache::m_CacheMutex;
 
 
-	TextureAsset::TextureAsset()
-		: m_Identifier( m_NextIdentifier++ )
+	/*----------------------------------------------------------------------------------------------------------
+		TextureAssetCache Class
+	------------------------------------------------------------------------------------------------------------*/
+	std::weak_ptr< TextureAsset > TextureAssetCache::Get( uint32 inIdentifier )
 	{
+		std::lock_guard< std::mutex > lock( m_CacheMutex );
+
+		auto entry = m_Cache.find( inIdentifier );
+		if( entry == m_Cache.end() )
+		{
+			return std::weak_ptr< TextureAsset >();
+		}
+
+		if( entry->second.expired() )
+		{
+			m_Cache.erase( entry );
+			return std::weak_ptr< TextureAsset >();
+		}
+		else
+		{
+			return entry->second;
+		}
 	}
 
-	TextureAsset::~TextureAsset()
-	{
 
+	void TextureAssetCache::Store( uint32 inIdentifier, const std::shared_ptr< TextureAsset >& inPtr )
+	{
+		std::lock_guard< std::mutex > lock( m_CacheMutex );
+
+		m_Cache.emplace( inIdentifier, std::weak_ptr< TextureAsset >( inPtr ) );
 	}
 
-	String TextureAsset::GetAssetType() const
+
+	/*----------------------------------------------------------------------------------------------------------
+		TextureAssetLoader Class
+	------------------------------------------------------------------------------------------------------------*/
+	std::shared_ptr< TextureAsset > TextureAssetLoader::Load( uint32 inIdentifier, std::unique_ptr< IFile >& inFile )
 	{
-		return "Texture";
+		// Use the HTX Reader class to read in the header data for this texture asset
+		HTXReader Reader( *inFile );
+		
+		TextureHeader assetHeader;
+		if( Reader.ReadHeader( assetHeader ) != HTXReader::Result::Success )
+		{
+			Console::WriteLine( "[WARNING] TextureAssetLoader: Failed to read header for '", inFile->GetPath().ToString(), "'" );
+			return nullptr;
+		}
+
+		// Return the new texture asset created from the header we read from file
+		return std::shared_ptr< TextureAsset >( new TextureAsset( assetHeader, inFile->GetPath(), inIdentifier ) );
 	}
+
+
+	/*----------------------------------------------------------------------------------------------------------
+		TextureAsset Class
+	------------------------------------------------------------------------------------------------------------*/
+	TextureAsset::TextureAsset( const TextureHeader& inHeader, const FilePath& inPath, uint32 inIdentifier )
+		: m_Header( inHeader ), AssetBase( inPath, inIdentifier )
+	{}
+
 
 	uint32 TextureAsset::GetWidth() const
 	{
-		return 0;
+		return m_Header.LODs.empty() ? 0 : m_Header.LODs.front().Width;
 	}
+
 
 	uint32 TextureAsset::GetHeight() const
 	{
-		return 0;
-	}
-
-	bool TextureAsset::IsValidTexture() const
-	{
-		// Check for valid format
-		if( m_Header.Format == TextureAssetFormat::NONE )
-		{
-			return false;
-		}
-
-		// Check for valid root LOD level
-		if( m_Header.LODs.size() == 0 )
-		{
-			return false;
-		}
-
-		// Validate resolution & size values
-		auto& rootLOD = m_Header.LODs.at( 0 );
-
-		if( rootLOD.Width == 0 || rootLOD.Height == 0 || rootLOD.Size == 0 )
-		{
-			return false;
-		}
-
-		// Seems valid 'enough'
-		// In the future, we might decide to do further validation, but this is good enough for most situations
-		return true;
+		return m_Header.LODs.empty() ? 0 : m_Header.LODs.front().Height;
 	}
 
 
-	template<>
-	std::shared_ptr< Asset > AssetLoader::Load< TextureAsset >( const AssetPath& Identifier, std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End )
+	uint8 TextureAsset::GetLODCount() const
 	{
-		return std::make_shared< TextureAsset >( Identifier, nullptr );
-	}
+		// Check for overflow
+		auto ret			= m_Header.LODs.size();
+		static auto maxNum	= (uint32)std::numeric_limits< uint8 >::max();
 
-	template<>
-	std::shared_ptr< Asset > AssetLoader::Stream< TextureAsset >( const AssetPath& Identifier, AssetStream& Stream )
-	{
-		return std::make_shared< TextureAsset >( Identifier, nullptr );
+		if( ret > maxNum )
+		{
+			Console::WriteLine( "[ERROR] TextureAsset: Invalid number of LOD levels detected in '", GetPath().ToString(), "' (", ret, ")" );
+			return 0;
+		}
+
+		return (uint8)m_Header.LODs.size();
 	}
 
 }

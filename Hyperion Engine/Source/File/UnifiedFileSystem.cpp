@@ -14,7 +14,7 @@
 namespace Hyperion
 {
 
-	static ConsoleVar< String > g_CVar_ContentSystem(
+	ConsoleVar< String > g_CVar_ContentSystem(
 		"fs_content_system", "The filesystem to use when loading/searching content, Valid Inputs: [v|d|n] (virtual, disk or network)", "v"
 	);
 
@@ -58,28 +58,35 @@ namespace Hyperion
 
 		Console::WriteLine( "[Status] FileSystem: Initializing.. selected content system '", systemDescription, "'" );
 
-		// Initialize the physical file system
-		if( !PhysicalFileSystem::Initialize() )
+		// First, attempt to initialize the virtual file system
+		if( !VirtualFileSystem::Initialize( m_ContentSystem == FileSystem::Virtual ) )
 		{
-			Console::WriteLine( "[ERROR] FileSystem: Failed to initialize.. the physical file system failed!" );
-		}
-		else
-		{
-		// Initialize the virtual file system
-			if( !VirtualFileSystem::Initialize() )
+			if( m_ContentSystem == FileSystem::Virtual )
 			{
-				// If the target content system is virtual, than fall back to disk
-				if( m_ContentSystem == FileSystem::Virtual )
-				{
-					Console::WriteLine( "[ERROR] FileSystem: Failed to initialize.. the virtual file system failed! This was the selected content system, so it will default back to 'disk'" );
-					m_ContentSystem = FileSystem::Disk;
-				}
-				else
-				{
-					Console::WriteLine( "[ERROR] FileSystem: Failed to initialize.. the virtual file system failed!" );
-				}
+				Console::WriteLine( "[ERROR] FileSystem: Failed to initialize virtual file system.. This was the selected content source, falling back to 'disk'!" );
+				m_ContentSystem = FileSystem::Disk;
+			}
+			else
+			{
+				Console::WriteLine( "[ERROR] FileSystem: Failed to initialize virtual file system!" );
 			}
 		}
+
+		// TODO: Attempt to initialize the network file system
+
+		// Finally, initialize the physical file system
+		if( !PhysicalFileSystem::Initialize( m_ContentSystem == FileSystem::Disk ) )
+		{
+			if( m_ContentSystem == FileSystem::Disk )
+			{
+				Console::WriteLine( "[ERROR] FileSystem: Failed to initialize physical file system.. This was the selected content source, NO content will be available!!" );
+			}
+			else
+			{
+				Console::WriteLine( "[ERROR] FileSystem: Failed to initialize physical file system" );
+			}
+		}
+
 	}
 
 

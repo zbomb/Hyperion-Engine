@@ -6,7 +6,7 @@
 
 #include "Hyperion/Tools/ImageLoader.h"
 #include "Hyperion/Tools/PNGReader.h"
-#include "Hyperion/Core/File.h"
+#include "Hyperion/File/FilePath.h"
 
 
 namespace Hyperion
@@ -30,7 +30,7 @@ namespace Hyperion
 
 		// Get extension as lowercase string
 		auto ext = path.Extension();
-		auto ext_s = ext.ToString().ToLower();
+		auto ext_s = ext.ToLower();
 
 		if( ext_s.IsWhitespaceOrEmpty() )
 		{

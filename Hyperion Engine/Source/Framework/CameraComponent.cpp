@@ -28,7 +28,7 @@ namespace Hyperion
 	bool CameraComponent::PerformProxyCreation()
 	{
 		// First, we need to create a new proxy
-		auto newProxy = std::make_shared< ProxyCamera >();
+		auto newProxy = std::make_shared< ProxyCamera >( GetIdentifier() );
 		if( !newProxy )
 		{
 			return false;
@@ -82,6 +82,8 @@ namespace Hyperion
 										}
 									}
 								 } );
+
+		return true;
 	}
 
 

@@ -49,12 +49,12 @@ namespace Hyperion
 
 	struct AdaptiveTextureInfo
 	{
-		AssetRef< TextureAsset > m_Asset;
+		std::shared_ptr< TextureAsset > m_Asset;
 	};
 
 	struct AdaptiveModelInfo
 	{
-		AssetRef< ModelAsset > m_Asset;
+		std::shared_ptr< ModelAsset > m_Asset;
 		bool m_Dynamic;
 	};
 

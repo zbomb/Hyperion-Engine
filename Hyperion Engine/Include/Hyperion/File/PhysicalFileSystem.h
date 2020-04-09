@@ -12,6 +12,16 @@
 #include "Hyperion/File/IDirectory.h"
 #include "Hyperion/File/FilePath.h"
 
+#include <fstream>
+
+#undef CreateFile
+#undef OpenFile
+#undef CreateDirectory
+#undef OpenDirectory
+#undef DeleteFile
+#undef DeleteDirectory
+#undef DirectoryExists
+#undef FileExists
 
 
 namespace Hyperion
@@ -43,6 +53,13 @@ namespace Hyperion
 	class PhysicalMetaData
 	{
 
+		const FilePath m_Path;
+
+	public:
+
+		PhysicalMetaData( const FilePath& inPath );
+
+		PhysicalMetaData() = delete;
 	};
 
 
@@ -81,6 +98,9 @@ namespace Hyperion
 
 		std::unique_ptr< PhysicalMetaData > GetMetaData() const;
 
+
+		friend class PhysicalFileSystem;
+
 	};
 
 
@@ -102,6 +122,8 @@ namespace Hyperion
 		PhysicalDirectory& operator=( PhysicalDirectory&& ) = delete;
 
 		std::unique_ptr< PhysicalMetaData > GetMetaData() const;
+
+		friend class PhysicalFileSystem;
 
 	};
 
@@ -126,8 +148,7 @@ namespace Hyperion
 		static bool DirectoryExists( const FilePath& inPath );
 		static DeleteResult DeleteDirectory( const FilePath& inPath, bool bFailIfHasContents = true );
 
-		template< typename _Pr >
-		static void FindFiles( const FilePath& inPath, std::vector< FilePath >& Out, _Pr inPredicate, bool bIncludeSubFolders = false );
+		static void FindFiles( const FilePath& inPath, std::vector< FilePath >& Out, std::function< bool( const FilePath& ) > inPredicate, bool bIncludeSubFolders = false );
 
 		static void FindFiles( const FilePath& inPath, std::vector< FilePath >& Out, bool bIncludeSubFolders = false );
 

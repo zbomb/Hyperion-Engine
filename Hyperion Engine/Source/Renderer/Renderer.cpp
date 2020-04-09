@@ -323,11 +323,11 @@ namespace Hyperion
 	}
 
 
-	bool Renderer::IncreaseTextureAssetLOD( AssetRef< TextureAsset >& inAsset, uint8 inMaxLevel, const std::vector< std::vector< byte > >& inData )
+	bool Renderer::IncreaseTextureAssetLOD( std::shared_ptr< TextureAsset >& inAsset, uint8 inMaxLevel, const std::vector< std::vector< byte > >& inData )
 	{
 		HYPERION_VERIFY( m_API, "Failed to update texture asset, API was null!" );
 
-		if( !inAsset.IsValid() || !inAsset->IsValidTexture() )
+		if( !inAsset )
 		{
 			Console::WriteLine( "[ERROR] Failed to update texture asset, the provided asset reference was invalid!" );
 			return false;
@@ -335,7 +335,7 @@ namespace Hyperion
 
 		uint32 textureIdentifier	= inAsset->GetIdentifier();
 		auto textureHeader			= inAsset->GetHeader();
-		auto texturePath			= inAsset->GetAssetPath().GetPath();
+		auto texturePath			= inAsset->GetPath();
 
 		// Ensure 'inMaxLevel' is a valid value
 		if( textureHeader.LODs.size() <= inMaxLevel )
@@ -361,7 +361,7 @@ namespace Hyperion
 
 		params.CanCPURead	= false;
 		params.Dynamic		= false;
-		params.Format		= ConvertAssetToTextureFormat( textureHeader.Format );
+		params.Format		= textureHeader.Format;
 		params.Width		= maxLOD.Width;
 		params.Height		= maxLOD.Height;
 		params.MipLevels	= lodCount;
@@ -474,11 +474,11 @@ namespace Hyperion
 	}
 
 	
-	bool Renderer::LowerTextureAssetLOD( AssetRef< TextureAsset >& inAsset, uint8 inMaxLevel )
+	bool Renderer::LowerTextureAssetLOD( std::shared_ptr< TextureAsset >& inAsset, uint8 inMaxLevel )
 	{
 		HYPERION_VERIFY( m_API, "Failed to update texture asset, API was null!" );
 
-		if( !inAsset.IsValid() || !inAsset->IsValidTexture() )
+		if( !inAsset )
 		{
 			Console::WriteLine( "[ERROR] Renderer: Failed to lower texture asset LOD, the asset supplied was invalid" );
 			return false;
@@ -486,7 +486,7 @@ namespace Hyperion
 
 		auto textureIdentifier	= inAsset->GetIdentifier();
 		auto textureHeader		= inAsset->GetHeader();
-		auto texturePath		= inAsset->GetAssetPath().GetPath();
+		auto texturePath		= inAsset->GetPath();
 
 		if( textureHeader.LODs.size() <= inMaxLevel )
 		{
@@ -502,7 +502,7 @@ namespace Hyperion
 
 		params.CanCPURead	= false;
 		params.Dynamic		= false;
-		params.Format		= ConvertAssetToTextureFormat( textureHeader.Format );
+		params.Format		= textureHeader.Format;
 		params.Width		= maxLOD.Width;
 		params.Height		= maxLOD.Height;
 		params.MipLevels	= lodCount;
@@ -548,7 +548,7 @@ namespace Hyperion
 															  0, 0,
 															  lodInfo.Width, lodInfo.Height,
 															  0, 0,
-															  oldTexIndex, newTexIndex ) )
+															  (uint8)oldTexIndex, (uint8)newTexIndex ) )
 								{
 									Console::WriteLine( "[ERROR] Renderer: Attempt to lower texture LOD, but one of the mip levels couldnt be copied!" );
 									bFailed = true;
@@ -609,7 +609,7 @@ namespace Hyperion
 																  0, 0,
 																  lodInfo.Width, lodInfo.Height,
 																  0, 0,
-																  oldTexIndex, newTexIndex ) )
+																  (uint8)oldTexIndex, (uint8)newTexIndex ) )
 									{
 										Console::WriteLine( "[ERROR] Renderer: Attempt to lower texture LOD.. but the API copy call failed when copying to new texture!" );
 										bFailed = true;

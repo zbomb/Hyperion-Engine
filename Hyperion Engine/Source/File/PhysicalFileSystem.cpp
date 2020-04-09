@@ -6,8 +6,7 @@
 
 #include "Hyperion/File/PhysicalFileSystem.h"
 #include "Hyperion/Core/AssetManager.h"
-
-#include <fstream>
+#include "Hyperion/Tools/HHTReader.h"
 
 
 namespace Hyperion
@@ -17,7 +16,7 @@ namespace Hyperion
 		class PhysicalFile
 	===============================================================================================================*/
 	PhysicalFile::PhysicalFile( const FilePath& inPath, FileMode inMode, WriteMode inWriteMode )
-		: IFile( inPath.IsDisk() ? inPath : FilePath() ), m_Mode( inMode ), m_WriteMode( inWriteMode )
+		: IFile( inPath.IsDisk() ? inPath : FilePath() ), m_Mode( inMode ), m_WriteMode( inWriteMode ), m_Buffer( std::make_unique< std::basic_filebuf< byte > >() )
 	{
 		if( !inPath.IsDisk() )
 		{
@@ -178,6 +177,15 @@ namespace Hyperion
 
 
 	/*===============================================================================================================
+		class PhysicalMetaData
+	===============================================================================================================*/
+	
+	PhysicalMetaData::PhysicalMetaData( const FilePath& inPath )
+		: m_Path( inPath )
+	{}
+
+
+	/*===============================================================================================================
 		class PhysicalFileSystem
 	===============================================================================================================*/
 
@@ -195,6 +203,34 @@ namespace Hyperion
 			else
 			{
 				// Once we load the file in, we need to seek through it, using some type of reader, and insert all entries into the asset manager
+				HHTReader reader( *f );
+				if( !reader.Validate() )
+				{
+					Console::WriteLine( "[ERROR] FileSystem: The currently selected content system is disk, but the content manifest was invalid!" );
+					// Should we return false here?
+				}
+				else
+				{
+					reader.Begin();
+
+					// Scan through file, and read all table entries
+					uint32 assetCounter = 0;
+
+					while( reader.NextEntry() )
+					{
+						uint32 hashCode;
+						std::vector< byte > strData;
+
+						if( reader.ReadEntry( hashCode, strData ) == HHTReader::Result::Success )
+						{
+							// Paths are stored as a UTF-8 string, and the hash code is a uint32
+							AssetManager::RegisterAsset( hashCode, String( strData, StringEncoding::UTF8 ) );
+							assetCounter++;
+						}
+					}
+
+					Console::WriteLine( "[Status] FileSystem: Discovered ", assetCounter, " assets on disk" );
+				}
 			}
 		}
 
@@ -277,7 +313,9 @@ namespace Hyperion
 
 		// Now, lets check if this file doesnt exist, and if not, then we will create it
 		std::error_code err;
-		if( !std::filesystem::exists( newPath.ToCPath( true ), err ) )
+		auto cPath = newPath.ToCPath( true );
+
+		if( !std::filesystem::exists( cPath, err ) )
 		{
 			if( bCreateIfNotExists )
 			{
@@ -290,9 +328,9 @@ namespace Hyperion
 		}
 
 		// File exists, so we need to open a filebuf and construct our output object
-		if( std::filesystem::is_regular_file( newPath.ToCPath(), err ) )
+		if( std::filesystem::is_regular_file( cPath, err ) )
 		{
-			return std::make_unique< PhysicalFile >( newPath, inMode, inWriteMode );
+			return std::unique_ptr< PhysicalFile >( new PhysicalFile( newPath, inMode, inWriteMode ) );
 		}
 		else
 		{
@@ -333,7 +371,7 @@ namespace Hyperion
 			return nullptr;
 		}
 
-		return std::make_unique< PhysicalFile >( newPath, inMode, inWriteMode );
+		return std::unique_ptr< PhysicalFile >( new PhysicalFile( newPath, inMode, inWriteMode ) );
 	}
 
 
@@ -387,7 +425,7 @@ namespace Hyperion
 		// Directory doesnt exist, so lets open it, as long as its a directory
 		if( std::filesystem::is_directory( cPath, err ) )
 		{
-			return std::make_unique< PhysicalDirectory >( newPath );
+			return std::unique_ptr< PhysicalDirectory >( new PhysicalDirectory( newPath ) );
 		}
 		else
 		{
@@ -423,7 +461,7 @@ namespace Hyperion
 		std::error_code create_err;
 		if( std::filesystem::create_directories( cPath, create_err ) )
 		{
-			return std::make_unique< PhysicalDirectory >( newPath );
+			return std::unique_ptr< PhysicalDirectory >( new PhysicalDirectory( newPath ) );
 		}
 		else
 		{
@@ -475,8 +513,7 @@ namespace Hyperion
 	}
 
 
-	template< typename _Pr >
-	void PhysicalFileSystem::FindFiles( const FilePath& inPath, std::vector< FilePath >& Out, _Pr inPredicate, bool bIncludeSubFolders /* = false */ )
+	void PhysicalFileSystem::FindFiles( const FilePath& inPath, std::vector< FilePath >& Out, std::function< bool( const FilePath& ) > inPredicate, bool bIncludeSubFolders /* = false */ )
 	{
 		// Basically, we want to get a list of all files and directories in this path
 		auto stdPath = inPath.ToCPath( true );

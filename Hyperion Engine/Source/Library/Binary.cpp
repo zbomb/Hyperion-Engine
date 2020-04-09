@@ -4,7 +4,7 @@
 	© 2019, Zachary Berry
 ==================================================================================================*/
 
-#include "Hyperion/Core/Library/Binary.h"
+#include "Hyperion/Library/Binary.h"
 
 #include <iostream>
 #include <iomanip>

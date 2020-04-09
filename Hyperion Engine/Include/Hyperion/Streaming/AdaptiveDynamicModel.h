@@ -21,7 +21,7 @@ namespace Hyperion
 
 	public:
 
-		AdaptiveDynamicModel( const AssetRef< DynamicModelAsset >& inAsset );
+		AdaptiveDynamicModel( const std::shared_ptr< DynamicModelAsset >& inAsset );
 		~AdaptiveDynamicModel();
 
 		AdaptiveDynamicModel() = delete;
