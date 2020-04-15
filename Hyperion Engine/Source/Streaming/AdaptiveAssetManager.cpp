@@ -316,7 +316,7 @@ namespace Hyperion
 		- Constructor, creates threads to run this system
 	-------------------------------------------------------------------------------*/
 	AdaptiveAssetManager::AdaptiveAssetManager()
-		: m_AdaptiveQualityMult( 1.f )
+		: m_AdaptiveQualityMult( 1.f ), m_MemoryUsage( 0 )
 	{
 		// Create main update thread
 		CustomThreadParameters threadParams;
@@ -661,6 +661,10 @@ namespace Hyperion
 			auto loadReq = texture->GenerateLoadRequest( texture );
 			if( loadReq )
 			{
+				#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
+				Console::WriteLine( "[DEBUG] AAManager: Generated load request for '", texture->GetAsset()->GetPath().ToString(), "' to level ", 
+									loadReq->GetLevel(), " from level ", texture->GetActiveLevel(), " (", loadReq->GetMemory(), " bytes)" ); // ??? bytes or kb or mb?
+				#endif
 				m_TextureLoadQueue.push_back( loadReq ); // TODO: Sorted insert
 			}
 			else
@@ -668,6 +672,10 @@ namespace Hyperion
 				auto dropReq = texture->GenerateDropRequest( texture );
 				if( dropReq )
 				{
+					#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
+					Console::WriteLine( "[DEBUG] AAManager: Generated unload request for '", texture->GetAsset()->GetPath().ToString(), "' to level ", dropReq->GetLevel(),
+										" from level ", texture->GetActiveLevel(), " (", dropReq->GetMemory(), " bytes)" ); // ??? bytes or kb or mb?
+					#endif
 					m_TextureUnloadQueue.push_back( dropReq ); // TODO: Sorted insert
 				}
 			}
@@ -780,6 +788,10 @@ namespace Hyperion
 		RenderManager::GetRenderer().RemoveTextureAsset( inTexture.GetIdentifier() );
 
 		m_MemoryUsage -= inTexture.GetActiveMemory();
+
+		#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
+		Console::WriteLine( "[DEBUG] AAManager: Destroying texture '", inTexture.GetAsset()->GetPath().ToString(), "' saving ", inTexture.GetActiveMemory(), " bytes" ); // bytes mb or kb????
+		#endif
 	}
 
 
@@ -820,6 +832,11 @@ namespace Hyperion
 				{
 					loadRequest->GetTarget()->SetLock( true );
 					m_MemoryUsage += loadRequest->GetMemory();
+
+					#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
+					Console::WriteLine( "[DEBUG] AAManager: Selected load request for '", loadRequest->GetTarget()->GetAsset()->GetPath().ToString(), "' at level ", 
+										loadRequest->GetLevel(), " neededing ", loadRequest->GetMemory(), " bytes" ); // bytes or mb or kb??
+					#endif
 				}
 
 				for( auto& drop : pureDropList )
@@ -828,6 +845,11 @@ namespace Hyperion
 					{
 						drop->GetTarget()->SetLock( true );
 						m_MemoryUsage -= drop->GetMemory();
+
+						#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
+						Console::WriteLine( "[DEBUG] AAManager: Selected pure unload for '", drop->GetTarget()->GetAsset()->GetPath().ToString(), "' down to level ",
+											drop->GetLevel(), " saving ", drop->GetMemory(), " bytes" ); // btyes or mb or kb??
+						#endif
 					}
 				}
 
@@ -837,6 +859,11 @@ namespace Hyperion
 					{
 						drop->SetLock( true );
 						m_MemoryUsage -= drop->GetTopLevelMemoryUsage();
+
+						#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
+						Console::WriteLine( "[DEBUG] AAManager: Selected force drop for '", drop->GetAsset()->GetPath().ToString(), "' down to level ",
+											drop->GetActiveLevel() - 1, " saving ", drop->GetTopLevelMemoryUsage(), " bytes" ); // bytes or mb or kb??
+						#endif
 					}
 				}
 			} // Mutex Release
@@ -925,6 +952,7 @@ namespace Hyperion
 
 			// Ensure this worker doesnt run more than 60Hz, it shouldnnt unless there are no pending laods/unloads
 			std::this_thread::sleep_until( lastTick + std::chrono::milliseconds( 16 ) );
+			lastTick = std::chrono::high_resolution_clock::now();
 		}
 
 		Console::WriteLine( "[DEBUG] TextureWorker: Shutting down..." );
@@ -937,7 +965,7 @@ namespace Hyperion
 	{
 		// Get the next pending load request (if there is one)
 		auto loadIter		= TextureWorker_PopNextLoadRequest();
-		auto memPoolSize	= g_CVar_AdaptiveTexturePoolSize.GetValue();
+		auto memPoolSize	= ( g_CVar_AdaptiveTexturePoolSize.GetValue() * 1048576 );
 		uint32 neededMem	= 0;
 		uint32 savedMem		= 0;
 		uint32 dropCount	= 0;
@@ -945,9 +973,14 @@ namespace Hyperion
 		static const uint32 minPureDrops	= 2;
 		static const uint32 maxDropsTotal	= 8;
 
+		// Ensure 'availableMemory' doesnt underflow, clamp lower-bounds at 0
+		uint32 availableMemory = m_MemoryUsage > memPoolSize ? 0 : memPoolSize - m_MemoryUsage;
+		uint32 loadMem = 0;
+
 		if( loadIter != m_TextureLoadQueue.end() ) // Assume this is a valid pointer, otherwise the function would return 'end()'
 		{
-			neededMem = ( *loadIter )->GetMemory() - ( memPoolSize - m_MemoryUsage );
+			loadMem = ( *loadIter )->GetMemory();
+			neededMem = availableMemory > loadMem ? 0 : loadMem - availableMemory;
 		}
 
 		// Pull some pure drops to save some memory
@@ -993,7 +1026,7 @@ namespace Hyperion
 
 			while( TextureWorker_DropLevelFromLoad( *loadIter ) )
 			{
-				neededMem = ( *loadIter )->GetMemory() - ( memPoolSize - m_MemoryUsage );
+				neededMem = availableMemory > loadMem ? 0 : loadMem - availableMemory;
 				if( savedMem >= neededMem )
 				{
 					// Managed to get under budget, so output the load as well
@@ -1009,7 +1042,7 @@ namespace Hyperion
 		}
 
 		// Perform 'force' drops to try and get under budget
-		while( neededMem > savedMem && !TextureWorker_GenerateForceDropList( maxDropsTotal - dropCount, ( *loadIter )->GetPriority(), neededMem - savedMem, outPureDrops, outForceDrops ) )
+		while( neededMem > savedMem && !TextureWorker_GenerateForceDropList( dropCount > maxDropsTotal ? 0 : maxDropsTotal - dropCount, ( *loadIter )->GetPriority(), neededMem - savedMem, outPureDrops, outForceDrops ) )
 		{
 			// At this point, we couldnt generate a list of force drops to get under budget, so were going to drop a level from the load request and try again
 			if( !TextureWorker_DropLevelFromLoad( *loadIter ) )
@@ -1020,7 +1053,7 @@ namespace Hyperion
 				return;
 			}
 
-			neededMem = ( *loadIter )->GetMemory() - ( memPoolSize - m_MemoryUsage );
+			neededMem = availableMemory > loadMem ? 0 : loadMem - availableMemory;
 		}
 
 		// We found a list of force drops (and/or lowered the request) to make enough space
@@ -1079,7 +1112,7 @@ namespace Hyperion
 				{
 					// Get begin and end iterators to the target data set for this LOD
 					auto& lodInfo = targetHeader.LODs.at( i );
-					uint32 localOffset = lodInfo.FileOffset - dataOffset;
+					uint32 localOffset = dataOffset > lodInfo.FileOffset ? 0 : lodInfo.FileOffset - dataOffset;
 
 					auto beginIt = allData.begin();
 					auto endIt = allData.begin();
@@ -1092,6 +1125,10 @@ namespace Hyperion
 
 				// Clear original data set
 				std::vector< byte >().swap( allData );
+
+				#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
+				Console::WriteLine( "[DEBUG] AAManager: Loaded LOD level(s) for '", targetAsset->GetPath().ToString(), "' up to level ", loadRequest->GetLevel(), " using ", dataSize, " bytes" ); // bytes or kb or mb??
+				#endif
 
 				// Now, make the renderer call to create this new texture
 				if( !RenderManager::GetRenderer().IncreaseTextureAssetLOD( targetAsset, loadRequest->GetLevel(), LODData ) )

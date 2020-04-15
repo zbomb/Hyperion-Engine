@@ -73,17 +73,20 @@ namespace Hyperion
 		}
 
 		uint8 targetLevel = 255;
+		uint8 i = (uint8) list.size() - 1;
 
-		for( uint8 i = (uint8)list.size() - 1; i >= 0; i-- )
+		while( true )
 		{
 			auto& lod		= list.at( i );
 			float lodSize	= Math::Max( lod.Width, lod.Height );
 
-			if( lodSize > m_MaxScreenSize )
+			if( i == 0 || lodSize > m_MaxScreenSize )
 			{
 				targetLevel = i;
 				break;
 			}
+
+			i--;
 		}
 
 		m_TargetLOD = Math::Min( targetLevel, m_MinimumLOD );
@@ -119,7 +122,7 @@ namespace Hyperion
 	{
 		if( m_Updating ) { return nullptr; }
 
-		if( m_TargetLOD > m_ActiveLOD )
+		if( m_TargetLOD < m_ActiveLOD )
 		{
 			auto newRequest = std::make_shared< AdaptiveTextureLoadRequest >( inPtr, m_TargetLOD );
 			
@@ -137,7 +140,7 @@ namespace Hyperion
 	{
 		if( m_Updating ) { return nullptr; }
 
-		if( m_TargetLOD < m_ActiveLOD )
+		if( m_TargetLOD > m_ActiveLOD )
 		{
 			auto newRequest = std::make_shared< AdaptiveTextureUnloadRequest >( inPtr, m_TargetLOD );
 
@@ -298,7 +301,7 @@ namespace Hyperion
 			HYPERION_VERIFY( header.LODs.size() > inLevel, "Attempt to create texture load request with out-of-bounds LOD level!" );
 
 			// If there are multiple LODs that need to be loaded, we need to add all the LOD sizes from the current to the target
-			uint8 currentLevel = inTarget->GetActiveLevel();
+			uint8 currentLevel = Math::Min( inTarget->GetActiveLevel(), (uint8)header.LODs.size() );
 			m_Memory = 0;
 
 			for( uint8 i = inLevel; i < currentLevel; i++ )
@@ -345,7 +348,7 @@ namespace Hyperion
 		{
 			// Fill out missing fields
 			auto& header = inTarget->GetAsset()->GetHeader();
-			HYPERION_VERIFY( header.LODs.size() > ( inLevel + 1 ) && inLevel > 0, "Attempt to create texture unload request with invalid LOD level!" );
+			HYPERION_VERIFY( header.LODs.size() > ( inLevel ) && inLevel > 0, "Attempt to create texture unload request with invalid LOD level!" );
 
 			// If were unloading multiple levels, we need to add together their sizes
 			uint8 currentLevel = inTarget->GetActiveLevel();

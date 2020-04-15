@@ -29,7 +29,7 @@ namespace Hyperion
 		static const std::vector< byte > correctSequence =
 		{
 			0x1A, 0xA1, 0xFF, 0x28,
-			0x9D, 0xD9, 0x00, 0x01
+			0x9D, 0xD9, 0x00, 0x03
 		};
 
 		return inData.size() == 8 && std::equal( inData.begin(), inData.end(), correctSequence.begin() );

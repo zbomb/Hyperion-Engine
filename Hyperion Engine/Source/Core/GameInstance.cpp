@@ -12,12 +12,15 @@
 #include "Hyperion/Framework/PrimitiveComponent.h"
 #include "Hyperion/Framework/LightComponent.h"
 #include "Hyperion/Framework/CameraComponent.h"
+#include "Hyperion/Framework/LocalPlayer.h"
+#include "Hyperion/Framework/Player.h"
+
 
 namespace Hyperion
 {
 
 	GameInstance::GameInstance()
-		: m_ActiveWorld( nullptr )
+		: m_ActiveWorld( nullptr ), m_LocalPlayer( nullptr ), m_LastTickScreenHeight( 0 )
 	{
 		
 	}
@@ -29,6 +32,9 @@ namespace Hyperion
 
 	void GameInstance::Initialize()
 	{
+		// We need to create the local player instance
+		m_LocalPlayer = CreateObject< LocalPlayer >();
+
 		// DEBUG
 		auto newWorld = CreateObject< World >();
 		if( SetActiveWorld( newWorld ) )
@@ -50,8 +56,22 @@ namespace Hyperion
 			Console::WriteLine( "[DEBUG] GameInstance: Default world couldnt be spawned!" );
 		}
 
+		// MORE MORE DEBUG
+		// Eventually, we need a world spawning system, and a joining system
+		auto newPlayer = CreateObject< Player >( 1 );
+		if( !newWorld->AddEntity( newPlayer ) )
+		{
+			Console::WriteLine( "[DEBUG] GameInstance: Failed to add player to world!" );
+		}
+		else
+		{
+			Console::WriteLine( "[DEBUG] GameInstance: Added player to world" );
+			m_LocalPlayer->SetPlayerEntity( newPlayer );
+		}
+
 		OnStart();
 	}
+
 
 	void GameInstance::Shutdown()
 	{
@@ -166,17 +186,6 @@ namespace Hyperion
 		return false;
 	}
 
-	bool GameInstance::RegisterRenderComponent( const HypPtr< CameraComponent >& inComp )
-	{
-		if( DoRegisterRenderComponent( inComp ) )
-		{
-			Console::WriteLine( "[DEBUG] GameInstance: Registered camera component" );
-			return true;
-		}
-
-		return false;
-	}
-
 
 	bool GameInstance::DoRemoveRenderComponent( const HypPtr< RenderComponent >& inComp )
 	{
@@ -230,22 +239,6 @@ namespace Hyperion
 
 		// DEBUG
 		Console::WriteLine( "[DEBUG] GameInstance: Removed light component from list/renderer" );
-		return true;
-	}
-
-
-	bool GameInstance::RemoveRenderComponent( const HypPtr< CameraComponent >& inComp )
-	{
-		if( !DoRemoveRenderComponent( inComp ) )
-		{
-			return false;
-		}
-
-		// Add render command to actually remove this component
-		RenderManager::AddCommand( std::make_unique< RemoveCameraProxyCommand >( inComp->GetIdentifier() ) );
-
-		// DEBUG
-		Console::WriteLine( "[DEBUG] GameInstance: Removed camera component from list/renderer" );
 		return true;
 	}
 
@@ -305,7 +298,38 @@ namespace Hyperion
 			It++;
 		}
 
+		// Next, we want to get the current view state
+		if( m_LocalPlayer && m_LocalPlayer->IsValid() )
+		{
+			ViewState vs;
+			uint32 screenHeight = RenderManager::GetActiveResolution().Height;
+
+			if( m_LocalPlayer->GetViewState( vs ) || screenHeight != m_LastTickScreenHeight )
+			{
+				// This means the view state has changed
+				// First, lets inform the renderer of the updated view state
+				RenderManager::AddCommand( std::make_unique< UpdateViewStateCommand >( vs ) );
+
+				// Next, lets inform the streaming manager of the updated view
+				AdaptiveAssetManagerCameraUpdateEvent CameraEvent;
+
+				CameraEvent.CameraInfo.FOV	= vs.FOV;
+				CameraEvent.CameraInfo.Position = vs.Position;
+				CameraEvent.CameraInfo.ScreenHeight = screenHeight;
+
+				m_LastTickScreenHeight = screenHeight;
+				RenderManager::GetStreamingManager().OnCameraUpdate( CameraEvent );
+			}
+		}
+		else
+		{
+			// DEBUG
+			Console::WriteLine( "[ERROR] GameInstance: Failed to update renderer.. local player instance was null?" );
+		}
+
+		// Send event to streaming system to update the position/size of all objects
 		RenderManager::GetStreamingManager().OnPrimitiveUpdate( Event );
+	
 	}
 
 

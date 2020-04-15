@@ -5,135 +5,77 @@
 ==================================================================================================*/
 
 #include "Hyperion/Framework/CameraComponent.h"
-#include "Hyperion/Core/GameManager.h"
-#include "Hyperion/Renderer/Proxy/ProxyCamera.h"
-#include "Hyperion/Core/RenderManager.h"
-#include "Hyperion/Framework/World.h"
+#include "Hyperion/Framework/Player.h"
 
 
 namespace Hyperion
 {
 
-	void CameraComponent::AddToRenderer()
+	void CameraComponent::OnSelected( const HypPtr< Player >& inPlayer )
 	{
-		GameManager::GetInstance()->RegisterRenderComponent( AquirePointer< CameraComponent >() );
-	}
-
-
-	void CameraComponent::RemoveFromRenderer()
-	{
-		GameManager::GetInstance()->RemoveRenderComponent( AquirePointer< CameraComponent >() );
-	}
-
-	bool CameraComponent::PerformProxyCreation()
-	{
-		// First, we need to create a new proxy
-		auto newProxy = std::make_shared< ProxyCamera >( GetIdentifier() );
-		if( !newProxy )
+		// Ensure the player is valid, and this player is not already using this camera
+		if( !inPlayer || !inPlayer->IsSpawned() )
 		{
-			return false;
+			Console::WriteLine( "[WARNING] CameraComponent: Attempt to select camera with an invalid player entity!" );
+			return;
 		}
 
-		m_Proxy = newProxy;
-
-		// Initialize this proxy
-		m_Proxy->GameInit();
-
-		// Run renderer command to add this new proxy
-		RenderManager::AddCommand( std::make_unique< AddCameraProxyCommand >( m_Proxy ) );
-		return true;
-	}
-
-	bool CameraComponent::UpdateProxy()
-	{
-		// Ensure we have a cached proxy copy
-		if( !m_Proxy ) return false;
-		
-		auto proxy = m_Proxy;
-		float cFOV = m_FOV;
-		float cAR = m_AspectRatio;
-		bool cA = m_Active;
-
-		// Enqueue the render command
-		HYPERION_RENDER_COMMAND( [ = ] ( Renderer& r ) 
-								 {
-									if( proxy )
-									{
-										proxy->SetFOV( cFOV );
-										proxy->SetAspectRatio( cAR );
-
-										if( proxy->IsActive() != cA )
-										{
-											// Tell renderer to update active camera
-											proxy->SetActive( cA );
-											
-											if( cA )
-											{
-												//r.GetScene()->SetActiveCamera( proxy );
-											}
-											else
-											{
-												//r.GetScene()->SetActiveCamera( nullptr );
-											}
-										}
-										else
-										{
-											r.GetScene()->OnCameraUpdate();
-										}
-									}
-								 } );
-
-		return true;
-	}
-
-
-	void CameraComponent::SetActiveCamera( bool bIn )
-	{
-		if( m_Active != bIn )
+		for( auto& p : m_ActivePlayers )
 		{
-			m_Active = bIn;
-			MarkDirty();
-
-			if( bIn )
+			if( p == inPlayer )
 			{
-				GetWorld()->SetActiveCamera( AquirePointer< CameraComponent >() );
+				Console::WriteLine( "[WARNING] CameraComponent: Player attempted to select a camera, that they already are using" );
+				return;
+			}
+		}
+
+		m_ActivePlayers.push_back( inPlayer );
+	}
+
+
+	void CameraComponent::OnDeSelected( const HypPtr< Player >& inPlayer )
+	{
+		if( !inPlayer )
+		{
+			Console::WriteLine( "[WARNING] CameraComponent: Attempt to deselect camera with null player entity!" );
+			return;
+		}
+
+		bool bFound = false;
+		for( auto It = m_ActivePlayers.begin(); It != m_ActivePlayers.end(); )
+		{
+			if( *It == inPlayer )
+			{
+				It = m_ActivePlayers.erase( It );
+				bFound = true;
 			}
 			else
 			{
-				GetWorld()->OnCameraUpdated();
+				It++;
 			}
 		}
-	}
 
-	void CameraComponent::SetFOV( float fIn )
-	{
-		if( m_FOV != fIn )
+		if( !bFound )
 		{
-			m_FOV = fIn;
-			MarkDirty();
-
-			GetWorld()->OnCameraUpdated();
-		}
-	}
-
-	void CameraComponent::SetAspectRatio( float fIn )
-	{
-		if( m_AspectRatio != fIn )
-		{
-			m_AspectRatio = fIn;
-			MarkDirty();
-
-			GetWorld()->OnCameraUpdated();
+			Console::WriteLine( "[WARNING] CameraComponent: Player attempted to deselect this camera, but this player wasnt in the active player list!" );
 		}
 	}
 
 
-	void CameraComponent::GetViewState( ViewState& Out )
+	void CameraComponent::OnDespawn( const HypPtr< World >& inWorld )
 	{
-		Out.Position = GetPosition();
-		Out.Rotation = GetRotation();
-		Out.FOV = m_FOV;
-		Out.AspectRatio = m_AspectRatio;
+		// Force all active players to deselect this camera
+		auto thisPtr = AquirePointer< CameraComponent >();
+
+		for( auto& p : m_ActivePlayers )
+		{
+			if( p && p->IsSpawned() )
+			{
+				p->SetActiveCamera( nullptr );
+			}
+		}
+
+		m_ActivePlayers.clear();
 	}
 
 }

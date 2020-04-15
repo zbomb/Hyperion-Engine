@@ -35,6 +35,7 @@ namespace Hyperion
 	constexpr LanguageID LANG_NONE = 0;
 
 	constexpr uint32 ASSET_INVALID	= 0;
+	constexpr uint32 PLAYER_INVALID = 0;
 
 	constexpr auto THREAD_GAME		= "game";
 	constexpr auto THREAD_RENDERER	= "renderer";

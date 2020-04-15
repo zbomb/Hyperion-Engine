@@ -17,14 +17,37 @@ namespace Hyperion
 		Vector3D Position;
 		Angle3D Rotation;
 		float FOV;
-		float AspectRatio;
 
 		ViewState()
 		{
 			Position		= Vector3D( 0.f, 0.f, 0.f );
 			Rotation		= Angle3D( 0.f, 0.f, 0.f );
 			FOV				= 0.f;
-			AspectRatio		= 0.f;
+		}
+
+		bool operator==( const ViewState& Other ) const
+		{
+			return
+				Position == Other.Position &&
+				Rotation == Other.Rotation &&
+				FOV == Other.FOV;
+		}
+
+		bool operator!=( const ViewState& Other ) const
+		{
+			return
+				Position != Other.Position ||
+				Rotation != Other.Rotation ||
+				FOV != Other.FOV;
+		}
+
+		ViewState& operator=( const ViewState& Other )
+		{
+			Position = Other.Position;
+			Rotation = Other.Rotation;
+			FOV = Other.FOV;
+
+			return *this;
 		}
 	};
 

@@ -30,15 +30,6 @@ namespace Hyperion
 	}
 
 
-	void AddCameraProxyCommand::Execute( Renderer& inRenderer )
-	{
-		if( m_Payload )
-		{
-			inRenderer.AddCamera( m_Payload );
-		}
-	}
-
-
 	void RemovePrimitiveProxyCommand::Execute( Renderer& inRenderer )
 	{
 		inRenderer.RemovePrimitive( m_Identifier );
@@ -51,8 +42,15 @@ namespace Hyperion
 	}
 
 
-	void RemoveCameraProxyCommand::Execute( Renderer& inRenderer )
+	void UpdateViewStateCommand::Execute( Renderer& inRenderer )
 	{
-		inRenderer.RemoveCamera( m_Identifier );
+		auto scene = inRenderer.GetScene();
+		if( !scene )
+		{
+			Console::WriteLine( "[WARNING] Renderer: Failed to update proxy view state! Proxy scene was null!" );
+			return;
+		}
+
+		
 	}
 }

@@ -53,6 +53,12 @@ namespace Hyperion
 	------------------------------------------------------------------------------------------------------------*/
 	std::shared_ptr< TextureAsset > TextureAssetLoader::Load( uint32 inIdentifier, std::unique_ptr< IFile >& inFile )
 	{
+		if( inIdentifier == ASSET_INVALID || !inFile || !inFile->IsValid() ) 
+		{ 
+			Console::WriteLine( "[ERROR] TextureAssetLoader: Failed to load asset.. identifier and/or file was invalid" );
+			return nullptr; 
+		}
+
 		// Use the HTX Reader class to read in the header data for this texture asset
 		HTXReader Reader( *inFile );
 		
@@ -65,6 +71,12 @@ namespace Hyperion
 
 		// Return the new texture asset created from the header we read from file
 		return std::shared_ptr< TextureAsset >( new TextureAsset( assetHeader, inFile->GetPath(), inIdentifier ) );
+	}
+
+
+	bool TextureAssetLoader::IsValidFile( const FilePath& inPath )
+	{
+		return inPath.Extension().ToLower().Equals( ".htx" );
 	}
 
 

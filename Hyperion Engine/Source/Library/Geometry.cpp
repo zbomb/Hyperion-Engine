@@ -16,7 +16,8 @@ namespace Hyperion
 	{
 		// Calculate distance from the screen origin to the center of the boudning sphere
 		float fovHalf = inFOV / 2.f;
-		float num = ( inBounds.Radius * ( cosf( fovHalf ) / sinf( fovHalf ) ) ) / Vector3D::Distance( inViewPos, inBounds.Center );
+		float dist = Vector3D::Distance( inViewPos, inBounds.Center );
+		float num = dist == 0.f ? 100000000.f : ( inBounds.Radius * ( cosf( fovHalf ) / sinf( fovHalf ) ) ) / dist;
 
 		// If we wanted the radius instead of the diameter, we would half this result
 		return num * (float) ( ScreenHeight );

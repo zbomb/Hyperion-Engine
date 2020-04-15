@@ -169,9 +169,6 @@
     <ClInclude Include="Include\Hyperion\Core\Types\ConcurrentQueue.h">
       <Filter>Core\Types</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyCamera.h">
-      <Filter>Renderer\Proxy</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyLight.h">
       <Filter>Renderer\Proxy</Filter>
     </ClInclude>
@@ -307,9 +304,6 @@
     <ClInclude Include="Include\Hyperion\Library\Math.h">
       <Filter>Library</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Material\MaterialAsset.h">
-      <Filter>Material</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Streaming\AdaptiveAssetManager.h">
       <Filter>Streaming</Filter>
     </ClInclude>
@@ -396,6 +390,27 @@
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Tools\HTXWriter.h">
       <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Tools\HHTWriter.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Crypto.h">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\Player.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\LocalPlayer.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Tools\HMATReader.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Tools\HMATWriter.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\MaterialTests.hpp">
+      <Filter>Tests</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -519,9 +534,6 @@
     <ClCompile Include="Source\Material\MaterialInstance.cpp">
       <Filter>Material</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Material\MaterialAsset.cpp">
-      <Filter>Material</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Streaming\AdaptiveAssetManager.cpp">
       <Filter>Streaming</Filter>
     </ClCompile>
@@ -569,6 +581,27 @@
     </ClCompile>
     <ClCompile Include="Source\Tools\HTXWriter.cpp">
       <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tools\HHTWriter.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Library\Crypto.cpp">
+      <Filter>Library</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\Player.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\LocalPlayer.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tools\HMATReader.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tools\HMATWriter.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Assets\MaterialAsset.cpp">
+      <Filter>Assets</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

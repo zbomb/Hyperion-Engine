@@ -61,7 +61,7 @@ namespace Hyperion
 
 		void ShutdownProxy( const std::shared_ptr< ProxyBase >& );
 
-		Transform3D GetViewTransform();
+		void GetViewState( ViewState& outState ) const;
 
 	public:
 
@@ -80,11 +80,9 @@ namespace Hyperion
 
 		bool AddPrimitive( std::shared_ptr< ProxyPrimitive >& );
 		bool AddLight( std::shared_ptr< ProxyLight >& );
-		bool AddCamera( std::shared_ptr< ProxyCamera >& );
 
 		bool RemovePrimitive( uint32 inIdentifier );
 		bool RemoveLight( uint32 inIdentifier );
-		bool RemoveCamera( uint32 inIdentifier );
 
 		inline std::shared_ptr< ProxyScene > GetScene() const { return m_Scene; }
 

@@ -1,0 +1,13 @@
+D:\Hyperion\Hyperion Utilities\bin\Debug\Hyperion Utilities.exe.config
+D:\Hyperion\Hyperion Utilities\bin\Debug\Hyperion Utilities.exe
+D:\Hyperion\Hyperion Utilities\bin\Debug\Hyperion Utilities.pdb
+D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion Utilities.csprojAssemblyReference.cache
+D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion Utilities.csproj.GenerateResource.cache
+D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion Utilities.exe
+D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion Utilities.pdb
+D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion.ConsoleWindow.resources
+D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion.MaterialEditor.resources
+D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion.Properties.Resources.resources
+D:\Hyperion\x64\Debug\Hyperion Utilities.exe.config
+D:\Hyperion\x64\Debug\Hyperion Utilities.exe
+D:\Hyperion\x64\Debug\Hyperion Utilities.pdb

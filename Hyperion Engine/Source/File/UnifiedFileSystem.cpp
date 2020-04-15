@@ -39,11 +39,15 @@ namespace Hyperion
 		{
 			m_ContentSystem		= FileSystem::Virtual;
 			systemDescription	= "virtual";
+
+			Console::WriteLine( "[Status] FileSystem: Discovering assets from virtual bundles..." );
 		}
 		else if( targetSys == "n" )
 		{
 			m_ContentSystem		= FileSystem::Network;
 			systemDescription	= "network";
+
+			Console::WriteLine( "[Status] FileSystem: Discovering assets from the network..." );
 		}
 		else
 		{
@@ -54,9 +58,9 @@ namespace Hyperion
 
 			m_ContentSystem		= FileSystem::Disk;
 			systemDescription	= "disk";
-		}
 
-		Console::WriteLine( "[Status] FileSystem: Initializing.. selected content system '", systemDescription, "'" );
+			Console::WriteLine( "[Status] FileSystem: Discovering assets from the disk..." );
+		}
 
 		// First, attempt to initialize the virtual file system
 		if( !VirtualFileSystem::Initialize( m_ContentSystem == FileSystem::Virtual ) )

@@ -226,6 +226,9 @@ namespace Hyperion
 							// Paths are stored as a UTF-8 string, and the hash code is a uint32
 							AssetManager::RegisterAsset( hashCode, String( strData, StringEncoding::UTF8 ) );
 							assetCounter++;
+
+							// DEBUG
+							Console::WriteLine( "===> Asset Identifier: ", hashCode, " Asset Path: \"", String( strData, StringEncoding::UTF8 ), "\"" );
 						}
 					}
 

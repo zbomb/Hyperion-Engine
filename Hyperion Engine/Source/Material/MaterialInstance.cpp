@@ -5,7 +5,7 @@
 ==================================================================================================*/
 
 #include "Hyperion/Material/MaterialInstance.h"
-#include "Hyperion/Material/MaterialAsset.h"
+#include "Hyperion/Assets/MaterialAsset.h"
 
 
 namespace Hyperion

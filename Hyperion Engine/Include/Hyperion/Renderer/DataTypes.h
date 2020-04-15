@@ -11,7 +11,6 @@
 #include "Hyperion/Renderer/Proxy/ProxyBase.h"
 #include "Hyperion/Renderer/Proxy/ProxyPrimitive.h"
 #include "Hyperion/Renderer/Proxy/ProxyLight.h"
-#include "Hyperion/Renderer/Proxy/ProxyCamera.h"
 #include "Hyperion/Renderer/Proxy/ProxyScene.h"
 
 // For HWND
@@ -35,7 +34,6 @@ namespace Hyperion
 	class Renderer;
 	class ProxyPrimitive;
 	class ProxyLight;
-	class ProxyCamera;
 
 
 	constexpr float SCREEN_NEAR		= 0.1f;
@@ -232,30 +230,6 @@ namespace Hyperion
 	};
 
 
-	struct AddCameraProxyCommand : public RenderCommandBase
-	{
-
-	private:
-
-		std::shared_ptr< ProxyCamera > m_Payload;
-
-	public:
-
-		AddCameraProxyCommand() = delete;
-		AddCameraProxyCommand( const std::shared_ptr< ProxyCamera >& inProxy )
-			: m_Payload( inProxy )
-		{}
-
-		bool IsValid() const
-		{
-			return m_Payload ? true : false;
-		}
-
-		void Execute( Renderer& inRenderer ) override;
-
-	};
-
-
 	struct RemovePrimitiveProxyCommand : public RenderCommandBase
 	{
 
@@ -294,18 +268,18 @@ namespace Hyperion
 	};
 
 
-	struct RemoveCameraProxyCommand : public RenderCommandBase
+	struct UpdateViewStateCommand : public RenderCommandBase
 	{
 
 	private:
 
-		uint32 m_Identifier;
+		ViewState m_Payload;
 
 	public:
 
-		RemoveCameraProxyCommand() = delete;
-		RemoveCameraProxyCommand( uint32 inIdentifier )
-			: m_Identifier( inIdentifier )
+		UpdateViewStateCommand() = delete;
+		UpdateViewStateCommand( const ViewState& inState )
+			: m_Payload( inState )
 		{}
 
 		void Execute( Renderer& inRenderer ) override;
@@ -401,21 +375,4 @@ namespace Hyperion
 			state = std::make_shared< RenderFenceState >();
 		}
 	};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

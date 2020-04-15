@@ -12,6 +12,8 @@
 #include "Hyperion/Core/Types/ConcurrentQueue.h"
 #include "Hyperion/Streaming/Events.h"
 
+// DEBUG: Comment this out to turn off debug console prints
+#define HYPERION_TEXTURE_STREAMING_DEBUG
 
 
 namespace Hyperion

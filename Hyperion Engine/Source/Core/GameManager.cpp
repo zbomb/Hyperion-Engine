@@ -150,8 +150,6 @@ namespace Hyperion
 
 			RenderManager::AddCommand( std::move( frameEndCommand ) );
 		}
-
-
 	}
 
 

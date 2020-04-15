@@ -48,7 +48,7 @@ namespace Hyperion
 	public:
 
 		FilePath();
-		explicit FilePath( const String& inPath, LocalPath inLocal = LocalPath::Game, FileSystem inSystem = FileSystem::None );
+		FilePath( const String& inPath, LocalPath inLocal = LocalPath::Game, FileSystem inSystem = FileSystem::None );
 		explicit FilePath( LocalPath inLocal, FileSystem inSystem = FileSystem::None );
 		FilePath( const String& inPath, FileSystem inSystem );
 

@@ -186,30 +186,6 @@ namespace Hyperion
 		return listEntry->second;
 	}
 
-	void World::SetActiveCamera( const HypPtr< CameraComponent >& inCamera )
-	{
-		if( inCamera && inCamera->IsActive() && inCamera->GetWorld() == AquirePointer< World >() )
-		{
-			if( m_ActiveCamera && m_ActiveCamera->IsValid() )
-			{
-				m_ActiveCamera->SetActiveCamera( false );
-			}
-
-			m_ActiveCamera = inCamera;
-			m_ActiveCamera->SetActiveCamera( true );
-		}
-	}
-
-	void World::OnCameraUpdated()
-	{
-		// Update our cached view state
-		if( m_ActiveCamera && m_ActiveCamera->IsActive() && m_ActiveCamera->GetWorld() == AquirePointer< World >() )
-		{
-			m_ActiveCamera->GetViewState( m_CachedViewState );
-		}
-	}
-
-
 
 	void World::OnSpawn()
 	{

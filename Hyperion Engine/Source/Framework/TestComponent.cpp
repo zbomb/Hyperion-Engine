@@ -7,6 +7,7 @@
 #include "Hyperion/Framework/TestComponent.h"
 #include "Hyperion/Renderer/Proxy/ProxyTest.h"
 #include "Hyperion/Streaming/AdaptiveAssetManager.h"
+#include "Hyperion/Core/AssetManager.h"
 
 
 
@@ -14,7 +15,7 @@ namespace Hyperion
 {
 
 	TestComponent::TestComponent()
-		: m_Proxy( nullptr )
+		: m_Proxy( nullptr ), m_Asset( AssetManager::Get< TextureAsset >( "textures/test.htx" ) )
 	{}
 
 

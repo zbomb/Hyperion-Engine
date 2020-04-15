@@ -8,7 +8,6 @@
 #include "Hyperion/Renderer/Proxy/ProxyScene.h"
 #include "Hyperion/Renderer/Proxy/ProxyPrimitive.h"
 #include "Hyperion/Renderer/Proxy/ProxyLight.h"
-#include "Hyperion/Renderer/Proxy/ProxyCamera.h"
 
 // STD Includes
 #include <iostream>
@@ -68,17 +67,6 @@ namespace Hyperion
 		}
 
 		m_Lights.clear();
-
-		for( auto It = m_Cameras.begin(); It != m_Cameras.end(); It++ )
-		{
-			if( It->second )
-			{
-				It->second->BeginShutdown();
-				It->second->Shutdown();
-			}
-		}
-
-		m_Cameras.clear();
 	}
 
 
@@ -122,25 +110,6 @@ namespace Hyperion
 		return true;
 	}
 
-	bool ProxyScene::AddCamera( std::shared_ptr< ProxyCamera > inCamera )
-	{
-		if( !inCamera )
-		{
-			Console::WriteLine( "[WARNING] ProxySystem: Attempt to add null camera to the camera list!" );
-			return false;
-		}
-
-		auto identifier = inCamera->GetIdentifier();
-		auto current_entry = m_Cameras.find( identifier );
-		if( current_entry != m_Cameras.end() )
-		{
-			Console::WriteLine( "[WARNING] ProxySystem: Attempt to add camera with duplicate id" );
-			return false;
-		}
-
-		m_Cameras[ identifier ] = inCamera;
-		return true;
-	}
 
 	std::shared_ptr< ProxyPrimitive > ProxyScene::RemovePrimitive( uint32 Identifier )
 	{
@@ -168,18 +137,6 @@ namespace Hyperion
 		return copy;
 	}
 
-	std::shared_ptr< ProxyCamera > ProxyScene::RemoveCamera( uint32 Identifier )
-	{
-		auto entry = m_Cameras.find( Identifier );
-		if( entry == m_Cameras.end() )
-		{
-			return nullptr;
-		}
-
-		auto copy = entry->second;
-		m_Cameras.erase( entry );
-		return copy;
-	}
 
 	std::shared_ptr< ProxyPrimitive > ProxyScene::FindPrimitive( uint32 Identifier )
 	{
@@ -203,33 +160,19 @@ namespace Hyperion
 		return entry->second;
 	}
 
-	std::shared_ptr< ProxyCamera > ProxyScene::FindCamera( uint32 Identifier )
-	{
-		auto entry = m_Cameras.find( Identifier );
-		if( entry == m_Cameras.end() )
-		{
-			return nullptr;
-		}
 
-		return entry->second;
+	void ProxyScene::GetViewState( ViewState& outState ) const
+	{
+		outState = m_ViewState;
 	}
 
-
-	void ProxyScene::SetActiveCamera( std::shared_ptr< ProxyCamera > inPtr )
+	void ProxyScene::UpdateViewState( const ViewState& inState )
 	{
-		if( m_ActiveCamera != inPtr )
-		{
-			m_ActiveCamera = inPtr;
-			// TODO: Call something?
-		}
+		m_ViewState			= inState;
+		m_bViewStateDirty	= true;
+
+		Console::WriteLine( "============> DEBUG DEBUG: Proxy Scene View State Updated!!!!" ); // DEBUG ONLY TEMP
 	}
-
-
-	std::shared_ptr< ProxyCamera > ProxyScene::GetActiveCamera()
-	{
-		return m_ActiveCamera;
-	}
-
 
 	void ProxyScene::OnCameraUpdate()
 	{

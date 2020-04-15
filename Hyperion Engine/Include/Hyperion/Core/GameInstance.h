@@ -19,6 +19,7 @@ namespace Hyperion
 	class PrimitiveComponent;
 	class LightComponent;
 	class CameraComponent;
+	class LocalPlayer;
 
 
 	class GameInstance : public Object
@@ -28,6 +29,9 @@ namespace Hyperion
 
 		HypPtr< World > m_ActiveWorld;
 		std::map< uint32, HypPtr< RenderComponent > > m_ActiveRenderComponents; // Maybe should move into world..?
+
+		HypPtr< LocalPlayer > m_LocalPlayer;
+		uint32 m_LastTickScreenHeight;
 
 	protected:
 
@@ -49,6 +53,7 @@ namespace Hyperion
 		virtual void Shutdown() final;
 
 		inline HypPtr< World > GetWorld() const { return m_ActiveWorld; }
+		inline HypPtr< LocalPlayer > GetLocalPlayer() const { return m_LocalPlayer; }
 
 		bool AddEntityToActiveWorld( const HypPtr< Entity >& inEnt, const Transform3D& inTransform = Transform3D() );
 		bool RemoveEntityFromActiveWorld( const HypPtr< Entity >& inEnt );
@@ -64,11 +69,9 @@ namespace Hyperion
 		*/
 		bool RegisterRenderComponent( const HypPtr< PrimitiveComponent >& );
 		bool RegisterRenderComponent( const HypPtr< LightComponent >& );
-		bool RegisterRenderComponent( const HypPtr< CameraComponent >& );
 
 		bool RemoveRenderComponent( const HypPtr< PrimitiveComponent >& );
 		bool RemoveRenderComponent( const HypPtr< LightComponent >& );
-		bool RemoveRenderComponent( const HypPtr< CameraComponent >& );
 
 		void ProcessRenderUpdates();
 

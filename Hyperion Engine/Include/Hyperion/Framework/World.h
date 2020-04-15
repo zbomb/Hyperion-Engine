@@ -49,9 +49,6 @@ namespace Hyperion
 
 		std::map< uint32, HypPtr< Entity > > m_ActiveEnts;
 
-		ViewState m_CachedViewState;
-		HypPtr< CameraComponent > m_ActiveCamera;
-
 	public:
 
 		inline bool IsSpawned() const	{ return m_bSpawned; }
@@ -65,10 +62,6 @@ namespace Hyperion
 		bool RemoveEntity( const HypPtr< Entity >& inTarget );
 
 		HypPtr< Entity > GetEntity( uint32 inIdentifier );
-
-		void SetActiveCamera( const HypPtr< CameraComponent >& inCamera );
-		void OnCameraUpdated();
-		const ViewState& GetViewState() const { return m_CachedViewState; }
 
 	protected:
 

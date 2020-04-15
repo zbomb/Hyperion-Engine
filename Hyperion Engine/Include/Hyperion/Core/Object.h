@@ -438,8 +438,6 @@ namespace Hyperion
 
 	protected:
 
-		bool bRequiresTick;
-
 		virtual void Initialize()
 		{
 		}
@@ -453,6 +451,8 @@ namespace Hyperion
 		}
 
 	public:
+
+		bool bRequiresTick;
 
 		Object()
 			: bRequiresTick( false ), m_IsValid( true ), m_LastTick( std::chrono::high_resolution_clock::now() ), m_Identifier( 0 )

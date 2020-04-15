@@ -64,6 +64,8 @@
     <ClInclude Include="Include\Hyperion\Framework\DynamicModelComponent.h" />
     <ClInclude Include="Include\Hyperion\Framework\Entity.h" />
     <ClInclude Include="Include\Hyperion\Framework\LightComponent.h" />
+    <ClInclude Include="Include\Hyperion\Framework\LocalPlayer.h" />
+    <ClInclude Include="Include\Hyperion\Framework\Player.h" />
     <ClInclude Include="Include\Hyperion\Framework\PrimitiveComponent.h" />
     <ClInclude Include="Include\Hyperion\Framework\RenderComponent.h" />
     <ClInclude Include="Include\Hyperion\Framework\StaticModelComponent.h" />
@@ -74,6 +76,7 @@
     <ClInclude Include="include\Hyperion\Hyperion.h" />
     <ClInclude Include="Include\Hyperion\Ints.h" />
     <ClInclude Include="Include\Hyperion\Library\Binary.h" />
+    <ClInclude Include="Include\Hyperion\Library\Crypto.h" />
     <ClInclude Include="Include\Hyperion\Library\Geometry.h" />
     <ClInclude Include="Include\Hyperion\Library\Math.h" />
     <ClInclude Include="Include\Hyperion\Library\Memory.hpp" />
@@ -83,7 +86,6 @@
     <ClInclude Include="Include\Hyperion\Library\UTF32.hpp" />
     <ClInclude Include="Include\Hyperion\Library\UTF8.hpp" />
     <ClInclude Include="Include\Hyperion\Macros.h" />
-    <ClInclude Include="Include\Hyperion\Material\MaterialAsset.h" />
     <ClInclude Include="Include\Hyperion\Material\MaterialInstance.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DataTypes.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11.h" />
@@ -92,7 +94,6 @@
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Texture.h" />
     <ClInclude Include="Include\Hyperion\Renderer\IGraphics.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyBase.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyCamera.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyLight.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyPrimitive.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyScene.h" />
@@ -112,6 +113,9 @@
     <ClInclude Include="Include\Hyperion\Streaming\Events.h" />
     <ClInclude Include="Include\Hyperion\Tools\Deflate.h" />
     <ClInclude Include="Include\Hyperion\Tools\HHTReader.h" />
+    <ClInclude Include="Include\Hyperion\Tools\HHTWriter.h" />
+    <ClInclude Include="Include\Hyperion\Tools\HMATReader.h" />
+    <ClInclude Include="Include\Hyperion\Tools\HMATWriter.h" />
     <ClInclude Include="Include\Hyperion\Tools\HTXReader.h" />
     <ClInclude Include="Include\Hyperion\Tools\HTXWriter.h" />
     <ClInclude Include="Include\Hyperion\Tools\HVBReader.h" />
@@ -123,6 +127,7 @@
     <ClInclude Include="Tests\BufferTests.hpp" />
     <ClInclude Include="Tests\EncodingTests.hpp" />
     <ClInclude Include="Tests\FileTests.hpp" />
+    <ClInclude Include="Tests\MaterialTests.hpp" />
     <ClInclude Include="Tests\MemoryTests.hpp" />
     <ClInclude Include="Tests\PNGTests.hpp" />
     <ClInclude Include="Tests\RenderTests.hpp" />
@@ -132,6 +137,7 @@
     <ClInclude Include="Tests\ZLibTests.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Assets\MaterialAsset.cpp" />
     <ClCompile Include="Source\Assets\TextureAsset.cpp" />
     <ClCompile Include="Source\Console\Console.cpp" />
     <ClCompile Include="Source\Console\ConsoleVarInstance.cpp" />
@@ -157,6 +163,8 @@
     <ClCompile Include="Source\Framework\DynamicModelComponent.cpp" />
     <ClCompile Include="Source\Framework\Entity.cpp" />
     <ClCompile Include="Source\Framework\LightComponent.cpp" />
+    <ClCompile Include="Source\Framework\LocalPlayer.cpp" />
+    <ClCompile Include="Source\Framework\Player.cpp" />
     <ClCompile Include="Source\Framework\PrimitiveComponent.cpp" />
     <ClCompile Include="Source\Framework\RenderComponent.cpp" />
     <ClCompile Include="Source\Framework\StaticModelComponent.cpp" />
@@ -165,10 +173,10 @@
     <ClCompile Include="Source\Framework\World.cpp" />
     <ClCompile Include="Source\Hyperion.cpp" />
     <ClCompile Include="Source\Library\Binary.cpp" />
+    <ClCompile Include="Source\Library\Crypto.cpp" />
     <ClCompile Include="Source\Library\Geometry.cpp" />
     <ClCompile Include="Source\Library\Math.cpp" />
     <ClCompile Include="Source\Library\Serialization.cpp" />
-    <ClCompile Include="Source\Material\MaterialAsset.cpp" />
     <ClCompile Include="Source\Material\MaterialInstance.cpp" />
     <ClCompile Include="Source\Renderer\DataTypes.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\DirectX11Graphics.cpp" />
@@ -182,6 +190,9 @@
     <ClCompile Include="Source\Streaming\AdaptiveTexture.cpp" />
     <ClCompile Include="Source\Tools\Deflate.cpp" />
     <ClCompile Include="Source\Tools\HHTReader.cpp" />
+    <ClCompile Include="Source\Tools\HHTWriter.cpp" />
+    <ClCompile Include="Source\Tools\HMATReader.cpp" />
+    <ClCompile Include="Source\Tools\HMATWriter.cpp" />
     <ClCompile Include="Source\Tools\HTXReader.cpp" />
     <ClCompile Include="Source\Tools\HTXWriter.cpp" />
     <ClCompile Include="Source\Tools\HVBReader.cpp" />

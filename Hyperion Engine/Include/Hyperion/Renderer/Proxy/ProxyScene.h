@@ -23,7 +23,6 @@ namespace Hyperion
 
 	class ProxyPrimitive;
 	class ProxyLight;
-	class ProxyCamera;
 
 
 	class ProxyScene
@@ -33,9 +32,9 @@ namespace Hyperion
 
 		std::map< ProxyID, std::shared_ptr< ProxyPrimitive > > m_Primitives;
 		std::map< ProxyID, std::shared_ptr< ProxyLight > > m_Lights;
-		std::map< ProxyID, std::shared_ptr< ProxyCamera > > m_Cameras;
 
-		std::shared_ptr< ProxyCamera > m_ActiveCamera;
+		ViewState m_ViewState;
+		bool m_bViewStateDirty;
 
 	public:
 
@@ -47,19 +46,17 @@ namespace Hyperion
 
 		bool AddPrimitive( std::shared_ptr< ProxyPrimitive > inPrimitive );
 		bool AddLight( std::shared_ptr< ProxyLight > inLight );
-		bool AddCamera( std::shared_ptr< ProxyCamera > inCamera );
 
 		std::shared_ptr< ProxyPrimitive > RemovePrimitive( uint32 Identifier );
 		std::shared_ptr< ProxyLight > RemoveLight( uint32 Identifier );
-		std::shared_ptr< ProxyCamera > RemoveCamera( uint32 Identifier );
 
 		std::shared_ptr< ProxyPrimitive > FindPrimitive( uint32 Identifier );
 		std::shared_ptr< ProxyLight > FindLight( uint32 Identifier );
-		std::shared_ptr< ProxyCamera > FindCamera( uint32 Identifier );
 
-		std::shared_ptr< ProxyCamera > GetActiveCamera();
-		void SetActiveCamera( std::shared_ptr< ProxyCamera > inPtr );
-		void OnCameraUpdate();
+		void GetViewState( ViewState& outState ) const;
+		void UpdateViewState( const ViewState& inState );
+
+	   	void OnCameraUpdate();
 
 	};
 

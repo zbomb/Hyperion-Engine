@@ -8,11 +8,11 @@
 #include "Hyperion/Renderer/Proxy/ProxyScene.h"
 #include "Hyperion/Renderer/Proxy/ProxyPrimitive.h"
 #include "Hyperion/Renderer/Proxy/ProxyLight.h"
-#include "Hyperion/Renderer/Proxy/ProxyCamera.h"
 #include "Hyperion/Core/RenderManager.h"
 #include "Hyperion/Core/ThreadManager.h"
 #include "Hyperion/Core/Asset.h"
 #include "Hyperion/Assets/TextureAsset.h"
+#include "Hyperion/Library/Math.h"
 
 /*
 	Include various graphics APIs?
@@ -197,32 +197,6 @@ namespace Hyperion
 	}
 
 
-	bool Renderer::AddCamera( std::shared_ptr< ProxyCamera >& inCamera )
-	{
-		if( !m_Scene )
-		{
-			Console::WriteLine( "[ERROR] Renderer: Failed to add camera.. scene was null!" );
-			return false;
-		}
-
-		auto ptr = m_Scene->RemoveCamera( inCamera->GetIdentifier() );
-		if( ptr )
-		{
-			ShutdownProxy( ptr );
-		}
-
-		if( m_Scene->AddCamera( inCamera ) )
-		{
-			inCamera->RenderInit();
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-
 	void Renderer::ShutdownProxy( const std::shared_ptr< ProxyBase >& inProxy )
 	{
 		if( inProxy )
@@ -285,41 +259,19 @@ namespace Hyperion
 	}
 
 
-	bool Renderer::RemoveCamera( uint32 inIdentifier )
-	{
-		if( !m_Scene )
-		{
-			Console::WriteLine( "[ERROR] Renderer: Failed to remove camera.. scene was null!" );
-			return false;
-		}
-
-		auto ptr = m_Scene->RemoveCamera( inIdentifier );
-		if( ptr )
-		{
-			ShutdownProxy( ptr );
-			return true;
-		}
-
-		return false;
-	}
-
-
-	Transform3D Renderer::GetViewTransform()
+	void Renderer::GetViewState( ViewState& outState ) const
 	{
 		if( m_Scene )
 		{
-			auto camera = m_Scene->GetActiveCamera();
-			if( camera )
-			{
-				return camera->GetTransform();
-			}
+			m_Scene->GetViewState( outState );
 		}
-
-		return Transform3D(
-			Vector3D( 0.f, 0.f, 0.f ),
-			Angle3D( 0.f, 0.f, 0.f ),
-			Vector3D( 0.f, 0.f, 0.f )
-		);
+		else
+		{
+			// Return a default view state
+			outState.FOV = Math::PIf / 4.f;
+			outState.Position.Clear();
+			outState.Rotation.Clear();
+		}
 	}
 
 

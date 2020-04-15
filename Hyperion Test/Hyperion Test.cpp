@@ -82,15 +82,17 @@ int Impl_Main( HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow )
     }
 
     // Begin engine initialization
-    // First, we need to startup the file system
-    Hyperion::UnifiedFileSystem::Initialize();
 
-    // Next, we need to start the console
+    // Start the console first, so we can load the config before any other systems
+    // The filesystem doesnt need to be loaded first, since its only using the physical file system
     if( !Hyperion::Console::Start( Hyperion::FLAG_CONSOLE_OS_OUTPUT ) )
     {
         MessageBox( hWindow, L"Hyperion engine failed to initialize! Couldnt start console!", L"Hyperion Error!", MB_OK );
         return -1;
     }
+
+    // Load the file systems and perform asset discovery
+    Hyperion::UnifiedFileSystem::Initialize();
 
     Hyperion::uint32 ifs = 0;
 

@@ -82,6 +82,7 @@ namespace Hyperion
 	public:
 
 		static std::shared_ptr< TextureAsset > Load( uint32 inIdentifier, std::unique_ptr< IFile >& inFile );
+		static bool IsValidFile( const FilePath& inPath );
 
 	};
 
@@ -100,7 +101,6 @@ namespace Hyperion
 		using _LoaderType	= TextureAssetLoader;
 
 		static inline AssetCacheMethod GetCacheMethod() { return AssetCacheMethod::Full; }
-
 
 	protected:
 
