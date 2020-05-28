@@ -13,4 +13,7 @@
   <PropertyGroup>
     <EnableSecurityDebugging>false</EnableSecurityDebugging>
   </PropertyGroup>
+  <PropertyGroup>
+    <ReferencePath>D:\Hyperion\x64\Debug\</ReferencePath>
+  </PropertyGroup>
 </Project>

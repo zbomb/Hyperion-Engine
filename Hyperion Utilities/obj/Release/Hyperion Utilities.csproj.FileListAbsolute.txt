@@ -1,0 +1,17 @@
+D:\Hyperion\x64\Debug\Hyperion Utilities.exe.config
+D:\Hyperion\x64\Debug\Hyperion Utilities.exe
+D:\Hyperion\x64\Debug\Hyperion Utilities.pdb
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion Utilities.csprojAssemblyReference.cache
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion.ConsoleWindow.resources
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion.KeyInput.resources
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion.MaterialEditor.resources
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion.Properties.Resources.resources
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion.TextureImporter.resources
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion.UI.TextureImportLODSettings.resources
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion.TextureImportOptions.resources
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion.TextureInput.resources
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion Utilities.csproj.GenerateResource.cache
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion Utilities.csproj.CoreCompileInputs.cache
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion Utilities.csproj.CopyComplete
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion Utilities.exe
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion Utilities.pdb

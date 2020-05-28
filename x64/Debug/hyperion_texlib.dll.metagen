@@ -1,0 +1,44 @@
+ImageRuntimeVersion: v4.0.30319
+Assembly hyperion_texlib, Version=1.0.*, Culture=Invariant Language (Invariant Country): 
+	hash=SHA1, flags=PublicKey
+Assembly mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089: 
+	hash=None, flags=None
+Assembly System.Data, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089: 
+	hash=None, flags=None
+Assembly System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089: 
+	hash=None, flags=None
+Assembly System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089: 
+	hash=None, flags=None
+Class Hyperion.BC7Library: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Methods:
+    Encode(Byte[], UInt32, UInt32, Boolean(HasFieldMarshal), Byte[]&(Out), UInt32&(Out)): PrivateScope, Public, Static, HideBySig
+Struct Hyperion.BC7Result: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeFieldInit
+  :System.Enum
+  Fields:
+    Int32 value__ : Public, SpecialName, RTSpecialName
+    Hyperion.BC7Result Success = 0 : Public, Static, Literal, HasDefault
+    Hyperion.BC7Result InvalidParams = 1 : Public, Static, Literal, HasDefault
+    Hyperion.BC7Result OtherError = 2 : Public, Static, Literal, HasDefault
+Class Hyperion.DXT1Library: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Methods:
+    Encode(Byte[], UInt32, UInt32, Byte[]&(Out), UInt32&(Out)): PrivateScope, Public, Static, HideBySig
+Struct Hyperion.DXT1Result: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeFieldInit
+  :System.Enum
+  Fields:
+    Int32 value__ : Public, SpecialName, RTSpecialName
+    Hyperion.DXT1Result Success = 0 : Public, Static, Literal, HasDefault
+    Hyperion.DXT1Result InvalidParams = 1 : Public, Static, Literal, HasDefault
+    Hyperion.DXT1Result OtherError = 2 : Public, Static, Literal, HasDefault
+Class Hyperion.DXT5Library: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Methods:
+    Encode(Byte[], UInt32, UInt32, Byte[]&(Out), UInt32&(Out)): PrivateScope, Public, Static, HideBySig
+Struct Hyperion.DXT5Result: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeFieldInit
+  :System.Enum
+  Fields:
+    Int32 value__ : Public, SpecialName, RTSpecialName
+    Hyperion.DXT5Result Success = 0 : Public, Static, Literal, HasDefault
+    Hyperion.DXT5Result InvalidParams = 1 : Public, Static, Literal, HasDefault
+    Hyperion.DXT5Result OtherError = 2 : Public, Static, Literal, HasDefault

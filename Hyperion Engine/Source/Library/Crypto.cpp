@@ -69,7 +69,7 @@ namespace Hyperion
 		for( auto It = inBegin; It != inEnd; It++ )
 		{
 			output = ( output << 4 ) + ( *It );
-			if( ( x = output & 0xF0000000L ) != 0 )
+			if( ( x = output & 0xF0000000 ) != 0 )
 			{
 				output ^= ( x >> 24 );
 			}

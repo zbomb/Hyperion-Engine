@@ -1,0 +1,4 @@
+^D:\HYPERION\HYPERION TEXTURE LIBRARY\COMPRESSONATOR\CMP_COMPRESSONATORLIB\DXTC\DXTC_V11_COMPRESS_64.ASM
+ml64 /Fo "..\Build\Temp\Debug_MD_DLL\x64\CMP_CompressonatorLib\Compressonator\dxtc_v11_compress_64.obj" /c /Cp /Zi "D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_CompressonatorLib\DXTC\dxtc_v11_compress_64.asm"
+^D:\HYPERION\HYPERION TEXTURE LIBRARY\COMPRESSONATOR\CMP_COMPRESSONATORLIB\DXTC\DXTC_V11_COMPRESS_SSE2.ASM
+ml64 /DX64=1 /W3 /Fo "..\Build\Temp\Debug_MD_DLL\x64\CMP_CompressonatorLib\Compressonator\dxtc_v11_compress_sse2.obj" /c /Cp /Zi "D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_CompressonatorLib\DXTC\dxtc_v11_compress_sse2.asm"

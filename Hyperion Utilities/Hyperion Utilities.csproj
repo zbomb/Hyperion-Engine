@@ -12,6 +12,7 @@
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -24,12 +25,11 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -37,15 +37,17 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\x64\Debug\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <TargetZone>LocalIntranet</TargetZone>
@@ -57,6 +59,10 @@
     <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="hyperion_texlib, Version=1.0.7452.31350, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\x64\Debug\hyperion_texlib.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -68,29 +74,84 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="zlib.net, Version=1.0.3.0, Culture=neutral, PublicKeyToken=47d7877cb3620160">
+      <HintPath>..\packages\zlib.net.1.0.4.0\lib\zlib.net.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Core.cs" />
-    <Compile Include="ConsoleWindow.cs">
+    <Compile Include="Core\Core.cs" />
+    <Compile Include="ImageImport\BC7Encoder.cs" />
+    <Compile Include="ImageImport\DXT1Encoder.cs" />
+    <Compile Include="ImageImport\DXT5Encoder.cs" />
+    <Compile Include="ImageImport\GenericImporter.cs" />
+    <Compile Include="ImageImport\JPGImporter.cs" />
+    <Compile Include="ImageImport\PNGImporter.cs" />
+    <Compile Include="ImageImport\GrayscaleEncoder.cs" />
+    <Compile Include="ImageImport\RGBEncoder.cs" />
+    <Compile Include="ImageImport\TGAImporter.cs" />
+    <Compile Include="Types\Material.cs" />
+    <Compile Include="Types\MaterialManager.cs" />
+    <Compile Include="Types\TextureManager.cs" />
+    <Compile Include="UI\ConsoleWindow.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ConsoleWindow.Designer.cs">
+    <Compile Include="UI\ConsoleWindow.Designer.cs">
       <DependentUpon>ConsoleWindow.cs</DependentUpon>
     </Compile>
-    <Compile Include="CoreCommands.cs" />
-    <Compile Include="MaterialEditor.cs">
+    <Compile Include="Commands\CoreCommands.cs" />
+    <Compile Include="Commands\FileCommands.cs" />
+    <Compile Include="UI\TextureImporter.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MaterialEditor.Designer.cs">
+    <Compile Include="UI\TextureImporter.Designer.cs">
+      <DependentUpon>TextureImporter.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\TextureImportLODSettings.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\TextureImportLODSettings.Designer.cs">
+      <DependentUpon>TextureImportLODSettings.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\TextureImportOptions.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\TextureImportOptions.Designer.cs">
+      <DependentUpon>TextureImportOptions.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\TextureImportTypes.cs" />
+    <Compile Include="Util\Deflate.cs" />
+    <Compile Include="Util\Hashing.cs" />
+    <Compile Include="UI\KeyInput.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\KeyInput.Designer.cs">
+      <DependentUpon>KeyInput.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Core\ManifestManager.cs" />
+    <Compile Include="UI\MaterialEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\MaterialEditor.Designer.cs">
       <DependentUpon>MaterialEditor.cs</DependentUpon>
     </Compile>
-    <Compile Include="MaterialWriter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="ConsoleWindow.resx">
+    <Compile Include="Core\ReferenceManager.cs" />
+    <Compile Include="Util\MipGenerator.cs" />
+    <Compile Include="Util\Serialization.cs" />
+    <Compile Include="UI\TextureInput.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\TextureInput.Designer.cs">
+      <DependentUpon>TextureInput.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="UI\ConsoleWindow.resx">
       <DependentUpon>ConsoleWindow.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="MaterialEditor.resx">
+    <EmbeddedResource Include="UI\KeyInput.resx">
+      <DependentUpon>KeyInput.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\MaterialEditor.resx">
       <DependentUpon>MaterialEditor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -103,6 +164,19 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <EmbeddedResource Include="UI\TextureImporter.resx">
+      <DependentUpon>TextureImporter.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\TextureImportLODSettings.resx">
+      <DependentUpon>TextureImportLODSettings.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\TextureImportOptions.resx">
+      <DependentUpon>TextureImportOptions.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\TextureInput.resx">
+      <DependentUpon>TextureInput.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -128,6 +202,9 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Extern\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
