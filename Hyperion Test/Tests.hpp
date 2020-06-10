@@ -5,7 +5,7 @@
 #include "Hyperion/Framework/TestComponent.h"
 #include "Hyperion/Framework/World.h"
 #include "Hyperion/Core/GameManager.h"
-#include "MaterialTests.hpp"
+#include "HSMTests.hpp"
 
 
 void RunEngineTests()
@@ -29,6 +29,6 @@ void RunEngineTests()
 void RunMiscTests()
 {
 	std::this_thread::sleep_for( std::chrono::seconds( 2 ) );
-	Hyperion::Tests::RunMaterialTests();
+	Hyperion::Tests::RunHSMTests();
 
 }

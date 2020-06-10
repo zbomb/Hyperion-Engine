@@ -26,10 +26,10 @@ namespace Hyperion
 
 	private:
 
-		IFile& m_File;
-		DataReader m_Reader;
+		DataReader& m_Reader;
 		bool m_bInvalidFormat;
 		uint32 m_Size;
+		std::streampos m_StartPos;
 
 		void _ReadFormat();
 
@@ -45,7 +45,7 @@ namespace Hyperion
 
 	public:
 
-		HMATReader( IFile& inFile );
+		HMATReader( DataReader& inReader );
 		~HMATReader();
 
 		HMATReader() = delete;

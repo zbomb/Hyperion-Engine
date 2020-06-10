@@ -173,6 +173,11 @@ namespace Hyperion
 		struct IStringData
 		{
 			virtual std::shared_ptr< const std::vector< byte > > GetData() = 0;
+		
+		#if _DEBUG
+			virtual void UpdateDebugPointers( byte** ppStart, byte** ppEnd ) = 0;
+		#endif
+
 		};
 
 		/*--------------------------------------------------------------------------------
@@ -185,6 +190,10 @@ namespace Hyperion
 			*/
 			std::shared_ptr< const std::vector< byte > > m_Data;
 			inline std::shared_ptr< const std::vector< byte > > GetData() { return m_Data; }
+
+		#if _DEBUG
+			virtual void UpdateDebugPointers( byte** ppStart, byte** ppEnd );
+		#endif
 
 			/*
 				Constructors
@@ -216,6 +225,10 @@ namespace Hyperion
 			std::shared_ptr< Localization::Cache::Instance > m_LocalizedRef;
 			std::shared_ptr< const std::vector< byte > > m_NonLocalizedRef;
 			std::shared_ptr< const std::vector< byte > > GetData();
+
+		#if _DEBUG
+			virtual void UpdateDebugPointers( byte** ppStart, byte** ppEnd );
+		#endif
 
 			/*
 				Constructors
@@ -340,6 +353,14 @@ namespace Hyperion
 	private:
 
 		std::shared_ptr< IStringData > m_Data;
+		
+	#if _DEBUG
+
+		byte* _StrBegin;
+		byte* _StrEnd;
+		void _DebugSetup();
+
+	#endif
 
 		/*--------------------------------------------------------------------------------
 			Constructors

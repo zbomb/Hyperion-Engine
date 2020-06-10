@@ -73,6 +73,10 @@ namespace Hyperion
 
 		Event.Textures.push_back( texInfo );
 
+		//AdaptiveModelInfo modelInfo;
+		//modelInfo.staticAsset = ...;
+		//Event.Models.push_back( modelInfo );
+
 		RenderManager::GetStreamingManager().OnPrimitiveSpawned( Event );
 
 		Console::WriteLine( "[DEBUG] TestComponent: On spawn!" );

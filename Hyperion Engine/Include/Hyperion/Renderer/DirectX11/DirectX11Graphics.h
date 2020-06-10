@@ -15,11 +15,16 @@
 #include "Hyperion/Core/String.h"
 #include "Hyperion/Renderer/Types/IBuffer.h"
 #include "Hyperion/Renderer/Types/ITexture.h"
+#include "Hyperion/Renderer/Types/IRenderTarget.h"
 
 
 
 namespace Hyperion
 {
+
+	// Forward Declarations
+	class DirectX11RenderTarget;
+	class DirectX11Texture2D;
 
 	class DirectX11Graphics : public IGraphics
 	{
@@ -46,7 +51,6 @@ namespace Hyperion
 		ComPtr< IDXGISwapChain > m_SwapChain;
 		ComPtr< ID3D11Device > m_Device;
 		ComPtr< ID3D11DeviceContext > m_DeviceContext;
-		ComPtr< ID3D11RenderTargetView > m_RenderTargetView;
 		ComPtr< ID3D11Texture2D > m_DepthStencilBuffer;
 		ComPtr< ID3D11RasterizerState > m_RasterizerState;
 		ComPtr< ID3D11DepthStencilView > m_DepthStencilView;
@@ -54,7 +58,9 @@ namespace Hyperion
 		ComPtr< ID3D11DepthStencilState > m_DepthDisabledState;
 		ComPtr< ID3D11BlendState > m_BlendState;
 		ComPtr< ID3D11BlendState > m_BlendDisabledState;
-		ComPtr< ID3D11Texture2D > m_BackBuffer;
+
+		std::shared_ptr< DirectX11RenderTarget > m_RenderTarget;
+		std::shared_ptr< DirectX11Texture2D > m_BackBuffer;
 
 		/*
 			Matricies
@@ -92,6 +98,10 @@ namespace Hyperion
 		void DisableZBuffer() override;
 		bool IsZBufferEnabled() override;
 
+		std::shared_ptr< IRenderTarget > GetRenderTarget() override;
+		std::shared_ptr< ITexture2D > GetBackBuffer() override;
+
+
 		std::vector< ScreenResolution > GetAvailableResolutions() override;
 
 		inline bool AllowAsyncTextureCreation() const override { return true; }
@@ -105,6 +115,8 @@ namespace Hyperion
 		bool CopyTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Target ) override;
 		bool CopyLODTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Dest,
 							uint32 SourceX, uint32 SourceY, uint32 Width, uint32 Height, uint32 DestX, uint32 DestY, uint8 SourceMip, uint8 DestMip ) override;
+
+		std::shared_ptr< IRenderTarget > CreateRenderTarget( std::shared_ptr< ITexture2D > inSource ) override;
 	};
 
 }

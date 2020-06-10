@@ -35,6 +35,7 @@
 			this.label1 = new System.Windows.Forms.Label();
 			this.panel2 = new System.Windows.Forms.Panel();
 			this.panel5 = new System.Windows.Forms.Panel();
+			this.panel7 = new System.Windows.Forms.Panel();
 			this.totalSizeLabel = new System.Windows.Forms.Label();
 			this.selectedLODLabel = new System.Windows.Forms.Label();
 			this.clearLODButton = new System.Windows.Forms.Button();
@@ -53,7 +54,7 @@
 			this.label3 = new System.Windows.Forms.Label();
 			this.label2 = new System.Windows.Forms.Label();
 			this.pathBox = new System.Windows.Forms.TextBox();
-			this.panel7 = new System.Windows.Forms.Panel();
+			this.preMultBox = new System.Windows.Forms.CheckBox();
 			this.panel1.SuspendLayout();
 			this.panel4.SuspendLayout();
 			this.panel2.SuspendLayout();
@@ -178,6 +179,18 @@
 			this.panel5.Padding = new System.Windows.Forms.Padding(10);
 			this.panel5.Size = new System.Drawing.Size(653, 404);
 			this.panel5.TabIndex = 1;
+			// 
+			// panel7
+			// 
+			this.panel7.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+			this.panel7.Location = new System.Drawing.Point(16, 79);
+			this.panel7.Name = "panel7";
+			this.panel7.Size = new System.Drawing.Size(622, 212);
+			this.panel7.TabIndex = 12;
+			this.panel7.Paint += new System.Windows.Forms.PaintEventHandler(this.panel7_Paint);
+			this.panel7.Resize += new System.EventHandler(this.panel7_Resize);
 			// 
 			// totalSizeLabel
 			// 
@@ -371,6 +384,7 @@
 			// 
 			this.panel3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
 			this.panel3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+			this.panel3.Controls.Add(this.preMultBox);
 			this.panel3.Controls.Add(this.formatBox);
 			this.panel3.Controls.Add(this.label3);
 			this.panel3.Controls.Add(this.label2);
@@ -403,6 +417,7 @@
 			this.formatBox.Size = new System.Drawing.Size(267, 23);
 			this.formatBox.TabIndex = 3;
 			this.formatBox.Text = "Select...";
+			this.formatBox.SelectedIndexChanged += new System.EventHandler(this.formatBox_SelectedIndexChanged);
 			// 
 			// label3
 			// 
@@ -440,17 +455,19 @@
 			this.pathBox.Size = new System.Drawing.Size(509, 23);
 			this.pathBox.TabIndex = 0;
 			// 
-			// panel7
+			// preMultBox
 			// 
-			this.panel7.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-			this.panel7.Location = new System.Drawing.Point(16, 79);
-			this.panel7.Name = "panel7";
-			this.panel7.Size = new System.Drawing.Size(622, 212);
-			this.panel7.TabIndex = 12;
-			this.panel7.Paint += new System.Windows.Forms.PaintEventHandler(this.panel7_Paint);
-			this.panel7.Resize += new System.EventHandler(this.panel7_Resize);
+			this.preMultBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.preMultBox.AutoSize = true;
+			this.preMultBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.preMultBox.Font = new System.Drawing.Font("Arial Rounded MT Bold", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.preMultBox.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(210)))));
+			this.preMultBox.Location = new System.Drawing.Point(511, 68);
+			this.preMultBox.Name = "preMultBox";
+			this.preMultBox.Size = new System.Drawing.Size(125, 19);
+			this.preMultBox.TabIndex = 4;
+			this.preMultBox.Text = "Pre-Mult Alpha?";
+			this.preMultBox.UseVisualStyleBackColor = true;
 			// 
 			// TextureImporter
 			// 
@@ -508,5 +525,6 @@
 		public System.Windows.Forms.Label selectedLODLabel;
 		public System.Windows.Forms.Label resolutionLabel;
 		private System.Windows.Forms.Panel panel7;
+		private System.Windows.Forms.CheckBox preMultBox;
 	}
 }

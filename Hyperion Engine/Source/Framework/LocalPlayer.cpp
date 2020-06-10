@@ -7,7 +7,7 @@
 #include "Hyperion/Framework/LocalPlayer.h"
 #include "Hyperion/Framework/Player.h"
 #include "Hyperion/Framework/CameraComponent.h"
-#include "Hyperion/Library/Math.h"
+#include "Hyperion/Library/Math/MathCore.h"
 
 
 

@@ -11,7 +11,7 @@
 #include "Hyperion/Core/String.h"
 #include "Hyperion/Library/UTF8.hpp"
 #include "Hyperion/Library/UTF16.hpp"
-#include "Hyperion/Library/Math.h"
+#include "Hyperion/Library/Math/MathCore.h"
 #include "Hyperion/Library/Binary.h"
 
 
@@ -406,6 +406,27 @@ namespace Hyperion
 		}
 	}
 
+#if _DEBUG
+
+	void String::NonCachedStringData::UpdateDebugPointers( byte** ppBegin, byte** ppEnd )
+	{
+		if( ppBegin != nullptr && ppEnd != nullptr )
+		{
+			if( m_Data )
+			{
+				*ppBegin = const_cast<byte*>( m_Data->data() );
+				*ppEnd = *ppBegin + m_Data->size();
+			}
+			else
+			{
+				*ppBegin = nullptr;
+				*ppEnd = nullptr;
+			}
+		}
+	}
+
+#endif
+
 
 	/*=========================================================================================================
 		Localized String Data
@@ -564,59 +585,126 @@ namespace Hyperion
 		}
 	}
 
+	#if _DEBUG
+
+	void String::LocalizedStringData::UpdateDebugPointers( byte** ppBegin, byte** ppEnd )
+	{
+		if( ppBegin != nullptr && ppEnd != nullptr )
+		{
+			auto data = this->GetData();
+			if( data )
+			{
+				*ppBegin = const_cast<byte*>( data->data() );
+				*ppEnd = *ppBegin + data->size();
+			}
+			else
+			{
+				*ppBegin = nullptr;
+				*ppEnd = nullptr;
+			}
+		}
+	}
+
+	#endif
+
 
 	/*=========================================================================================================
 		String Objects
 	=========================================================================================================*/
+
+	#if _DEBUG
+
+	void String::_DebugSetup()
+	{
+		if( m_Data )
+		{
+			m_Data->UpdateDebugPointers( &_StrBegin, &_StrEnd );
+		}
+		else
+		{
+			_StrBegin = nullptr;
+			_StrEnd = nullptr;
+		}
+	}
+
+	#endif
 
 	/*
 		String::String
 	*/
 	String::String( const std::shared_ptr< IStringData >& inRawData )
 		: m_Data( inRawData )
-	{}
+	{
+		#if _DEBUG
+		_DebugSetup();
+		#endif
+	}
 
 	/*
 		String::String
 	*/
 	String::String( const std::vector< byte >& inData, StringEncoding Enc /*= StringEncoding::ASCII */ )
 		: m_Data( std::dynamic_pointer_cast< IStringData >( std::make_shared< NonCachedStringData >( inData, Enc ) ) )
-	{}
+	{
+		#if _DEBUG
+		_DebugSetup();
+		#endif
+	}
 
 	/*
 		String::String
 	*/
 	String::String( const std::string& inStr, StringEncoding Enc /*= StringEncoding::ASCII*/ )
 		: String( std::vector< byte >( inStr.begin(), inStr.end() ), Enc )
-	{}
+	{
+		#if _DEBUG
+		_DebugSetup();
+		#endif
+	}
 
 	/*
 		String::String
 	*/
 	String::String( const char* inStr, StringEncoding Enc /*= StringEncoding::ASCII*/ )
 		: String( std::string( inStr ), Enc )
-	{}
+	{
+		#if _DEBUG
+		_DebugSetup();
+		#endif
+	}
 
 	/*
 		String::String
 	*/
 	String::String()
 		: m_Data( nullptr )
-	{}
+	{
+		#if _DEBUG
+		_DebugSetup();
+		#endif
+	}
 
 	/*
 		String::String
 	*/
 	String::String( nullptr_t )
 		: m_Data( nullptr )
-	{}
+	{
+		#if _DEBUG
+		_DebugSetup();
+		#endif
+	}
 
 	/*
 		String::String
 	*/
 	String::String( const String& Other )
 		: m_Data( Other.m_Data )
-	{}
+	{
+		#if _DEBUG
+		_DebugSetup();
+		#endif
+	}
 
 	/*
 		String::String
@@ -629,6 +717,10 @@ namespace Hyperion
 
 		// Get the underlying char start position in the data vector, copy into the string data and were done!
 		m_Data =  std::dynamic_pointer_cast< IStringData >( std::make_shared< NonCachedStringData >( std::vector< byte >( Begin.m_Iter, End.m_Iter ) ) );
+
+		#if _DEBUG
+		_DebugSetup();
+		#endif
 	}
 
 	/*
@@ -673,6 +765,10 @@ namespace Hyperion
 		// Now, were going to construct the NonLocalizedStringData, but were going to specify the byte order so
 		// the encoding conversion doesnt have to read through the entire string to auto-detect the byte order
 		m_Data = std::dynamic_pointer_cast< IStringData >( std::make_shared< NonCachedStringData >( std::move( sortedData ), Enc, true, false ) );
+
+		#if _DEBUG
+		_DebugSetup();
+		#endif
 	}
 
 	/*
@@ -680,7 +776,11 @@ namespace Hyperion
 	*/
 	String::String( const wchar_t* inStr, StringEncoding Enc )
 		: String( std::wstring( inStr ), Enc )
-	{}
+	{
+		#if _DEBUG
+		_DebugSetup();
+		#endif
+	}
 
 	/*
 		String::Data

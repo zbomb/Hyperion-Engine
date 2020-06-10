@@ -273,7 +273,8 @@ namespace Hyperion
 		m_CachedResolution.store( resolution );
 
 		// Now that we have the console settings read in, and the api created, lets setup the renderer
-		m_Instance = std::make_shared< Renderer >( apiInst, m_OutputWindow, resolution, bVSync );
+		// TODO: Allow different types of renderers to be created
+		m_Instance = std::make_shared< DeferredRenderer >( apiInst, m_OutputWindow, resolution, bVSync );
 		m_Instance->Initialize();
 
 		// Trigger cv

@@ -9,6 +9,7 @@
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/Asset.h"
 #include "Hyperion/File/UnifiedFileSystem.h"
+#include "Hyperion/Library/Crypto.h"
 
 
 namespace Hyperion
@@ -225,6 +226,8 @@ namespace Hyperion
 		static bool RegisterAsset( uint32 inHash, const String& inPath );
 		static String GetAssetPath( uint32 inHash );
 		static uint32 GetAssetIdentifier( const String& inPath );
+		static uint32 CalculateIdentifier( const String& inPath );
+		static bool Exists( uint32 inIdentifier );
 
 		template< typename _Ty, typename std::enable_if< 
 			std::is_base_of< AssetBase, _Ty >::value &&

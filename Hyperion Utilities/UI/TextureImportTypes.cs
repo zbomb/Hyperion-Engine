@@ -9,6 +9,7 @@ namespace Hyperion
 	{
 		public TextureFormat Format;
 		public string Path;
+		public bool bPreMultAlpha;
 
 		public List< TextureImportLOD > LODs;
 	}

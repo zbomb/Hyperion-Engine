@@ -72,7 +72,7 @@ namespace Hyperion
 			m_Buffer.clear();
 		}
 
-		const _VecType& GetVector() const
+		const _VecType& GetVector_Const() const
 		{
 			return m_Buffer.vector();
 		}

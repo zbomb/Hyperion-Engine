@@ -62,6 +62,12 @@
     <Filter Include="File">
       <UniqueIdentifier>{16f5991a-7bf3-4919-8151-8b43c24b787c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Library\Math">
+      <UniqueIdentifier>{049f238a-30de-445f-a7af-a08ae7308c99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Debugging">
+      <UniqueIdentifier>{a475e7a4-9b93-4f19-a28b-15cffa62664c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Hyperion\Hyperion.h">
@@ -94,16 +100,10 @@
     <ClInclude Include="Include\Hyperion\Constants.h">
       <Filter>Root</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Types\Angle.h">
-      <Filter>Core\Types</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Types\Color.h">
       <Filter>Core\Types</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Types\Point.h">
-      <Filter>Core\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Types\Vector.h">
       <Filter>Core\Types</Filter>
     </ClInclude>
     <ClInclude Include="Tests\MemoryTests.hpp">
@@ -175,9 +175,6 @@
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyPrimitive.h">
       <Filter>Renderer\Proxy</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Types\Transform.h">
-      <Filter>Core\Types</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Object.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -241,9 +238,6 @@
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Buffer.h">
       <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Types\Vertex.h">
-      <Filter>Renderer\Types</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\Types\IBuffer.h">
       <Filter>Renderer\Types</Filter>
     </ClInclude>
@@ -298,17 +292,8 @@
     <ClInclude Include="Include\Hyperion\Material\MaterialInstance.h">
       <Filter>Material</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Library\Geometry.h">
-      <Filter>Library</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Library\Math.h">
-      <Filter>Library</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Streaming\AdaptiveAssetManager.h">
       <Filter>Streaming</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Assets\ModelAsset.h">
-      <Filter>Assets</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Streaming\AdaptiveModel.h">
       <Filter>Streaming</Filter>
@@ -410,6 +395,42 @@
       <Filter>Tools</Filter>
     </ClInclude>
     <ClInclude Include="Tests\MaterialTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyStaticModel.h">
+      <Filter>Renderer\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DeferredRenderer.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Types\IRenderTarget.h">
+      <Filter>Renderer\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11RenderTarget.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Tools\HSMReader.h">
+      <Filter>Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Math\Geometry.h">
+      <Filter>Library\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Math\MathCore.h">
+      <Filter>Library\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Math\Vertex.h">
+      <Filter>Library\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Math\Vector.h">
+      <Filter>Library\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Math\Angle.h">
+      <Filter>Library\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Math\Transform.h">
+      <Filter>Library\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\HSMTests.hpp">
       <Filter>Tests</Filter>
     </ClInclude>
   </ItemGroup>
@@ -525,12 +546,6 @@
     <ClCompile Include="Source\Framework\DynamicModelComponent.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Library\Geometry.cpp">
-      <Filter>Library</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Library\Math.cpp">
-      <Filter>Library</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Material\MaterialInstance.cpp">
       <Filter>Material</Filter>
     </ClCompile>
@@ -603,5 +618,28 @@
     <ClCompile Include="Source\Assets\MaterialAsset.cpp">
       <Filter>Assets</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Renderer\Proxy\ProxyStaticModel.cpp">
+      <Filter>Renderer\Proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DeferredRenderer.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Tools\HSMReader.cpp">
+      <Filter>Tools</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Library\Math\Geometry.cpp">
+      <Filter>Library\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Library\Math\MathCore.cpp">
+      <Filter>Library\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Assets\StaticModelAsset.cpp">
+      <Filter>Assets</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="String.natvis">
+      <Filter>Debugging</Filter>
+    </Natvis>
   </ItemGroup>
 </Project>

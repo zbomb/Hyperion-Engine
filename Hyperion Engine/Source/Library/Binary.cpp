@@ -46,6 +46,7 @@ namespace Hyperion
 		*/
 		void Binary::SerializeFloat( const float& In, std::vector< byte >& Output, bool bOutputAsLittleEndian /* = false */ )
 		{
+			/*
 			// We can build these bytes manually, the order of the bytes is
 			// [MSB] First, Second, Third, Fourth [LSB]
 			// Sign Bit: 1 bit
@@ -157,6 +158,18 @@ namespace Hyperion
 			{
 				Output.insert( Output.end(), { First, Second, Third, Fourth } );
 			}
+			*/
+			HYPERION_VERIFY( sizeof( float ) == 4, "Size of float is unpexted" );
+			
+			const byte* dataPtr = reinterpret_cast<const byte*>( &In );
+			if( bOutputAsLittleEndian == IsLittleEndian() )
+			{
+				Output.insert( Output.end(), dataPtr, dataPtr + 4 );
+			}
+			else
+			{
+				Output.insert( Output.end(), { dataPtr[ 3 ], dataPtr[ 2 ], dataPtr[ 1 ], dataPtr[ 0 ] } );
+			}
 		}
 
 
@@ -172,6 +185,7 @@ namespace Hyperion
 				return false;
 			}
 
+			/*
 			// Read the bytes in from the vector, and take into account endianess now
 			uint8 First, Second, Third, Fourth;
 
@@ -194,10 +208,22 @@ namespace Hyperion
 			bool bIsNegative = (bool)( First & 0b1000'0000 );
 
 			// Next, lets try and extraxt the exponent, from the first and second bytes
-			int8 Exponent = ( ( First & 0b0111'1111 ) << 1 ) | ( ( Second & 0b1000'0000 ) >> 7 );
+			uint8 Exponent = ( ( ( First & 0b0111'1111 ) << 1 ) | ( ( Second & 0b1000'0000 ) >> 7 ) ) - 127;
 
 			// Finally, extract the mantissa from the second, third and fourth bytes
 			uint32 Mantissa = ( (uint32) ( Second & 0b0111'1111 ) << 16 ) | (uint32)( Third << 8 ) | ( Fourth );
+			float MantissaValue = 1.0f;
+			uint32 Pos = 0;
+
+			while( Pos < 21 )
+			{
+				if( ( Mantissa & ( 0x1 << ( 22 - Pos ) ) ) != 0 )
+				{
+					MantissaValue += ( 1.0f / powf( 2.0f, Pos + 1 ) );
+				}
+
+				Pos++;
+			}
 
 			// Now we can check for special cases
 			if( Exponent == 0b0000'0000 )
@@ -229,21 +255,12 @@ namespace Hyperion
 				// Normal Number
 				// We need to calculate the actual mantissa, we can do this by dividing the value we read by the max value of 23 bits
 				// Then, we need to add 1.f to it, and divide by 2.f to get it back to the original range [0.5,1)
-				static const double MaxMantissa = pow( 2.0, 23 );
-				double RealMantissa = ( ( (double)Mantissa / MaxMantissa ) + 1.0 ) / 2.0;
-
-				// Next, we need to perform some checks, so we dont overflow when we go to calculate the float
-				if( RealMantissa < 0.5 || RealMantissa > 1.0 )
-				{
-					// Mantissa out of range
-					// Set value to 0?
-					Console::WriteLine( "[ERROR] Binary: Failed to deserialize float.. mantissa was out of range!" );
-					Output = 0.f;
-					return false;
-				}
-
+				//static const double MaxMantissa = pow( 2.0, 23 );
+				//double RealMantissa = ( ( (double)Mantissa / MaxMantissa ) + 1.0 ) / 2.0;
+				
 				// Next, we need to calculate the output value
-				double FinalValue = RealMantissa * pow( 2.0, Exponent );
+				//double FinalValue = RealMantissa * pow( 2.0, Exponent );
+				double FinalValue = MantissaValue * pow( 2.0, Exponent );
 
 				if( FinalValue > std::numeric_limits< float >::max() )
 				{
@@ -258,6 +275,20 @@ namespace Hyperion
 					// Value is in range....
 					Output = (float)( bIsNegative ? -FinalValue : FinalValue );
 				}
+			}
+
+			return true;
+			*/
+
+			HYPERION_VERIFY( sizeof( float ) == 4, "Size of float is unexpected" );
+
+			if( bIsLittleEndian == IsLittleEndian() )
+			{
+				std::copy( Begin, End, reinterpret_cast<byte*>( &Output ) );
+			}
+			else
+			{
+				std::reverse_copy( Begin, End, reinterpret_cast<byte*>( &Output ) );
 			}
 
 			return true;
@@ -354,6 +385,7 @@ namespace Hyperion
 		*/
 		void Binary::SerializeDouble( const double& In, std::vector< byte >& Output, bool bOutputAsLittleEndian /* = false */  )
 		{
+			/*
 			// Were going to manually build the 8 output bytes.. the order will be
 			// [MSB] First, Second, Third, Fourth, Fifth, Sixth, Seventh, Eighth [LSB]
 			// Sign Bit: 1
@@ -472,6 +504,19 @@ namespace Hyperion
 			{
 				Output.insert( Output.end(), { First, Second, Third, Fourth, Fifth, Sixth, Seventh, Eighth } );
 			}
+			*/
+			HYPERION_VERIFY( sizeof( double ) == 8, "Size of double is unexpected" );
+
+			const byte* dataPtr = reinterpret_cast<const byte*>( &Output );
+			if( bOutputAsLittleEndian == IsLittleEndian() )
+			{
+				Output.insert( Output.end(), dataPtr, dataPtr + 8 );
+			}
+			else
+			{
+				Output.insert( Output.end(), { dataPtr[ 7 ], dataPtr[ 6 ], dataPtr[ 5 ], dataPtr[ 4 ], dataPtr[ 3 ], dataPtr[ 2 ], dataPtr[ 1 ], dataPtr[ 0 ] } );
+			}
+
 		}
 
 
@@ -480,6 +525,7 @@ namespace Hyperion
 		*/
 		bool Binary::DeserializeDouble( std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End, double& Output, bool bReadAsLittleEndian /* = false */  )
 		{
+			/*
 			// Set default output value
 			Output = 0.0;
 
@@ -589,6 +635,20 @@ namespace Hyperion
 				{
 					Output = bIsNegative ? -FinalValue : FinalValue;
 				}
+			}
+
+			return true;
+			*/
+			
+			HYPERION_VERIFY( sizeof( double ) == 8, "Size of double is unexpected" );
+
+			if( bReadAsLittleEndian == IsLittleEndian() )
+			{
+				std::copy( Begin, End, reinterpret_cast<byte*>( &Output ) );
+			}
+			else
+			{
+				std::reverse_copy( Begin, End, reinterpret_cast< byte* >( &Output ) );
 			}
 
 			return true;

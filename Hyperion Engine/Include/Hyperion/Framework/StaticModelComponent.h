@@ -19,7 +19,10 @@ namespace Hyperion
 
 	protected:
 
+		// TODO: Do we need this?
 		uint32 m_ScreenSize;
+
+		
 
 	public:
 

@@ -132,7 +132,8 @@ namespace Hyperion
 						Console::WriteLine( "-----> Reopened file!" );
 
 						// Now, we want to try and read the entries back out
-						HMATReader reader( *f );
+						DataReader dr( *f );
+						HMATReader reader( dr );
 
 						Console::WriteLine( "\n---> Reading header...." );
 						uint16 count = 0;

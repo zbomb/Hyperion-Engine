@@ -1,13 +1,2 @@
-﻿  MaterialAsset.cpp
-  TextureAsset.cpp
-  Console.cpp
-  ConsoleVarInstance.cpp
-  AssetManager.cpp
-  GameInstance.cpp
-  GameManager.cpp
-  InputManager.cpp
-  Object.cpp
-  RenderManager.cpp
-  Stream.cpp
-  String.cpp
-  Threading.cpp
+﻿  HSMReader.cpp
+  Hyperion Engine.vcxproj -> D:\Hyperion\Build\Debug\Hyperion.lib

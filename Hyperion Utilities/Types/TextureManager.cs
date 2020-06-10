@@ -44,13 +44,16 @@ namespace Hyperion
 		public string Path { get; private set; }
 		public uint Hash { get; private set; }
 
-		public Texture( string inPath, uint inHash, TextureFormat inFormat, byte inLODPadding, int inLODCount )
+		public bool bPreMultAlpha { get; private set; }
+
+		public Texture( string inPath, uint inHash, TextureFormat inFormat, byte inLODPadding, int inLODCount, bool bIsAlphaPreMult )
 		{
 			Path = inPath;
 			Hash = inHash;
 			Format = inFormat;
 			LODPadding = inLODPadding;
 			LODs = new TextureLOD[ inLODCount ];
+			bPreMultAlpha = bIsAlphaPreMult;
 		}
 	}
 
@@ -58,6 +61,7 @@ namespace Hyperion
 	{
 
 		private static TextureImporter m_ImportUI;
+		private static TextureViewer m_ViewerUI;
 
 		public static void RegisterConsoleCommands()
 		{
@@ -71,7 +75,18 @@ namespace Hyperion
 				Callback = (a) => OpenImportUI()
 			};
 
+			CommandInfo viewerCommand = new CommandInfo
+			{
+				Base = "texture_viewer",
+				Usage = "texture_viewer",
+				Description = "Opens the texture viewer UI",
+				MinArgs = 0,
+				MaxArgs = 0,
+				Callback = (a) => OpenViewerUI()
+			};
+
 			Core.RegisterCommand( importCommand );
+			Core.RegisterCommand( viewerCommand );
 		}
 
 		public static void OpenImportUI()
@@ -88,6 +103,104 @@ namespace Hyperion
 
 			m_ImportUI = new TextureImporter();
 			m_ImportUI.ShowDialog( Program.GetWindow() );
+		}
+
+		public static void OpenViewerUI()
+		{
+			if( m_ViewerUI != null )
+			{
+				if( m_ViewerUI.Visible )
+				{
+					return;
+				}
+
+				m_ViewerUI = null;
+			}
+
+			m_ViewerUI = new TextureViewer();
+			m_ViewerUI.ShowDialog( Program.GetWindow() );
+		}
+
+		public static Texture ReadTextureFromMemory( byte[] inData )
+		{
+			// Check data
+			if( ( inData?.Length ?? 0 ) < 37 )
+			{
+				Core.WriteLine( "[Warning] TextureManager: Failed to load texture from memory, not enough data" );
+				return null;
+			}
+
+			// Check header
+			var validHeader = new byte[]{ 0x1A, 0xA1, 0xFF, 0x28, 0x9D, 0xD9, 0x00, 0x02 };
+			for( int i = 0; i < validHeader.Length; i++ )
+			{
+				if( inData[ i ] != validHeader[ i ] )
+				{
+					Core.WriteLine( "[Warning] TextureManager: Failed to load texture from memory, invalid header sequence" );
+					return null;
+				}
+			}
+
+			// Deserialize the header values we need
+			byte headerNum      = Serialization.GetUInt8( inData, 8 );
+			byte lodPadding     = Serialization.GetUInt8( inData, 9 );
+			byte lodCount       = Serialization.GetUInt8( inData, 10 );
+			bool bPreMult       = Serialization.GetBoolean( inData, 11 );
+
+			if( !Enum.IsDefined( typeof( TextureFormat ), (int)headerNum ) || lodCount > 15 || headerNum == 0 )
+			{
+				Core.WriteLine( "[Warning] TextureManager: failed to read texture from memory because the header values were out of range" );
+				return null;
+			}
+
+			// Ensure the data is long enough to hold the LOD list
+			if( inData.Length < ( 15 + ( lodCount * 16 ) ) )
+			{
+				Core.WriteLine( "[Warning] TextureManager: Failed to read texture from memory because there wasnt enough data for the LOD list" );
+				return null;
+			}
+
+			var Output = new Texture( null, 0, (TextureFormat) headerNum, lodPadding, lodCount, bPreMult );
+			int memOffset = 20;
+
+			for( byte i = 0; i < lodCount; i++ )
+			{
+				// Deserialize info about this LOD
+				Output.LODs[ i ].Width = Serialization.GetUInt16( inData, memOffset, false );
+				memOffset += 2;
+
+				Output.LODs[ i ].Height = Serialization.GetUInt16( inData, memOffset, false );
+				memOffset += 2;
+
+				Output.LODs[ i ].FileOffset = Serialization.GetUInt32( inData, memOffset, false );
+				memOffset += 4;
+
+				uint lodSize = Serialization.GetUInt32( inData, memOffset, false );
+				memOffset += 4;
+
+				Output.LODs[ i ].Data = new byte[ lodSize ];
+				Output.LODs[ i ].RowSize = Serialization.GetUInt32( inData, memOffset, false );
+				memOffset += 4;
+
+				// Lets do a quick validation of this
+				if( lodSize == 0 || Output.LODs[ i ].RowSize == 0 || Output.LODs[ i ].Width == 0 || Output.LODs[ i ].Height == 0 )
+				{
+					Core.WriteLine( "[Warning] TextureManager: Failed to read texture LOD ", ( uint ) i, " from in-memory texture because the values were invalid" );
+					return null;
+				}
+
+				// Now, to read the pixel data in, we need to first check that fileOffset + dataSize is within range
+				if( inData.Length < Output.LODs[ i ].FileOffset + lodSize )
+				{
+					Core.WriteLine( "[Warning] TextureManager: Failed to read texture LOD ", ( uint ) i, " from in-memory texture because the pixel data went beyond the bounds of the data buffer provided" );
+					return null;
+				}
+				
+				// Copy data into the LOD structure from the source memory
+				Array.ConstrainedCopy( inData, (int)Output.LODs[ i ].FileOffset, Output.LODs[ i ].Data, 0, (int)lodSize );
+			}
+
+			return Output;
 		}
 
 		public static Texture ReadTexture( string inPath )
@@ -160,6 +273,7 @@ namespace Hyperion
 			byte headerNum		= Serialization.GetUInt8( headerData, 8 );
 			byte lodPadding		= Serialization.GetUInt8( headerData, 9 );
 			byte lodCount		= Serialization.GetUInt8( headerData, 10 );
+			bool bPreMult       = Serialization.GetBoolean( headerData, 11 );
 
 			if( !Enum.IsDefined( typeof( TextureFormat ), headerNum ) || lodCount > 15 || headerNum == 0 )
 			{
@@ -168,7 +282,7 @@ namespace Hyperion
 				return null;
 			}
 
-			var Output = new Texture( inPath, assetId, (TextureFormat) headerNum, lodPadding, lodCount );
+			var Output = new Texture( inPath, assetId, (TextureFormat) headerNum, lodPadding, lodCount, bPreMult );
 
 			// Now we can calculate how long the files need to be to hold the LOD data
 			var lodListData		= new byte[ lodCount * 16 ];
@@ -266,10 +380,10 @@ namespace Hyperion
 			// This is tricky to write, since we need file offsets for the different LOD levels, luckily, we can calculate this using....
 			// headerSize + ( lodCount * lodSize ) + Sum( LODData from level 0 to this level )
 			var fileData = new List< byte >{ 0x1A, 0xA1, 0xFF, 0x28, 0x9D, 0xD9, 0x00, 0x02 };
-			fileData.Add( (byte) inTexture.Format );
-			fileData.Add( (byte) inTexture.LODPadding );
-			fileData.Add( (byte) inTexture.LODs.Length );
-			fileData.Add( 0 );
+			fileData.Add( (byte) inTexture.Format ); // Format Type [1byte]
+			fileData.Add( (byte) inTexture.LODPadding ); // LOD Padding [1byte]
+			fileData.Add( (byte) inTexture.LODs.Length ); // LOD Count [1byte]
+			fileData.Add( inTexture.bPreMultAlpha ? (byte)1 : (byte)0 );
 			fileData.AddRange( new byte[]{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } );
 
 			var pixelData			= new List< byte >();

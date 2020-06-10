@@ -18,7 +18,7 @@ namespace Hyperion
 	enum class TextureBindTarget
 	{
 		Shader = 1,
-		Output = 2,
+		Render = 2,
 		DepthStencil = 3
 	};
 

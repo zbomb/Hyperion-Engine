@@ -8,7 +8,6 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Assets/TextureAsset.h"
-#include "Hyperion/Assets/ModelAsset.h"
 
 
 
@@ -52,10 +51,13 @@ namespace Hyperion
 		std::shared_ptr< TextureAsset > m_Asset;
 	};
 
+	class StaticModelAsset;
+	class DynamicModelAsset;
+
 	struct AdaptiveModelInfo
 	{
-		std::shared_ptr< ModelAsset > m_Asset;
-		bool m_Dynamic;
+		std::shared_ptr< StaticModelAsset > staticAsset;
+		std::shared_ptr< DynamicModelAsset > dynamicAsset;
 	};
 
 	struct AdaptiveAssetManagerCameraInfo

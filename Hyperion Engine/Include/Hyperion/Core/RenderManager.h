@@ -7,7 +7,7 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Renderer/Renderer.h"
+#include "Hyperion/Renderer/DeferredRenderer.h"
 #include "Hyperion/Assets/TextureAsset.h"
 #include "Hyperion/Streaming/AdaptiveAssetManager.h"
 

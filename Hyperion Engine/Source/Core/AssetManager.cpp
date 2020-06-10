@@ -55,6 +55,10 @@ namespace Hyperion
 		}
 
 		auto lowerPath = inPath.ToLower();
+		if( lowerPath.StartsWith( "content/" ) )
+		{
+			lowerPath = lowerPath.SubStr( 8, lowerPath.Length() - 8 );
+		}
 
 		for( auto It = m_HashTable.begin(); It != m_HashTable.end(); It++ )
 		{
@@ -65,6 +69,30 @@ namespace Hyperion
 		}
 
 		return ASSET_INVALID;
+	}
+
+	uint32 AssetManager::CalculateIdentifier( const String& inPath )
+	{
+		if( inPath.IsWhitespaceOrEmpty() )
+		{
+			return ASSET_INVALID;
+		}
+
+		auto lowerStr = inPath.ToLower();
+		if( lowerStr.StartsWith( "content/" ) )
+		{
+			lowerStr = lowerStr.SubStr( 8, lowerStr.Length() - 8 );
+		}
+
+		std::vector< byte > strData;
+		lowerStr.CopyData( strData, StringEncoding::UTF8 );
+
+		return Crypto::ELFHash( strData );
+	}
+
+	bool AssetManager::Exists( uint32 inIdentifier )
+	{
+		return m_HashTable.find( inIdentifier ) != m_HashTable.end();
 	}
 }
 

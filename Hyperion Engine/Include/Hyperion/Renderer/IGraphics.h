@@ -26,6 +26,8 @@ namespace Hyperion
 	struct Texture2DParameters;
 	struct Texture3DParameters;
 
+	class IRenderTarget;
+
 
 	class IGraphics
 	{
@@ -54,6 +56,9 @@ namespace Hyperion
 		virtual void DisableZBuffer() = 0;
 		virtual bool IsZBufferEnabled() = 0;
 
+		virtual std::shared_ptr< IRenderTarget > GetRenderTarget() = 0;
+		virtual std::shared_ptr< ITexture2D > GetBackBuffer() = 0;
+
 		virtual std::vector< ScreenResolution > GetAvailableResolutions() = 0;
 
 		virtual bool AllowAsyncTextureCreation() const = 0;
@@ -69,6 +74,9 @@ namespace Hyperion
 		virtual bool CopyTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Dest ) = 0;
 		virtual bool CopyLODTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Dest,
 									   uint32 SourceX, uint32 SourceY, uint32 Width, uint32 Height, uint32 DestX, uint32 DestY, uint8 SourceLevel, uint8 TargetLevel ) = 0;
+
+		// Render Target Creation
+		virtual std::shared_ptr< IRenderTarget > CreateRenderTarget( std::shared_ptr< ITexture2D > inTarget ) = 0;
 
 		friend class TextureCache;
 	};

@@ -15,6 +15,138 @@
 namespace Hyperion
 {
 
+	TextureFormat DXGIFormatToTextureFormat( DXGI_FORMAT In )
+	{
+		switch( In )
+		{
+			/*
+			 * 8-bit Types
+			*/
+			// Unsigned Normals (converted to floats in shaders) [0,1]
+		case DXGI_FORMAT_R8_UNORM:
+			return TextureFormat::R_8BIT_UNORM;
+		case DXGI_FORMAT_R8G8_UNORM:
+			return TextureFormat::RG_8BIT_UNORM;
+		case DXGI_FORMAT_R8G8B8A8_UNORM:
+			return TextureFormat::RGBA_8BIT_UNORM;
+		case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+			return TextureFormat::RGBA_8BIT_UNORM_SRGB;
+
+				// Signed Normals (converted to floats in shaders) [-1,1]
+		case DXGI_FORMAT_R8_SNORM:
+			return TextureFormat::R_8BIT_SNORM;
+		case DXGI_FORMAT_R8G8_SNORM:
+			return TextureFormat::RG_8BIT_SNORM;
+		case DXGI_FORMAT_R8G8B8A8_SNORM:
+			return TextureFormat::RGBA_8BIT_SNORM;
+
+				// Unsigned Integers (not converted to floats)
+		case DXGI_FORMAT_R8_UINT:
+			return TextureFormat::R_8BIT_UINT;
+		case DXGI_FORMAT_R8G8_UINT:
+			return TextureFormat::RG_8BIT_UINT;
+		case DXGI_FORMAT_R8G8B8A8_UINT:
+			return TextureFormat::RGBA_8BIT_UINT;
+
+				// Signed Integers (not converted to floats)
+		case DXGI_FORMAT_R8_SINT:
+			return TextureFormat::R_8BIT_SINT;
+		case DXGI_FORMAT_R8G8_SINT:
+			return TextureFormat::RG_8BIT_SINT;
+		case DXGI_FORMAT_R8G8B8A8_SINT:
+			return TextureFormat::RGBA_8BIT_SINT;
+
+				/*
+				 * 16-bit Types
+				*/
+				// Unsigned normals (converted to floats in shaders) [0,1]
+		case DXGI_FORMAT_R16_UNORM:
+			return TextureFormat::R_16BIT_UNORM;
+		case DXGI_FORMAT_R16G16_UNORM:
+			return TextureFormat::RG_16BIT_UNORM;
+		case DXGI_FORMAT_R16G16B16A16_UNORM:
+			return TextureFormat::RGBA_16BIT_UNORM;
+
+				// Signed normals (converted to floats in shaders) [-1,1]
+		case DXGI_FORMAT_R16_SNORM:
+			return TextureFormat::R_16BIT_SNORM;
+		case DXGI_FORMAT_R16G16_SNORM:
+			return TextureFormat::RG_16BIT_SNORM;
+		case DXGI_FORMAT_R16G16B16A16_SNORM:
+			return TextureFormat::RGBA_16BIT_SNORM;
+
+				// Unisnged Integers (not converted to floats)
+		case DXGI_FORMAT_R16_UINT:
+			return TextureFormat::R_16BIT_UINT;
+		case DXGI_FORMAT_R16G16_UINT:
+			return TextureFormat::RG_16BIT_UINT;
+		case DXGI_FORMAT_R16G16B16A16_UINT:
+			return TextureFormat::RGBA_16BIT_UINT;
+
+				// Signed Integers (not converted to floats)
+		case DXGI_FORMAT_R16_SINT:
+			return TextureFormat::R_16BIT_SINT;
+		case DXGI_FORMAT_R16G16_SINT:
+			return TextureFormat::RG_16BIT_SINT;
+		case DXGI_FORMAT_R16G16B16A16_SINT:
+			return TextureFormat::RGBA_16BIT_SINT;
+
+				// Floats 
+		case DXGI_FORMAT_R16_FLOAT:
+			return TextureFormat::R_16BIT_FLOAT;
+		case DXGI_FORMAT_R16G16_FLOAT:
+			return TextureFormat::RG_16BIT_FLOAT;
+		case DXGI_FORMAT_R16G16B16A16_FLOAT:
+			return TextureFormat::RGBA_16BIT_FLOAT;
+
+				/*
+				 * 32-bit Types
+				*/
+
+				// Unsigned integers (not converted to floats)
+		case DXGI_FORMAT_R32_UINT:
+			return TextureFormat::R_32BIT_UINT;
+		case DXGI_FORMAT_R32G32_UINT:
+			return TextureFormat::RG_32BIT_UINT;
+		case DXGI_FORMAT_R32G32B32_UINT:
+			return TextureFormat::RGB_32BIT_UINT;
+		case DXGI_FORMAT_R32G32B32A32_UINT:
+			return TextureFormat::RGBA_32BIT_UINT;
+
+				// Signed integers (not converted to floats)
+		case DXGI_FORMAT_R32_SINT:
+			return TextureFormat::R_32BIT_SINT;
+		case DXGI_FORMAT_R32G32_SINT:
+			return  TextureFormat::RG_32BIT_SINT;
+		case DXGI_FORMAT_R32G32B32_SINT:
+			return  TextureFormat::RGB_32BIT_SINT;
+		case DXGI_FORMAT_R32G32B32A32_SINT:
+			return TextureFormat::RGBA_32BIT_SINT;
+
+				// Floats
+		case DXGI_FORMAT_R32_FLOAT:
+			return TextureFormat::R_32BIT_FLOAT;
+		case DXGI_FORMAT_R32G32_FLOAT:
+			return TextureFormat::RG_32BIT_FLOAT;
+		case DXGI_FORMAT_R32G32B32_FLOAT:
+			return TextureFormat::RGB_32BIT_FLOAT;
+		case DXGI_FORMAT_R32G32B32A32_FLOAT:
+			return TextureFormat::RGBA_32BIT_FLOAT;
+
+			// Compressed Types
+		case DXGI_FORMAT_BC1_UNORM:
+			return TextureFormat::RGB_DXT_1;
+		case DXGI_FORMAT_BC3_UNORM:
+			return TextureFormat::RGBA_DXT_5;
+		case DXGI_FORMAT_BC7_UNORM:
+			return TextureFormat::RGBA_BC_7; // ISSUE: We have two BC7 formats, one with RGB and one with RGBA
+
+
+		default:
+			return TextureFormat::NONE;
+		}
+	}
+
 	// Lookup table for Hyperion::TextureFormat -> DXGI_FORMAT_*
 	DXGI_FORMAT TextureFormatToDXGIFormat( TextureFormat In )
 	{
@@ -156,15 +288,16 @@ namespace Hyperion
 	private:
 
 		ID3D11Texture1D* m_Texture;
-		Texture1DParameters m_Parameters;
 
-		DirectX11Texture1D( const Texture1DParameters& inParams )
-			: m_Texture( nullptr ), m_Parameters( inParams )
+		DirectX11Texture1D()
+			: m_Texture( nullptr )
+		{}
+
+		DirectX11Texture1D( ID3D11Texture1D* inRaw )
+			: m_Texture( inRaw )
 		{}
 
 	public:
-
-		DirectX11Texture1D() = delete;
 
 		~DirectX11Texture1D()
 		{
@@ -197,32 +330,73 @@ namespace Hyperion
 
 		uint32 GetWidth() const final
 		{
-			return m_Parameters.Width;
+			if( m_Texture == nullptr ) { return 0; }
+
+			D3D11_TEXTURE1D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return desc.Width;
 		}
 
 		uint32 GetMipLevels() const final
 		{
-			return m_Parameters.MipLevels;
+			if( m_Texture == nullptr ) { return 0; }
+
+			D3D11_TEXTURE1D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return desc.MipLevels;
 		}
 
 		bool IsDynamicResource() const final
 		{
-			return m_Parameters.Dynamic;
+			if( m_Texture == nullptr ) { return 0; }
+
+			D3D11_TEXTURE1D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return desc.Usage == D3D11_USAGE_DYNAMIC;
 		}
 
 		bool CanCPURead() const final
 		{
-			return m_Parameters.CanCPURead;
+			if( m_Texture == nullptr ) { return false; }
+
+			D3D11_TEXTURE1D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return( ( desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ ) != 0 );
 		}
 
 		TextureBindTarget GetBindTarget() const final
 		{
-			return m_Parameters.Target;
+			if( m_Texture == nullptr ) { return TextureBindTarget::Shader; }
+
+			D3D11_TEXTURE1D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			switch( desc.BindFlags )
+			{
+			case D3D11_BIND_SHADER_RESOURCE:
+				return TextureBindTarget::Shader;
+			case D3D11_BIND_DEPTH_STENCIL:
+				return TextureBindTarget::DepthStencil;
+			case D3D11_BIND_RENDER_TARGET:
+				return TextureBindTarget::Render;
+			default:
+				HYPERION_VERIFY( true, "Invalid texture bind target!" );
+				return TextureBindTarget::Shader;
+			}
 		}
 
 		TextureFormat GetFormat() const final
 		{
-			return m_Parameters.Format;
+			if( m_Texture == nullptr ) { return TextureFormat::NONE; }
+
+			D3D11_TEXTURE1D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return DXGIFormatToTextureFormat( desc.Format );
 		}
 
 		void Swap( ITexture1D& Other ) final
@@ -245,15 +419,16 @@ namespace Hyperion
 	private:
 
 		ID3D11Texture2D* m_Texture;
-		Texture2DParameters m_Parameters;
 
-		DirectX11Texture2D( const Texture2DParameters& inParams )
-			: m_Texture( nullptr ), m_Parameters( inParams )
+		DirectX11Texture2D()
+			: m_Texture( nullptr )
+		{}
+
+		DirectX11Texture2D( ID3D11Texture2D* inRawTexture )
+			: m_Texture( inRawTexture )
 		{}
 
 	public:
-
-		DirectX11Texture2D() = delete;
 
 		~DirectX11Texture2D()
 		{
@@ -264,7 +439,6 @@ namespace Hyperion
 		{
 			if( m_Texture )
 			{
-				Console::WriteLine( "[DEBUG] D3DTEXTURE2D SHUTDOWN" );
 				m_Texture->Release();
 				m_Texture = nullptr;
 			}
@@ -287,37 +461,83 @@ namespace Hyperion
 
 		uint32 GetWidth() const final
 		{
-			return m_Parameters.Width;
+			if( m_Texture == nullptr ) { return 0; }
+
+			D3D11_TEXTURE2D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return desc.Width;
 		}
 
 		uint32 GetHeight() const final
 		{
-			return m_Parameters.Height;
+			if( m_Texture == nullptr ) { return 0; }
+
+			D3D11_TEXTURE2D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return desc.Height;
 		}
 
 		uint32 GetMipLevels() const final
 		{
-			return m_Parameters.MipLevels;
+			if( m_Texture == nullptr ) { return 0; }
+
+			D3D11_TEXTURE2D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return desc.MipLevels;
 		}
 
 		bool IsDynamicResource() const final
 		{
-			return m_Parameters.Dynamic;
+			if( m_Texture == nullptr ) { return false; }
+
+			D3D11_TEXTURE2D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return desc.Usage == D3D11_USAGE_DYNAMIC;
 		}
 
 		bool CanCPURead() const final
 		{
-			return m_Parameters.CanCPURead;
+			if( m_Texture == nullptr ) { return false; }
+
+			D3D11_TEXTURE2D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return( ( desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ ) != 0 );
 		}
 
 		TextureBindTarget GetBindTarget() const final
 		{
-			return m_Parameters.Target;
+			if( m_Texture == nullptr ) { return TextureBindTarget::Shader; }
+
+			D3D11_TEXTURE2D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			switch( desc.BindFlags )
+			{
+			case D3D11_BIND_SHADER_RESOURCE:
+				return TextureBindTarget::Shader;
+			case D3D11_BIND_DEPTH_STENCIL:
+				return TextureBindTarget::DepthStencil;
+			case D3D11_BIND_RENDER_TARGET:
+				return TextureBindTarget::Render;
+			default:
+				HYPERION_VERIFY( true, "Invalid texture bind target!" );
+				return TextureBindTarget::Shader;
+			}
 		}
 
 		TextureFormat GetFormat() const final
 		{
-			return m_Parameters.Format;
+			if( m_Texture == nullptr ) { return TextureFormat::NONE; }
+
+			D3D11_TEXTURE2D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return DXGIFormatToTextureFormat( desc.Format );
 		}
 
 		void Swap( ITexture2D& Other )
@@ -340,15 +560,16 @@ namespace Hyperion
 	private:
 
 		ID3D11Texture3D* m_Texture;
-		Texture3DParameters m_Parameters;
 
-		DirectX11Texture3D( const Texture3DParameters& inParams )
-			: m_Texture( nullptr ), m_Parameters( inParams )
+		DirectX11Texture3D()
+			: m_Texture( nullptr )
+		{}
+
+		DirectX11Texture3D( ID3D11Texture3D* inRaw )
+			: m_Texture( inRaw )
 		{}
 
 	public:
-
-		DirectX11Texture3D() = delete;
 
 		~DirectX11Texture3D()
 		{
@@ -381,42 +602,93 @@ namespace Hyperion
 
 		uint32 GetWidth() const final
 		{
-			return m_Parameters.Width;
+			if( m_Texture == nullptr ) { return 0; }
+
+			D3D11_TEXTURE3D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return desc.Width;
 		}
 
 		uint32 GetHeight() const final
 		{
-			return m_Parameters.Height;
+			if( m_Texture == nullptr ) { return 0; }
+
+			D3D11_TEXTURE3D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return desc.Height;
 		}
 
 		uint32 GetDepth() const final
 		{
-			return m_Parameters.Depth;
+			if( m_Texture == nullptr ) { return 0; }
+
+			D3D11_TEXTURE3D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return desc.Depth;
 		}
 
 		uint32 GetMipLevels() const final
 		{
-			return m_Parameters.MipLevels;
+			if( m_Texture == nullptr ) { return 0; }
+
+			D3D11_TEXTURE3D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return desc.MipLevels;
 		}
 
 		bool IsDynamicResource() const final
 		{
-			return m_Parameters.Dynamic;
+			if( m_Texture == nullptr ) { return false; }
+
+			D3D11_TEXTURE3D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return desc.Usage == D3D11_USAGE_DYNAMIC;
 		}
 
 		bool CanCPURead() const final
 		{
-			return m_Parameters.CanCPURead;
+			if( m_Texture == nullptr ) { return false; }
+
+			D3D11_TEXTURE3D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return( ( desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ ) != 0 );
 		}
 
 		TextureBindTarget GetBindTarget() const final
 		{
-			return m_Parameters.Target;
+			if( m_Texture == nullptr ) { return TextureBindTarget::Shader; }
+
+			D3D11_TEXTURE3D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			switch( desc.BindFlags )
+			{
+			case D3D11_BIND_SHADER_RESOURCE:
+				return TextureBindTarget::Shader;
+			case D3D11_BIND_DEPTH_STENCIL:
+				return TextureBindTarget::DepthStencil;
+			case D3D11_BIND_RENDER_TARGET:
+				return TextureBindTarget::Render;
+			default:
+				HYPERION_VERIFY( true, "Invalid texture bind target!" );
+				return TextureBindTarget::Shader;
+			}
 		}
 
 		TextureFormat GetFormat() const final
 		{
-			return m_Parameters.Format;
+			if( m_Texture == nullptr ) { return TextureFormat::NONE; }
+
+			D3D11_TEXTURE3D_DESC desc;
+			m_Texture->GetDesc( &desc );
+
+			return DXGIFormatToTextureFormat( desc.Format );
 		}
 
 		void Swap( ITexture3D& Other )

@@ -11,8 +11,8 @@
 namespace Hyperion
 {
 
-	HMATReader::HMATReader( IFile& inFile )
-		: m_File( inFile ), m_Reader( inFile ), m_bInvalidFormat( true ), m_Size( (uint32)inFile.GetSize() )
+	HMATReader::HMATReader( DataReader& inReader )
+		: m_Reader( inReader ), m_bInvalidFormat( true ), m_Size( (uint32)inReader.Size() )
 	{
 		_ReadFormat();
 	}
@@ -33,7 +33,7 @@ namespace Hyperion
 		};
 
 		// First, check if we meet the minimum data requirment
-		if( m_File.GetSize() >= 16 )
+		if( m_Reader.Size() >= 16 )
 		{
 			m_Reader.SeekBegin();
 			std::vector< byte > headerData;

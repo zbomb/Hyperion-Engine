@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using System.IO;
 using System.Drawing;
+using System.Windows.Media.Imaging;
+using System.Windows.Media;
+using System.Linq;
+using System.Drawing.Imaging;
 
 namespace Hyperion
 {
@@ -17,12 +21,14 @@ namespace Hyperion
 	{
 		public uint lodCount;
 		public TextureImportState state;
+		private bool bPreMultSet;
 
 		public TextureImporter()
 		{
 			state.Format = TextureFormat.NONE;
 			state.Path = null;
 			state.LODs = new List<TextureImportLOD>();
+			state.bPreMultAlpha = true;
 
 			state.LODs.Add( new TextureImportLOD() );
 
@@ -34,6 +40,9 @@ namespace Hyperion
 			clearLODButton.Enabled = false;
 			browseButton.Enabled = false;
 			autogenButton.Enabled = false;
+			preMultBox.Enabled = false;
+			preMultBox.Checked = false;
+			bPreMultSet = false;
 
 			// This will force the creation of the buffer, so we can start drawing image previews
 			panel7_Resize( this, null );
@@ -76,7 +85,6 @@ namespace Hyperion
 			uint lastWidth		= state.LODs[ 0 ].Width;
 			uint lastHeight		= state.LODs[ 0 ].Height;
 			
-			/*
 			for( int i = 1; i < state.LODs.Count; i++ )
 			{
 				if( state.LODs[ i ].Width != ( lastWidth / 2 ) ||
@@ -88,8 +96,10 @@ namespace Hyperion
 
 					return;
 				}
+
+				lastWidth /= 2;
+				lastHeight /= 2;
 			}
-			*/ // TODO: Uncomment this, just for testing purposes
 
 			// Validate the path
 			if( ( pathBox.Text?.Length ?? 0 ) < 5 || !pathBox.Text.EndsWith( ".htx" ) )
@@ -135,6 +145,7 @@ namespace Hyperion
 			// Get the texture format as a proper enum
 			var formatIndex = formatBox.SelectedIndex;
 			TextureFormat format = TextureFormat.NONE;
+			bool bPreMult = false;
 
 			switch( formatIndex )
 			{
@@ -146,21 +157,25 @@ namespace Hyperion
 					break;
 				case 2:
 					format = TextureFormat.RGBA_8BIT_UNORM;
+					bPreMult = preMultBox.Checked;
 					break;
 				case 3:
 					format = TextureFormat.RGBA_8BIT_UNORM_SRGB;
+					bPreMult = preMultBox.Checked;
 					break;
 				case 4:
 					format = TextureFormat.RGB_DXT_1;
 					break;
 				case 5:
 					format = TextureFormat.RGBA_DXT_5;
+					bPreMult = preMultBox.Checked;
 					break;
 				case 6:
 					format = TextureFormat.RGB_BC_7;
 					break;
 				case 7:
 					format = TextureFormat.RGBA_BC_7;
+					bPreMult = preMultBox.Checked;
 					break;
 				default:
 					Core.WriteLine( "[ERROR] TextureImporter: Invalid format selected?? Import failed" );
@@ -169,8 +184,9 @@ namespace Hyperion
 			}
 
 			// We need to set these so the import options menu can display them
-			state.Format	= format;
-			state.Path		= relPath;
+			state.Format			= format;
+			state.Path				= relPath;
+			state.bPreMultAlpha		= bPreMult;
 
 			// We need to get some more info from the user, about indivusal LOD levels
 			var importOptions = new TextureImportOptions( this );
@@ -187,8 +203,6 @@ namespace Hyperion
 				{
 					lodParams[ i ].colorParams = importOptions.m_ImportSettings[ i ].m_ColorParam;
 					lodParams[ i ].alphaParam = importOptions.m_ImportSettings[ i ].m_AlphaParam;
-
-					Core.WriteLine( "[DEBUG] TextureImporter: LOD Params [", i.ToString(), "]  Color Params: " + ConvertColorParams( lodParams[ i ].colorParams ) + "\tAlpha Param: " + lodParams[ i ].alphaParam.ToString() );
 				}
 			}
 			else if( result == DialogResult.Cancel )
@@ -207,8 +221,9 @@ namespace Hyperion
 
 			// Now, we have everything we need to complete the import
 			// Start creating texture object to be written
-			var tex = new Texture( relPath, assetHash, format, 0, state.LODs.Count );
+			var tex = new Texture( relPath, assetHash, format, 0, state.LODs.Count, state.bPreMultAlpha );
 
+			// This also will perform correction for multiplied alpha, if disabled
 			if( !BuildTexture( tex, lodParams ) )
 			{
 				MessageBox.Show( "Failed to build texture! Check console for more info", "Texture import error!", MessageBoxButtons.OK, MessageBoxIcon.Warning );
@@ -233,6 +248,11 @@ namespace Hyperion
 			state.Path = null;
 			state.LODs.Clear();
 			state.LODs.Add( new TextureImportLOD() );
+
+			state.bPreMultAlpha = false;
+			preMultBox.Checked = false;
+			preMultBox.Enabled = false;
+			bPreMultSet = false; // This means the pre-mult box will automatically select next time its available
 
 			// Reset everything
 			lodList.ClearSelected();
@@ -296,7 +316,7 @@ namespace Hyperion
 					lodList.SelectedIndex = ( int ) removeIndex - 1;
 				}
 
-				lodList.Items.Remove( removeIndex );
+				lodList.Items.RemoveAt( (int)removeIndex );
 			}
 
 			for( int i = ( int ) lodCount; i < state.LODs.Count; i++ )
@@ -315,6 +335,9 @@ namespace Hyperion
 			autogenButton.Enabled = false;
 			browseButton.Enabled = false;
 			clearLODButton.Enabled = false;
+			preMultBox.Checked = false;
+			preMultBox.Enabled = false;
+			bPreMultSet = false;
 			//previewBox.Image = null;
 			DrawImagePreview();
 		}
@@ -446,8 +469,18 @@ namespace Hyperion
 						autogenButton.Text = "Export";
 					}
 
-					browseButton.Enabled = true;
-					clearLODButton.Enabled = true;
+					// If we have image data loaded, we want the clear box to be enabled
+					// And the browse button disabled
+					if( ( state.LODs[ selectedIndex ].Data?.Length ?? 0 ) == 0 )
+					{
+						browseButton.Enabled = true;
+						clearLODButton.Enabled = false;
+					}
+					else
+					{
+						browseButton.Enabled = false;
+						clearLODButton.Enabled = true;
+					}
 
 					if( state.LODs[ selectedIndex ].ImagePath != null )
 					{
@@ -517,8 +550,6 @@ namespace Hyperion
 						}
 					}
 
-					Core.WriteLine( "[DEBUG] ImageSelector: Selected image to upload: ", fileName );
-
 					// Perform the import of the selected image, this function automatically detects the type and performs the import
 					// We have a standardized format we convert to, which is basically just a uncompressed 32-bit per pixel image
 					if( !GenericImporter.AutoImport( fileName, out RawImageData imgData ) )
@@ -541,7 +572,7 @@ namespace Hyperion
 						imagePathBox.Text = fileName;
 						imagePathBox.Enabled = false;
 						clearLODButton.Enabled = true;
-						browseButton.Enabled = true;
+						browseButton.Enabled = false;
 						autogenButton.Enabled = ( selectedIndex == 0 );
 						autogenButton.Text = ( selectedIndex == 0 ) ? "Generate MIPs" : "Export";
 
@@ -627,13 +658,224 @@ namespace Hyperion
 
 		private void AutogenerateMIPs()
 		{
+			// To do this, we need to validate some stuff first
+			// We need to have the LOD index 0 selected, and it needs to have some data
+			if( lodList.SelectedIndex != 0 || state.LODs.Count < 1 || ( state.LODs[ 0 ].Data?.Length ?? 0 ) == 0 )
+			{
+				Core.WriteLine( "[Warning] TextureImporter: Failed to generate mips! Invalid LOD selected/LOD wasnt valid to use" );
+				MessageBox.Show( this, "Failed to autogenerate mips! LOD index 0 needs to be selected, and have an image uploaded to it!", "MIP Generation Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning );
+				return;
+			}
+
+			// Now, we need to take the data, and actually perform the generation 
+			RawImageData sourceData = new RawImageData
+			{
+				Width = state.LODs[ 0 ].Width,
+				Height = state.LODs[ 0 ].Height,
+				Format = state.LODs[ 0 ].SourceFormat,
+				Data = state.LODs[ 0 ].Data
+			};
+
+			// And lets call into the mip generator to perform this for us....
+			var res = MIPBuilder.Generate( ref sourceData, out List< RawImageData > outLevels );
+			if( res != MIPBuilder.Result.Success )
+			{
+				switch( res )
+				{
+					default:
+						Core.WriteLine( "[Warning] TextureImporter: Failed to generate mips! Unknown error" );
+						MessageBox.Show( this, "Failed to generate MIP chain.. unknown error", "MIP Generation Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning );
+						break;
+				}
+
+				return;
+			}
+
+			// DEBUG
+			Core.WriteLine( "TextureImporter: Generated MIPS! ", outLevels.Count, " levels were generated" );
+
+			// From the UI, remove any LODs except 0
+			lodList.Items.Clear();
+			lodList.Items.Add( 0 );
+			lodList.SelectedIndex = 0;
+
+			lodCount = 1;
+
+			// Now, re-create all we need in the UI
+			for( int i = 1; i < outLevels.Count; i++ )
+			{
+				lodList.Items.Add( i );
+				lodCount++;
+			}
+
+			// Ensure the underlying state is the correct size
+			if( state.LODs.Count > outLevels.Count )
+			{
+				for( int i = outLevels.Count; i < state.LODs.Count; i++ )
+				{
+					state.LODs.RemoveAt( i );
+				}
+			}
+			else
+			{
+				while( state.LODs.Count < outLevels.Count )
+				{
+					state.LODs.Add( new TextureImportLOD() );
+				}
+			}
+
+			for( int lvl = 1; lvl < outLevels.Count; lvl++ )
+			{
+				state.LODs[ lvl ] = new TextureImportLOD()
+				{
+					Autogenerated = true,
+					Width = outLevels[ lvl ].Width,
+					Height = outLevels[ lvl ].Height,
+					Data = outLevels[ lvl ].Data,
+					ImagePath = null,
+					RowSize = outLevels[ lvl ].Width * 4,
+					SourceFormat = sourceData.Format
+				};
+			}
+
+			// All done?
 
 		}
 
 
 		private void ExportLOD()
 		{
+			// First, we want to ensure the image is able to be exported, we only want to export LODs that arent 
+			// already on disk
+			var selIndex = lodList.SelectedIndex;
+			if( selIndex == 0 || state.LODs.Count < 2 || state.LODs.Count <= selIndex || state.LODs[ selIndex ] == null ||
+				!state.LODs[ selIndex ].Autogenerated || ( state.LODs[ selIndex ].Data?.Length ?? 0 ) == 0 )
+			{
+				Core.WriteLine( "[Warning] TextureImporter: Failed to export.. invalid LOD sleected" );
+				MessageBox.Show( this, "Failed to export LOD: The selected level was not valid.. has to be autogenerated and has data", "LOD Export Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning );
+				return;
+			}
 
+			// Now, lets take this, and export the image as whatever format the user selects
+			// We will do this the same way as the imort, using .NET instead of custom code
+			var LOD = state.LODs[ selIndex ];
+
+			// We need to prompt the user on where to save it, and also in that we get the desired extension
+			// We then need to take the raw pixel data, convert it into a bitmap, and save the bitmap how we desire
+			// Promp user on where to save
+			// Open image selector
+			using( var imageSelector = new SaveFileDialog()
+			{
+				AddExtension = true,
+				CheckFileExists = false,
+				CheckPathExists = true,
+				InitialDirectory = Directory.GetCurrentDirectory(),
+				ValidateNames = true,
+				DereferenceLinks = true,
+				Title = "Select save location...",
+				SupportMultiDottedExtensions = false,
+				ShowHelp = false,
+				Filter = "png files (*.png)|*.png|tga files (*.tga)|*.tga|jpg files (*.jpg)|*.jpg|jpeg files(.jpgeg)|*.jpeg|Image files (*.png;*.tga;*.jpg;*.jpeg)|*.png;*.tga;*.jpg;*.jpeg",
+				FilterIndex = 4,
+			} )
+			{
+				if( imageSelector.ShowDialog( this ) == DialogResult.OK )
+				{
+					var fName = imageSelector.FileName;
+					if( !fName.EndsWith( ".tga" ) && !fName.EndsWith( ".png" ) && !fName.EndsWith( ".jpg" ) && !fName.EndsWith( ".jpeg" ) )
+					{
+						Core.WriteLine( "[Warning] TextureImporter: LOD export failed! Invalid extension!" );
+						MessageBox.Show( this, "Failed to export LOD: Invalid extension entered by user", "LOD Export Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning );
+						return;
+					}
+
+					// Copy data into a new array, and then were going to switch the red and blue channels, so we can load it into a Pbgra bitmap frame
+					byte[] newData = new byte[ LOD.Data.LongLength ];
+					Array.Copy( LOD.Data, newData, newData.LongLength );
+
+					for( uint y = 0; y < LOD.Height; y++ )
+					{
+						for( uint x = 0; x < LOD.Width; x++ )
+						{
+							long memOffset = ( ( y * (long)LOD.Width ) + x ) * 4L;
+
+							byte b = newData[ memOffset ];
+							newData[ memOffset ] = newData[ memOffset + 2L ];
+							newData[ memOffset + 2L ] = b;
+
+							// We also want to 'un-multiply' the alpha
+							byte bA = newData[ memOffset + 3L ];
+							float fA = (float)bA / 255.0f;
+
+							newData[ memOffset ] = (byte)Math.Min( 255.0f, ( ( float )( newData[ memOffset ] ) ) / fA );
+							newData[ memOffset + 1L ] = ( byte ) Math.Min( 255.0f, ( ( float ) ( newData[ memOffset + 1L ] ) ) / fA );
+							newData[ memOffset + 2L ] = ( byte ) Math.Min( 255.0f, ( ( float ) ( newData[ memOffset + 2L ] ) ) / fA );
+						}
+					}
+
+					// Create bitmap source/frame
+					var frame = BitmapSource.Create( (int)LOD.Width, (int)LOD.Height, 60, 60, PixelFormats.Bgra32, null, newData, (int)LOD.Width * 4 );
+					frame.Freeze();
+
+					// Write out new file
+					if( fName.EndsWith( ".jpg" ) || fName.EndsWith( ".jpeg" ) )
+					{
+						var enc = new JpegBitmapEncoder();
+						enc.Frames.Add( BitmapFrame.Create( frame ) );
+
+						enc.QualityLevel = 100;
+
+						if( File.Exists( fName ) ) { File.Delete( fName ); }
+
+						using( var fStream = new FileStream( fName, FileMode.Create ) )
+						{
+							enc.Save( fStream );
+						}
+
+
+					}
+					else if( fName.EndsWith( ".png" ) )
+					{
+						var enc = new PngBitmapEncoder();
+						enc.Frames.Add( BitmapFrame.Create( frame ) );
+
+						if( File.Exists( fName ) ) { File.Delete( fName ); }
+
+						using( var fStream = new FileStream( fName, FileMode.Create ) )
+						{
+							enc.Save( fStream );
+						}
+					}
+					else if( fName.EndsWith( ".tga" ) )
+					{
+						// We have to use a custom library to write to this format, there is no TGA encoder in C#
+						var newTGA = new TGASharpLib.TGA( (ushort) LOD.Width, (ushort) LOD.Height, TGASharpLib.TgaPixelDepth.Bpp32, TGASharpLib.TgaImageType.Uncompressed_TrueColor );
+						newTGA.ImageOrColorMapArea.ImageData = newData;
+						newTGA.Header.ImageSpec.ImageDescriptor.ImageOrigin = TGASharpLib.TgaImgOrigin.TopLeft;
+
+						if( File.Exists( fName ) ) { File.Delete( fName ); }
+
+						using( var fStream = new FileStream( fName, FileMode.Create ) )
+						{
+							newTGA.Save( fStream );
+						}
+					}
+					else
+					{
+						Core.WriteLine( "[Warning] TextureImporter: LOD export failed! Invalid extension!" );
+						MessageBox.Show( this, "Failed to export LOD: Invalid extension entered by user", "LOD Export Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning );
+						return;
+					}
+
+					Core.WriteLine( "TextureImporter => Saved LOD ", selIndex, " to disk at \"", fName, "\"" );
+
+				}
+				else
+				{
+					Core.WriteLine( "[Warning] TextureImporter: User canceled LOD export..." );
+					return;
+				}
+			}
 		}
 
 
@@ -646,6 +888,11 @@ namespace Hyperion
 				return false;
 			}
 
+			if( !inTex.bPreMultAlpha )
+			{
+				Core.WriteLine( "TextureImporter: Performing conversion from 'pre-mult alpha' to unmodified channels" );
+			}
+
 			// We need to go through each LOD level
 			for( int i = 0; i < inTex.LODs.Length; i++ )
 			{
@@ -654,6 +901,34 @@ namespace Hyperion
 
 				inTex.LODs[ i ].Width = state.LODs[ i ].Width;
 				inTex.LODs[ i ].Height = state.LODs[ i ].Height;
+
+				byte[] dataCopy = new byte[ state.LODs[ i ].Data.LongLength ];
+				Array.Copy( state.LODs[ i ].Data, dataCopy, dataCopy.LongLength );
+
+				// Before we encode the data, we need to correct for pre-multiplied alpha
+				if( !inTex.bPreMultAlpha )
+				{
+					var data = state.LODs[ i ].Data;
+					for( uint y = 0; y < state.LODs[ i ].Height; y++ )
+					{
+						for( uint x = 0; x < state.LODs[ i ].Width; x++ )
+						{
+							long memOffset = ( ( y * state.LODs[ i ].Width ) + x ) * 4L;
+
+							byte bA = data[ memOffset + 3L ];
+							float fA = (float) bA / 255.0f;
+
+							byte bR = (byte) Math.Min( 255.0f, (float)( data[ memOffset ] ) / fA );
+							byte bG = (byte) Math.Min( 255.0f, (float)( data[ memOffset + 1L ] ) / fA );
+							byte bB = (byte) Math.Min( 255.0f, (float)( data[ memOffset + 2L ] ) / fA );
+
+							data[ memOffset ] = bR;
+							data[ memOffset + 1L ] = bG;
+							data[ memOffset + 2L ] = bB;
+							data[ memOffset + 3L ] = bA;
+						}
+					}
+				}
 
 				switch( inTex.Format )
 				{
@@ -686,6 +961,10 @@ namespace Hyperion
 						return false;
 				}
 
+				// Replace texture data with old data
+				// TODO: Do this a better way, we dont want to perform operations on the source data that will modify it
+				state.LODs[ i ].Data = dataCopy;
+
 				if( !bResult )
 				{
 					Core.WriteLine( "Failed to encode LOD " + i.ToString() );
@@ -711,7 +990,7 @@ namespace Hyperion
 
 		private void panel7_Resize( object sender, EventArgs e )
 		{
-			if( m_PreviewBuffer == null || m_PreviewBuffer.Width < panel7.Width || m_PreviewBuffer.Height < panel7.Height )
+			if( m_PreviewBuffer == null || m_PreviewBuffer.Width != panel7.Width || m_PreviewBuffer.Height != panel7.Height )
 			{
 				Bitmap newBuffer = new Bitmap( panel7.Width, panel7.Height );
 
@@ -724,6 +1003,7 @@ namespace Hyperion
 				}
 
 				m_PreviewBuffer = newBuffer;
+				DrawImagePreview();
 			}
 		}
 
@@ -744,7 +1024,7 @@ namespace Hyperion
 					var cnvH = m_PreviewBuffer.Height;
 
 					var selectedIndex = lodList.SelectedIndex;
-					if( state.LODs.Count <= selectedIndex || ( ( state.LODs[ selectedIndex ].Data?.Length ?? 0 ) == 0 ) )
+					if( selectedIndex < 0 || state.LODs.Count <= selectedIndex || ( ( state.LODs[ selectedIndex ].Data?.Length ?? 0 ) == 0 ) )
 					{
 						// Invalid LOD selected, clear everything
 						g.Clear( panel7.BackColor );
@@ -776,21 +1056,41 @@ namespace Hyperion
 						{
 							var finalPixelRatio = (int)Math.Floor( pixelRatio );
 
+							// We also need to center this image, so we need to calculate where to start drawing in terms of X and Y
+							// We have the imgW and imgH in pixels, and the cnvW and cnvH in pixels
+							// StartX = ( cnvW / 2 ) - ( imgW / 2 )
+							// But, we have a pixel ratio applied, this means, a single pixel might take up some more space
+							// So, we need to ensure imgW and imgH and multiplied by that ratio
+							int startX = Math.Max( 0, ( cnvW / 2 ) - ( ( (int)imgW * finalPixelRatio ) / 2 ) );
+							int startY = Math.Max( 0, ( cnvH / 2 ) - ( ( (int)imgH * finalPixelRatio ) / 2 ) );
+
 							// Now, the drawing of the image will be quite easy
 							// Loop through each pixel in source image
+							g.Clear( panel7.BackColor );
+
 							for( uint y = 0; y < imgH; y++ )
 							{
 								for( uint x = 0; x < imgW; x++ )
 								{
 									long memOffset = ( ( y * imgW ) + x ) * 4L;
 
+									// In memory images are stored with pre-multiplied alpha 
+									byte bA = sourceData[ memOffset + 3L ];
+									float fA = (float)bA / 255.0f;
+
+									// We need to apply Math.Min before overflow
+									byte bR = (byte)Math.Min( 255.0f, (float)( sourceData[ memOffset ] ) / fA );
+									byte bG = (byte)Math.Min( 255.0f, (float)( sourceData[ memOffset + 1L ] ) / fA );
+									byte bB = (byte)Math.Min( 255.0f, (float)( sourceData[ memOffset + 2L ] ) / fA );
+
+
 									g.FillRectangle( 
-										new SolidBrush( Color.FromArgb( 
-											sourceData[ memOffset + 3L ], 
-											sourceData[ memOffset ], 
-											sourceData[ memOffset + 1L ], 
-											sourceData[ memOffset + 2L ] ) ), 
-										new Rectangle( (int)x * finalPixelRatio, (int)y * finalPixelRatio, finalPixelRatio, finalPixelRatio ) 
+										new SolidBrush( System.Drawing.Color.FromArgb( 
+											bA, 
+											bR, 
+											bG, 
+											bB ) ), 
+										new Rectangle( startX + ( (int)x * finalPixelRatio ), startY + ( (int)y * finalPixelRatio ), finalPixelRatio, finalPixelRatio ) 
 										);
 								}
 							}
@@ -817,6 +1117,13 @@ namespace Hyperion
 							// So.. there is going to be 100 / 4 blocks
 							var blockWCount = (int) Math.Ceiling( (float) imgW / (float) blockSize );
 							var blockHCount = (int) Math.Ceiling( (float) imgH / (float) blockSize );
+
+							// We want to get this image centered, so, we have to calculate the 'drawn' size in both axis, and calculate
+							// The 'actual' size as drawn, is blockWCount by blockHCount
+							int imgStartX = ( cnvW / 2 ) - ( blockWCount / 2 );
+							int imgStartY = ( cnvH / 2 ) - ( blockHCount / 2 );
+
+							g.Clear( panel7.BackColor );
 
 							for( int y = 0; y < blockHCount; y++ )
 							{
@@ -845,23 +1152,35 @@ namespace Hyperion
 										for( int px = x_start; px < x_end && px < imgW; px++ )
 										{
 											long memOffset = ( ( py * imgW ) + px ) * 4L;
-											accumR += sourceData[ memOffset ];
-											accumG += sourceData[ memOffset + 1L ];
-											accumB += sourceData[ memOffset + 2L ];
-											accumA += sourceData[ memOffset + 3L ];
+
+											// First, were going to read alpha, if the pixel is invisible, then it will only contribute to count
+											byte a = sourceData[ memOffset + 3L ];
+											if( a > 0 )
+											{
+												accumR += sourceData[ memOffset ];
+												accumG += sourceData[ memOffset + 1L ];
+												accumB += sourceData[ memOffset + 2L ];
+												accumA += a;
+											}
 
 											count++;
 										}
 									}
 
+									byte finalA = (byte)( accumA / count );
+									float fA = (float)finalA / 255.0f;
+									byte finalR = (byte) Math.Min( 255.0f, (float)( accumR / count ) / fA );
+									byte finalG = (byte) Math.Min( 255.0f, (float)( accumG / count ) / fA );
+									byte finalB = (byte) Math.Min( 255.0f, (float)( accumB / count ) / fA );
+
 									// Now, we figured out the color of our block, and we need to draw it on the panel
 									g.FillRectangle(
-										new SolidBrush( Color.FromArgb(
-											( byte ) ( accumA / count ),
-											( byte ) ( accumR / count ),
-											( byte ) ( accumG / count ),
-											( byte ) ( accumB / count ) ) ),
-										new Rectangle( x, y, blockSize, blockSize ) 
+										new SolidBrush( System.Drawing.Color.FromArgb(
+											finalA,
+											finalR,
+											finalG,
+											finalB ) ),
+										new Rectangle( imgStartX + x, imgStartY + y, 1, 1 ) 
 									);
 								}
 							}
@@ -874,6 +1193,44 @@ namespace Hyperion
 			}
 		}
 
+		private void formatBox_SelectedIndexChanged( object sender, EventArgs e )
+		{
+			// We need to enabled/disable the 'Pre Mult' check box based on the selcetion
+			var formatIndex = formatBox.SelectedIndex;
+			switch( formatIndex )
+			{
+				case 0: // R_8
+				case 4: // RGB_DXT1
+				case 6: // RGB_BC7
 
+					preMultBox.Enabled = false;
+					break;
+
+				case 2: // RGBA_8
+				case 3: // RGBA_8_SRGB
+				case 5: // RGBA_DXT5
+				case 7: // RGBA_BC7
+				case 1: // RG_8 (a.k.a. Grayscale w/ Alpha)
+
+					if( !preMultBox.Enabled )
+					{
+						preMultBox.Enabled = true;
+
+						// We want to 'suggest' this, by automatically enabling the first time its available by default
+						if( !bPreMultSet )
+						{
+							preMultBox.Checked = true;
+							bPreMultSet = true;
+						}
+					}
+
+					break;
+
+				default:
+
+					preMultBox.Enabled = false;
+					break;
+			}
+		}
 	}
 }

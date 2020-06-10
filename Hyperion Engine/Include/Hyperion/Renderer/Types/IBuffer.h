@@ -8,7 +8,7 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Renderer/Types/Resource.h"
-#include "Hyperion/Renderer/Types/Vertex.h"
+#include "Hyperion/Library/Math/Vertex.h"
 
 
 namespace Hyperion

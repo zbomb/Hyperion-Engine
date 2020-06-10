@@ -16,7 +16,8 @@ namespace Hyperion
 	{
 		Success = 0,
 		InvalidParams = 1,
-		OtherError = 2
+		PitchCalcError = 2,
+		OtherError = 3
 	};
 
 
@@ -26,7 +27,7 @@ namespace Hyperion
 	public:
 
 		static DXT1Result Encode( cli::array< Byte >^ inData, UInt32 inWidth, UInt32 inHeight, [ Out ] cli::array< Byte >^% outData, [ Out ] UInt32% outRowSize );
-
+		static DXT1Result DXT1Library::Decode( cli::array< Byte >^ inData, UInt32 inWidth, UInt32 inHeight, UInt32 inPitch, [ Out ] cli::array< Byte >^% outData );
 	};
 
 }

@@ -12,7 +12,7 @@
 #include "Hyperion/Core/ThreadManager.h"
 #include "Hyperion/Core/Asset.h"
 #include "Hyperion/Assets/TextureAsset.h"
-#include "Hyperion/Library/Math.h"
+#include "Hyperion/Library/Math/MathCore.h"
 
 /*
 	Include various graphics APIs?
@@ -60,6 +60,8 @@ namespace Hyperion
 
 		// Initialize the scene
 		m_Scene->Initialize();
+		OnInitialize();
+
 		return true;
 	}
 
@@ -77,6 +79,8 @@ namespace Hyperion
 		{
 			m_API.reset();
 		}
+
+		OnShutdown();
 	}
 
 
@@ -88,7 +92,8 @@ namespace Hyperion
 		// Next, we need to prepare the API for the frame
 		m_API->BeginFrame();
 
-		// TODO: Render scene
+		// Call derived class to render the current scene
+		RenderScene();
 
 		m_API->EndFrame();
 	}

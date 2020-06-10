@@ -34,7 +34,7 @@ namespace Hyperion
             var printCommand = new CommandInfo
             {
                 Base = "refs_print",
-                Usage = "regs_print",
+                Usage = "refs_print",
                 Description = "Prints a list of all asset references",
                 MinArgs = 0,
                 MaxArgs = 0,

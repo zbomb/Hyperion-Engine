@@ -12,7 +12,7 @@
 #include "Hyperion/Renderer/DataTypes.h"
 #include "Hyperion/Core/Types/ConcurrentQueue.h"
 #include "Hyperion/Console/ConsoleVar.h"
-#include "Hyperion/Core/Types/Transform.h"
+#include "Hyperion/Library/Math/Transform.h"
 
 
 namespace Hyperion
@@ -53,15 +53,10 @@ namespace Hyperion
 
 		std::map< uint32, std::shared_ptr< ITexture2D > > m_TextureCache;
 
-		bool Initialize();
-		void Shutdown();
-		void Frame();
-
-		void UpdateScene();
-
-		void ShutdownProxy( const std::shared_ptr< ProxyBase >& );
-
-		void GetViewState( ViewState& outState ) const;
+		// Functions for derived classes to define
+		virtual void RenderScene() = 0;
+		virtual void OnInitialize() = 0;
+		virtual void OnShutdown() = 0;
 
 	public:
 
@@ -74,6 +69,14 @@ namespace Hyperion
 
 		Renderer& operator=( const Renderer& ) = delete;
 		Renderer& operator=( Renderer&& ) = delete;
+
+		bool Initialize();
+		void Shutdown();
+		void Frame();
+
+		void UpdateScene();
+		void ShutdownProxy( const std::shared_ptr< ProxyBase >& );
+		void GetViewState( ViewState& outState ) const;
 
 		void AddImmediateCommand( std::unique_ptr< RenderCommandBase >&& inCommand );
 		void AddCommand( std::unique_ptr< RenderCommandBase >&& inCommand );

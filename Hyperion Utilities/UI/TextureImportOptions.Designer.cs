@@ -29,14 +29,14 @@
 		private void InitializeComponent()
 		{
 			this.panel1 = new System.Windows.Forms.Panel();
-			this.filenameLabel = new System.Windows.Forms.Label();
-			this.lodCountLabel = new System.Windows.Forms.Label();
-			this.fullResLabel = new System.Windows.Forms.Label();
-			this.sizeLabel = new System.Windows.Forms.Label();
 			this.formatLabel = new System.Windows.Forms.Label();
+			this.sizeLabel = new System.Windows.Forms.Label();
+			this.fullResLabel = new System.Windows.Forms.Label();
+			this.lodCountLabel = new System.Windows.Forms.Label();
+			this.filenameLabel = new System.Windows.Forms.Label();
 			this.panel2 = new System.Windows.Forms.Panel();
-			this.importButton = new System.Windows.Forms.Button();
 			this.cancelButton = new System.Windows.Forms.Button();
+			this.importButton = new System.Windows.Forms.Button();
 			this.lodList = new System.Windows.Forms.FlowLayoutPanel();
 			this.panel1.SuspendLayout();
 			this.panel2.SuspendLayout();
@@ -57,39 +57,16 @@
 			this.panel1.Size = new System.Drawing.Size(816, 121);
 			this.panel1.TabIndex = 0;
 			// 
-			// filenameLabel
+			// formatLabel
 			// 
-			this.filenameLabel.Dock = System.Windows.Forms.DockStyle.Top;
-			this.filenameLabel.Font = new System.Drawing.Font("Arial Rounded MT Bold", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.filenameLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(210)))));
-			this.filenameLabel.Location = new System.Drawing.Point(0, 10);
-			this.filenameLabel.Name = "filenameLabel";
-			this.filenameLabel.Size = new System.Drawing.Size(816, 30);
-			this.filenameLabel.TabIndex = 0;
-			this.filenameLabel.Text = "Output File: ";
-			this.filenameLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lodCountLabel
-			// 
-			this.lodCountLabel.Font = new System.Drawing.Font("Arial Rounded MT Bold", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.lodCountLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(210)))));
-			this.lodCountLabel.Location = new System.Drawing.Point(0, 47);
-			this.lodCountLabel.Name = "lodCountLabel";
-			this.lodCountLabel.Size = new System.Drawing.Size(408, 30);
-			this.lodCountLabel.TabIndex = 1;
-			this.lodCountLabel.Text = "LOD Count: ";
-			this.lodCountLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// fullResLabel
-			// 
-			this.fullResLabel.Font = new System.Drawing.Font("Arial Rounded MT Bold", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.fullResLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(210)))));
-			this.fullResLabel.Location = new System.Drawing.Point(408, 47);
-			this.fullResLabel.Name = "fullResLabel";
-			this.fullResLabel.Size = new System.Drawing.Size(408, 30);
-			this.fullResLabel.TabIndex = 2;
-			this.fullResLabel.Text = "Full Res:";
-			this.fullResLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			this.formatLabel.Font = new System.Drawing.Font("Arial Rounded MT Bold", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.formatLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(210)))));
+			this.formatLabel.Location = new System.Drawing.Point(408, 77);
+			this.formatLabel.Name = "formatLabel";
+			this.formatLabel.Size = new System.Drawing.Size(408, 30);
+			this.formatLabel.TabIndex = 4;
+			this.formatLabel.Text = "Format: ";
+			this.formatLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// sizeLabel
 			// 
@@ -102,16 +79,39 @@
 			this.sizeLabel.Text = "Size:";
 			this.sizeLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
-			// formatLabel
+			// fullResLabel
 			// 
-			this.formatLabel.Font = new System.Drawing.Font("Arial Rounded MT Bold", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.formatLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(210)))));
-			this.formatLabel.Location = new System.Drawing.Point(408, 77);
-			this.formatLabel.Name = "formatLabel";
-			this.formatLabel.Size = new System.Drawing.Size(408, 30);
-			this.formatLabel.TabIndex = 4;
-			this.formatLabel.Text = "Format: ";
-			this.formatLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			this.fullResLabel.Font = new System.Drawing.Font("Arial Rounded MT Bold", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.fullResLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(210)))));
+			this.fullResLabel.Location = new System.Drawing.Point(408, 47);
+			this.fullResLabel.Name = "fullResLabel";
+			this.fullResLabel.Size = new System.Drawing.Size(408, 30);
+			this.fullResLabel.TabIndex = 2;
+			this.fullResLabel.Text = "Full Res:";
+			this.fullResLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// lodCountLabel
+			// 
+			this.lodCountLabel.Font = new System.Drawing.Font("Arial Rounded MT Bold", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.lodCountLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(210)))));
+			this.lodCountLabel.Location = new System.Drawing.Point(0, 47);
+			this.lodCountLabel.Name = "lodCountLabel";
+			this.lodCountLabel.Size = new System.Drawing.Size(408, 30);
+			this.lodCountLabel.TabIndex = 1;
+			this.lodCountLabel.Text = "LOD Count: ";
+			this.lodCountLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// filenameLabel
+			// 
+			this.filenameLabel.Dock = System.Windows.Forms.DockStyle.Top;
+			this.filenameLabel.Font = new System.Drawing.Font("Arial Rounded MT Bold", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.filenameLabel.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(210)))), ((int)(((byte)(210)))), ((int)(((byte)(210)))));
+			this.filenameLabel.Location = new System.Drawing.Point(0, 10);
+			this.filenameLabel.Name = "filenameLabel";
+			this.filenameLabel.Size = new System.Drawing.Size(816, 30);
+			this.filenameLabel.TabIndex = 0;
+			this.filenameLabel.Text = "Output File: ";
+			this.filenameLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// panel2
 			// 
@@ -123,22 +123,6 @@
 			this.panel2.Name = "panel2";
 			this.panel2.Size = new System.Drawing.Size(816, 48);
 			this.panel2.TabIndex = 1;
-			// 
-			// importButton
-			// 
-			this.importButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.importButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
-			this.importButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
-			this.importButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.importButton.Font = new System.Drawing.Font("Arial Rounded MT Bold", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.importButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(215)))), ((int)(((byte)(215)))), ((int)(((byte)(215)))));
-			this.importButton.Location = new System.Drawing.Point(708, 9);
-			this.importButton.Name = "importButton";
-			this.importButton.Size = new System.Drawing.Size(96, 31);
-			this.importButton.TabIndex = 1;
-			this.importButton.Text = "Import";
-			this.importButton.UseVisualStyleBackColor = false;
-			this.importButton.Click += new System.EventHandler(this.importButton_Click);
 			// 
 			// cancelButton
 			// 
@@ -156,8 +140,25 @@
 			this.cancelButton.UseVisualStyleBackColor = false;
 			this.cancelButton.Click += new System.EventHandler(this.cancelButton_Click);
 			// 
+			// importButton
+			// 
+			this.importButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			this.importButton.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+			this.importButton.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+			this.importButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.importButton.Font = new System.Drawing.Font("Arial Rounded MT Bold", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.importButton.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(215)))), ((int)(((byte)(215)))), ((int)(((byte)(215)))));
+			this.importButton.Location = new System.Drawing.Point(708, 9);
+			this.importButton.Name = "importButton";
+			this.importButton.Size = new System.Drawing.Size(96, 31);
+			this.importButton.TabIndex = 1;
+			this.importButton.Text = "Import";
+			this.importButton.UseVisualStyleBackColor = false;
+			this.importButton.Click += new System.EventHandler(this.importButton_Click);
+			// 
 			// lodList
 			// 
+			this.lodList.AutoScroll = true;
 			this.lodList.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.lodList.Location = new System.Drawing.Point(0, 121);
 			this.lodList.Name = "lodList";

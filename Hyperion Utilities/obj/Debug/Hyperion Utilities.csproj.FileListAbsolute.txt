@@ -18,3 +18,5 @@ D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion.TextureImportOptions.resources
 D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion.UI.TextureImportLODSettings.resources
 D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion Utilities.csproj.CoreCompileInputs.cache
 D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion Utilities.csprojAssemblyReference.cache
+D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion.TextureViewer.resources
+D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion.ZoomControl.resources

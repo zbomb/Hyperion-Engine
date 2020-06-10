@@ -8,11 +8,11 @@
 #include "Hyperion/Streaming/AdaptiveTexture.h"
 #include "Hyperion/Streaming/AdaptiveStaticModel.h"
 #include "Hyperion/Streaming/AdaptiveDynamicModel.h"
-#include "Hyperion/Library/Geometry.h"
+#include "Hyperion/Library/Math/Geometry.h"
 #include "Hyperion/Assets/StaticModelAsset.h"
 #include "Hyperion/Assets/DynamicModelAsset.h"
 #include "Hyperion/Assets/TextureAsset.h"
-#include "Hyperion/Library/Math.h"
+#include "Hyperion/Library/Math/MathCore.h"
 #include "Hyperion/Core/RenderManager.h"
 #include "Hyperion/File/UnifiedFileSystem.h"
 
@@ -213,8 +213,9 @@ namespace Hyperion
 
 		for( auto& mdl : NewModels )
 		{
-			if( mdl.m_Asset )
+			if( mdl.dynamicAsset || mdl.staticAsset )
 			{
+				HYPERION_VERIFY( !( mdl.dynamicAsset && mdl.staticAsset ), "AAManager: ResourceChangeEvent had a model with both static and dynamic assets" );
 				inManager.CreateOrUpdateModel( mdl, objectPtr );
 			}
 		}

@@ -58,6 +58,11 @@ namespace Hyperion
 
 	   	void OnCameraUpdate();
 
+		auto inline PrimitivesBegin()	{ return m_Primitives.begin(); }
+		auto inline PrimitivesEnd()		{ return m_Primitives.end(); }
+		auto inline LightsBegin()		{ return m_Lights.begin(); }
+		auto inline LightsEnd()			{ return m_Lights.end(); }
+
 	};
 
 }

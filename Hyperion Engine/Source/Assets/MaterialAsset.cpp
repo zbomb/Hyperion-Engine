@@ -144,8 +144,20 @@ namespace Hyperion
 			return nullptr; 
 		}
 
+		DataReader reader( *inFile );
+		return Load( inIdentifier, reader, inFile->GetPath() );
+	}
+
+	std::shared_ptr< MaterialAsset > MaterialAssetLoader::Load( uint32 inIdentifier, DataReader& inReader, const FilePath& inPath )
+	{
+		if( inIdentifier == ASSET_INVALID || inReader.Size() == 0 )
+		{
+			Console::WriteLine( "[ERROR] MaterialAssetLoader: Failed to load material asset.. identifier and/or datareader was invalid" );
+			return nullptr;
+		}
+
 		// Use reader to process file into a map
-		HMATReader reader( *inFile );
+		HMATReader reader( inReader );
 		reader.Begin();
 
 		std::map< String, std::any > matData;
@@ -159,7 +171,7 @@ namespace Hyperion
 			auto res = reader.ReadEntry( key, val );
 			if( res != HMATReader::Result::Success )
 			{
-				Console::WriteLine( "[ERROR] MaterialAssetLoader: Invalid material asset '", inFile->GetPath().ToString(), "' (Error Code: ", (uint32) res, ")" );
+				Console::WriteLine( "[ERROR] MaterialAssetLoader: Invalid material asset '", inPath.ToString(), "' (Error Code: ", (uint32) res, ")" );
 				return nullptr;
 			}
 
@@ -167,7 +179,7 @@ namespace Hyperion
 		}
 
 		// Create new material asset from the map we loaded
-		return std::shared_ptr< MaterialAsset >( new MaterialAsset( std::move( matData ), inFile->GetPath(), inIdentifier ) );
+		return std::shared_ptr< MaterialAsset >( new MaterialAsset( std::move( matData ), inPath, inIdentifier ) );
 	}
 
 

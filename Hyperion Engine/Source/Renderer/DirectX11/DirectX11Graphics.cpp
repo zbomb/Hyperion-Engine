@@ -7,6 +7,7 @@
 #include "Hyperion/Renderer/DirectX11/DirectX11Graphics.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11Buffer.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11Texture.h"
+#include "Hyperion/Renderer/DirectX11/DirectX11RenderTarget.h"
 
 
 
@@ -154,9 +155,9 @@ namespace Hyperion
 			}
 
 			// Reset the render target view and depth stencil view.. we need to recreate with updated sizes
-			m_RenderTargetView.Reset();
 			m_DepthStencilView.Reset();
-			m_BackBuffer.Reset();
+			m_RenderTarget.reset();
+			m_BackBuffer.reset();
 
 			// Resize the swap chain buffers
 			if( FAILED( m_SwapChain->ResizeBuffers( 0, 0, 0, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH ) ) )
@@ -165,13 +166,13 @@ namespace Hyperion
 				return false;
 			}
 
-			if( FAILED( m_SwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), (void**)m_BackBuffer.GetAddressOf() ) ) )
+			if( FAILED( m_SwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), (void**)m_BackBuffer->GetAddress() ) ) )
 			{
 				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. coudlnt recreate back buffer" );
 				return false;
 			}
 
-			if( FAILED( m_Device->CreateRenderTargetView( m_BackBuffer.Get(), NULL, m_RenderTargetView.GetAddressOf() ) ) )
+			if( FAILED( m_Device->CreateRenderTargetView( m_BackBuffer->Get(), NULL, m_RenderTarget->GetAddress() ) ) )
 			{
 				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. couldnt create render target view" );
 				return false;
@@ -251,7 +252,7 @@ namespace Hyperion
 			}
 
 			// Bind render target view and depth stencil view to the output render view
-			ID3D11RenderTargetView *aRenderViews[ 1 ] = { m_RenderTargetView.Get() }; // array of pointers
+			ID3D11RenderTargetView *aRenderViews[ 1 ] = { m_RenderTarget->Get() }; // array of pointers
 			m_DeviceContext->OMSetRenderTargets( 1, aRenderViews, m_DepthStencilView.Get() );
 
 			// Now update the viewport
@@ -567,9 +568,9 @@ namespace Hyperion
 				throw std::exception();
 			}
 
-			// Get pointer to the back buffer
-			// TODO: What is the purpose of the other buffer? And is index 0 or index 1 the back buffer?
-			res = m_SwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), (void**) m_BackBuffer.GetAddressOf() );
+			// Get back buffer texture
+			m_BackBuffer = std::shared_ptr< DirectX11Texture2D >( new DirectX11Texture2D() );
+			res = m_SwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), (void**) m_BackBuffer->GetAddress() );
 
 			if( FAILED( res ) )
 			{
@@ -578,7 +579,8 @@ namespace Hyperion
 			}
 
 			// Create render target view
-			res = m_Device->CreateRenderTargetView( m_BackBuffer.Get(), NULL, m_RenderTargetView.GetAddressOf() );
+			m_RenderTarget = std::shared_ptr< DirectX11RenderTarget >( new DirectX11RenderTarget( m_BackBuffer ) );
+			res = m_Device->CreateRenderTargetView( m_BackBuffer->Get(), NULL, m_RenderTarget->GetAddress() );
 			if( FAILED( res ) )
 			{
 				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create render target view" );
@@ -657,7 +659,7 @@ namespace Hyperion
 			}
 
 			// Bind render target view and depth stencil view to the output render view
-			ID3D11RenderTargetView *aRenderViews[ 1 ] = { m_RenderTargetView.Get() }; // array of pointers
+			ID3D11RenderTargetView *aRenderViews[ 1 ] = { m_RenderTarget->Get() }; // array of pointers
 			m_DeviceContext->OMSetRenderTargets( 1, aRenderViews, m_DepthStencilView.Get() );
 
 			// Create the rasterizer
@@ -778,7 +780,7 @@ namespace Hyperion
 
 		// Clear render target and depth stencil before rendering the next frame
 		FLOAT backgroundColor[ 4 ] = { 0.f, 0.f, 0.f, 0.f };
-		m_DeviceContext->ClearRenderTargetView( m_RenderTargetView.Get(), backgroundColor );
+		m_DeviceContext->ClearRenderTargetView( m_RenderTarget->Get(), backgroundColor );
 		m_DeviceContext->ClearDepthStencilView( m_DepthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.f, 0 );
 	}
 
@@ -799,7 +801,7 @@ namespace Hyperion
 	void DirectX11Graphics::ShutdownResources()
 	{
 		//if( m_CommonStates )		{ m_CommonStates.reset(); }
-		if( m_BackBuffer )			{ m_BackBuffer.Reset(); }
+		if( m_BackBuffer )			{ m_BackBuffer.reset(); }
 		//if( m_EffectFactory )		{ m_EffectFactory->ReleaseCache(); m_EffectFactory.reset(); }
 		if( m_RasterizerState )		{ m_RasterizerState.Reset(); }
 		if( m_DepthStencilView )	{ m_DepthStencilView.Reset(); }
@@ -808,7 +810,7 @@ namespace Hyperion
 		if( m_DepthStencilBuffer )	{ m_DepthStencilBuffer.Reset(); }
 		if( m_BlendState )			{ m_BlendState.Reset(); }
 		if( m_BlendDisabledState )	{ m_BlendDisabledState.Reset(); }
-		if( m_RenderTargetView )	{ m_RenderTargetView.Reset(); }
+		if( m_RenderTarget )		{ m_RenderTarget.reset(); }
 		if( m_DeviceContext )		{ m_DeviceContext.Reset(); }
 		if( m_Device )				{ m_Device.Reset(); }
 		if( m_SwapChain )			{ m_SwapChain->SetFullscreenState( false, nullptr ); m_SwapChain.Reset(); }
@@ -833,6 +835,7 @@ namespace Hyperion
 		auto position	= DirectX::XMFLOAT3( 0.f, 0.f, -0.1f );
 
 		DirectX::XMStoreFloat4x4( &m_ScreenMatrix, DirectX::XMMatrixLookAtLH( DirectX::XMLoadFloat3( &position ), lookAt, up ) );
+
 	}
 
 
@@ -952,6 +955,28 @@ namespace Hyperion
 	}
 
 
+	std::shared_ptr< IRenderTarget > DirectX11Graphics::GetRenderTarget()
+	{
+		if( m_RenderTarget && m_RenderTarget->IsValid() )
+		{
+			return m_RenderTarget;
+		}
+
+		return nullptr;
+	}
+
+
+	std::shared_ptr< ITexture2D > DirectX11Graphics::GetBackBuffer()
+	{
+		if( m_BackBuffer && m_BackBuffer->IsValid() )
+		{
+			return m_BackBuffer;
+		}
+
+		return nullptr;
+	}
+
+
 	std::shared_ptr< IBuffer > DirectX11Graphics::CreateBuffer( const BufferParameters& inParams )
 	{
 		if( !m_Device )
@@ -1038,8 +1063,8 @@ namespace Hyperion
 		{
 		case TextureBindTarget::Shader:
 			return D3D11_BIND_SHADER_RESOURCE;
-		case TextureBindTarget::Output:
-			return D3D11_BIND_STREAM_OUTPUT;
+		case TextureBindTarget::Render:
+			return D3D11_BIND_RENDER_TARGET;
 		case TextureBindTarget::DepthStencil:
 			return D3D11_BIND_DEPTH_STENCIL;
 		default:
@@ -1090,7 +1115,7 @@ namespace Hyperion
 		Data.pSysMem = inParams.Data;
 
 		// Finally, lets create the texture
-		std::shared_ptr< DirectX11Texture1D > Output( new DirectX11Texture1D( inParams ) );
+		std::shared_ptr< DirectX11Texture1D > Output( new DirectX11Texture1D() );
 		if( FAILED( m_Device->CreateTexture1D( &Desc, &Data, Output->GetAddress() ) ) )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to create 1D texture! API Call failed" );
@@ -1159,7 +1184,7 @@ namespace Hyperion
 		}
 
 		// Finally, lets create the texture
-		std::shared_ptr< DirectX11Texture2D > Output( new DirectX11Texture2D( inParams ) );
+		std::shared_ptr< DirectX11Texture2D > Output( new DirectX11Texture2D() );
 		if( FAILED( m_Device->CreateTexture2D( &Desc, DataArray.data(), Output->GetAddress() ) ) )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to create 2D texture! API Call failed" );
@@ -1217,7 +1242,7 @@ namespace Hyperion
 		Data.SysMemSlicePitch	= inParams.LayerDataSize;
 
 		// Finally, lets create the texture
-		std::shared_ptr< DirectX11Texture3D > Output( new DirectX11Texture3D( inParams ) );
+		std::shared_ptr< DirectX11Texture3D > Output( new DirectX11Texture3D() );
 		if( FAILED( m_Device->CreateTexture3D( &Desc, &Data, Output->GetAddress() ) ) )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to create 3D texture! API Call failed" );
@@ -1276,6 +1301,53 @@ namespace Hyperion
 		
 		m_DeviceContext->CopySubresourceRegion( DestPtr->Get(), DestMip, DestX, DestY, 0, SourcePtr->Get(), SourceMip, &Box );
 		return true;
+	}
+
+
+	std::shared_ptr< IRenderTarget > DirectX11Graphics::CreateRenderTarget( std::shared_ptr< ITexture2D > inTarget )
+	{
+		if( !m_Device )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create render target! Device was null!" );
+			return nullptr;
+		}
+
+		// Validate the texture parameter
+		if( !inTarget || !inTarget->IsValid() || ( (int)inTarget->GetBindTarget() & (int)TextureBindTarget::Render ) == 0 )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create render target! Source texture was invalid.. or wasnt bound properly" );
+			return nullptr;
+		}
+
+		// Get the actual DX11 texture pointer from the texture
+		auto dx11tex = std::dynamic_pointer_cast<DirectX11Texture2D>( inTarget );
+		HYPERION_VERIFY( dx11tex != nullptr, "Invalid resource type! Expected DX11 texture, got other type?" );
+
+		D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+		ZeroMemory( &rtvDesc, sizeof( rtvDesc ) );
+
+		// We need to get the texture format
+		auto fmt = TextureFormatToDXGIFormat( dx11tex->GetFormat() );
+		if( fmt == DXGI_FORMAT_UNKNOWN )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create render target! Source texture had an unknown format" );
+			return nullptr;
+		}
+		
+		rtvDesc.Format				= fmt;
+		rtvDesc.ViewDimension		= D3D11_RTV_DIMENSION_TEXTURE2D; // TODO: Enable different view dimenions
+		rtvDesc.Texture2D.MipSlice	= 0;
+
+		auto output = std::shared_ptr< DirectX11RenderTarget >( new DirectX11RenderTarget( inTarget ) );
+
+		auto res = m_Device->CreateRenderTargetView( dx11tex->Get(), &rtvDesc, output->GetAddress() );
+		if( FAILED( res ) || !output->IsValid() )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create render target! DX11 API failed to create the instance" );
+			return nullptr;
+		}
+
+		return output;
 	}
 
 }

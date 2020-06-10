@@ -7,7 +7,7 @@
 #pragma once
 
 #include "Hyperion/Core/Object.h"
-#include "Hyperion/Core/Types/Transform.h"
+#include "Hyperion/Library/Math/Transform.h"
 #include "Hyperion/Core/String.h"
 
 #include <vector>

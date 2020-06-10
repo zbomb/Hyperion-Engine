@@ -75,20 +75,20 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LibraryPath>D:\Hyperion\Hyperion Texture Library\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_CompressonatorLib;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_Framework;D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_CompressonatorLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LibraryPath>D:\Hyperion\Hyperion Texture Library\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_CompressonatorLib;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_Framework;D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_CompressonatorLib;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LibraryPath>D:\Hyperion\Hyperion Texture Library\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_CompressonatorLib;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_Framework;D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_CompressonatorLib;$(IncludePath)</IncludePath>
     <TargetName>hyperion_texlib</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LibraryPath>D:\Hyperion\Hyperion Texture Library\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_CompressonatorLib;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_Framework;D:\Hyperion\Hyperion Texture Library\Compressonator\CMP_CompressonatorLib;$(IncludePath)</IncludePath>
     <TargetName>hyperion_texlib</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -100,7 +100,7 @@
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Compressonator_MDd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Compressonator_MDd.lib;CMP_Framework_MDd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -111,7 +111,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Compressonator_MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Compressonator_MDd.lib;CMP_Framework_MDd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -122,7 +122,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Compressonator_MTd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Compressonator_MDd.lib;CMP_Framework_MDd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -134,13 +134,14 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Compressonator_MDd_DLL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Compressonator_MDd.lib;CMP_Framework_MDd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BC7Library.h" />
     <ClInclude Include="DXT1Library.h" />
     <ClInclude Include="DXT5Library.h" />
+    <ClInclude Include="MipGenerator.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
   </ItemGroup>
@@ -149,6 +150,7 @@
     <ClCompile Include="BC7Library.cpp" />
     <ClCompile Include="DXT1Library.cpp" />
     <ClCompile Include="DXT5Library.cpp" />
+    <ClCompile Include="MipGenerator.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

@@ -8,7 +8,7 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/Object.h"
-#include "Hyperion/Core/Types/Transform.h"
+#include "Hyperion/Library/Math/Transform.h"
 
 
 namespace Hyperion

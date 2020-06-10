@@ -63,6 +63,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\x64\Debug\hyperion_texlib.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationCore" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -74,21 +75,22 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
     <Reference Include="zlib.net, Version=1.0.3.0, Culture=neutral, PublicKeyToken=47d7877cb3620160">
       <HintPath>..\packages\zlib.net.1.0.4.0\lib\zlib.net.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\Core.cs" />
-    <Compile Include="ImageImport\BC7Encoder.cs" />
-    <Compile Include="ImageImport\DXT1Encoder.cs" />
-    <Compile Include="ImageImport\DXT5Encoder.cs" />
-    <Compile Include="ImageImport\GenericImporter.cs" />
-    <Compile Include="ImageImport\JPGImporter.cs" />
-    <Compile Include="ImageImport\PNGImporter.cs" />
-    <Compile Include="ImageImport\GrayscaleEncoder.cs" />
-    <Compile Include="ImageImport\RGBEncoder.cs" />
-    <Compile Include="ImageImport\TGAImporter.cs" />
+    <Compile Include="Image\BC7Encoder.cs" />
+    <Compile Include="Image\DXT1Encoder.cs" />
+    <Compile Include="Image\DXT5Encoder.cs" />
+    <Compile Include="Image\GenericImporter.cs" />
+    <Compile Include="Image\GrayscaleEncoder.cs" />
+    <Compile Include="Image\ImageUtils.cs" />
+    <Compile Include="Image\MIPBuilder.cs" />
+    <Compile Include="Image\RGBEncoder.cs" />
+    <Compile Include="Image\TGAConverter.cs" />
     <Compile Include="Types\Material.cs" />
     <Compile Include="Types\MaterialManager.cs" />
     <Compile Include="Types\TextureManager.cs" />
@@ -119,6 +121,18 @@
       <DependentUpon>TextureImportOptions.cs</DependentUpon>
     </Compile>
     <Compile Include="UI\TextureImportTypes.cs" />
+    <Compile Include="UI\TextureViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\TextureViewer.Designer.cs">
+      <DependentUpon>TextureViewer.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UI\ZoomControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UI\ZoomControl.Designer.cs">
+      <DependentUpon>ZoomControl.cs</DependentUpon>
+    </Compile>
     <Compile Include="Util\Deflate.cs" />
     <Compile Include="Util\Hashing.cs" />
     <Compile Include="UI\KeyInput.cs">
@@ -137,7 +151,6 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Core\ReferenceManager.cs" />
-    <Compile Include="Util\MipGenerator.cs" />
     <Compile Include="Util\Serialization.cs" />
     <Compile Include="UI\TextureInput.cs">
       <SubType>Form</SubType>
@@ -176,6 +189,12 @@
     <EmbeddedResource Include="UI\TextureInput.resx">
       <DependentUpon>TextureInput.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="UI\TextureViewer.resx">
+      <DependentUpon>TextureViewer.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UI\ZoomControl.resx">
+      <DependentUpon>ZoomControl.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
@@ -205,6 +224,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Extern\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\zoom_in.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\zoom_out.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

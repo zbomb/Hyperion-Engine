@@ -13,32 +13,64 @@ Class Hyperion.BC7Library: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
   Methods:
     Encode(Byte[], UInt32, UInt32, Boolean(HasFieldMarshal), Byte[]&(Out), UInt32&(Out)): PrivateScope, Public, Static, HideBySig
+    Decode(Byte[], UInt32, UInt32, UInt32, Boolean(HasFieldMarshal), Byte[]&(Out)): PrivateScope, Public, Static, HideBySig
 Struct Hyperion.BC7Result: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeFieldInit
   :System.Enum
   Fields:
     Int32 value__ : Public, SpecialName, RTSpecialName
     Hyperion.BC7Result Success = 0 : Public, Static, Literal, HasDefault
     Hyperion.BC7Result InvalidParams = 1 : Public, Static, Literal, HasDefault
-    Hyperion.BC7Result OtherError = 2 : Public, Static, Literal, HasDefault
+    Hyperion.BC7Result PitchCalcError = 2 : Public, Static, Literal, HasDefault
+    Hyperion.BC7Result OtherError = 3 : Public, Static, Literal, HasDefault
 Class Hyperion.DXT1Library: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
   Methods:
     Encode(Byte[], UInt32, UInt32, Byte[]&(Out), UInt32&(Out)): PrivateScope, Public, Static, HideBySig
+    Decode(Byte[], UInt32, UInt32, UInt32, Byte[]&(Out)): PrivateScope, Public, Static, HideBySig
 Struct Hyperion.DXT1Result: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeFieldInit
   :System.Enum
   Fields:
     Int32 value__ : Public, SpecialName, RTSpecialName
     Hyperion.DXT1Result Success = 0 : Public, Static, Literal, HasDefault
     Hyperion.DXT1Result InvalidParams = 1 : Public, Static, Literal, HasDefault
-    Hyperion.DXT1Result OtherError = 2 : Public, Static, Literal, HasDefault
+    Hyperion.DXT1Result PitchCalcError = 2 : Public, Static, Literal, HasDefault
+    Hyperion.DXT1Result OtherError = 3 : Public, Static, Literal, HasDefault
 Class Hyperion.DXT5Library: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
     Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
   Methods:
     Encode(Byte[], UInt32, UInt32, Byte[]&(Out), UInt32&(Out)): PrivateScope, Public, Static, HideBySig
+    Decode(Byte[], UInt32, UInt32, UInt32, Byte[]&(Out)): PrivateScope, Public, Static, HideBySig
 Struct Hyperion.DXT5Result: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeFieldInit
   :System.Enum
   Fields:
     Int32 value__ : Public, SpecialName, RTSpecialName
     Hyperion.DXT5Result Success = 0 : Public, Static, Literal, HasDefault
     Hyperion.DXT5Result InvalidParams = 1 : Public, Static, Literal, HasDefault
-    Hyperion.DXT5Result OtherError = 2 : Public, Static, Literal, HasDefault
+    Hyperion.DXT5Result PitchCalcError = 2 : Public, Static, Literal, HasDefault
+    Hyperion.DXT5Result OtherError = 3 : Public, Static, Literal, HasDefault
+Class Hyperion.MipGenerator: AutoLayout, AnsiClass, Class, Public, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Methods:
+    Generate(Request, Dictionary`2&(Out)): PrivateScope, Public, Static, HideBySig
+Class Hyperion.MipGenerator+Request: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Fields:
+    Byte[] Data : Public
+    UInt32 Width : Public
+    UInt32 Height : Public
+Class Hyperion.MipGenerator+MIP: AutoLayout, AnsiClass, Class, NestedPublic, BeforeFieldInit
+    Void .ctor(): PrivateScope, Public, HideBySig, SpecialName, RTSpecialName
+  Fields:
+    Byte Index : Public
+    UInt32 Width : Public
+    UInt32 Height : Public
+    Byte[] Data : Public
+Struct Hyperion.MipGeneratorResult: AutoLayout, AnsiClass, Class, Public, Sealed, BeforeFieldInit
+  :System.Enum
+  Fields:
+    Int32 value__ : Public, SpecialName, RTSpecialName
+    Hyperion.MipGeneratorResult Success = 0 : Public, Static, Literal, HasDefault
+    Hyperion.MipGeneratorResult InvalidSourceData = 1 : Public, Static, Literal, HasDefault
+    Hyperion.MipGeneratorResult InvalidSourceResolution = 2 : Public, Static, Literal, HasDefault
+    Hyperion.MipGeneratorResult GenerateFailed = 3 : Public, Static, Literal, HasDefault
+    Hyperion.MipGeneratorResult Failed = 255 : Public, Static, Literal, HasDefault

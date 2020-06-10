@@ -31,6 +31,7 @@ namespace Hyperion
 	public:
 
 		static std::shared_ptr< MaterialAsset > Load( uint32 inIdentifier, std::unique_ptr< IFile >& inFile );
+		static std::shared_ptr< MaterialAsset > Load( uint32 inIdentifier, DataReader& inReader, const FilePath& inPath );
 		static bool IsValidFile( const FilePath& inPath );
 
 	};

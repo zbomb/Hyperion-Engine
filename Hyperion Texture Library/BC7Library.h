@@ -15,7 +15,8 @@ namespace Hyperion
 	{
 		Success = 0,
 		InvalidParams = 1,
-		OtherError = 2
+		PitchCalcError = 2,
+		OtherError = 3
 	};
 
 	public ref class BC7Library
@@ -24,6 +25,7 @@ namespace Hyperion
 	public:
 
 		static BC7Result Encode( cli::array< Byte >^ inData, UInt32 inWidth, UInt32 inHeight, bool bIncludeAlpha, [Out] cli::array< Byte >^% outData, [Out] UInt32% outRowSize );
+		static BC7Result Decode( cli::array< Byte >^ inData, UInt32 inWidth, UInt32 inHeight, UInt32 inPitch, bool bIncludeAlpha, [ Out ] cli::array< Byte >^% outData );
 
 	};
 
