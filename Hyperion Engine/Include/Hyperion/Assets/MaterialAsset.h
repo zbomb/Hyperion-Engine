@@ -22,61 +22,18 @@ namespace Hyperion
 
 
 	/*
-		class MaterialAssetLoader
-		* A class used to load material assets from file
-	*/
-	class MaterialAssetLoader : public IAssetLoader
-	{
-
-	public:
-
-		static std::shared_ptr< MaterialAsset > Load( uint32 inIdentifier, std::unique_ptr< IFile >& inFile );
-		static std::shared_ptr< MaterialAsset > Load( uint32 inIdentifier, DataReader& inReader, const FilePath& inPath );
-		static bool IsValidFile( const FilePath& inPath );
-
-	};
-
-
-	/*
-		class MaterialAssetCache
-		* A class used to store and get material assets
-	*/
-	class MaterialAssetCache : public IAssetCache
-	{
-
-	private:
-
-		static std::map< uint32, std::weak_ptr< MaterialAsset > > m_Cache;
-		static std::mutex m_CacheMutex;
-
-	public:
-
-		static std::weak_ptr< MaterialAsset > Get( uint32 inIdentifier );
-		static void Store( uint32 inIdentifier, const std::shared_ptr< MaterialAsset >& inPtr );
-
-	};
-
-
-	/*
 		class MaterialAsset
 		* An engine asset containing a list of material parameters and textures
 	*/
 	class MaterialAsset : public AssetBase
 	{
 
-	public:
-
-		using _LoaderType = MaterialAssetLoader;
-		//using _CacheType = MaterialAssetCache;
-
-		static inline AssetCacheMethod GetCacheMethod() { return AssetCacheMethod::Full; }
-
 	protected:
 
 		std::map< String, std::any > m_Values;
 		std::map< String, std::shared_ptr< TextureAsset > > m_Textures;
 
-		MaterialAsset( std::map< String, std::any >&& inData, const FilePath& inPath, uint32 inIdentifier );
+		MaterialAsset( std::map< String, std::any >&& inData, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength );
 
 	public:
 
@@ -104,7 +61,10 @@ namespace Hyperion
 		inline auto TexturesBegin() const { return m_Textures.begin(); }
 		inline auto TexturesEnd() const { return m_Textures.end(); }
 
-		friend class MaterialAssetLoader;
+		
+		// Loader Function
+		static std::shared_ptr< AssetBase > LoadFromFile( std::unique_ptr< File >& inFile, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength );
+		static std::shared_ptr< AssetBase > LoadFromReader( DataReader& inReader, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength );
 
 	};
 

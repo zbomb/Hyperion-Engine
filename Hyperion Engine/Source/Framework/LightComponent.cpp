@@ -43,3 +43,9 @@ namespace Hyperion
 	}
 
 }
+
+
+/*
+*	Register Type
+*/
+HYPERION_REGISTER_ABSTRACT_OBJECT_TYPE( LightComponent, RenderComponent );

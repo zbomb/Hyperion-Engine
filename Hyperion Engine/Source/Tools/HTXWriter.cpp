@@ -11,7 +11,7 @@
 namespace Hyperion
 {
 
-	HTXWriter::Result HTXWriter::Write( std::unique_ptr< PhysicalFile >& inFile, HTXWriter::Input& inData )
+	HTXWriter::Result HTXWriter::Write( std::unique_ptr< File >& inFile, HTXWriter::Input& inData )
 	{
 		// First, we need to validate the input
 		if( !IsValidTextureAssetFormat( inData.Format ) ||

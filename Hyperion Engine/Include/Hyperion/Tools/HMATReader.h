@@ -28,8 +28,10 @@ namespace Hyperion
 
 		DataReader& m_Reader;
 		bool m_bInvalidFormat;
-		uint32 m_Size;
+		uint64 m_Size;
 		std::streampos m_StartPos;
+
+		uint64 m_Offset;
 
 		void _ReadFormat();
 
@@ -45,7 +47,7 @@ namespace Hyperion
 
 	public:
 
-		HMATReader( DataReader& inReader );
+		HMATReader( DataReader& inReader, uint64 inStart, uint64 inLength );
 		~HMATReader();
 
 		HMATReader() = delete;

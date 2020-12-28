@@ -12,45 +12,38 @@ namespace Hyperion
 {
 
 	FilePath::FilePath()
-		: m_Local( LocalPath::Game ), m_System( FileSystem::None ), m_Path()
+		: m_Root( PathRoot::Game ), m_Path()
 	{}
 
 
-	FilePath::FilePath( const std::filesystem::path& inPath, LocalPath inLocal, FileSystem inSystem )
-		: m_Path( inPath ), m_Local( inLocal ), m_System( inSystem )
+	FilePath::FilePath( const std::filesystem::path& inPath, PathRoot inRoot )
+		: m_Path( inPath ), m_Root( inRoot )
 	{
 		_Verify();
 	}
 
 
-	FilePath::FilePath( const String& inPath, LocalPath inLocal /* = LocalPath::Game */, FileSystem inSystem /* = FileSystem::None */ )
-		: m_Path( inPath.GetU8Str() ), m_Local( inLocal ), m_System( inSystem )
+	FilePath::FilePath( const String& inPath, PathRoot inRoot /* = PathRoot::Game */ )
+		: m_Path( inPath.GetU8Str() ), m_Root( inRoot )
 	{
 		_Verify();
 	}
 
 
-	FilePath::FilePath( LocalPath inLocal, FileSystem inSystem /* = FileSystem::None */ )
-		: m_Path(), m_Local( inLocal ), m_System( inSystem )
-	{
-		_Verify();
-	}
-
-
-	FilePath::FilePath( const String& inPath, FileSystem inSystem )
-		: m_Path( inPath.GetU8Str() ), m_System( inSystem ), m_Local( LocalPath::Game )
+	FilePath::FilePath( PathRoot inRoot )
+		: m_Path(), m_Root( inRoot )
 	{
 		_Verify();
 	}
 
 
 	FilePath::FilePath( const FilePath& Other )
-		: FilePath( Other.m_Path, Other.m_Local, Other.m_System )
+		: FilePath( Other.m_Path, Other.m_Root )
 	{}
 
 
 	FilePath::FilePath( FilePath&& Other ) noexcept
-		: m_Path( std::move( Other.m_Path ) ), m_Local( std::move( Other.m_Local ) ), m_System( std::move( Other.m_System ) )
+		: m_Path( std::move( Other.m_Path ) ), m_Root( std::move( Other.m_Root ) )
 	{
 		_Verify();
 		Other.Clear();
@@ -59,8 +52,7 @@ namespace Hyperion
 	FilePath& FilePath::operator=( const FilePath& Other )
 	{
 		m_Path		= Other.m_Path;
-		m_Local		= Other.m_Local;
-		m_System	= Other.m_System;
+		m_Root		= Other.m_Root;
 
 		_Verify();
 
@@ -71,8 +63,7 @@ namespace Hyperion
 	FilePath& FilePath::operator=( FilePath&& Other ) noexcept
 	{
 		m_Path		= std::move( Other.m_Path );
-		m_Local		= std::move( Other.m_Local );
-		m_System	= std::move( Other.m_System );
+		m_Root		= std::move( Other.m_Root );
 
 		_Verify();
 
@@ -82,19 +73,14 @@ namespace Hyperion
 
 	void FilePath::_Verify()
 	{
-		// There are a couple local paths only accessible by the physical file system, so lets ensure there isnt a mismatch here
-		if( ( m_Local == LocalPath::Root || m_Local == LocalPath::Documents ) && ( m_System == FileSystem::Network || m_System == FileSystem::Virtual ) )
-		{
-			Console::WriteLine( "[WARNING] FileSystem: Invalid file path! Can only access 'root' and 'data' files on disk! Defaulting to disk..." );
-			m_System = FileSystem::Disk;
-		}
+		// DEPRECATED: TODO: Remove
 	}
 
 
 	String FilePath::ToString( bool bAbsolutePath /* = false */ ) const
 	{
 		String relativePath( m_Path.generic_u8string(), StringEncoding::UTF8 );
-		return bAbsolutePath ? IFileServices::Get().GetLocalPathLocation( m_Local ).Append( relativePath ) : relativePath;
+		return bAbsolutePath ? IFileServices::Get().GetRootPathLocation( m_Root ).Append( relativePath ) : relativePath;
 	}
 
 
@@ -106,14 +92,13 @@ namespace Hyperion
 
 	FilePath FilePath::ToRootPath() const
 	{
-		return m_Local == LocalPath::Root ? FilePath( *this ) : FilePath( ToString( true ), LocalPath::Root, m_System );
+		return m_Root == PathRoot::SystemRoot ? FilePath( *this ) : FilePath( ToString( true ), PathRoot::SystemRoot );
 	}
 
 
 	void FilePath::Clear()
 	{
-		m_System	= FileSystem::None;
-		m_Local		= LocalPath::Game;
+		m_Root		= PathRoot::Game;
 		m_Path.clear();
 	}
 
@@ -124,9 +109,9 @@ namespace Hyperion
 	}
 
 
-	bool FilePath::Equals( const FilePath& Other, bool bIncludeSystem /* = true */ ) const
+	bool FilePath::Equals( const FilePath& Other ) const
 	{
-		return m_Local == Other.m_Local && ( m_Path.compare( Other.m_Path ) == 0 ) && ( !bIncludeSystem || m_System == Other.m_System );
+		return m_Root == Other.m_Root && ( m_Path.compare( Other.m_Path ) == 0  );
 	}
 
 
@@ -137,7 +122,7 @@ namespace Hyperion
 
 		pathCopy /= newPart;
 
-		return FilePath( pathCopy, m_Local, m_System );
+		return FilePath( pathCopy, m_Root );
 	}
 
 
@@ -148,7 +133,7 @@ namespace Hyperion
 
 		pathCopy += newPart;
 
-		return FilePath( pathCopy, m_Local, m_System );
+		return FilePath( pathCopy, m_Root );
 	}
 
 
@@ -167,13 +152,6 @@ namespace Hyperion
 		m_Path += newPart;
 
 		return *this;
-	}
-
-
-	void FilePath::SetSystem( FileSystem In )
-	{
-		m_System = In;
-		_Verify();
 	}
 
 

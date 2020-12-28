@@ -5,7 +5,7 @@
 ==================================================================================================*/
 
 #include "Hyperion/Console/Console.h"
-#include "Hyperion/File/PhysicalFileSystem.h"
+#include "Hyperion/File/FileSystem.h"
 
 
 namespace Hyperion
@@ -71,8 +71,8 @@ namespace Hyperion
 	bool Console::LoadConfig()
 	{
 		// Check to see if the file exists
-		FilePath path( String( "config.hcf" ), LocalPath::Game );
-		auto f = PhysicalFileSystem::OpenFile( path, FileMode::Read );
+		FilePath path( String( "config.hcf" ), PathRoot::Game );
+		auto f = FileSystem::OpenFile( path, FileMode::Read );
 
 		if( !f || !f->IsValid() )
 		{

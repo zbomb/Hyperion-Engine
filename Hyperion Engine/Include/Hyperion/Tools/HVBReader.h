@@ -7,7 +7,7 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/File/PhysicalFileSystem.h"
+#include "Hyperion/File/FileSystem.h"
 
 
 
@@ -75,7 +75,7 @@ namespace Hyperion
 		/*
 			Constructor/Destructor
 		*/
-		HVBReader( PhysicalFile& inFile );
+		HVBReader( File& inFile );
 		~HVBReader();
 
 		/*

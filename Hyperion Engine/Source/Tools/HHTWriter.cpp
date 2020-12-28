@@ -11,7 +11,7 @@
 namespace Hyperion
 {
 
-	HHTWriter::HHTWriter( PhysicalFile& inFile, bool bIsNewFile /* = true */ )
+	HHTWriter::HHTWriter( File& inFile, bool bIsNewFile /* = true */ )
 		: m_File( inFile ), m_Writer( inFile )
 	{
 		if( bIsNewFile )

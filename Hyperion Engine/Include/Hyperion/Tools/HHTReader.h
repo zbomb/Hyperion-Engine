@@ -7,7 +7,7 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/File/PhysicalFileSystem.h"
+#include "Hyperion/File/FileSystem.h"
 
 
 namespace Hyperion
@@ -22,7 +22,7 @@ namespace Hyperion
 
 	public:
 
-		HHTReader( PhysicalFile& inFile );
+		HHTReader( File& inFile );
 		~HHTReader();
 
 		HHTReader() = delete;

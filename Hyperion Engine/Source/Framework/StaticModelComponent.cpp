@@ -10,7 +10,21 @@
 
 namespace Hyperion
 {
+	
+	std::shared_ptr< ProxyPrimitive > StaticModelComponent::CreateProxy()
+	{
+		return nullptr;
+	}
 
-
-
+	bool StaticModelComponent::UpdateProxy()
+	{
+		return true;
+	}
+	
 }
+
+
+/*
+*	Register Type
+*/
+HYPERION_REGISTER_OBJECT_TYPE( StaticModelComponent, PrimitiveComponent );

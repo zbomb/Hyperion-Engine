@@ -53,61 +53,19 @@ namespace Hyperion
 
 
 	/*
-		class TextureAssetCache
-		* Class that handles the caching of texture assets
-	*/
-	class TextureAssetCache : public IAssetCache
-	{
-
-	private:
-
-		static std::map< uint32, std::weak_ptr< TextureAsset > > m_Cache;
-		static std::mutex m_CacheMutex;
-
-	public:
-
-		static std::weak_ptr< TextureAsset > Get( uint32 inIdentifier );
-		static void Store( uint32 inIdentifier, const std::shared_ptr< TextureAsset >& inPtr );
-
-	};
-
-
-	/*
-		class TextureAssetLoader
-		* Class that handles the loading of texture assets from data sources
-	*/
-	class TextureAssetLoader : public IAssetLoader
-	{
-
-	public:
-
-		static std::shared_ptr< TextureAsset > Load( uint32 inIdentifier, std::unique_ptr< IFile >& inFile );
-		static bool IsValidFile( const FilePath& inPath );
-
-	};
-
-
-	/*
 		class TextureAsset
 		* An engine asset containing a texture
 	*/
 	class TextureAsset : public AssetBase
 	{
 
-	public:
-
-		// Things needed for the asset manager to handle this type properly
-		using _CacheType	= TextureAssetCache;
-		using _LoaderType	= TextureAssetLoader;
-
-		static inline AssetCacheMethod GetCacheMethod() { return AssetCacheMethod::Full; }
-
 	protected:
 
 		// Data Members
+		FilePath m_DiskPath;
 		TextureHeader m_Header;
 
-		TextureAsset( const TextureHeader& inHeader, const FilePath& inPath, uint32 inIdentifier );
+		TextureAsset( const TextureHeader& inHeader, const String& inPath, const FilePath& inDiskPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength );
 
 	public:
 
@@ -120,12 +78,14 @@ namespace Hyperion
 
 		// Member Functions
 		inline const TextureHeader& GetHeader() const { return m_Header; }
+		inline FilePath GetDiskPath() const { return m_DiskPath; }
 
 		uint32 GetWidth() const;
 		uint32 GetHeight() const;
 		uint8 GetLODCount() const;
 
-		friend class TextureAssetLoader;
+		// Loader Function
+		static std::shared_ptr< AssetBase > LoadFromFile( std::unique_ptr< File >& inFile, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength );
 	};
 
 

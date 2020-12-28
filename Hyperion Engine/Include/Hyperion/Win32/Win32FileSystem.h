@@ -18,7 +18,7 @@ namespace Hyperion
 
 	public:
 
-		String GetLocalPathLocation( LocalPath inLocal ) final;
+		String GetRootPathLocation( PathRoot inLocal ) final;
 
 	};
 

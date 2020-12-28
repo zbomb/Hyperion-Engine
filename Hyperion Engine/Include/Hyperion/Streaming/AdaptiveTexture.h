@@ -64,6 +64,8 @@ namespace Hyperion
 
 		void PerformDrop( uint8 inLevel );
 		void PerformIncrease( uint8 inLevel );
+
+		bool Update( float globalMult, float charMult, float dynMult, float lvlMult, float staticMult, uint32 objCount ) final;
 	};
 
 

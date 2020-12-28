@@ -42,7 +42,7 @@
 namespace Hyperion
 {
 
-	HHTReader::HHTReader( PhysicalFile& inFile )
+	HHTReader::HHTReader( File& inFile )
 		: m_Reader( inFile )
 	{
 		m_Reader.SeekBegin();

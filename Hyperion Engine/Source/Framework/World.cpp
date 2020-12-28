@@ -218,3 +218,9 @@ namespace Hyperion
 	}
 
 }
+
+
+/*
+*	Register Type
+*/
+HYPERION_REGISTER_OBJECT_TYPE( World, Object );

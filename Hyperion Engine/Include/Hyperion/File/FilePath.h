@@ -16,20 +16,12 @@
 namespace Hyperion
 {
 
-	enum class LocalPath
+	enum class PathRoot
 	{
-		Root		= 0,
-		Game		= 1,
-		Documents	= 2,
-		Content		= 3
-	};
-
-	enum class FileSystem
-	{
-		None		= 0,
-		Disk		= 1,
-		Virtual		= 2,
-		Network		= 4
+		SystemRoot		= 0,
+		Game			= 1,
+		Documents		= 2,
+		Content			= 3
 	};
 
 
@@ -38,19 +30,18 @@ namespace Hyperion
 
 	private:
 
-		LocalPath m_Local;
-		FileSystem m_System;
+		PathRoot m_Root;
 		std::filesystem::path m_Path;
 
-		FilePath( const std::filesystem::path& inPath, LocalPath inLocal, FileSystem inSystem );
+		FilePath( const std::filesystem::path& inPath, PathRoot inRoot );
 		void _Verify();
 
 	public:
 
 		FilePath();
-		FilePath( const String& inPath, LocalPath inLocal = LocalPath::Game, FileSystem inSystem = FileSystem::None );
-		explicit FilePath( LocalPath inLocal, FileSystem inSystem = FileSystem::None );
-		FilePath( const String& inPath, FileSystem inSystem );
+		explicit FilePath( const String& inPath, PathRoot inRoot = PathRoot::Game );
+		explicit FilePath( PathRoot inRoot );
+		inline FilePath( const char* inPath, PathRoot inRoot = PathRoot::Game ) : FilePath( String( inPath ), inRoot ) {}
 
 		FilePath( const FilePath& Other );
 		FilePath( FilePath&& Other ) noexcept;
@@ -63,14 +54,13 @@ namespace Hyperion
 
 		FilePath ToRootPath() const;
 
-		inline bool IsRootPath() const { return m_Local == LocalPath::Root; }
-		inline LocalPath GetLocal() const { return m_Local; }
-		inline FileSystem GetSystem() const { return m_System; }
+		inline bool IsSystemRootPath() const { return m_Root == PathRoot::SystemRoot; }
+		inline PathRoot GetRootPath() const { return m_Root; }
 
 		void Clear();
 		bool IsEmpty() const;
 
-		bool Equals( const FilePath& Other, bool bIncludeSystem = true ) const;
+		bool Equals( const FilePath& Other ) const;
 		inline bool operator==( const FilePath& Other ) const { return Equals( Other ); }
 		inline bool operator!=( const FilePath& Other ) const { return !Equals( Other ); }
 
@@ -97,15 +87,10 @@ namespace Hyperion
 		bool HasExtension() const			{ return m_Path.has_extension(); }
 		bool HasStem() const				{ return m_Path.has_stem(); }
 
-		inline bool IsDisk() const		{ return m_System == FileSystem::Disk || m_System == FileSystem::None; }
-		inline bool IsVirtual() const	{ return m_System == FileSystem::Virtual || m_System == FileSystem::None; }
-		inline bool IsNetwork() const	{ return m_System == FileSystem::Network || m_System == FileSystem::None; }
-
-		void SetSystem( FileSystem In );
-
 		friend std::ostream& operator<<( std::ostream&, const FilePath& );
-		friend class PhysicalDirectory;
-		friend class PhysicalFileSystem;
+
+		friend class FileSystem;
+		friend class Directory;
 
 	};
 

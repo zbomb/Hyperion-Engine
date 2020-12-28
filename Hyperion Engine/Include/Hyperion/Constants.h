@@ -21,6 +21,7 @@ namespace Hyperion
 	constexpr ObjectID OBJECT_INVALID	= 0;
 	constexpr ObjectID OBJECT_NONE		= 0;
 
+	// TODO: Check if this is deprecated
 	typedef unsigned int ObjectCacheID;
 	constexpr ObjectCacheID CACHE_INVALID		= 0;
 	constexpr ObjectCacheID CACHE_NONE			= 0;
@@ -34,8 +35,13 @@ namespace Hyperion
 	typedef uint16 LanguageID;
 	constexpr LanguageID LANG_NONE = 0;
 
-	constexpr uint32 ASSET_INVALID	= 0;
-	constexpr uint32 PLAYER_INVALID = 0;
+	constexpr uint32 ASSET_INVALID			= 0;
+	constexpr uint32 ASSET_TYPE_INVALID		= 0;
+	constexpr uint32 PLAYER_INVALID			= 0;
+
+	constexpr uint32 ASSET_TYPE_TEXTURE			= 1;
+	constexpr uint32 ASSET_TYPE_STATICMODEL		= 2;
+	constexpr uint32 ASSET_TYPE_MATERIAL		= 3;
 
 	constexpr auto THREAD_GAME		= "game";
 	constexpr auto THREAD_RENDERER	= "renderer";

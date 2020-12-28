@@ -13,7 +13,7 @@ namespace Hyperion
 		{
 			outData = null;
 			throw new Exception( "Deflate algorithm hasnt been implemented" );
-			return false;
+			//return false;
 		}
 
 

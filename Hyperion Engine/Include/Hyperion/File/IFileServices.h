@@ -26,7 +26,7 @@ namespace Hyperion
 	public:
 
 		static IFileServices& Get();
-		virtual String GetLocalPathLocation( LocalPath inLocal ) = 0;
+		virtual String GetRootPathLocation( PathRoot inRoot ) = 0;
 
 	};
 

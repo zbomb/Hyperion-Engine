@@ -12,9 +12,9 @@
 #include "Hyperion/Library/Math/Geometry.h"
 
 
-
 namespace Hyperion
 {
+
 	// Forward Declarations
 	class StaticModelAsset;
 
@@ -49,45 +49,10 @@ namespace Hyperion
 	};
 
 
-	class StaticModelAssetCache : public IAssetCache
-	{
-
-	private:
-
-		static std::map< uint32, std::weak_ptr< StaticModelAsset > > m_Cache;
-		static std::mutex m_CacheMutex;
-
-	public:
-
-		static std::weak_ptr< StaticModelAsset > Get( uint32 inIdentifier );
-		static void Store( uint32 inIdentifier, const std::shared_ptr< StaticModelAsset >& inPtr );
-
-	};
-
-
-	class StaticModelAssetLoader : public IAssetLoader
-	{
-
-	public:
-
-		static std::shared_ptr< StaticModelAsset > Load( uint32 inIdentifier, std::unique_ptr< IFile >& inFile );
-		static bool IsValidFile( const FilePath& inPath );
-
-	};
-
-
 
 
 	class StaticModelAsset : public AssetBase
 	{
-
-	public:
-
-		// Things needed for the asset manager to handle this type properly
-		using _CacheType	= StaticModelAssetCache;
-		using _LoaderType	= StaticModelAssetLoader;
-
-		static inline AssetCacheMethod GetCacheMethod() { return AssetCacheMethod::Full; }
 
 	private:
 
@@ -97,7 +62,9 @@ namespace Hyperion
 		std::vector< StaticModelAssetLOD > m_LODs;
 		std::map< uint8, std::shared_ptr< MaterialAsset > > m_MaterialSlots;
 
-		StaticModelAsset( const FilePath& inPath, uint32 inIdentifier );
+		FilePath m_DiskPath;
+
+		StaticModelAsset( const String& inPath, const FilePath& inDiskPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength );
 
 	public:
 
@@ -109,6 +76,8 @@ namespace Hyperion
 		// Bounds Method
 		const AABB& GetAABB() const { return m_BoundingBox; }
 		const BoundingSphere& GetBoundingSphere() const { return m_BoundingSphere; }
+
+		inline FilePath GetDiskPath() const { return m_DiskPath; }
 
 		// LOD Methods
 		std::vector< StaticModelAssetLOD >::const_iterator LODBegin() const { return m_LODs.begin(); }
@@ -132,8 +101,10 @@ namespace Hyperion
 		std::map< uint8, StaticModelAssetSubModel >::const_iterator GetSubModelEnd( uint8 inLOD ) const;
 		std::map< uint8, StaticModelAssetSubModel >::const_iterator GetSubModel( uint8 inLOD, uint8 inIndex ) const;
 
-		friend class StaticModelAssetLoader;
 		friend class HSMReader;
+
+		// Loader Function
+		static std::shared_ptr< AssetBase > LoadFromFile( std::unique_ptr< File >& inFile, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength );
 	};
 
 

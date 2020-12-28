@@ -264,6 +264,60 @@ namespace Hyperion
 		UpdatePriority();
 	}
 
+	bool AdaptiveTexture::Update( float globalMult, float characterMult, float dynamicMult, float levelMult, float staticMult, uint32 objectCount )
+	{
+		bool bValidEntry = false;
+
+		m_MaxScreenSize		= 0.f;
+		m_TotalScreenSize	= 0.f;
+		m_Priority_Mult		= 0.f;
+
+		for( auto It = m_Refs.begin(); It != m_Refs.end(); )
+		{
+			auto obj = It->second.lock();
+
+			if( obj && obj->m_Valid )
+			{
+				float mult = globalMult;
+
+				switch( obj->m_Type )
+				{
+				case AdaptiveAssetObjectType::Character:
+					mult *= characterMult;
+					break;
+				case AdaptiveAssetObjectType::Dynamic:
+					mult *= dynamicMult;
+					break;
+				case AdaptiveAssetObjectType::Level:
+					mult *= levelMult;
+					break;
+				case AdaptiveAssetObjectType::Static:
+				default:
+					mult *= staticMult;
+					break;
+				}
+
+				m_Priority_Mult = Math::Max( m_Priority_Mult, mult );
+
+				float objScreenSize		= obj->m_ScreenSize * mult;
+				m_TotalScreenSize		+= objScreenSize;
+				m_MaxScreenSize			= Math::Max( m_MaxScreenSize, objScreenSize );
+
+				bValidEntry = true;
+				It++;
+			}
+			else
+			{
+				It = m_Refs.erase( It );
+			}
+		}
+
+		// We want to calculate what percentage of the scene objects are using this texture, range (0,100]
+		m_ObjectUsage = (float) m_Refs.size() / (float) objectCount;
+
+		return bValidEntry;
+	}
+
 
 	AdaptiveTextureRequestBase::AdaptiveTextureRequestBase( const std::shared_ptr< AdaptiveTexture >& inTarget, uint8 inLevel )
 	{

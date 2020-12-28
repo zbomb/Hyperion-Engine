@@ -7,84 +7,26 @@
 #include "Hyperion/Assets/TextureAsset.h"
 #include "Hyperion/Tools/HTXReader.h"
 
+using namespace std::placeholders;
 
 
 namespace Hyperion
 {
-	std::map< uint32, std::weak_ptr< TextureAsset > > TextureAssetCache::m_Cache;
-	std::mutex TextureAssetCache::m_CacheMutex;
-
-
-	/*----------------------------------------------------------------------------------------------------------
-		TextureAssetCache Class
-	------------------------------------------------------------------------------------------------------------*/
-	std::weak_ptr< TextureAsset > TextureAssetCache::Get( uint32 inIdentifier )
-	{
-		std::lock_guard< std::mutex > lock( m_CacheMutex );
-
-		auto entry = m_Cache.find( inIdentifier );
-		if( entry == m_Cache.end() )
-		{
-			return std::weak_ptr< TextureAsset >();
-		}
-
-		if( entry->second.expired() )
-		{
-			m_Cache.erase( entry );
-			return std::weak_ptr< TextureAsset >();
-		}
-		else
-		{
-			return entry->second;
-		}
-	}
-
-
-	void TextureAssetCache::Store( uint32 inIdentifier, const std::shared_ptr< TextureAsset >& inPtr )
-	{
-		std::lock_guard< std::mutex > lock( m_CacheMutex );
-
-		m_Cache.emplace( inIdentifier, std::weak_ptr< TextureAsset >( inPtr ) );
-	}
-
-
-	/*----------------------------------------------------------------------------------------------------------
-		TextureAssetLoader Class
-	------------------------------------------------------------------------------------------------------------*/
-	std::shared_ptr< TextureAsset > TextureAssetLoader::Load( uint32 inIdentifier, std::unique_ptr< IFile >& inFile )
-	{
-		if( inIdentifier == ASSET_INVALID || !inFile || !inFile->IsValid() ) 
-		{ 
-			Console::WriteLine( "[ERROR] TextureAssetLoader: Failed to load asset.. identifier and/or file was invalid" );
-			return nullptr; 
-		}
-
-		// Use the HTX Reader class to read in the header data for this texture asset
-		HTXReader Reader( *inFile );
-		
-		TextureHeader assetHeader;
-		if( Reader.ReadHeader( assetHeader ) != HTXReader::Result::Success )
-		{
-			Console::WriteLine( "[WARNING] TextureAssetLoader: Failed to read header for '", inFile->GetPath().ToString(), "'" );
-			return nullptr;
-		}
-
-		// Return the new texture asset created from the header we read from file
-		return std::shared_ptr< TextureAsset >( new TextureAsset( assetHeader, inFile->GetPath(), inIdentifier ) );
-	}
-
-
-	bool TextureAssetLoader::IsValidFile( const FilePath& inPath )
-	{
-		return inPath.Extension().ToLower().Equals( ".htx" );
-	}
+	
+	/*
+		Register asset type
+	*/
+	AssetType g_AssetType_Texture = AssetType(
+		ASSET_TYPE_TEXTURE, "texture", ".htx",
+		std::bind( &TextureAsset::LoadFromFile, _1, _2, _3, _4, _5 )
+	);
 
 
 	/*----------------------------------------------------------------------------------------------------------
 		TextureAsset Class
 	------------------------------------------------------------------------------------------------------------*/
-	TextureAsset::TextureAsset( const TextureHeader& inHeader, const FilePath& inPath, uint32 inIdentifier )
-		: m_Header( inHeader ), AssetBase( inPath, inIdentifier )
+	TextureAsset::TextureAsset( const TextureHeader& inHeader, const String& inPath, const FilePath& inDiskPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength )
+		: m_Header( inHeader ), m_DiskPath( inDiskPath ), AssetBase( inIdentifier, inPath, inOffset, inLength )
 	{}
 
 
@@ -108,11 +50,31 @@ namespace Hyperion
 
 		if( ret > maxNum )
 		{
-			Console::WriteLine( "[ERROR] TextureAsset: Invalid number of LOD levels detected in '", GetPath().ToString(), "' (", ret, ")" );
+			Console::WriteLine( "[ERROR] TextureAsset: Invalid number of LOD levels detected in '", GetPath(), "' (", ret, ")" );
 			return 0;
 		}
 
 		return (uint8)m_Header.LODs.size();
+	}
+
+
+	/*----------------------------------------------------------------------------------------------------------
+		Texture Asset Loader Function
+	------------------------------------------------------------------------------------------------------------*/
+	std::shared_ptr< AssetBase > TextureAsset::LoadFromFile( std::unique_ptr< File >& inFile, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength )
+	{
+		if( !inFile || !inFile->IsValid() ) { return nullptr; }
+
+		HTXReader reader( *inFile, inOffset, inLength );
+		TextureHeader header;
+
+		if( reader.ReadHeader( header ) != HTXReader::Result::Success )
+		{
+			Console::WriteLine( "[Warning] TextureAsset: Failed to load texture from file \"", inFile->GetPath().ToString(), "\" because the header was invalid" );
+			return nullptr;
+		}
+
+		return std::shared_ptr< AssetBase >( new TextureAsset( header, inPath, inFile->GetPath(), inIdentifier, inOffset, inLength ) );
 	}
 
 }

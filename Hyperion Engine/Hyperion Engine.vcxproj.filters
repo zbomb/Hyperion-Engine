@@ -316,18 +316,6 @@
     <ClInclude Include="Include\Hyperion\Streaming\Events.h">
       <Filter>Streaming</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\File\NetworkFileSystem.h">
-      <Filter>File</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\File\PhysicalFileSystem.h">
-      <Filter>File</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\File\UnifiedFileSystem.h">
-      <Filter>File</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\File\VirtualFileSystem.h">
-      <Filter>File</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\File\FilePath.h">
       <Filter>File</Filter>
     </ClInclude>
@@ -432,6 +420,15 @@
     </ClInclude>
     <ClInclude Include="Tests\HSMTests.hpp">
       <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\AssetType.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\File\FileSystem.h">
+      <Filter>File</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\RTTI.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -561,18 +558,6 @@
     <ClCompile Include="Source\Streaming\AdaptiveDynamicModel.cpp">
       <Filter>Streaming</Filter>
     </ClCompile>
-    <ClCompile Include="Source\File\NetworkFileSystem.cpp">
-      <Filter>File</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\File\PhysicalFileSystem.cpp">
-      <Filter>File</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\File\UnifiedFileSystem.cpp">
-      <Filter>File</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\File\VirtualFileSystem.cpp">
-      <Filter>File</Filter>
-    </ClCompile>
     <ClCompile Include="Source\File\FilePath.cpp">
       <Filter>File</Filter>
     </ClCompile>
@@ -635,6 +620,12 @@
     </ClCompile>
     <ClCompile Include="Source\Assets\StaticModelAsset.cpp">
       <Filter>Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\File\FileSystem.cpp">
+      <Filter>File</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\RTTI.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

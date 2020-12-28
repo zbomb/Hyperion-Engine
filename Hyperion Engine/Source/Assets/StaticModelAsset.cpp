@@ -8,79 +8,27 @@
 #include "Hyperion/Tools/HSMReader.h"
 
 
+using namespace std::placeholders;
+
+
 namespace Hyperion
 {
 
-	std::map< uint32, std::weak_ptr< StaticModelAsset > > StaticModelAssetCache::m_Cache;
-	std::mutex StaticModelAssetCache::m_CacheMutex;
+	/*
+		Register Asset Type
+	*/
+	AssetType g_Asset_Type_StaticModel = AssetType(
+		ASSET_TYPE_STATICMODEL, "static_model", ".hsm",
+		std::bind( &StaticModelAsset::LoadFromFile, _1, _2, _3, _4, _5 )
+	);
 
-
-	/*----------------------------------------------------------------------------------------------------------
-		StaticModelAssetCache Class
-	------------------------------------------------------------------------------------------------------------*/
-	std::weak_ptr< StaticModelAsset > StaticModelAssetCache::Get( uint32 inIdentifier )
-	{
-		std::lock_guard< std::mutex > lock( m_CacheMutex );
-
-		auto entry = m_Cache.find( inIdentifier );
-		if( entry == m_Cache.end() )
-		{
-			return std::weak_ptr< StaticModelAsset >();
-		}
-
-		if( entry->second.expired() )
-		{
-			m_Cache.erase( entry );
-			return std::weak_ptr< StaticModelAsset >();
-		}
-		else
-		{
-			return entry->second;
-		}
-	}
-
-
-	void StaticModelAssetCache::Store( uint32 inIdentifier, const std::shared_ptr< StaticModelAsset >& inPtr )
-	{
-		std::lock_guard< std::mutex > lock( m_CacheMutex );
-
-		m_Cache.emplace( inIdentifier, std::weak_ptr< StaticModelAsset >( inPtr ) );
-	}
-
-
-	/*----------------------------------------------------------------------------------------------------------
-		StaticModelAssetLoader Class
-	------------------------------------------------------------------------------------------------------------*/
-	std::shared_ptr< StaticModelAsset > StaticModelAssetLoader::Load( uint32 inIdentifier, std::unique_ptr< IFile >& inFile )
-	{
-		if( inIdentifier == ASSET_INVALID || !inFile || !inFile->IsValid() )
-		{
-			Console::WriteLine( "[ERROR] StaticModelAssetLoader: Failed to load asset.. identifier and/or file was invalid" );
-			return nullptr;
-		}
-
-		// First, we want to use the HSM loader to create a structure we can use to fill out our asset
-		auto newAsset = std::shared_ptr< StaticModelAsset >( new StaticModelAsset( inFile->GetPath(), inIdentifier ) );
-		if( HSMReader::ReadFile( *inFile, newAsset ) != HSMReader::Success )
-		{
-			return nullptr;
-		}
-
-		return newAsset;
-	}
-
-
-	bool StaticModelAssetLoader::IsValidFile( const FilePath& inPath )
-	{
-		return inPath.Extension().ToLower().Equals( ".hsm" );
-	}
 
 	/*----------------------------------------------------------------------------------------------------------
 		StaticModelAsset Class
 	------------------------------------------------------------------------------------------------------------*/
 
-	StaticModelAsset::StaticModelAsset( const FilePath& inPath, uint32 inIdentifier )
-		: AssetBase( inPath, inIdentifier )
+	StaticModelAsset::StaticModelAsset( const String& inPath, const FilePath& inDiskPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength )
+		: AssetBase( inIdentifier, inPath, inOffset, inLength ), m_DiskPath( inDiskPath )
 	{
 
 	}
@@ -213,6 +161,31 @@ namespace Hyperion
 		std::advance( It, inIndex );
 
 		return It;
+	}
+
+
+	/*
+		Loader Function
+	*/
+	std::shared_ptr< AssetBase > StaticModelAsset::LoadFromFile( std::unique_ptr< File >& inFile, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength )
+	{
+		// Validate the file
+		if( inIdentifier == ASSET_INVALID || !inFile || !inFile->IsValid() )
+		{
+			Console::WriteLine( "[Warning] StaticModelAsset: Failed to load from file.. file was invalid (Asset ID: ", inIdentifier, ")" );
+			return nullptr;
+		}
+
+		// Engage the loader
+
+		auto newAsset = std::shared_ptr< StaticModelAsset >( new StaticModelAsset( inPath, inFile->GetPath(), inIdentifier, inOffset, inLength ) );
+		if( HSMReader::ReadFile( *inFile, newAsset ) != HSMReader::Result::Success )
+		{
+			Console::WriteLine( "[Warning] StaticModelAsset: Failed to load from file.. loader failed!" );
+			return nullptr;
+		}
+
+		return std::dynamic_pointer_cast< AssetBase >( newAsset );
 	}
 
 }

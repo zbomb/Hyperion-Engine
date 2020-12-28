@@ -8,648 +8,261 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/Asset.h"
-#include "Hyperion/File/UnifiedFileSystem.h"
+#include "Hyperion/File/FileSystem.h"
 #include "Hyperion/Library/Crypto.h"
+
+#include <memory>
 
 
 namespace Hyperion
 {
-	/*
-		DefaultAssetCache
-		* The asset cache type used by default if none is declared in your asset class
-	*/
-	template< typename _Ty >
-	class DefaultAssetCache : public IAssetCache
+
+	struct AssetInstanceInfo
+	{
+
+	public:
+
+		uint32 Identifier;
+		String Path;
+		String Bundle;
+		uint64 Offset;
+		uint64 Length;
+		//String CacheGroup; // TODO: Implement this
+		bool AlwaysCached;
+		uint32 AssetType;
+
+		std::weak_ptr< AssetBase > Instance;
+	};
+
+	struct AssetTypeInfo
+	{
+		uint32 Identifier;
+		String Name;
+		String Extension;
+		std::function< std::shared_ptr< AssetBase >( std::unique_ptr< File >&, const String&, uint32, uint64, uint64 ) > LoaderFunc;
+	};
+
+
+	class AssetManager
 	{
 
 	private:
+		
+		// NEW
+		static std::map< uint32, AssetInstanceInfo > m_Cache;
+		static std::map< uint32, AssetTypeInfo > m_Types;
 
-		static std::map< uint32, std::weak_ptr< _Ty > > m_Cache;
 		static std::mutex m_CacheMutex;
 
 	public:
 
-		static std::weak_ptr< _Ty > Get( uint32 inIdentifier )
-		{
-			std::lock_guard< std::mutex > lock( m_CacheMutex );
+		/*
+			bool [True if exists] AssetManager::TypeExists( uint32 [ID of target type] )
+			- Checks to see if an asset type exists by identifier
+		*/
+		static bool TypeExists( uint32 inTypeIdentifier );
 
-			auto entry = m_Cache.find( inIdentifier );
-			if( entry == m_Cache.end() )
+		/*
+			bool [True if success] AssetManager::GetType( uint32 [ID of target type], AssetTypeInfo& [OUT the info about the type] )
+			- Gets info about an asset type by identifier
+		*/
+		static bool GetType( uint32 inTypeIdentifier, AssetTypeInfo& outInfo );
+
+		/*
+			bool [True if added] AssetManager::RegisterType( const AssetTypeInfo& [Type info structure] )
+			- Adds a new type to the asset manager
+		*/
+		static bool RegisterType( const AssetTypeInfo& inInfo );
+
+		/*
+			bool [True if added] AssetManager::RegisterAsset( const AssetInstanceInfo& [Info about the asset to register] )
+			- Adds a new assets metadata to the cache
+		*/
+		static bool RegisterAsset( const AssetInstanceInfo& inEntry );
+
+		/*
+			bool [True if found] AssetManager::GetAssetInfo( uint32 [Asset identifier to find], AssetInstanceInfo& [OUT info about the asset] )
+			- Finds info about an asset by identifier
+		*/
+		static bool GetAssetInfo( uint32 inIdentifier, AssetInstanceInfo& outEntry );
+
+		/*
+			bool [True if found] AssetManager::GetAssetInfo( const String& [Asset path to find], AssetInstanceInfo& [OUT info about the asset] )
+			- Finds info about an asset by the asset's path
+		*/
+		static bool GetAssetInfo( const String& inPath, AssetInstanceInfo& outEntry );
+
+		/*
+			uint32 [Result] AssetManager::CalculateIdentifier( const String& [Asset path] )
+			- Takes the path for an asset, and calculates what the numeric identifier would be
+		*/
+		static uint32 CalculateIdentifier( const String& inPath );
+
+		/*
+			bool [True if registered] AssetManager::Exists( uint32 [Asset identifier] )
+			- Checks if an asset is registered with the AssetManager using the numeric identifier
+			- This DOES NOT mean that asset is cached!
+		*/
+		static bool Exists( uint32 inIdentifier );
+
+		/*
+			bool [True if registered] AssetManager::Exists( const String& [Asset path] )
+			- Checks if an asset is registered with the AssetManager using the Asset's path
+			- This DOES NOT mean that asset is cached!
+		*/
+		static bool Exists( const String& inPath );
+
+		/*
+			bool [True if cached] AssetManager::IsCached( uint32 [Asset Identifier] )
+			- Checks if an asset is currently cached using the numeric identifier
+		*/
+		static bool IsCached( uint32 inIdentifier );
+
+		/*
+			bool [True if cached] AssetManager::IsCached( const String& [Asset Path] )
+			- Checks if an asset is currently cached using the asset's path
+		*/
+		static bool IsCached( const String& inPath );
+
+		/*
+			std::shared_ptr< AssetBase > [Asset result] AssetManager::GetGeneric( uint32 [Asset Identifier] )
+			- Gets an asset by identifier, and returns it as the generic AssetBase
+			- First checks the cache (if applicable) and if its not found, loads it from file
+		*/
+		static std::shared_ptr< AssetBase > GetGeneric( uint32 inIdentifier )
+		{
+			if( inIdentifier == ASSET_INVALID ) { return nullptr; }
+
+			// Get this assets info from the cache, if it doesnt exist, then we fail the function
+			// We need to get a lock on the mutex to read the entry from the asset cache, copy into local structure and release the lock
+			AssetInstanceInfo assetInfo;
 			{
-				return std::weak_ptr< _Ty >();
+				std::lock_guard< std::mutex > cacheLock( m_CacheMutex );
+
+				auto entry = m_Cache.find( inIdentifier );
+				if( entry == m_Cache.end() || entry->second.Identifier == ASSET_INVALID || entry->second.AssetType == ASSET_TYPE_INVALID )
+				{
+					Console::WriteLine( "[Warning] AssetManager: Failed to find metadata for asset! (Identifier: ", inIdentifier, ") [Might not exist, or added afer startup]" );
+					return nullptr;
+				}
+				else if( !entry->second.Instance.expired() )
+				{
+					// Returned the cached version
+					return entry->second.Instance.lock();
+				}
+
+				assetInfo = entry->second;
 			}
-			else if( entry->second.expired() )
+
+			// Find the correct type info, so we can use the loader
+			auto typeEntry = m_Types.find( assetInfo.AssetType );
+			if( typeEntry == m_Types.end() || !typeEntry->second.LoaderFunc )
 			{
-				m_Cache.erase( entry );
-				return std::weak_ptr< _Ty >();
+				Console::WriteLine( "[Warning] AssetManager: Failed to find loader for asset type (AssetType#", assetInfo.AssetType, ") when caching \"", assetInfo.Path, "\"" );
+				return nullptr;
+			}
+
+			// Next, we need to actually open the file where the asset is contained
+			auto& typeInfo		= typeEntry->second;
+
+			uint64 offset	= 0;
+			uint64 length	= 0;
+			String path;
+
+			// Determine if the asset is contained within a bundle, or is standalone on disk
+			if( assetInfo.Bundle.IsEmpty() )
+			{
+				path = assetInfo.Path;
+				if( !path.EndsWith( typeInfo.Extension ) )
+				{
+					Console::WriteLine( "[Warning] AssetManager: Failed to load asset (", assetInfo.Path, ") from file! The extension is not valid for an asset of type \"", typeInfo.Name, "\"" );
+					return nullptr;
+				}
+
+				if( !FileSystem::FileExists( FilePath( path, PathRoot::Content ) ) )
+				{
+					Console::WriteLine( "[Warning] AssetManager: Failed to load asset (", assetInfo.Path, ") from file!" );
+					return nullptr;
+				}
 			}
 			else
 			{
-				return entry->second;
-			}
-		}
+				path		= assetInfo.Bundle;
+				offset		= assetInfo.Offset;
+				length		= assetInfo.Length;
 
-
-		static void Store( uint32 inIdentifier, const std::shared_ptr< _Ty >& inPtr )
-		{
-			std::lock_guard< std::mutex > lock( m_CacheMutex );
-			m_Cache.emplace( inIdentifier, std::weak_ptr< _Ty >( inPtr ) );
-		}
-
-	};
-
-	template< typename _Ty >
-	std::map< uint32, std::weak_ptr< _Ty > > DefaultAssetCache< _Ty >::m_Cache;
-
-	template< typename _Ty >
-	std::mutex DefaultAssetCache< _Ty >::m_CacheMutex;
-
-
-	class AssetManager
-	{
-
-	private:
-		
-		static std::map< uint32, String > m_HashTable;
-
-
-		/*
-			AssetManager::_Get( uint32 )
-			 * Internal get function
-			 * Takes all template parameters, gets asset via numeric identifier
-		*/
-		template< typename _AssetType, typename _LoaderType, typename _CacheType >
-		static std::shared_ptr< _AssetType > _Get( uint32 inIdentifier )
-		{
-			if( inIdentifier == ASSET_INVALID )
-			{
-				return nullptr;
-			}
-
-			// First, lets check the way this asset type is cached
-			AssetCacheMethod cacheMethod = _AssetType::GetCacheMethod(); // static AssetCacheMethod IAsset::GetCacheMethod()
-
-			if( cacheMethod == AssetCacheMethod::Full )
-			{
-				// If were performing a full cache on this asset type, find it in the cache
-				std::weak_ptr< _AssetType > weakPtr = _CacheType::Get( inIdentifier ); // static std::weak_ptr< _Ty > IAssetCache::Get( uint32 inIdentifier );
-				if( !weakPtr.expired() )
+				if( !FileSystem::FileExists( FilePath( path, PathRoot::Content ) ) )
 				{
-					return std::shared_ptr< _AssetType >( weakPtr );
+					Console::WriteLine( "[Warning] AssetManager: Failed to load asset (", assetInfo.Path, ") from file! The bundle (", assetInfo.Bundle, ") its inside doesnt exist" );
+					return nullptr;
 				}
 			}
 
-			// We either dont have it in the cache, or arent using the cache
-			std::shared_ptr< _AssetType > newInstance = _GetUnique< _AssetType, _LoaderType >( inIdentifier );
-
-			// Check if we need to cache this type
-			if( cacheMethod == AssetCacheMethod::Full )
+			// Open the file
+			auto f = FileSystem::OpenFile( FilePath( path, PathRoot::Content ), FileMode::Read );
+			if( !f || !f->IsValid() || f->GetSize() < offset + length )
 			{
-				_CacheType::Store( inIdentifier, newInstance ); // void IAssetCache::Store( uint32 inIdentifier, const std::shared_ptr< _Ty >& );
-			}
-
-			return newInstance;
-		}
-
-
-		/*
-			AssetManager::_Get( const String& )
-			* Internal get function
-			* Takes all template parameters, and gets asset from the path
-		*/
-		template< typename _AssetType, typename _LoaderType, typename _CacheType >
-		static std::shared_ptr< _AssetType > _Get( const String& inPath )
-		{
-			if( inPath.IsWhitespaceOrEmpty() )
-			{
+				Console::WriteLine( "[Warning] AssetManager: Failed to load asset (", assetInfo.Path, ") from file! It couldnt be opened or target range is out of bounds" );
 				return nullptr;
 			}
 
-			return _Get< _AssetType, _LoaderType, _CacheType >( GetAssetIdentifier( inPath ) );
-		}
-
-
-		/*
-			AssetManager::_GetUnique( uint32 )
-			* Internal get unique function
-			* Takes all template parameters, and finds asset from numeric identifier
-		*/
-		template< typename _AssetType, typename _LoaderType >
-		static std::shared_ptr< _AssetType > _GetUnique( uint32 inIdentifier )
-		{
-			if( inIdentifier == ASSET_INVALID )
+			// Invoke the loader
+			auto instance = typeInfo.LoaderFunc( f, assetInfo.Path, assetInfo.Identifier, offset, length );
+			if( !instance )
 			{
+				Console::WriteLine( "[Warning] AssetManager: Failed to load asset (", assetInfo.Path, "), the loader function failed!" );
 				return nullptr;
 			}
 
-			auto entry = m_HashTable.find( inIdentifier );
-			if( entry == m_HashTable.end() )
-			{
-				Console::WriteLine( "[Warning] AssetManager: Attempt to get asset #", inIdentifier, " but, this ID isnt registered" );
-				return nullptr;
-			}
-
-			FilePath assetPath( entry->second, LocalPath::Content );
-
-			// Validate the extension
-			if( !_LoaderType::IsValidFile( assetPath ) )
-			{
-				Console::WriteLine( "[WARNING] AssetManager: Attempt to load asset '", entry->second, "' but this file doesnt match the desired type" );
-				return nullptr;
-			}
-
-			auto assetFile = UnifiedFileSystem::OpenFile( assetPath );
-
-			if( !assetFile || !assetFile->IsValid() )
-			{
-				Console::WriteLine( "[ERROR] AssetManager: Failed to read asset '", entry->second, "' because the file was not found" );
-				return nullptr;
-			}
-
-			// Now, pass the file off to the loader to create the instance, and than if were caching, attempt to place it back into the cache
-			std::shared_ptr< _AssetType > newInstance = _LoaderType::Load( inIdentifier, assetFile ); // static std::shared_ptr< _Ty > IAssetLoader::Load( uint32 inIdentifier, std::unique_ptr< IFile >& );
-			if( !newInstance )
-			{
-				Console::WriteLine( "[ERROR] AssetManager: Failed to create asset '", entry->second, "' because the loader wasnt able to proces the file!" );
-				return nullptr;
-			}
-
-			return newInstance;
+			return instance;
 		}
 
 		/*
-			AssetManager::_GetUnique( const String& )
-			* Internal get unique version
-			* Takes all template parameters, and gets asset based on path
+			std::shared_ptr< AssetBase > [Asset result] AssetManager::GetGeneric( const String& [Asset path] )
+			- Gets an asset by path, and returns it as a generic AssetBase result
+			- First checks the cache (if applicable) and if its not found, lods it from file
 		*/
-		template< typename _AssetType, typename _LoaderType >
-		static std::shared_ptr< _AssetType > _GetUnique( const String& inPath )
+		static std::shared_ptr< AssetBase > GetGeneric( const String& inPath )
 		{
-			if( inPath.IsWhitespaceOrEmpty() ) { return nullptr; }
-			return _GetUnique< _AssetType, _LoaderType >( GetAssetIdentifier( inPath ) );
-		}
-
-
-		/*
-			AssetManager::_GetCache( uint32 )
-			* Internal get cached function
-			* Gets via numeric identifier, and takes all template parameters
-		*/
-		template< typename _AssetType, typename _CacheType >
-		static std::shared_ptr< _AssetType > _GetCached( uint32 inIdentifier )
-		{
-			if( inIdentifier == ASSET_INVALID )
+			// Quick validation of the path
+			if( inPath.Length() < 2 || inPath.IsWhitespace() )
 			{
+				Console::WriteLine( "[Warning] AssetManager: Failed to load asset, invalid path!" );
 				return nullptr;
 			}
 
-			std::weak_ptr< _AssetType > weakPtr = _CacheType::Get( inIdentifier );
-			return weakPtr.expired() ? nullptr : std::shared_ptr< _AssetType >( weakPtr );
+			// Calculate the numeric identifier, and load the instance
+			return GetGeneric( CalculateIdentifier( inPath ) );
 		}
-
 
 		/*
-			AssetManager::_GetCache( const String& )
-			* Internal get cached function
-			* Gets via string path, and takes all template parameters
+			std::shared_ptr< _Ty > [Casted asset result] AssetManager::Get( uint32 [Asset identifier] )
+			- Gets an asset by identifier, and casts to desired type
+			- First checks the cache (if applicable) and if its not found, loads it from file
 		*/
-		template< typename _AssetType, typename _CacheType >
-		static std::shared_ptr< _AssetType > _GetCached( const String& inPath )
-		{
-			if( inPath.IsWhitespaceOrEmpty() ) { return nullptr; }
-			return _GetCached< _AssetType, _CacheType >( GetAssetIdentifier( inPath ) );
-		}
-
-
-	public:
-
-		static bool RegisterAsset( uint32 inHash, const String& inPath );
-		static String GetAssetPath( uint32 inHash );
-		static uint32 GetAssetIdentifier( const String& inPath );
-		static uint32 CalculateIdentifier( const String& inPath );
-		static bool Exists( uint32 inIdentifier );
-
-		template< typename _Ty, typename std::enable_if< 
-			std::is_base_of< AssetBase, _Ty >::value &&
-			!std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
-			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value, 
-			int >::type = 0 >
+		template< typename _Ty >
 		static std::shared_ptr< _Ty > Get( uint32 inIdentifier )
 		{
-			return _Get< _Ty, typename _Ty::_LoaderType, typename _Ty::_CacheType >( inIdentifier );
+			// Check if the asset id is valid
+			if( inIdentifier == ASSET_INVALID ) { return nullptr; }
+
+			auto instance = GetGeneric( inIdentifier );
+			if( !instance ) { return nullptr; }
+
+			return std::dynamic_pointer_cast<_Ty>( instance );
 		}
 
-		template< typename _Ty, typename _Cache = DefaultAssetCache< _Ty >,
-			typename std::enable_if<
-			std::is_base_of< AssetBase, _Ty >::value &&
-			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value,
-			int >::type = 0 >
-			static std::shared_ptr< _Ty > Get( uint32 inIdentifier )
-		{
-			return _Get< _Ty, typename _Ty::_LoaderType, _Cache >( inIdentifier );
-		}
-
-
-		template< typename _Ty, typename std::enable_if<
-			std::is_base_of< AssetBase, _Ty >::value &&
-			std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
-			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value,
-			int >::type = 0 >
+		/*
+			std::shared_ptr< _Ty > [Casted asset result] AssetManager::Get( const String& [Asset Path] )
+			- Gets an asset by the path, and casts it to the desired type
+			- First checks the cache (if applicable) and if not found, loads it from file
+		*/
+		template< typename _Ty >
 		static std::shared_ptr< _Ty > Get( const String& inPath )
 		{
-			return _Get< _Ty, typename _Ty::_LoaderType, typename _Ty::_CacheType >( inPath );
+			return std::dynamic_pointer_cast< _Ty >( GetGeneric( inPath ) );
 		}
-
-
-		template< typename _Ty, typename _Cache = DefaultAssetCache< _Ty >,
-			typename std::enable_if<
-			std::is_base_of< AssetBase, _Ty >::value &&
-			!std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
-			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value,
-			int >::type = 0 >
-			static std::shared_ptr< _Ty > Get( const String& inPath )
-		{
-			return _Get< _Ty, typename _Ty::_LoaderType, _Cache >( inPath );
-		}
-
-
-		template< typename _Ty, typename std::enable_if<
-			std::is_base_of< AssetBase, _Ty >::value &&
-			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value,
-			int >::type = 0 >
-		static std::shared_ptr< _Ty > GetUnique( uint32 inIdentifier )
-		{
-			return _GetUnique< _Ty, typename _Ty::_LoaderType >( inIdentifier );
-		}
-
-
-		template< typename _Ty, typename std::enable_if<
-			std::is_base_of< AssetBase, _Ty >::value &&
-			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value,
-			int >::type = 0 >
-		static std::shared_ptr< _Ty > GetUnique( const String& inPath )
-		{
-			return _GetUnique< _Ty, typename _Ty::_LoaderType >( inPath );
-		}
-
-
-		template< typename _Ty, typename std::enable_if<
-			std::is_base_of< AssetBase, _Ty >::value &&
-			std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
-			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value,
-			int >::type = 0 >
-		static std::shared_ptr< _Ty > GetCached( uint32 inIdentifier )
-		{
-			return _GetCached< _Ty, typename _Ty::_CacheType >( inIdentifier );
-		}
-
-
-		template< typename _Ty, typename _Cache = DefaultAssetCache< _Ty >,
-			typename std::enable_if<
-			std::is_base_of< AssetBase, _Ty >::value &&
-			!std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
-			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value,
-			int >::type = 0 >
-			static std::shared_ptr< _Ty > GetCached( uint32 inIdentifier )
-		{
-			return _GetCached< _Ty, _Cache >( inIdentifier );
-		}
-
-
-		template< typename _Ty, typename std::enable_if<
-			std::is_base_of< AssetBase, _Ty >::value &&
-			std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
-			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value,
-			int >::type = 0 >
-		static std::shared_ptr< _Ty > GetCached( const String& inPath )
-		{
-			return _GetCached< _Ty, typename _Ty::_CacheType >( inPath );
-		}
-
-
-		template< typename _Ty, typename _Cache = DefaultAssetCache< _Ty >,
-			typename std::enable_if<
-			std::is_base_of< AssetBase, _Ty >::value &&
-			!std::is_base_of< IAssetCache, typename _Ty::_CacheType >::value &&
-			std::is_base_of< IAssetLoader, typename _Ty::_LoaderType >::value,
-			int >::type = 0 >
-			static std::shared_ptr< _Ty > GetCached( const String& inPath )
-		{
-			return _GetCached< _Ty, _Cache >( inPath );
-		}
-
 		
 	};
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-#include "Hyperion/Core/Asset.h"
-#include "Hyperion/Core/String.h"
-#include "Hyperion/Core/VirtualFileSystem.h"
-#include "Hyperion/Core/AssetLoader.h"
-#include "Hyperion/Core/Async.h"
-
-#include <atomic>
-#include <unordered_map>
-#include <shared_mutex>
-
-namespace Hyperion
-{
-
-
-	class AssetManager
-	{
-
-	private:
-
-		static std::unordered_map< String, std::shared_ptr< AssetInstance > > m_Assets;
-		static std::vector< String > m_CachedGroups;
-		static std::shared_mutex m_CacheMutex;
-
-		template< typename T >
-		static AssetRef< T > Impl_LoadShared( const String& assetIdentifier, bool& bFailed )
-		{
-			// This boolean is set to true if the cast failed
-			bFailed = false;
-
-			// Attempt to load from the cache using a shared lock
-			// This means, if the asset isnt in the cache, then we have to defer to
-			// the unique lock version of this function to actually load the asset
-			{
-				std::shared_lock< std::shared_mutex > lock( m_CacheMutex );
-
-				auto entry = m_Assets.find( assetIdentifier );
-				if( entry != m_Assets.end() )
-				{
-					// If this asset is invalid, or is still loading, then we cant do anything in this function
-					if( !entry->second || !entry->second->m_Loaded || !entry->second->m_Ref )
-					{
-						return nullptr;
-					}
-
-					std::shared_ptr< T > castedAsset = std::dynamic_pointer_cast< T >( entry->second->m_Ref );
-					if( castedAsset )
-					{
-						return AssetRef< T >( castedAsset, entry->second, AssetPath( entry->first, AssetLocation:: );
-					}
-					else
-					{
-						bFailed = true;
-						return nullptr;
-					}
-				}
-			}
-
-			return nullptr;
-		}
-
-		template< typename T >
-		static AssetRef< T > Impl_LoadUnique( const String& assetIdentifier, bool bCheckDisk = true )
-		{
-			{
-				std::unique_lock< std::shared_mutex > lock( m_CacheMutex );
-
-				auto entry = m_Assets.find( assetIdentifier );
-				if( entry != m_Assets.end() )
-				{
-					auto state = entry->second;
-
-					// If the state is null, or its 'loaded' but the ref is null, then erase it, and reload the asset
-					if( !state || ( !state->m_Ref && state->m_Loaded ) )
-					{
-						m_Assets.erase( entry );
-					}
-					else
-					{
-						// If another call is in the middle of loading this asset, then wait for it to finish
-						if( !state->m_Loaded )
-						{
-							state->m_Wait.wait( lock, [ state ]{ return state->m_Loaded; } );
-
-							// Now return the result (if we can cast it properly and its valid)
-							// Were going to reaquire the iterator, incase the map changed more than we expected
-							auto new_entry = m_Assets.find( assetIdentifier );
-							if( new_entry != m_Assets.end() )
-							{
-								auto new_state = new_entry->second;
-								if( new_state && new_state->m_Ref && new_state->m_Loaded )
-								{
-									std::shared_ptr< T > casted_asset = std::dynamic_pointer_cast< T >( new_state->m_Ref );
-									if( casted_asset )
-									{
-										return AssetRef< T >( casted_asset, new_state, new_entry->first );
-									}
-								}
-							}
-
-							// If we couldnt get the asset after waiting for the function to finish loading, we assume
-							// the load of this asset failed (or we specified an invalid cast) so we return null
-							return nullptr;
-						}
-						else
-						{
-							// Already loaded, so we can cast and attempt to return
-							std::shared_ptr< T > casted_asset = std::dynamic_pointer_cast< T >( state->m_Ref );
-							if( casted_asset )
-							{
-								return AssetRef< T >( casted_asset, state, entry->first );
-							}
-
-							return nullptr;
-						}
-					}
-				}
-
-				// If we get here, then we werent able to get the asset from the cache, and we need to load it ourself
-				// So first, we need to insert an entry into the cache to indicate were going to be loading it before we release the lock
-				auto& newEntry = m_Assets[ assetIdentifier ] = std::make_shared< AssetInstance >();
-
-				newEntry->m_Cached		= false;
-				newEntry->m_Loaded		= false;
-				newEntry->m_Ref			= nullptr;
-				newEntry->m_RefCount	= 0;
-				newEntry->m_Location	= AssetLocation::FileSystem;
-			}
-
-			std::shared_ptr< T > newAsset = nullptr;
-
-			// First, were going to attempt to load this asset from the virtual file system
-			if( VirtualFileSystem::FileExists( assetIdentifier ) )
-			{
-				auto streamResult = VirtualFileSystem::StreamFile( assetIdentifier );
-				if( streamResult )
-				{
-					std::shared_ptr< Asset > assetRef = AssetLoader::StreamFromFileName( assetIdentifier, *streamResult );
-					assetRef->m_Path = AssetPath( assetIdentifier, AssetLocation::Virtual );
-					
-					// Now we need to try and cast to the desired type
-					newAsset = std::dynamic_pointer_cast< T >( assetRef );
-					if( !newAsset )
-					{
-						// If we found the asset, but the cast failed, then dont bother checking disk
-						bCheckDisk = false;
-					}
-				}
-			}
-
-			// If we werent able to load from the VFS, then check disk
-			if( !newAsset && bCheckDisk )
-			{
-				auto path = FilePath( assetIdentifier, PathRoot::Assets );
-
-				if( IFileSystem::FileExists( path ) )
-				{
-					auto file = IFileSystem::OpenFile( path, FileMode::Read );
-					if( file )
-					{
-						// Create AssetStream, so we can stream this asset data in
-						auto f_size = file->Size();
-						AssetStream stream( std::move( file ), 0, f_size );
-
-						auto gasset = AssetLoader::StreamFromFileName( AssetPath( assetIdentifier, AssetLocation::FileSystem ), stream );
-						gasset->m_Path = AssetPath( assetIdentifier, AssetLocation::FileSystem );
-
-						newAsset = std::dynamic_pointer_cast<T>( gasset );
-					}
-				}
-			}
-
-			// Reaquire unique lock so we can indicate that we finished loading
-			{
-				std::unique_lock< std::shared_mutex > lock( m_CacheMutex );
-
-				auto entry = m_Assets.find( assetIdentifier );
-				if( entry == m_Assets.end() || !entry->second )
-				{
-					auto& i = m_Assets[ assetIdentifier ] = std::make_shared< AssetInstance >();
-
-					i->m_Cached		= false;
-					i->m_Loaded		= true;
-					i->m_Ref		= newAsset;
-					i->m_RefCount	= 0;
-					i->m_Location	= bCheckDisk ? AssetLocation::FileSystem : AssetLocation::Virtual;
-					
-					// Somehow the entry went missing, so were going to recreate it and return
-					return AssetRef< T >( newAsset, i, AssetLocation( entry->first, i->m_Location ) );
-				}
-				else
-				{
-					auto i = entry->second;
-
-					i->m_Loaded		= true;
-					i->m_Ref		= newAsset;
-					i->m_RefCount	= 0;
-					i->m_Location	= bCheckDisk ? AssetLocation::FileSystem : AssetLocation::Virtual;
-
-					// Release the lock and trigger CV, we dont have to worry about the AssetInstance being erased
-					// because its a shared_ptr, so we can safely unlock before building the asset ref were returning
-					lock.unlock();
-
-					i->m_Wait.notify_all();
-					return AssetRef< T >( newAsset, i, AssetLocation( entry->first, i->m_Location ) );
-				}
-			}
-		}
-
-	public:
-
-		AssetManager() = delete;
-
-		/*
-			LoadSync
-			* Loads an asset from either the virtual file system or disk
-			* If bCheckDisk is false, only the VFS will be checked for the asset
-			* Can be called from any thread.. thread-safe!
-		
-		template< typename T >
-		static AssetRef< T > LoadSync( const String& inAssetIdentifier, bool bCheckDisk = true )
-		{
-			// Verify the identifier argument, needs to be a basic string (non localized), lowercase, and not empty
-			HYPERION_VERIFY_BASICSTR( inAssetIdentifier );
-			auto assetIdentifier = inAssetIdentifier.TrimBoth().ToLower();
-
-			if( assetIdentifier.IsEmpty() ) return nullptr;
-
-			// First, attempt to read this from the cache, if we cant, then we have to call in a slower function
-			// to either wait on another thread to finish loading this asset, or load it ourself
-			bool bFailed = false;
-			auto quick_res = Impl_LoadShared< T >( assetIdentifier, bFailed );
-
-			// If we either got a valid result, or are unable to load this asset, then return the result
-			if( quick_res || bFailed )
-			{
-				return quick_res;
-			}
-
-			return Impl_LoadUnique< T >( assetIdentifier, bCheckDisk );
-		}
-
-		/*
-			LoadAsync
-		
-		template< typename T >
-		static TaskHandle< AssetRef< T > > LoadAsync( const String& Identifier, bool bCheckDisk = true )
-		{
-			HYPERION_VERIFY_BASICSTR( Identifier );
-
-			// Basically, were just going to perform asset loading on the thread pool
-			// Issue is.. how to handle multi-threading with IFileSystem/VirtualFileSystem
-			return Task::Create< AssetRef< T > >( std::bind( &AssetManager::LoadSync< T >, Identifier, bCheckDisk ) );
-		}
-
-		/*
-			CacheGroupSync
-		
-		static bool CacheGroupSync( const String& groupIdentifier, bool bBatchRead = false );
-
-		/*
-			CacheGroupAsync
-		
-		static TaskHandle< bool > CacheGroupAsync( const String& groupIdentifier, bool bBatchRead = false );
-
-		/*
-			IsGroupCached
-		
-		static bool IsGroupCached( const String& groupIdentifier );
-
-		/*
-			FreeGroupSync
-		
-		static bool FreeGroupSync( const String& groupIdentifier );
-
-		/*
-			FreeGroupAsync
-		
-		static TaskHandle< bool > FreeGroupAsync( const String& groupIdentifier );
-
-		/*
-			IsAssetCached
-		
-
-		enum class CacheState
-		{
-			None = 0,
-			Soft = 1,
-			Hard = 2
-		};
-
-		static CacheState IsAssetCached( const String& assetIdentifier );
-
-		static void CheckAsset( const std::shared_ptr< AssetInstance >& targetInstance );
-	};
-
-}
-*/

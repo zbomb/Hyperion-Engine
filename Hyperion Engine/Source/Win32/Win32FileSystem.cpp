@@ -21,20 +21,20 @@
 namespace Hyperion
 {
 
-	String Win32FileServices::GetLocalPathLocation( LocalPath inPath )
+	String Win32FileServices::GetRootPathLocation( PathRoot inPath )
 	{
 		switch( inPath )
 		{
-		case LocalPath::Root:
+		case PathRoot::SystemRoot:
 			return String();
 
-		case LocalPath::Game:
+		case PathRoot::Game:
 			return Platform::GetExecutablePath().Append( "/" );
 
-		case LocalPath::Content:
+		case PathRoot::Content:
 			return Platform::GetExecutablePath().Append( "/content/" );
 
-		case LocalPath::Documents:
+		case PathRoot::Documents:
 		default:
 			return Platform::GetUserDataPath().Append( "/" ).Append( HYPERION_DOC_FOLDER );
 		}

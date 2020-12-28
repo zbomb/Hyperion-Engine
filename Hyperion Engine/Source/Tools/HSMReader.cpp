@@ -364,15 +364,18 @@ namespace Hyperion
 		GenericBuffer gbuf( buffer, true, false );
 		DataReader reader( gbuf );
 
-		auto mat_ptr = MaterialAssetLoader::Load( assetId, reader, FilePath( assetPath, LocalPath::Content, FileSystem::Disk ) );
+		auto mat_ptr = MaterialAsset::LoadFromReader( reader, assetPath, assetId, inOffset, inLength );
 		if( !mat_ptr )
 		{
 			Console::WriteLine( "[Warning] HSMReader: Failed to load baked material from static model file!" );
 			return nullptr;
 		}
 
-		MaterialAssetCache::Store( assetId, mat_ptr );
-		return mat_ptr;
+		// TODO: Add material to cache, might not have instance info either.. maybe we should discover baked assets during startup...
+
+		// TODO: Implement this!
+		HYPERION_NOT_IMPLEMENTED( "Need to write system to cache materials baked into static model assets!" );
+		return nullptr;
 	}
 
 

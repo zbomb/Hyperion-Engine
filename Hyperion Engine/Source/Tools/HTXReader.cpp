@@ -11,11 +11,11 @@
 namespace Hyperion
 {
 
-	HTXReader::HTXReader( IFile& inFile )
+	HTXReader::HTXReader( IFile& inFile, uint64 inOffset, uint64 inLength )
 		: m_Reader( inFile ), m_bValidFormat( false ), m_Target( inFile )
 	{
 		// Check if this file is a valid texture file
-		m_Reader.SeekBegin();
+		m_Reader.SeekOffset( inOffset );
 
 		std::vector< byte > headerSequence;
 		static const std::vector< byte > correctSequence =
@@ -24,7 +24,7 @@ namespace Hyperion
 			0x9D, 0xD9, 0x00, 0x02 // <- Last two bytes differentiates hyperion formats, 0x00, 0x02 is .htx
 		};
 
-		if( m_Reader.Size() < 20 ||
+		if( m_Reader.Size() < 20 || ( m_Length != 0 && m_Length < 20 ) ||
 			m_Reader.ReadBytes( headerSequence, 8 ) != DataReader::ReadResult::Success ||
 			!std::equal( correctSequence.begin(), correctSequence.end(), headerSequence.begin() ) )
 		{
@@ -34,8 +34,6 @@ namespace Hyperion
 		{
 			m_bValidFormat = true;
 		}
-
-		m_Reader.SeekBegin();
 	}
 
 
@@ -72,7 +70,7 @@ namespace Hyperion
 		// LOD Entry Size: 16 bytes
 
 		// First, lets read in all of the data fields from the header 
-		m_Reader.SeekOffset( 8 );
+		m_Reader.SeekOffset( 8  +  m_Offset);
 		std::vector< byte > headerData;
 		if( m_Reader.ReadBytes( headerData, 12 ) != DataReader::ReadResult::Success )
 		{
@@ -111,9 +109,14 @@ namespace Hyperion
 		outHeader.LODPadding	= lodPadding;
 
 		// Now, we have all of the static data read in, lets validate the size of the file, ensure we have enough data to read the LOD level(s) in
-		auto fileSize = m_Reader.Size();
+		uint64 fileSize = m_Length == 0 ? (uint64)m_Reader.Size() : m_Length;
+		if( fileSize > (uint64)m_Reader.Size() )
+		{
+			Console::WriteLine( "[DEBUG] HTXReader: Failed to read texture asset '", m_Target.GetPath().ToString(), "' because the desired length is larger than the current file" );
+			return Result::InvalidFormat;
+		}
 
-		if( fileSize < ( lodCount * 16 ) + 20 )
+		if( fileSize < ( lodCount * 16 ) + 20  )
 		{
 			#ifdef HYPERION_DEBUG
 			Console::WriteLine( "[DEBUG] HTXReader: Failed to read texture asset '", m_Target.GetPath().ToString(), "' because there isnt enough data for the LOD header list (",
@@ -191,8 +194,8 @@ namespace Hyperion
 		}
 
 		// Ensure the ranges provided fall in the readers range
-		m_Reader.SeekBegin();
-		auto fileSize = m_Reader.Size();
+		m_Reader.SeekBegin( m_Offset );
+		uint64 fileSize = m_Length == 0 ? (uint64)m_Reader.Size() : m_Length;
 
 		if( inOffset + inSize > fileSize )
 		{
@@ -204,7 +207,7 @@ namespace Hyperion
 		}
 
 		// Read the data
-		m_Reader.SeekOffset( inOffset );
+		m_Reader.SeekOffset( m_Offset + inOffset );
 		if( m_Reader.ReadBytes( outData, inSize ) != DataReader::ReadResult::Success )
 		{
 			#ifdef HYPERION_DEBUG

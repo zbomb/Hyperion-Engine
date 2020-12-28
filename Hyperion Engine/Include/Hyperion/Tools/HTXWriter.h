@@ -8,7 +8,7 @@
 
 #include "Hyperion/File/IFile.h"
 #include "Hyperion/Core/Stream.h"
-#include "Hyperion/File/PhysicalFileSystem.h"
+#include "Hyperion/File/FileSystem.h"
 #include "Hyperion/Assets/TextureAsset.h"
 
 
@@ -52,7 +52,7 @@ namespace Hyperion
 			Failed = 4
 		};
 
-		static Result Write( std::unique_ptr< PhysicalFile >& inFile, Input& inData );
+		static Result Write( std::unique_ptr< File >& inFile, Input& inData );
 	};
 
 }

@@ -14,7 +14,7 @@
 #include "Hyperion/Assets/TextureAsset.h"
 #include "Hyperion/Library/Math/MathCore.h"
 #include "Hyperion/Core/RenderManager.h"
-#include "Hyperion/File/UnifiedFileSystem.h"
+#include "Hyperion/File/FileSystem.h"
 
 
 
@@ -65,6 +65,34 @@ namespace Hyperion
 	ConsoleVar< uint32 > g_CVar_TextureMaxResidentMemory(
 		"r_texture_max_resident_memory", "Maximum amount of resident mip memory per texture? In kB",
 		64, 0, 10000000 );
+
+	ConsoleVar< uint32 > g_CVar_AdaptiveModel_MaxLoadsPerTick(
+		"r_adaptive_model_max_loads", "Maximum number of model LODs to load in a single tick",
+		5, 1, 100 );
+
+	ConsoleVar< uint32 > g_CVar_AdaptiveModel_MaxUnloadsPerTick(
+		"r_adaptive_model_max_unloads", "Maximum number of model LODs to unload from memory in a single tick",
+		5, 1, 100 );
+
+	ConsoleVar< float > g_CVar_ModelLODMult_Global(
+		"r_model_lod_mult_global", "Multiplier applied when selecting an LOD for a model",
+		1.f, 0.01f, 10.f );
+
+	ConsoleVar< float > g_CVar_ModelLODMult_StaticModel(
+		"r_model_lod_mult_static_model", "Multiplier applied when selecting an LOD for model thats static",
+		1.f, 0.01f, 10.f );
+
+	ConsoleVar< float > g_CVar_ModelLODMult_DynamicModel(
+		"r_model_lod_mult_dynamic_model", "Multiplier applied when selecting an LOD for a model thats dynamic",
+		1.f, 0.01f, 10.f );
+
+	ConsoleVar< float > g_CVar_ModelLODMult_Level(
+		"r_model_lod_mult_level", "Multiplier applied when selecting an LOD for a model being used by the level",
+		1.f, 0.01f, 10.f );
+
+	ConsoleVar< float > g_CVar_ModelLODMult_Character(
+		"r_model_lod_mult_character", "Multiplier applied when selecting an LOD for a model used by a character",
+		1.f, 0.01f, 10.f );
 
 
 	/*=============================================================================================================
@@ -304,6 +332,18 @@ namespace Hyperion
 	bool AdaptiveAssetManagerTextureUnloadRequestSort::operator()( const std::shared_ptr< AdaptiveTextureUnloadRequest >& lhs, const std::shared_ptr< AdaptiveTextureUnloadRequest >& rhs )
 	{
 		// Sort by memory, high to low
+		return lhs->GetMemory() > rhs->GetMemory();
+	}
+
+
+	bool AdaptiveAssetManagerModelLoadRequestSort::operator()( const std::shared_ptr< AdaptiveModelLoadRequest >& lhs, const std::shared_ptr< AdaptiveModelLoadRequest >& rhs )
+	{
+		return lhs->GetPriority() > rhs->GetPriority();
+	}
+
+	
+	bool AdaptiveAssetManagerModelUnloadRequestSort::operator()( const std::shared_ptr< AdaptiveModelUnloadRequest >& lhs, const std::shared_ptr< AdaptiveModelUnloadRequest >& rhs )
+	{
 		return lhs->GetMemory() > rhs->GetMemory();
 	}
 
@@ -626,12 +666,14 @@ namespace Hyperion
 			// Check for locked, or invalid textures
 			if( It->second && It->second->IsLocked() )
 			{
+				It++;
 				continue;
 			}
 			else if( !It->second || !It->second->GetAsset() )
 			{
+				auto tex_ptr = It->second;
 				It = m_Textures.erase( It );
-				FinishDestroyTexture( *( It->second ) );
+				FinishDestroyTexture( *tex_ptr );
 				continue;
 			}
 
@@ -656,14 +698,12 @@ namespace Hyperion
 				continue;
 			}
 
-			// DONT FORGET: HAVE TO CAUCLATE PRIORITY AT SOME POINT
-
 			// Check if we can generate a load or unload request
 			auto loadReq = texture->GenerateLoadRequest( texture );
 			if( loadReq )
 			{
 				#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
-				Console::WriteLine( "[DEBUG] AAManager: Generated load request for '", texture->GetAsset()->GetPath().ToString(), "' to level ", 
+				Console::WriteLine( "[DEBUG] AAManager: Generated load request for '", texture->GetAsset()->GetPath(), "' to level ", 
 									loadReq->GetLevel(), " from level ", texture->GetActiveLevel(), " (", loadReq->GetMemory(), " bytes)" ); // ??? bytes or kb or mb?
 				#endif
 				m_TextureLoadQueue.push_back( loadReq ); // TODO: Sorted insert
@@ -674,7 +714,7 @@ namespace Hyperion
 				if( dropReq )
 				{
 					#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
-					Console::WriteLine( "[DEBUG] AAManager: Generated unload request for '", texture->GetAsset()->GetPath().ToString(), "' to level ", dropReq->GetLevel(),
+					Console::WriteLine( "[DEBUG] AAManager: Generated unload request for '", texture->GetAsset()->GetPath(), "' to level ", dropReq->GetLevel(),
 										" from level ", texture->GetActiveLevel(), " (", dropReq->GetMemory(), " bytes)" ); // ??? bytes or kb or mb?
 					#endif
 					m_TextureUnloadQueue.push_back( dropReq ); // TODO: Sorted insert
@@ -791,7 +831,7 @@ namespace Hyperion
 		m_MemoryUsage -= inTexture.GetActiveMemory();
 
 		#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
-		Console::WriteLine( "[DEBUG] AAManager: Destroying texture '", inTexture.GetAsset()->GetPath().ToString(), "' saving ", inTexture.GetActiveMemory(), " bytes" ); // bytes mb or kb????
+		Console::WriteLine( "[DEBUG] AAManager: Destroying texture '", inTexture.GetAsset()->GetPath(), "' saving ", inTexture.GetActiveMemory(), " bytes" ); // bytes mb or kb????
 		#endif
 	}
 
@@ -835,7 +875,7 @@ namespace Hyperion
 					m_MemoryUsage += loadRequest->GetMemory();
 
 					#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
-					Console::WriteLine( "[DEBUG] AAManager: Selected load request for '", loadRequest->GetTarget()->GetAsset()->GetPath().ToString(), "' at level ", 
+					Console::WriteLine( "[DEBUG] AAManager: Selected load request for '", loadRequest->GetTarget()->GetAsset()->GetPath(), "' at level ", 
 										loadRequest->GetLevel(), " neededing ", loadRequest->GetMemory(), " bytes" ); // bytes or mb or kb??
 					#endif
 				}
@@ -848,7 +888,7 @@ namespace Hyperion
 						m_MemoryUsage -= drop->GetMemory();
 
 						#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
-						Console::WriteLine( "[DEBUG] AAManager: Selected pure unload for '", drop->GetTarget()->GetAsset()->GetPath().ToString(), "' down to level ",
+						Console::WriteLine( "[DEBUG] AAManager: Selected pure unload for '", drop->GetTarget()->GetAsset()->GetPath(), "' down to level ",
 											drop->GetLevel(), " saving ", drop->GetMemory(), " bytes" ); // btyes or mb or kb??
 						#endif
 					}
@@ -862,7 +902,7 @@ namespace Hyperion
 						m_MemoryUsage -= drop->GetTopLevelMemoryUsage();
 
 						#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
-						Console::WriteLine( "[DEBUG] AAManager: Selected force drop for '", drop->GetAsset()->GetPath().ToString(), "' down to level ",
+						Console::WriteLine( "[DEBUG] AAManager: Selected force drop for '", drop->GetAsset()->GetPath(), "' down to level ",
 											drop->GetActiveLevel() - 1, " saving ", drop->GetTopLevelMemoryUsage(), " bytes" ); // bytes or mb or kb??
 						#endif
 					}
@@ -904,7 +944,7 @@ namespace Hyperion
 			for( auto& tex : forceDropList )
 			{
 				auto level = tex->GetActiveLevel() - 1;
-				HYPERION_VERIFY( tex && tex->GetActiveLevel() > tex->GetMinimumLevel() && tex->GetAsset(), "Force drop target became invalid?" );
+				HYPERION_VERIFY( tex && tex->GetActiveLevel() < tex->GetMinimumLevel() && tex->GetAsset(), "Force drop target became invalid?" );
 
 				if( r.LowerTextureAssetLOD( tex->GetAsset(), level ) )
 				{
@@ -985,7 +1025,7 @@ namespace Hyperion
 		}
 
 		// Pull some pure drops to save some memory
-		for( auto It = m_TextureUnloadQueue.begin(); It != m_TextureUnloadQueue.end(); It++ )
+		for( auto It = m_TextureUnloadQueue.begin(); It != m_TextureUnloadQueue.end(); )
 		{
 			auto trgt = *It;
 			if( trgt && trgt->IsValid() )
@@ -994,11 +1034,17 @@ namespace Hyperion
 				savedMem += trgt->GetMemory();
 				dropCount++;
 
+				It = m_TextureUnloadQueue.erase( It );
+
 				if( dropCount >= maxDropsTotal ||
 					( outPureDrops.size() >= minPureDrops && savedMem >= neededMem ) )
 				{
 					break;
 				}
+			}
+			else
+			{
+				It++;
 			}
 		}
 
@@ -1039,6 +1085,13 @@ namespace Hyperion
 
 			// We didnt get under budget, so we need to reset the load before returning
 			( *loadIter )->Reset( originalLevel, originalMemory, originalPriority );
+
+			// Also, re-insert pure drops from the list
+			for( auto It = outPureDrops.begin(); It != outPureDrops.end(); It++ )
+			{
+				m_TextureUnloadQueue.push_front( *It );
+			}
+
 			return;
 		}
 
@@ -1051,6 +1104,12 @@ namespace Hyperion
 				// Were unable to drop the load any further, or come up with a list of unloads to make enough memory
 				// So, were still going to allow the force drops to go ahead, and the pure drops
 				( *loadIter )->Reset( originalLevel, originalMemory, originalPriority );
+
+				for( auto It = outPureDrops.begin(); It != outPureDrops.end(); It++ )
+				{
+					m_TextureUnloadQueue.push_front( *It );
+				}
+
 				return;
 			}
 
@@ -1071,9 +1130,10 @@ namespace Hyperion
 
 		auto& targetAsset	= loadRequest->GetTarget()->GetAsset();
 		auto targetHeader	= targetAsset->GetHeader();
-		auto targetPath		= targetAsset->GetPath();
+		auto targetPath		= targetAsset->GetDiskPath();
+		
 
-		auto f = UnifiedFileSystem::OpenFile( targetPath );
+		auto f = FileSystem::OpenFile( targetPath, FileMode::Read );
 		if( !f || !f->IsValid() )
 		{
 			Console::WriteLine( "[ERROR] AdaptiveAssetManager: Failed to load LOD level(s) for texture '", targetPath, "' because the file couldnt be opened" );
@@ -1128,7 +1188,7 @@ namespace Hyperion
 				std::vector< byte >().swap( allData );
 
 				#ifdef HYPERION_TEXTURE_STREAMING_DEBUG
-				Console::WriteLine( "[DEBUG] AAManager: Loaded LOD level(s) for '", targetAsset->GetPath().ToString(), "' up to level ", loadRequest->GetLevel(), " using ", dataSize, " bytes" ); // bytes or kb or mb??
+				Console::WriteLine( "[DEBUG] AAManager: Loaded LOD level(s) for '", targetAsset->GetPath(), "' up to level ", loadRequest->GetLevel(), " using ", dataSize, " bytes" ); // bytes or kb or mb??
 				#endif
 
 				// Now, make the renderer call to create this new texture
@@ -1145,7 +1205,7 @@ namespace Hyperion
 
 		return false;
 	}
-
+	
 
 	/*----------------------------------------------------------------------------------------------
 		AdaptiveAssetManager::TextureWorker_PopNextLoadRequest
@@ -1179,8 +1239,46 @@ namespace Hyperion
 	bool AdaptiveAssetManager::TextureWorker_GenerateForceDropList( uint32 dropCount, float loadPriority, uint32 neededMemory, 
 																	const std::vector< std::shared_ptr< AdaptiveTextureUnloadRequest > >& selectedDrops, std::vector< std::shared_ptr< AdaptiveTexture > >& outList )
 	{
-		// TODO: Even when we fail, we want to output a list of the 'best' drops possible, to get us as close as possible with as low memory as possible
-		// because, even if we failed to reach the memory target, we might still perform them, to avoid a deadlock
+		if( dropCount == 0 ) return true;
+
+		// We need to find any textures whose priority is less than the load priority, and drop a level off from them to save some memory
+		// until we get under budget, or we run out of available drops
+		uint32 savedMemory = 0;
+		uint32 count = 0;
+
+		for( auto It = m_Textures.begin(); It != m_Textures.end(); It++ )
+		{
+			if( !It->second ) continue;
+
+			// Ensure this texture is able to be dropped
+			if( It->second->GetPriority() >= loadPriority ) continue;
+
+			// Check if this texture is in the pure drop list already
+			bool bIsPureDrop = false;
+			for( auto UnloadIt = selectedDrops.begin(); UnloadIt != selectedDrops.end(); UnloadIt++ )
+			{
+				auto unloadTarget = *UnloadIt ? ( *UnloadIt )->GetTarget() : nullptr;
+				if( unloadTarget && unloadTarget->GetIdentifier() == It->first )
+				{
+					bIsPureDrop = true;
+					break;
+				}
+			}
+
+			if( bIsPureDrop ) continue;
+
+			// Now, check if this texture can even drop another level
+			if( ( It->second->GetPendingLevel() != It->second->GetActiveLevel() ) ||
+				( It->second->GetActiveLevel() >= It->second->GetMinimumLevel() ) ) continue;
+
+			outList.push_back( It->second );
+			count++;
+			savedMemory += It->second->GetTopLevelMemoryUsage();
+
+			if( savedMemory >= neededMemory ) return true;
+			else if( count >= dropCount ) break;
+		}
+
 		return false;
 	}
 
@@ -1195,7 +1293,130 @@ namespace Hyperion
 	---------------------------------------------------------------------------------------*/
 	void AdaptiveAssetManager::PerformModelPass()
 	{
+		// Aquire lock on the mutex
+		std::lock_guard< std::mutex > lock( m_ModelMutex );
 
+		// Get multiplier values
+		float globalMult		= g_CVar_ModelLODMult_Global.GetValue();
+		float staticMult		= g_CVar_ModelLODMult_StaticModel.GetValue();
+		float dynamicMult		= g_CVar_ModelLODMult_DynamicModel.GetValue();
+		float levelMult			= g_CVar_ModelLODMult_Level.GetValue();
+		float characterMult		= g_CVar_ModelLODMult_Character.GetValue();
+
+		// Loop through each model, determine if there are any null entries
+		// and then, we need to calculate the LOD levels we need
+		for( auto It = m_Models.begin(); It != m_Models.end(); )
+		{
+			// Check if the model is locked
+			if( It->second && It->second->IsLocked() )
+			{
+				continue;
+			}
+			else if( !It->second->IsValid() )
+			{
+				auto mdl_ptr = It->second;
+				It = m_Models.erase( It );
+				FinishDestroyModel( *mdl_ptr );
+				continue;
+			}
+
+			// Next, we need to go through and figure out which LODs we need, and how important each of them are
+			// THen, we can cancel any requests that are no longer valid
+			auto& mdl = It->second;
+			if( !mdl->Update( globalMult, characterMult, dynamicMult, levelMult, staticMult, (uint32) m_Objects.size() ) )
+			{
+				It = m_Models.erase( It );
+				FinishDestroyModel( *mdl );
+				continue;
+			}
+
+			mdl->CancelStaleRequests();
+
+			// Now, we need to generate missing load and unload requests
+			std::vector< std::shared_ptr< AdaptiveModelLoadRequest > > loadRequests;
+			std::vector< std::shared_ptr< AdaptiveModelUnloadRequest > > unloadRequests;
+
+			mdl->GenerateRequests( loadRequests, unloadRequests );
+
+			if( loadRequests.size() > 0 )
+			{
+				#ifdef HYPERION_MODEL_STREAMING_DEBUG
+				Console::WriteLine( "[DEBUG] AAManager: Generated new model LOD load request(s) for ID: ", mdl->GetIdentifier() );
+				#endif
+
+				for( auto It = loadRequests.begin(); It != loadRequests.end(); It++ )
+				{
+					if( *It )
+					{
+						// TODO: Sorted Insert
+						( *It )->SetOwner( mdl );
+						m_ModelLoadQueue.push_back( *It );
+					}
+				}
+			}
+
+			if( unloadRequests.size() > 0 )
+			{
+				#ifdef HYPERION_MODEL_STREAMING_DEBUG
+				Console::WriteLine( "[DEBUG] AAManager: Generated new model LOD unload request(s) for ID: ", mdl->GetIdentifier() );
+				#endif
+
+				for( auto It = unloadRequests.begin(); It != unloadRequests.end(); It++ )
+				{
+					if( *It )
+					{
+						// TODO: Sorted insert
+						( *It )->SetOwner( mdl );
+						m_ModelUnloadQueue.push_back( *It );
+					}
+				}
+			}
+
+			It++;
+		}
+
+		SortModelLoadRequests();
+		SortModelUnloadRequests();
+	}
+
+
+	void AdaptiveAssetManager::SortModelLoadRequests()
+	{
+		// Loop through each request, erase stale ones
+		for( auto It = m_ModelLoadQueue.begin(); It != m_ModelLoadQueue.end(); )
+		{
+			auto req = *It;
+			if( !req || !req->IsValid() )
+			{
+				It = m_ModelLoadQueue.erase( It );
+			}
+			else
+			{
+				It++;
+			}
+		}
+
+		std::sort( m_ModelLoadQueue.begin(), m_ModelLoadQueue.end(), AdaptiveAssetManagerModelLoadRequestSort() );
+	}
+
+
+	void AdaptiveAssetManager::SortModelUnloadRequests()
+	{
+		// Loop through each request, and sort
+		for( auto It = m_ModelUnloadQueue.begin(); It != m_ModelUnloadQueue.end(); )
+		{
+			auto req = *It;
+			if( !req || !req->IsValid() )
+			{
+				It = m_ModelUnloadQueue.erase( It );
+			}
+			else
+			{
+				It++;
+			}
+		}
+
+		std::sort( m_ModelUnloadQueue.begin(), m_ModelUnloadQueue.end(), AdaptiveAssetManagerModelUnloadRequestSort() );
 	}
 
 
@@ -1203,11 +1424,130 @@ namespace Hyperion
 	void AdaptiveAssetManager::ModelWorker_Main( CustomThread& thisThread )
 	{
 		Console::WriteLine( "[DEBUG] ModelWorker: Initializing..." );
+		std::chrono::time_point< std::chrono::high_resolution_clock > lastTick = std::chrono::high_resolution_clock::now();
 
-		// TODO
+		auto maxLoads		= g_CVar_AdaptiveModel_MaxLoadsPerTick.GetValue();
+		auto maxUnloads		= g_CVar_AdaptiveModel_MaxUnloadsPerTick.GetValue();
+
+		while( thisThread.IsRunning() )
+		{
+			std::vector< std::shared_ptr< AdaptiveModelLoadRequest > > loadList;
+			std::vector< std::shared_ptr< AdaptiveModelUnloadRequest > > unloadList;
+
+			// First, select the loads and unloads were going to perform this tick
+			{
+				std::lock_guard< std::mutex > lock( m_ModelMutex );
+
+				// Gather together loads to run this tick
+				for( auto It = m_ModelLoadQueue.begin(); It != m_ModelLoadQueue.end(); )
+				{
+					if( *It && ( *It )->IsValid() )
+					{
+						loadList.push_back( *It );
+						( *It )->SetOwnerLock( true );
+
+						// Check if we hit the max number of loads
+						if( loadList.size() > maxLoads ) { break; }
+						else { It++; }
+					}
+					else
+					{
+						It = m_ModelLoadQueue.erase( It );
+					}
+				}
+
+				// Gather togher unloads to run this tick
+				for( auto It = m_ModelUnloadQueue.begin(); It != m_ModelUnloadQueue.end(); )
+				{
+					if( *It && ( *It )->IsValid() )
+					{
+						unloadList.push_back( *It );
+						( *It )->SetOwnerLock( true );
+
+						// Check if we hit the max number of unloads
+						if( unloadList.size() > maxUnloads ) { break; }
+						else { It++; }
+					}
+				}
+			}
+
+			// Release the lock, and start to perform the loads/unloads, and unlock the owning asset afterwards
+			// First, were going to perform the actual loads, this way we dont leave gaps
+			for( auto It = loadList.begin(); It != loadList.end(); It++ )
+			{
+				if( ModelWorker_PerformLoad( *It ) )
+				{
+					( *It )->OnComplete();
+				}
+				else
+				{
+					( *It )->OnFailed();
+				}
+			}
+
+			for( auto It = unloadList.begin(); It != unloadList.end(); It++ )
+			{
+				ModelWorker_PerformUnload( *It );
+				( *It )->OnComplete();
+			}
+
+			// We cant start to unlock the models until were finished, since a single model can have loads and unloads at the same time
+			// or multiple unloads, or multiple loads...
+			for( auto It = loadList.begin(); It != loadList.end(); It++ )
+			{
+				if( *It )
+				{
+					( *It )->SetOwnerLock( false );
+				}
+			}
+
+			for( auto It = unloadList.begin(); It != unloadList.end(); It++ )
+			{
+				if( *It )
+				{
+					( *It )->SetOwnerLock( false );
+				}
+			}
+
+			std::this_thread::sleep_until( lastTick + std::chrono::milliseconds( 16 ) );
+			lastTick = std::chrono::high_resolution_clock::now();
+		}
 
 		Console::WriteLine( "[DEBUG] ModelWorker: Shutting down..." );
 	}
+
+
+	bool AdaptiveAssetManager::ModelWorker_PerformLoad( const std::shared_ptr< AdaptiveModelLoadRequest >& inRequest )
+	{
+		if( !inRequest || !inRequest->IsValid() ) { return false; }
+
+		if( inRequest->IsDynamic() )
+		{
+			auto req_ptr = std::dynamic_pointer_cast< AdaptiveDynamicModelLoadRequest >( inRequest );
+			HYPERION_VERIFY( req_ptr, "Failed to cast model load request pointer, when it shouldnt have failed" );
+		}
+		else
+		{
+			auto req_ptr = std::dynamic_pointer_cast< AdaptiveStaticModelLoadRequest >( inRequest );
+			HYPERION_VERIFY( req_ptr, "Failed to cast model load request pointer, when it shouldnt have failed" );
+		}
+
+		return false;
+	}
+
+
+	void AdaptiveAssetManager::ModelWorker_PerformUnload( const std::shared_ptr< AdaptiveModelUnloadRequest >& inRequest )
+	{
+		
+	}
+
+
+	void AdaptiveAssetManager::FinishDestroyModel( AdaptiveModel& inModel )
+	{
+		// TODO
+	}
+
+
 
 
 

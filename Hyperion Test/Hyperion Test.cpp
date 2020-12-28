@@ -8,7 +8,7 @@
 #include "Hyperion/Core/ThreadManager.h"
 #include "Hyperion/Core/RenderManager.h"
 #include "Hyperion/Console/Console.h"
-#include "Hyperion/File/UnifiedFileSystem.h"
+#include "Hyperion/File/FileSystem.h"
 #include "Tests.hpp"
 
 #include <windowsx.h>
@@ -82,6 +82,10 @@ int Impl_Main( HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow )
     }
 
     // Begin engine initialization
+    // First, ensure type system gets initialized
+    // If we dont call init here, it will perform the init on first use, which could cause a little 'hickup'
+    // So just to get it out of the way, when performance requirments arent high, lets just call it
+    Hyperion::RTTI::Initialize();
 
     // Start the console first, so we can load the config before any other systems
     // The filesystem doesnt need to be loaded first, since its only using the physical file system
@@ -91,8 +95,10 @@ int Impl_Main( HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow )
         return -1;
     }
 
+    // EDIT: For now, were only going to use the physical file system, to simplify development
     // Load the file systems and perform asset discovery
-    Hyperion::UnifiedFileSystem::Initialize();
+    //Hyperion::UnifiedFileSystem::Initialize();
+    Hyperion::FileSystem::Initialize( true );
 
     Hyperion::uint32 ifs = 0;
 
@@ -254,7 +260,7 @@ int Impl_Main( HINSTANCE hInstance, LPWSTR lpCmdLine, int nCmdShow )
     Hyperion::RenderManager::Stop();
     Hyperion::ThreadManager::Stop();
     Hyperion::Console::Stop();
-    Hyperion::UnifiedFileSystem::Shutdown();
+    Hyperion::FileSystem::Shutdown();
 
     // If we created a console window, we need to free it
     if( bHasOSConsoleFlag )
@@ -322,7 +328,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     Hyperion::RenderManager::Stop();
     Hyperion::ThreadManager::Stop();
     Hyperion::Console::Stop();
-    Hyperion::UnifiedFileSystem::Shutdown();
+    Hyperion::FileSystem::Shutdown();
 
     return ErrRet;
 }

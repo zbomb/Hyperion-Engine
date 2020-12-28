@@ -20,12 +20,14 @@ namespace Hyperion
 	private:
 
 		IFile& m_Target;
+		uint64 m_Offset;
+		uint64 m_Length;
 		DataReader m_Reader;
 		bool m_bValidFormat;
 
 	public:
 
-		HTXReader( IFile& inFile );
+		HTXReader( IFile& inFile, uint64 offset = 0, uint64 length = 0 );
 		~HTXReader();
 
 		HTXReader() = delete;

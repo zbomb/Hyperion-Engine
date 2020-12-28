@@ -13,6 +13,7 @@
 #define HYPERION_DEBUG
 #define HYPERION_DEBUG_OBJECT
 #define HYPERION_DEBUG_RENDERER
+#define HYPERION_DEBUG_ASSETS
 
 // External Defines
 

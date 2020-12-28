@@ -11,8 +11,8 @@
 namespace Hyperion
 {
 
-	HMATReader::HMATReader( DataReader& inReader )
-		: m_Reader( inReader ), m_bInvalidFormat( true ), m_Size( (uint32)inReader.Size() )
+	HMATReader::HMATReader( DataReader& inReader, uint64 inOffset, uint64 inLength )
+		: m_Reader( inReader ), m_bInvalidFormat( true ), m_Size( inOffset == 0 ? (uint64)inReader.Size() : inLength ), m_Offset( inOffset )
 	{
 		_ReadFormat();
 	}
@@ -33,9 +33,9 @@ namespace Hyperion
 		};
 
 		// First, check if we meet the minimum data requirment
-		if( m_Reader.Size() >= 16 )
+		if( m_Size >= 16 )
 		{
-			m_Reader.SeekBegin();
+			m_Reader.SeekBegin( m_Offset );
 			std::vector< byte > headerData;
 
 			if( m_Reader.ReadBytes( headerData, 16 ) == DataReader::ReadResult::Success ||
@@ -58,7 +58,7 @@ namespace Hyperion
 		}
 
 		std::vector< byte > countData;
-		m_Reader.SeekBegin( 8 );
+		m_Reader.SeekBegin( 8 + m_Offset );
 
 		if( m_Reader.ReadBytes( countData, 2 ) != DataReader::ReadResult::Success ||
 			countData.size() != 2 )
@@ -75,7 +75,7 @@ namespace Hyperion
 	{
 		if( !m_bInvalidFormat )
 		{
-			m_Reader.SeekBegin( 16 );
+			m_Reader.SeekBegin( 16 + m_Offset );
 		}
 	}
 
@@ -85,7 +85,7 @@ namespace Hyperion
 		if( m_bInvalidFormat ) { return false; }
 
 		auto offset = m_Reader.GetOffset();
-		if( offset + 8ll > m_Size ) { return false; }
+		if( (uint64)offset + 8llu > m_Size ) { return false; }
 
 		return true;
 	}

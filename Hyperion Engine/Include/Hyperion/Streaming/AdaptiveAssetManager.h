@@ -14,6 +14,7 @@
 
 // DEBUG: Comment this out to turn off debug console prints
 #define HYPERION_TEXTURE_STREAMING_DEBUG
+#define HYPERION_MODEL_STREAMING_DEBUG
 
 
 namespace Hyperion
@@ -29,6 +30,14 @@ namespace Hyperion
 	extern ConsoleVar< float > g_CVar_TextureLODMult_Level;
 	extern ConsoleVar< float > g_CVar_TextureLODMult_Character;
 	extern ConsoleVar< uint32 > g_CVar_TextureMaxResidentMemory;
+	extern ConsoleVar< uint32 > g_CVar_AdaptiveModel_MaxUnloadsPerTick;
+	extern ConsoleVar< uint32 > g_CVar_AdaptiveModel_MaxLoadsPerTick;
+	extern ConsoleVar< float > g_CVar_ModelLODMult_Global;
+	extern ConsoleVar< float > g_CVar_ModelLODMult_StaticModel;
+	extern ConsoleVar< float > g_CVar_ModelLODMult_DynamicModel;
+	extern ConsoleVar< float > g_CVar_ModelLODMult_Level;
+	extern ConsoleVar< float > g_CVar_ModelLODMult_Character;
+
 
 
 	// Forward Declarations
@@ -39,6 +48,7 @@ namespace Hyperion
 	struct AdaptiveTextureLoadRequest;
 	struct AdaptiveTextureUnloadRequest;
 	struct AdaptiveModelLoadRequest;
+	struct AdaptiveModelUnloadRequest;
 	
 
 	class AdaptiveAssetManager
@@ -59,6 +69,7 @@ namespace Hyperion
 		std::deque< std::shared_ptr< AdaptiveTextureUnloadRequest > > m_TextureUnloadQueue;
 
 		std::vector< std::shared_ptr< AdaptiveModelLoadRequest > > m_ModelLoadQueue;
+		std::vector< std::shared_ptr< AdaptiveModelUnloadRequest > > m_ModelUnloadQueue;
 
 		std::mutex m_TextureMutex;
 		std::mutex m_ModelMutex;
@@ -91,6 +102,12 @@ namespace Hyperion
 		void SortTextureUnloadRequests();
 		void FinishDestroyTexture( AdaptiveTexture& inTexture );
 
+		void SortModelLoadRequests();
+		void SortModelUnloadRequests();
+		void FinishDestroyModel( AdaptiveModel& inModel );
+
+		bool ModelWorker_PerformLoad( const std::shared_ptr< AdaptiveModelLoadRequest >& inRequest );
+		void ModelWorker_PerformUnload( const std::shared_ptr< AdaptiveModelUnloadRequest >& inRequest );
 
 		void TextureWorker_Main( CustomThread& );
 		void ModelWorker_Main( CustomThread& );
@@ -146,6 +163,16 @@ namespace Hyperion
 	struct AdaptiveAssetManagerTextureUnloadRequestSort
 	{
 		inline bool operator()( const std::shared_ptr< AdaptiveTextureUnloadRequest >& lhs, const std::shared_ptr< AdaptiveTextureUnloadRequest >& rhs );
+	};
+
+	struct AdaptiveAssetManagerModelLoadRequestSort
+	{
+		inline bool operator()( const std::shared_ptr< AdaptiveModelLoadRequest >& lhs, const std::shared_ptr< AdaptiveModelLoadRequest >& rhs );
+	};
+
+	struct AdaptiveAssetManagerModelUnloadRequestSort
+	{
+		inline bool operator()( const std::shared_ptr< AdaptiveModelUnloadRequest >& lhs, const std::shared_ptr< AdaptiveModelUnloadRequest >& rhs );
 	};
 
 }

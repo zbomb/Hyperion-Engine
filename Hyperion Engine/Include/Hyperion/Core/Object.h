@@ -8,6 +8,7 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/String.h"
+#include "Hyperion/Core/RTTI.h"
 
 #include <chrono>
 #include <memory>
@@ -23,6 +24,10 @@ namespace Hyperion
 {
 	class Object;
 	class InputManager;
+	class Type;
+
+	// TEST
+	//extern std::map< size_t, std::shared_ptr< RTTI::TypeInfo > > g_TypeInfoList;
 
 	/*
 		Try to forward declare the destroy object function so we can call it from HypPtr
@@ -40,10 +45,11 @@ namespace Hyperion
 		uint32 refcount;
 		bool valid;
 		bool shutdown_started;
+		size_t rtti_id;
 
 		_ObjectState() = delete;
-		_ObjectState( Object* inPtr )
-			: ptr( inPtr ), refcount( 0 ), valid( true ), shutdown_started( false )
+		_ObjectState( Object* inPtr, size_t inTypeId )
+			: ptr( inPtr ), refcount( 0 ), valid( true ), shutdown_started( false ), rtti_id( inTypeId )
 		{
 			HYPERION_VERIFY( inPtr != nullptr, "Cant create object meta state with null ptr!" );
 		}
@@ -484,10 +490,7 @@ namespace Hyperion
 			return HypPtr< _To >( casted, m_ThisState, m_Identifier );
 		}
 
-		virtual String GetDebugName() const
-		{
-			return "unknown_object";
-		}
+		HypPtr< Type > GetType() const;
 
 		/*
 			Friend in the create/destroy functions
@@ -503,6 +506,32 @@ namespace Hyperion
 
 	extern std::map< uint32, std::shared_ptr< _ObjectState > > __objCache;
 	extern uint32 __objIdCounter;
+
+	template< typename _From, typename _To,
+		typename = typename std::enable_if< std::is_base_of< Object, _To >::value && ( std::is_base_of< _From, _To >::value || std::is_base_of< _To, _From >::value ) >::type >
+	HypPtr< _To > CastObject( const HypPtr< _From >& inPtr )
+	{
+		// Validate the pointer
+		if( inPtr.ptr == nullptr || inPtr.id == OBJECT_INVALID || !inPtr.state )
+		{
+			return nullptr;
+		}
+
+		// Attempt a cast
+		_To* pCasted = dynamic_cast< _To >( inPtr.ptr );
+		if( !pCasted )
+		{
+			// Print debug warning
+		#ifdef HYPERION_DEBUG_OBJECT
+			Console::WriteLine( "[Warning] Object: Failed to perform cast from \"", typeid( _From ).name(), "\" to \"", typeid( _To ).name(), "\"" );
+		#endif
+
+			return nullptr;
+		}
+
+		// Construct the new pointer
+		return HypPtr< _To >( pCasted, inPtr.state, inPtr.id );
+	}
 
 	template< typename _Ty, class... Args >
 	HypPtr< _Ty > CreateObject( Args&& ... args )
@@ -520,7 +549,7 @@ namespace Hyperion
 		HYPERION_VERIFY( baseObj != nullptr, "Couldnt cast new object back to base type?" );
 
 		// Create shared state to hold object and do ref counting
-		auto state = std::make_shared< _ObjectState >( baseObj );
+		auto state = std::make_shared< _ObjectState >( baseObj, typeid( _Ty ).hash_code() );
 		__objCache[ newId ] = state;
 
 		// Initialize
@@ -566,4 +595,146 @@ namespace Hyperion
 
 	void TickObjects();
 
+
+	/*
+	*	Type Class
+	*/
+	class Type : public Object
+	{
+
+	private:
+
+		std::shared_ptr< RTTI::TypeInfo > m_Info;
+
+	public:
+
+		Type() = delete;
+		Type( const std::shared_ptr< RTTI::TypeInfo >& inInfo )
+			: m_Info( inInfo )
+		{
+			HYPERION_VERIFY( inInfo != nullptr, "Attempt to construct 'Type' with null info!" );
+		}
+
+		String GetTypeName() const
+		{
+			HYPERION_VERIFY( m_Info != nullptr, "[RTTI] Type info was null" );
+			return m_Info->Name;
+		}
+
+		size_t GetTypeIdentifier() const
+		{
+			HYPERION_VERIFY( m_Info != nullptr, "[RTTI] Type info was null" );
+			return m_Info->Identifier;
+		}
+
+		/*
+		*	bool Type::IsParentTo( const HypPtr< Type >& )
+		*	- Checks if this type is a parent to another type
+		*	- IMPORTANT: This function checks if the other type is either derived from this class, or derived from a derived class (and so on)
+		*/
+		bool IsParentTo( const HypPtr< Type >& other ) const;
+
+
+		template< typename _Ty, typename = typename std::enable_if< std::is_base_of< Object, _Ty >::value || std::is_same< Object, _Ty >::value >::type >
+		bool IsParentTo() const
+		{
+			return IsParentTo( Type::Get< _Ty >() );
+		}
+
+		/*
+		*	bool Type::IsDirectParentTo( const HypPtr< Type >& )
+		*	- Checks if this type is the DIRECT parent of another type
+		*	- Doesnt check if this is a 'grandparent' or 'great-grandparent' (etc..) class, only if its the direct parent
+		*/
+		bool IsDirectParentTo( const HypPtr< Type >& other ) const;
+
+		template< typename _Ty, typename = typename std::enable_if< std::is_base_of< Object, _Ty >::value || std::is_same< Object, _Ty >::value >::type >
+		bool IsDirectParentTo()
+		{
+			return IsDirectParentTo( Type::Get< _Ty >() );
+		}
+
+		/*
+		*	bool IsDerivedFrom( const HypPtr< Type >& )
+		*	- Checks if this type is derived from the other type in any way, wether the target type is a 'direct' parent class, or a 'distant' parent class
+		*/
+		bool IsDerivedFrom( const HypPtr< Type >& other ) const;
+
+		template< typename _Ty, typename = typename std::enable_if< std::is_base_of< Object, _Ty >::value || std::is_same< Object, _Ty >::value >::type >
+		bool IsDerivedFrom()
+		{
+			return IsDerivedFrom( Type::Get< _Ty >() );
+		}
+
+		/*
+		*	bool IsDirectlyDerivedFrom( const HypPtr< Type >& )
+		*	- Checks if tis type is immediatley derived from the target type. This function doesnt return true if the target is a 'grandparent' or 'great-grandparent' (etc..) class
+		*/
+		bool IsDirectlyDerivedFrom( const HypPtr< Type >& other ) const;
+
+		template< typename T, typename = typename std::enable_if< std::is_base_of< Object, T >::value || std::is_same< Object, T >::value >::type >
+		bool IsDirectlyDerivedFrom()
+		{
+			return IsDirectlyDerivedFrom( Type::Get< T >() );
+		}
+
+
+		/*
+		*	std::vector< HypPtr< Type > > GetParentList() const;
+		*/
+		std::vector< HypPtr< Type > > GetParentList() const;
+
+		/*
+		*	HypPtr< Type > GetParent() const;
+		*/
+		HypPtr< Type > GetParent() const;
+
+		/*
+		*	std::vector< HypPtr< Type > > GetDirectChildren()
+		*	- Gets a list of classes that are directly derived from this type
+		*/
+		std::vector< HypPtr< Type > > GetDirectChildren() const;
+
+		/*
+		*	std::vector< HypPtr< Type > > GetChildren() const
+		*	- Gets a list of classes that are derived from this type, including classes derived from derived types, and so on..
+		*/
+		std::vector< HypPtr< Type > > GetChildren() const;
+
+
+		/*
+		*	HypPtr< Object > CreateInstance()
+		*	- Creates an instance of this type
+		*	- NOTE: Only works when the constructor has an overload with zero arguments
+		*	- Returns the result as the base 'Object' type
+		*/
+		HypPtr< Object > CreateInstance() const;
+
+		/*
+		*	HypPtr< _Ty > CreateCastedInstance()
+		*	- Creates an instance of this type, and then casts the result to the template parameter type
+		*	- NOTE: Only works when the constructor has an overload with zero arguments
+
+		template< typename _Ty >
+		HypPtr< _Ty > CreateCastedInstance() const
+		{
+			return CastObject< _Ty >( CreateInstance() );
+		}
+		*/
+
+		/*
+		*	Static Methods
+		*/
+		static HypPtr< Type > Get( size_t inIdentifier );
+		static HypPtr< Type > Get( const String& inName );
+		static HypPtr< Type > Get( const HypPtr< Object >& inObj );
+
+		template< typename T, typename = typename std::enable_if< std::is_base_of< Object, T >::value || std::is_same< Object, T >::value >::type >
+		static HypPtr< Type > Get()
+		{
+			return Get( typeid( T ).hash_code() );
+		}
+
+		friend class Object;
+	};
 }

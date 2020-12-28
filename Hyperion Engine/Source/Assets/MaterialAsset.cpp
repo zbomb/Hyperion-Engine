@@ -9,20 +9,26 @@
 #include "Hyperion/Assets/TextureAsset.h"
 #include "Hyperion/Core/AssetManager.h"
 
+using namespace std::placeholders;
+
 
 namespace Hyperion
 {
+
 	/*
-		Static Definitions
+		Register Asset Type
 	*/
-	std::map< uint32, std::weak_ptr< MaterialAsset > > MaterialAssetCache::m_Cache;
-	std::mutex MaterialAssetCache::m_CacheMutex;
+	AssetType g_Asset_Type_Material = AssetType(
+		ASSET_TYPE_MATERIAL, "material", ".hmat",
+		std::bind( &MaterialAsset::LoadFromFile, _1, _2, _3, _4, _5 )
+	);
+
 
 	/*----------------------------------------------------------------------------------------------------------
 		MaterialAsset Class
 	------------------------------------------------------------------------------------------------------------*/
-	MaterialAsset::MaterialAsset( std::map< String, std::any >&& inData, const FilePath& inPath, uint32 inIdentifier )
-		: AssetBase( inPath, inIdentifier ), m_Values( std::move( inData ) )
+	MaterialAsset::MaterialAsset( std::map< String, std::any >&& inData, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength )
+		: AssetBase( inIdentifier, inPath, inOffset, inLength ), m_Values( std::move( inData ) )
 	{
 		// We want to find all of the textures, and get them from the asset manager, so they get cached in as well
 		for( auto It = m_Values.begin(); It != m_Values.end(); )
@@ -35,7 +41,7 @@ namespace Hyperion
 
 				if( !inst )
 				{
-					Console::WriteLine( "[WARNING] MaterialAsset: Texture asset (", assetId, ") couldnt be found for material \"", GetPath().ToString(), "\"" );
+					Console::WriteLine( "[WARNING] MaterialAsset: Texture asset (", assetId, ") couldnt be found for material \"", GetPath(), "\"" );
 				}
 				else
 				{
@@ -122,96 +128,52 @@ namespace Hyperion
 
 
 	/*----------------------------------------------------------------------------------------------------------
-		MaterialAssetLoader Class
+		Material Asset Loader Function
 	------------------------------------------------------------------------------------------------------------*/
-	bool MaterialAssetLoader::IsValidFile( const FilePath& inPath )
+	std::shared_ptr< AssetBase > MaterialAsset::LoadFromFile( std::unique_ptr< File >& inFile, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength )
 	{
-		if( inPath.HasExtension() )
-		{
-			auto ext = inPath.Extension().ToLower().TrimBoth();
-			return ext == ".hmat";
-		}
-
-		return false;
-	}
-
-
-	std::shared_ptr< MaterialAsset > MaterialAssetLoader::Load( uint32 inIdentifier, std::unique_ptr< IFile >& inFile )
-	{
-		if( inIdentifier == ASSET_INVALID || !inFile || !inFile->IsValid() ) 
-		{ 
-			Console::WriteLine( "[ERROR] MaterialAssetLoader: Failed to load material asset.. identifier and/or file was invalid" );
-			return nullptr; 
-		}
-
 		DataReader reader( *inFile );
-		return Load( inIdentifier, reader, inFile->GetPath() );
+		return LoadFromReader( reader, inPath, inIdentifier, inOffset, inLength );
 	}
 
-	std::shared_ptr< MaterialAsset > MaterialAssetLoader::Load( uint32 inIdentifier, DataReader& inReader, const FilePath& inPath )
+	std::shared_ptr< AssetBase > MaterialAsset::LoadFromReader( DataReader& inReader, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength )
 	{
-		if( inIdentifier == ASSET_INVALID || inReader.Size() == 0 )
+		if( inIdentifier == ASSET_INVALID )
 		{
-			Console::WriteLine( "[ERROR] MaterialAssetLoader: Failed to load material asset.. identifier and/or datareader was invalid" );
+			Console::WriteLine( "[Warning] MaterialAsset: Failed to load from file.. file/id was invalid (", inPath, ")" );
 			return nullptr;
 		}
 
-		// Use reader to process file into a map
-		HMATReader reader( inReader );
-		reader.Begin();
-
-		std::map< String, std::any > matData;
-
-		while( reader.Next() )
 		{
-			String key;
-			std::any val;
-
-			// Read next entry, check if valid
-			auto res = reader.ReadEntry( key, val );
-			if( res != HMATReader::Result::Success )
+			if( inReader.Size() == 0 || inOffset > (uint64)inReader.Size() || inOffset + inLength > (uint64)inReader.Size() )
 			{
-				Console::WriteLine( "[ERROR] MaterialAssetLoader: Invalid material asset '", inPath.ToString(), "' (Error Code: ", (uint32) res, ")" );
+				Console::WriteLine( "[Warning] MaterialAsset: Failed to load from file (", inPath, ").. not enough data or range is out of bounds!" );
 				return nullptr;
 			}
 
-			matData.emplace( key, val );
+			HMATReader reader( inReader, inOffset, inLength );
+			reader.Begin();
+
+			std::map< String, std::any > materialData;
+			while( reader.Next() )
+			{
+				String key;
+				std::any val;
+
+				// Read next entry, check if valid
+				auto res = reader.ReadEntry( key, val );
+				if( res != HMATReader::Result::Success )
+				{
+					Console::WriteLine( "[ERROR] MaterialAssetLoader: Invalid material asset '", inPath, "' (Error Code: ", (uint32) res, ")" );
+					return nullptr;
+				}
+
+				materialData.emplace( key, val );
+			}
+
+			// Create new material asset from the map we loaded
+			return std::shared_ptr< MaterialAsset >( new MaterialAsset( std::move( materialData ), inPath, inIdentifier, inOffset, inLength ) );
+			
 		}
-
-		// Create new material asset from the map we loaded
-		return std::shared_ptr< MaterialAsset >( new MaterialAsset( std::move( matData ), inPath, inIdentifier ) );
-	}
-
-
-	/*----------------------------------------------------------------------------------------------------------
-		MaterialAssetCache Class
-	------------------------------------------------------------------------------------------------------------*/
-
-	std::weak_ptr< MaterialAsset > MaterialAssetCache::Get( uint32 inIdentifier )
-	{
-		std::lock_guard< std::mutex > lock( m_CacheMutex );
-
-		auto entry = m_Cache.find( inIdentifier );
-		if( entry == m_Cache.end() )
-		{
-			return std::weak_ptr< MaterialAsset >();
-		}
-
-		if( entry->second.expired() )
-		{
-			m_Cache.erase( entry );
-			return std::weak_ptr< MaterialAsset >();
-		}
-		else
-		{
-			return entry->second;
-		}
-	}
-
-	void MaterialAssetCache::Store( uint32 inIdentifier, const std::shared_ptr< MaterialAsset >& inPtr )
-	{
-		std::lock_guard< std::mutex > lock( m_CacheMutex );
-
-		m_Cache.emplace( inIdentifier, std::weak_ptr< MaterialAsset >( inPtr ) );
 	}
 }

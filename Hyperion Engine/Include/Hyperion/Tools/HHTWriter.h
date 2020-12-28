@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Hyperion/File/PhysicalFileSystem.h"
+#include "Hyperion/File/FileSystem.h"
 
 
 namespace Hyperion
@@ -17,7 +17,7 @@ namespace Hyperion
 
 	private:
 
-		PhysicalFile& m_File;
+		File& m_File;
 		DataWriter m_Writer;
 		bool m_bHeaderFailed;
 
@@ -27,7 +27,7 @@ namespace Hyperion
 
 	public:
 
-		HHTWriter( PhysicalFile& inFile, bool bIsNewFile  /* = true */ );
+		HHTWriter( File& inFile, bool bIsNewFile  /* = true */ );
 		~HHTWriter();
 
 		HHTWriter() = delete;

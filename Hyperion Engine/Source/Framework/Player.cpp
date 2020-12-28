@@ -82,3 +82,9 @@ namespace Hyperion
 
 
 }
+
+
+/*
+*	Register Type
+*/
+HYPERION_REGISTER_OBJECT_TYPE( Player, Entity, Hyperion::PLAYER_INVALID );

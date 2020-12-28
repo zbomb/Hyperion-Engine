@@ -12,7 +12,7 @@
 namespace Hyperion
 {
 
-	HVBReader::HVBReader( PhysicalFile& inFile )
+	HVBReader::HVBReader( File& inFile )
 		: m_Reader( inFile ), m_BlobBegin( 0 )
 	{
 		m_Reader.SeekBegin();
