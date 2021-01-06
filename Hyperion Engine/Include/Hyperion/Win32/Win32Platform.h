@@ -35,6 +35,8 @@ namespace Hyperion
 		virtual String GetUserDataPath() override;
 		virtual void Init() override;
 
+		inline virtual uint32 GetDefaultGraphicsAPI() override { return DEFAULT_API_WIN32; }
+
 	};
 	
 }

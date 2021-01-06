@@ -97,7 +97,7 @@ namespace Hyperion
 	private:
 
 		//static std::map< size_t, std::shared_ptr< TypeInfo > > m_TypeInfoList;
-		static std::shared_ptr< TypeInfo > m_ObjectTypeInfo;
+		//static std::shared_ptr< TypeInfo > m_ObjectTypeInfo;
 
 	public:
 
@@ -161,7 +161,7 @@ namespace Hyperion
 		/*
 		*	std::shared_ptr< TypeInfo > Hyperion::RTTI::GetObjectType()
 		*/
-		static std::shared_ptr< TypeInfo > GetObjectType() { return m_ObjectTypeInfo; }
+		static std::shared_ptr< TypeInfo > GetObjectType();
 
 	private:
 

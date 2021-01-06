@@ -8,7 +8,7 @@
 
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Renderer/Types/ITexture.h"
+#include "Hyperion/Renderer/Resource/Texture.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
 
 
@@ -282,7 +282,7 @@ namespace Hyperion
 		}
 	}
 
-	class DirectX11Texture1D : public ITexture1D
+	class DirectX11Texture1D : public RTexture1D
 	{
 
 	private:
@@ -338,7 +338,7 @@ namespace Hyperion
 			return desc.Width;
 		}
 
-		uint32 GetMipLevels() const final
+		uint8 GetMipCount() const final
 		{
 			if( m_Texture == nullptr ) { return 0; }
 
@@ -348,7 +348,7 @@ namespace Hyperion
 			return desc.MipLevels;
 		}
 
-		bool IsDynamicResource() const final
+		bool IsDynamic() const final
 		{
 			if( m_Texture == nullptr ) { return 0; }
 
@@ -399,7 +399,7 @@ namespace Hyperion
 			return DXGIFormatToTextureFormat( desc.Format );
 		}
 
-		void Swap( ITexture1D& Other ) final
+		void Swap( RTexture1D& Other ) final
 		{
 			DirectX11Texture1D* casted = dynamic_cast< DirectX11Texture1D* >( &Other );
 			HYPERION_VERIFY( casted != nullptr, "Attempt to swap textures from different apis?" );
@@ -413,7 +413,7 @@ namespace Hyperion
 	};
 
 
-	class DirectX11Texture2D : public ITexture2D
+	class DirectX11Texture2D : public RTexture2D
 	{
 
 	private:
@@ -479,7 +479,7 @@ namespace Hyperion
 			return desc.Height;
 		}
 
-		uint32 GetMipLevels() const final
+		uint8 GetMipCount() const final
 		{
 			if( m_Texture == nullptr ) { return 0; }
 
@@ -489,7 +489,7 @@ namespace Hyperion
 			return desc.MipLevels;
 		}
 
-		bool IsDynamicResource() const final
+		bool IsDynamic() const final
 		{
 			if( m_Texture == nullptr ) { return false; }
 
@@ -540,7 +540,7 @@ namespace Hyperion
 			return DXGIFormatToTextureFormat( desc.Format );
 		}
 
-		void Swap( ITexture2D& Other )
+		void Swap( RTexture2D& Other )
 		{
 			auto casted = dynamic_cast<DirectX11Texture2D*>( &Other );
 			HYPERION_VERIFY( casted != nullptr, "Attempt to swap textures from different apis!" );
@@ -554,7 +554,7 @@ namespace Hyperion
 	};
 
 
-	class DirectX11Texture3D : public ITexture3D
+	class DirectX11Texture3D : public RTexture3D
 	{
 
 	private:
@@ -630,7 +630,7 @@ namespace Hyperion
 			return desc.Depth;
 		}
 
-		uint32 GetMipLevels() const final
+		uint8 GetMipCount() const final
 		{
 			if( m_Texture == nullptr ) { return 0; }
 
@@ -640,7 +640,7 @@ namespace Hyperion
 			return desc.MipLevels;
 		}
 
-		bool IsDynamicResource() const final
+		bool IsDynamic() const final
 		{
 			if( m_Texture == nullptr ) { return false; }
 
@@ -691,7 +691,7 @@ namespace Hyperion
 			return DXGIFormatToTextureFormat( desc.Format );
 		}
 
-		void Swap( ITexture3D& Other )
+		void Swap( RTexture3D& Other )
 		{
 			auto casted = dynamic_cast<DirectX11Texture3D*>( &Other );
 			HYPERION_VERIFY( casted != nullptr, "Attempt to swap textures from different apis!" );

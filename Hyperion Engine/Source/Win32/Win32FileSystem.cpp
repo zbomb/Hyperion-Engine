@@ -10,7 +10,6 @@
 
 #include "Hyperion/Win32/Win32FileSystem.h"
 #include "Hyperion/Core/Platform.h"
-#include "Hyperion/Core/GameManager.h"
 
 #include <sys/stat.h>
 

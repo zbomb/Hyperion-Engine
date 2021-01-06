@@ -5,10 +5,33 @@
 ==================================================================================================*/
 
 #include "Hyperion/Framework/TestEntity.h"
+#include "Hyperion/Core/AssetManager.h"
+#include "Hyperion/Assets/TextureAsset.h"
+#include "Hyperion/Assets/StaticModelAsset.h"
+
 
 
 namespace Hyperion
 {
+
+	void TestEntity::OnCreate()
+	{
+		// Create our static model component
+		m_Comp = CreateObject< StaticModelComponent >();
+
+		// Set the material
+		m_Comp->SetMaterial( AssetManager::Get< MaterialAsset >( "materials/mat_test.hmat" ), 0 );
+		m_Comp->SetModel( AssetManager::Get< StaticModelAsset >( "models/mdl_test.hsm" ) );
+
+		AddComponent( m_Comp, "model" );
+	}
+
+
+	void TestEntity::OnDestroy()
+	{
+
+	}
+
 
 	void TestEntity::OnSpawn( const HypPtr< World >& inWorld )
 	{

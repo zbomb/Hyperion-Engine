@@ -1,2 +1,22 @@
-﻿  Object.cpp
-  Hyperion Engine.vcxproj -> D:\Hyperion\Build\Debug\Hyperion.lib
+﻿  MaterialAsset.cpp
+  StaticModelAsset.cpp
+  AssetManager.cpp
+  Engine.cpp
+  GameInstance.cpp
+  FileSystem.cpp
+  LightComponent.cpp
+  PrimitiveComponent.cpp
+  StaticModelComponent.cpp
+  TestEntity.cpp
+  DataTypes.cpp
+  DeferredRenderer.cpp
+  ProxyStaticModel.cpp
+  Renderer.cpp
+  ResourceManager.cpp
+  AdaptiveAssetManager.cpp
+  AdaptiveDynamicModel.cpp
+  AdaptiveStaticModel.cpp
+  BasicStreamingManager.cpp
+  HSMReader.cpp
+  Generating Code...
+  Hyperion Engine.vcxproj -> D:\Hyperion\Build\Debug\Hyperion.exe

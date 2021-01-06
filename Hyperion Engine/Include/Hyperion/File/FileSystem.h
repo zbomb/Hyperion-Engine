@@ -152,7 +152,7 @@ namespace Hyperion
 
 		static void FindFiles( const FilePath& inPath, std::vector< FilePath >& Out, bool bIncludeSubFolders = false );
 
-		static bool Initialize( bool bDiscoverAssets );
+		static bool Initialize( bool bDiscoverAssets, uint32 inFlags = FLAG_NONE );
 		static void Shutdown();
 
 

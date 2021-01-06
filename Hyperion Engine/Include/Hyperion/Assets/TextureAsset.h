@@ -33,7 +33,7 @@ namespace Hyperion
 	{
 		uint16 Width;
 		uint16 Height;
-		uint32 FileOffset;
+		uint64 FileOffset;
 		uint32 LODSize;
 		uint32 RowSize;
 	};

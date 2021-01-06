@@ -11,6 +11,39 @@
 namespace Hyperion
 {
 
+	bool ScreenResolution::LoadFromString( const String& inStr )
+	{
+		// We want to break it out into two components, seperated by a comma
+		String trimmedStr = inStr.TrimBoth();
+		std::vector< String > explodedStr = trimmedStr.Explode( ',' );
+		
+		if( explodedStr.size() != 2 )
+		{
+			return false;
+		}
+
+		uint32 strWidth		= 0;
+		uint32 strHeight	= 0;
+
+		if( !explodedStr[ 0 ].ToUInt( strWidth ) ||
+			!explodedStr[ 1 ].ToUInt( strHeight ) )
+		{
+			return false;
+		}
+
+		if( strWidth > 420 && strHeight > 360 )
+		{
+			Width	= strWidth;
+			Height	= strHeight;
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 
 	void AddPrimitiveProxyCommand::Execute( Renderer& inRenderer )
 	{

@@ -571,3 +571,5 @@ namespace Hyperion
 	}
 
 }
+
+HYPERION_REGISTER_OBJECT_TYPE( InputManager, Object );

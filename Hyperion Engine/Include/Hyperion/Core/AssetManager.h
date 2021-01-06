@@ -50,7 +50,7 @@ namespace Hyperion
 		
 		// NEW
 		static std::map< uint32, AssetInstanceInfo > m_Cache;
-		static std::map< uint32, AssetTypeInfo > m_Types;
+		static std::map< uint32, AssetTypeInfo >& GetTypes();
 
 		static std::mutex m_CacheMutex;
 
@@ -142,7 +142,7 @@ namespace Hyperion
 				auto entry = m_Cache.find( inIdentifier );
 				if( entry == m_Cache.end() || entry->second.Identifier == ASSET_INVALID || entry->second.AssetType == ASSET_TYPE_INVALID )
 				{
-					Console::WriteLine( "[Warning] AssetManager: Failed to find metadata for asset! (Identifier: ", inIdentifier, ") [Might not exist, or added afer startup]" );
+					Console::WriteLine( "[Warning] AssetManager: Failed to find metadata for asset! (Identifier: ", inIdentifier, ")" );
 					return nullptr;
 				}
 				else if( !entry->second.Instance.expired() )
@@ -155,8 +155,10 @@ namespace Hyperion
 			}
 
 			// Find the correct type info, so we can use the loader
-			auto typeEntry = m_Types.find( assetInfo.AssetType );
-			if( typeEntry == m_Types.end() || !typeEntry->second.LoaderFunc )
+			auto& types = GetTypes();
+
+			auto typeEntry = types.find( assetInfo.AssetType );
+			if( typeEntry == types.end() || !typeEntry->second.LoaderFunc )
 			{
 				Console::WriteLine( "[Warning] AssetManager: Failed to find loader for asset type (AssetType#", assetInfo.AssetType, ") when caching \"", assetInfo.Path, "\"" );
 				return nullptr;
@@ -232,7 +234,93 @@ namespace Hyperion
 			}
 
 			// Calculate the numeric identifier, and load the instance
-			return GetGeneric( CalculateIdentifier( inPath ) );
+			auto inIdentifier = CalculateIdentifier( inPath );
+			if( inIdentifier == ASSET_INVALID ) { return nullptr; }
+
+			// Get this assets info from the cache, if it doesnt exist, then we fail the function
+			// We need to get a lock on the mutex to read the entry from the asset cache, copy into local structure and release the lock
+			AssetInstanceInfo assetInfo;
+			{
+				std::lock_guard< std::mutex > cacheLock( m_CacheMutex );
+
+				auto entry = m_Cache.find( inIdentifier );
+				if( entry == m_Cache.end() || entry->second.Identifier == ASSET_INVALID || entry->second.AssetType == ASSET_TYPE_INVALID )
+				{
+					Console::WriteLine( "[Warning] AssetManager: Failed to find metadata for asset! (Path: ", inPath, ")" );
+					return nullptr;
+				}
+				else if( !entry->second.Instance.expired() )
+				{
+					// Returned the cached version
+					return entry->second.Instance.lock();
+				}
+
+				assetInfo = entry->second;
+			}
+
+			// Find the correct type info, so we can use the loader
+			auto& types = GetTypes();
+
+			auto typeEntry = types.find( assetInfo.AssetType );
+			if( typeEntry == types.end() || !typeEntry->second.LoaderFunc )
+			{
+				Console::WriteLine( "[Warning] AssetManager: Failed to find loader for asset type (AssetType#", assetInfo.AssetType, ") when caching \"", assetInfo.Path, "\"" );
+				return nullptr;
+			}
+
+			// Next, we need to actually open the file where the asset is contained
+			auto& typeInfo		= typeEntry->second;
+
+			uint64 offset	= 0;
+			uint64 length	= 0;
+			String path;
+
+			// Determine if the asset is contained within a bundle, or is standalone on disk
+			if( assetInfo.Bundle.IsEmpty() )
+			{
+				path = assetInfo.Path;
+				if( !path.EndsWith( typeInfo.Extension ) )
+				{
+					Console::WriteLine( "[Warning] AssetManager: Failed to load asset (", assetInfo.Path, ") from file! The extension is not valid for an asset of type \"", typeInfo.Name, "\"" );
+					return nullptr;
+				}
+
+				if( !FileSystem::FileExists( FilePath( path, PathRoot::Content ) ) )
+				{
+					Console::WriteLine( "[Warning] AssetManager: Failed to load asset (", assetInfo.Path, ") from file!" );
+					return nullptr;
+				}
+			}
+			else
+			{
+				path		= assetInfo.Bundle;
+				offset		= assetInfo.Offset;
+				length		= assetInfo.Length;
+
+				if( !FileSystem::FileExists( FilePath( path, PathRoot::Content ) ) )
+				{
+					Console::WriteLine( "[Warning] AssetManager: Failed to load asset (", assetInfo.Path, ") from file! The bundle (", assetInfo.Bundle, ") its inside doesnt exist" );
+					return nullptr;
+				}
+			}
+
+			// Open the file
+			auto f = FileSystem::OpenFile( FilePath( path, PathRoot::Content ), FileMode::Read );
+			if( !f || !f->IsValid() || f->GetSize() < offset + length )
+			{
+				Console::WriteLine( "[Warning] AssetManager: Failed to load asset (", assetInfo.Path, ") from file! It couldnt be opened or target range is out of bounds" );
+				return nullptr;
+			}
+
+			// Invoke the loader
+			auto instance = typeInfo.LoaderFunc( f, assetInfo.Path, assetInfo.Identifier, offset, length );
+			if( !instance )
+			{
+				Console::WriteLine( "[Warning] AssetManager: Failed to load asset (", assetInfo.Path, "), the loader function failed!" );
+				return nullptr;
+			}
+
+			return instance;
 		}
 
 		/*

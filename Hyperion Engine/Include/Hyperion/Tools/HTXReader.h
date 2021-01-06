@@ -48,7 +48,7 @@ namespace Hyperion
 
 
 		Result ReadHeader( TextureHeader& outHeader );
-		Result ReadRawData( uint32 inOffset, uint32 inSize, std::vector< byte >& outData );
+		Result ReadRawData( uint64 inOffset, uint32 inSize, std::vector< byte >& outData );
 		Result ReadLODData( const TextureHeader& inHeader, uint8 inLevel, std::vector< byte >& outData );
 		Result ReadLODRange( const TextureHeader& inHeader, std::vector< uint8 >& inLevels, std::map< uint8, std::vector< byte > >& outData );
 	};

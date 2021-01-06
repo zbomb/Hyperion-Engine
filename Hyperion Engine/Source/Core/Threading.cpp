@@ -5,6 +5,7 @@
 ==================================================================================================*/
 
 #include "Hyperion/Core/Threading.h"
+#include "Hyperion/Core/Object.h"
 
 #include <chrono>
 
@@ -425,3 +426,7 @@ namespace Hyperion
 
 
 }
+
+HYPERION_REGISTER_ABSTRACT_OBJECT_TYPE( Thread, Object );
+HYPERION_REGISTER_ABSTRACT_OBJECT_TYPE( TickedThread, Thread );
+HYPERION_REGISTER_ABSTRACT_OBJECT_TYPE( CustomThread, Thread );

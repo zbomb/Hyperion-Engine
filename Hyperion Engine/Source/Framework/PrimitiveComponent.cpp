@@ -5,9 +5,10 @@
 ==================================================================================================*/
 
 #include "Hyperion/Framework/PrimitiveComponent.h"
-#include "Hyperion/Core/GameManager.h"
 #include "Hyperion/Renderer/Proxy/ProxyPrimitive.h"
-#include "Hyperion/Core/RenderManager.h"
+#include "Hyperion/Core/Engine.h"
+#include "Hyperion/Core/GameInstance.h"
+#include "Hyperion/Renderer/Renderer.h"
 
 
 namespace Hyperion
@@ -15,12 +16,12 @@ namespace Hyperion
 
 	void PrimitiveComponent::AddToRenderer()
 	{
-		GameManager::GetInstance()->RegisterRenderComponent( AquirePointer< PrimitiveComponent >() );
+		Engine::GetGame()->RegisterRenderComponent( AquirePointer< PrimitiveComponent >() );
 	}
 
 	void PrimitiveComponent::RemoveFromRenderer()
 	{
-		GameManager::GetInstance()->RemoveRenderComponent( AquirePointer< PrimitiveComponent >() );
+		Engine::GetGame()->RemoveRenderComponent( AquirePointer< PrimitiveComponent >() );
 	}
 
 
@@ -38,10 +39,28 @@ namespace Hyperion
 
 		// Initialize primitive
 		newProxy->GameInit();
+		m_Proxy = newProxy;
 
 		// Add to renderer
-		RenderManager::AddCommand( std::make_unique< AddPrimitiveProxyCommand >( newProxy ) );
+		Engine::GetRenderer()->AddCommand( std::make_unique< AddPrimitiveProxyCommand >( newProxy ) );
 		return true;
+	}
+
+
+	bool PrimitiveComponent::PerformProxyUpdate()
+	{
+		auto ptr = m_Proxy.lock();
+		if( ptr )
+		{
+			ptr->m_Transform = GetWorldTransform();
+			
+			return UpdateProxy( ptr );
+		}
+		else
+		{
+			Console::WriteLine( "[Warning] PrimitiveComponent: Failed to update render proxy! The stored pointer was invalid" );
+			return true;
+		}
 	}
 
 }

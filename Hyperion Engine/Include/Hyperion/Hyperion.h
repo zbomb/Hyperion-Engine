@@ -27,7 +27,7 @@
 //#define HYPERION_CONFIG_2D
 
 #define HYPERION_DOC_FOLDER "hyperion/"
-
+#define HYPERION_APP_NAME "Hyperion Engine"
 
 
 //////////////////////////////////////////////
@@ -111,4 +111,11 @@ namespace Hyperion
 			return false;
 		}
 	}
+
+	struct RawImageData
+	{
+		uint32 Width;
+		uint32 Height;
+		std::vector< byte > Data;
+	};
 }

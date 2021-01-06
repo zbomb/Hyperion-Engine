@@ -16,9 +16,25 @@ namespace Hyperion
 	*/
 	std::atomic< bool > Console::m_bRunning( false );
 	std::atomic< bool > Console::m_bOSOutput( false );
-	std::shared_mutex Console::m_VarListMutex;
-	std::map< String, std::shared_ptr< ConsoleVarInstanceBase > > Console::m_Vars;
-	std::mutex Console::m_PrintMutex;
+
+
+	std::shared_mutex& Console::GetVarListMutex()
+	{
+		static std::shared_mutex m;
+		return m;
+	}
+
+	std::map< String, std::shared_ptr< ConsoleVarInstanceBase > >& Console::GetVarList()
+	{
+		static std::map< String, std::shared_ptr< ConsoleVarInstanceBase > > list;
+		return list;
+	}
+
+	std::mutex& Console::GetPrintMutex()
+	{
+		static std::mutex m;
+		return m;
+	}
 
 
 	bool Console::Start( uint32 inFlags /* = 0 */ )
@@ -169,10 +185,13 @@ namespace Hyperion
 			return false;
 		}
 
+		auto& varMutex = GetVarListMutex();
+		auto& varList = GetVarList();
+
 		{
-			std::shared_lock< std::shared_mutex > lock( m_VarListMutex );
-			auto existing = m_Vars.find( inVar->GetKey() );
-			if( existing != m_Vars.end() )
+			std::shared_lock< std::shared_mutex > lock( varMutex );
+			auto existing = varList.find( inVar->GetKey() );
+			if( existing != varList.end() )
 			{
 				WriteLine( "[ERROR] Console: Attempt to add console var '", inVar->GetKey(), "' but this key already exists!" );
 				return false;
@@ -183,8 +202,8 @@ namespace Hyperion
 
 		// Now, we need to insert into the list of console vars
 		{
-			std::unique_lock< std::shared_mutex > lock( m_VarListMutex );
-			m_Vars[ inVar->GetKey() ] = inVar;
+			std::unique_lock< std::shared_mutex > lock( varMutex );
+			varList[ inVar->GetKey() ] = inVar;
 		}
 
 		return true;
@@ -202,9 +221,11 @@ namespace Hyperion
 		// Find this var
 		std::shared_ptr< ConsoleVarInstanceBase > varInst;
 		{
-			std::shared_lock< std::shared_mutex > lock( m_VarListMutex );
-			auto entry = m_Vars.find( inKey );
-			if( entry == m_Vars.end() || !entry->second )
+			std::shared_lock< std::shared_mutex > lock( GetVarListMutex() );
+			auto& varList = GetVarList();
+
+			auto entry = varList.find( inKey );
+			if( entry == varList.end() || !entry->second )
 			{
 				WriteLine( "[ERROR] Console: Failed to set '", inKey, "' because no cvar could be found with this key" );
 				return false;
@@ -234,10 +255,11 @@ namespace Hyperion
 
 		std::shared_ptr< ConsoleVarInstanceBase > varInst;
 		{
-			std::shared_lock< std::shared_mutex > lock( m_VarListMutex );
+			std::shared_lock< std::shared_mutex > lock( GetVarListMutex() );
+			auto& varList = GetVarList();
 
-			auto entry = m_Vars.find( inKey );
-			if( entry == m_Vars.end() || !entry->second )
+			auto entry = varList.find( inKey );
+			if( entry == varList.end() || !entry->second )
 			{
 				WriteLine( "[ERROR] Console: Failed to get '", inKey, "' because this cvar couldnt be found" );
 				return false;

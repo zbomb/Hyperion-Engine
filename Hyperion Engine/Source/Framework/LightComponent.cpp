@@ -5,9 +5,10 @@
 ==================================================================================================*/
 
 #include "Hyperion/Framework/LightComponent.h"
-#include "Hyperion/Core/GameManager.h"
 #include "Hyperion/Renderer/Proxy/ProxyLight.h"
-#include "Hyperion/Core/RenderManager.h"
+#include "Hyperion/Core/Engine.h"
+#include "Hyperion/Core/GameInstance.h"
+#include "Hyperion/Renderer/Renderer.h"
 
 
 namespace Hyperion
@@ -15,13 +16,13 @@ namespace Hyperion
 
 	void LightComponent::AddToRenderer()
 	{
-		GameManager::GetInstance()->RegisterRenderComponent( AquirePointer< LightComponent >() );
+		Engine::GetGame()->RegisterRenderComponent( AquirePointer< LightComponent >() );
 	}
 
 
 	void LightComponent::RemoveFromRenderer()
 	{
-		GameManager::GetInstance()->RemoveRenderComponent( AquirePointer< LightComponent >() );
+		Engine::GetGame()->RemoveRenderComponent( AquirePointer< LightComponent >() );
 	}
 
 
@@ -38,8 +39,26 @@ namespace Hyperion
 		newProxy->GameInit();
 
 		// Add to renderer
-		RenderManager::AddCommand( std::make_unique< AddLightProxyCommand >( newProxy ) );
+		Engine::GetRenderer()->AddCommand( std::make_unique< AddLightProxyCommand >( newProxy ) );
+		m_Proxy = newProxy;
+
 		return true;
+	}
+
+
+	bool LightComponent::PerformProxyUpdate()
+	{
+		auto ptr = m_Proxy.lock();
+		if( ptr )
+		{
+			ptr->m_Transform = GetWorldTransform();
+			return UpdateProxy( ptr );
+		}
+		else
+		{
+			Console::WriteLine( "[Warning] LightComponent: Failed to update light proxy, the pointer wasnt set" );
+			return true;
+		}
 	}
 
 }

@@ -158,7 +158,7 @@ namespace Hyperion
 			: HypPtr()
 		{}
 
-		HypPtr( _Ty* inPtr, std::shared_ptr< _ObjectState >& inState, uint32 inId )
+		HypPtr( _Ty* inPtr, const std::shared_ptr< _ObjectState >& inState, uint32 inId )
 			: ptr( inPtr ), state( inState ), id( inId )
 		{
 			_ValidateConstruction( true );
@@ -386,6 +386,12 @@ namespace Hyperion
 		}
 		*/
 
+		/*
+		*	Friend Functions
+		*/
+		template< typename _To, typename _From >
+		friend HypPtr< _To > CastObject( const HypPtr< _From >& inPtr );
+
 	};
 
 	class Object
@@ -507,10 +513,12 @@ namespace Hyperion
 	extern std::map< uint32, std::shared_ptr< _ObjectState > > __objCache;
 	extern uint32 __objIdCounter;
 
-	template< typename _From, typename _To,
-		typename = typename std::enable_if< std::is_base_of< Object, _To >::value && ( std::is_base_of< _From, _To >::value || std::is_base_of< _To, _From >::value ) >::type >
+	template< typename _To, typename _From >
 	HypPtr< _To > CastObject( const HypPtr< _From >& inPtr )
 	{
+		static_assert( std::is_base_of< Object, _To >::value && ( std::is_base_of< _From, _To >::value || std::is_base_of< _To, _From >::value ),
+					   "Invalid template types for casting" );
+
 		// Validate the pointer
 		if( inPtr.ptr == nullptr || inPtr.id == OBJECT_INVALID || !inPtr.state )
 		{
@@ -518,7 +526,7 @@ namespace Hyperion
 		}
 
 		// Attempt a cast
-		_To* pCasted = dynamic_cast< _To >( inPtr.ptr );
+		_To* pCasted = dynamic_cast< _To* >( inPtr.ptr );
 		if( !pCasted )
 		{
 			// Print debug warning

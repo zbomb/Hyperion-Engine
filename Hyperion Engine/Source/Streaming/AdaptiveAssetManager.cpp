@@ -13,8 +13,9 @@
 #include "Hyperion/Assets/DynamicModelAsset.h"
 #include "Hyperion/Assets/TextureAsset.h"
 #include "Hyperion/Library/Math/MathCore.h"
-#include "Hyperion/Core/RenderManager.h"
 #include "Hyperion/File/FileSystem.h"
+#include "Hyperion/Renderer/Renderer.h"
+#include "Hyperion/Core/Engine.h"
 
 
 
@@ -412,7 +413,7 @@ namespace Hyperion
 			if( worker )
 			{
 				worker->Stop();
-				worker.reset();
+				worker.Clear();
 			}
 		}
 
@@ -421,7 +422,7 @@ namespace Hyperion
 			if( worker )
 			{
 				worker->Stop();
-				worker.reset();
+				worker.Clear();
 			}
 		}
 
@@ -429,7 +430,7 @@ namespace Hyperion
 		if( m_Thread )
 		{
 			m_Thread->Stop();
-			m_Thread.reset();
+			m_Thread.Clear();
 		}
 	}
 
@@ -826,7 +827,8 @@ namespace Hyperion
 	{
 		// Properly remove texture from this system
 		inTexture.CancelPendingRequest();
-		RenderManager::GetRenderer().RemoveTextureAsset( inTexture.GetIdentifier() );
+		//Engine::GetRenderer()->RemoveTextureAsset( inTexture.GetIdentifier() );
+		// TODO TODO TODO TODO
 
 		m_MemoryUsage -= inTexture.GetActiveMemory();
 
@@ -913,7 +915,7 @@ namespace Hyperion
 				Now we want to process the unloads first. Start with the pure unloads, then the forced unloads
 				Also, we want to keep track of the failed loads/unloads, so we can correct the memory usage later
 			*/
-			auto& r = RenderManager::GetRenderer();
+			auto r = Engine::GetRenderer();
 			uint32 failedUnloadMemory	= 0;
 			uint32 failedLoadMemory		= 0;
 
@@ -924,7 +926,8 @@ namespace Hyperion
 
 				HYPERION_VERIFY( target && target->GetAsset(), "Pure drop target became invalid?" );
 
-				if( r.LowerTextureAssetLOD( target->GetAsset(), level ) )
+				/*
+				if( r->LowerTextureAssetLOD( target->GetAsset(), level ) )
 				{
 					// If the drop was successful, update our texture instance to reflect this, and unlock it
 					// so other threads are able to access it right away
@@ -939,6 +942,8 @@ namespace Hyperion
 
 					failedUnloadMemory += drop->GetMemory();
 				}
+				*/
+				// TODO TODO TODO TODO
 			}
 
 			for( auto& tex : forceDropList )
@@ -946,7 +951,8 @@ namespace Hyperion
 				auto level = tex->GetActiveLevel() - 1;
 				HYPERION_VERIFY( tex && tex->GetActiveLevel() < tex->GetMinimumLevel() && tex->GetAsset(), "Force drop target became invalid?" );
 
-				if( r.LowerTextureAssetLOD( tex->GetAsset(), level ) )
+				/*
+				if( r->LowerTextureAssetLOD( tex->GetAsset(), level ) )
 				{
 					// Force drop was successful, so update texture to reflect this, and unlock it
 					tex->PerformDrop( level );
@@ -960,6 +966,8 @@ namespace Hyperion
 
 					failedUnloadMemory += tex->GetTopLevelMemoryUsage();
 				}
+				*/
+				// TODO TODO TODO TODO
 			}
 
 			/*
@@ -1146,14 +1154,14 @@ namespace Hyperion
 			uint8 globalLODCount	= (uint8) targetHeader.LODs.size();
 			uint8 localLODCount		= (uint8) targetHeader.LODs.size() - loadRequest->GetLevel();
 
-			uint32 dataOffset	= targetHeader.LODs.at( loadRequest->GetLevel() ).FileOffset;
+			uint64 dataOffset	= targetHeader.LODs.at( loadRequest->GetLevel() ).FileOffset;
 
 			// For size, we can just take the offset of the last LOD, and its size and calculate the total size
-			uint32 lowestOffset		= targetHeader.LODs.back().FileOffset;
+			uint64 lowestOffset		= targetHeader.LODs.back().FileOffset;
 			uint32 lowestSize		= targetHeader.LODs.back().LODSize;
 
-			uint32 dataSize = ( lowestOffset + lowestSize ) - dataOffset;
-			HYPERION_VERIFY( lowestOffset + lowestSize <= fileSize, "Texture data out of file bounds?" );
+			uint64 dataSize = ( lowestOffset + lowestSize ) - dataOffset;
+			HYPERION_VERIFY( lowestOffset + lowestSize <= (uint64)fileSize, "Texture data out of file bounds?" );
 
 			// Now, read all of the data in a single read call.
 			// TODO: Interuptable prioritized loads?
@@ -1173,7 +1181,7 @@ namespace Hyperion
 				{
 					// Get begin and end iterators to the target data set for this LOD
 					auto& lodInfo = targetHeader.LODs.at( i );
-					uint32 localOffset = dataOffset > lodInfo.FileOffset ? 0 : lodInfo.FileOffset - dataOffset;
+					uint64 localOffset = dataOffset > lodInfo.FileOffset ? 0 : lodInfo.FileOffset - dataOffset;
 
 					auto beginIt = allData.begin();
 					auto endIt = allData.begin();
@@ -1191,8 +1199,12 @@ namespace Hyperion
 				Console::WriteLine( "[DEBUG] AAManager: Loaded LOD level(s) for '", targetAsset->GetPath(), "' up to level ", loadRequest->GetLevel(), " using ", dataSize, " bytes" ); // bytes or kb or mb??
 				#endif
 
+				// We could create the render command here, to cross the thread barrier.. then....
+				// Engine::GetRenderer()->GetTextureCache()->UpdateTexture( ... );
+
 				// Now, make the renderer call to create this new texture
-				if( !RenderManager::GetRenderer().IncreaseTextureAssetLOD( targetAsset, loadRequest->GetLevel(), LODData ) )
+				/*
+				if( !Engine::GetRenderer()->IncreaseTextureAssetLOD( targetAsset, loadRequest->GetLevel(), LODData ) )
 				{
 					Console::WriteLine( "[ERROR] AdaptiveAssetManager: Failed to increase LOD level for texture \"", targetPath, "\", because the render thread failed to update the texture!" );
 				}
@@ -1200,6 +1212,9 @@ namespace Hyperion
 				{
 					return true;
 				}
+				*/
+
+				// TODO TODO TODO TODO
 			}
 		}
 

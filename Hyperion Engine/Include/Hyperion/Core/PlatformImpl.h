@@ -24,6 +24,8 @@ namespace Hyperion
 
 		virtual void Init() = 0;
 
+		virtual uint32 GetDefaultGraphicsAPI() = 0;
+
 	};
 
 	template< typename _PlatformClass >
@@ -48,6 +50,7 @@ namespace Hyperion
 		static String GetExecutableName() { return Get().GetExecutableName(); }
 		static String GetExecutablePath() { return Get().GetExecutablePath(); }
 		static String GetUserDataPath() { return Get().GetUserDataPath(); }
+		static uint32 GetDefaultGraphicsAPI() { return Get().GetDefaultGraphicsAPI(); }
 		static void Init() { return Get().Init(); }
 
 	};

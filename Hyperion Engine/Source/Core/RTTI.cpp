@@ -11,16 +11,18 @@
 namespace Hyperion
 {
 
-	//std::map< size_t, std::shared_ptr< RTTI::TypeInfo > > g_TypeInfoList;
-
-	std::shared_ptr< RTTI::TypeInfo > RTTI::m_ObjectTypeInfo( 
-		std::make_shared< RTTI::TypeInfo >( typeid( Object ).hash_code(), String( HYPERION_OBJECT_TYPE_NAME ), nullptr, std::vector< size_t >() ) 
-	);
-
 	std::map< size_t, std::shared_ptr< RTTI::TypeInfo > >& getTypeMap()
 	{
 		static std::map< size_t, std::shared_ptr< RTTI::TypeInfo > > ret;
 		return ret;
+	}
+
+	std::shared_ptr< RTTI::TypeInfo > RTTI::GetObjectType()
+	{
+		static std::shared_ptr< RTTI::TypeInfo > objType =
+			std::make_shared< RTTI::TypeInfo >( typeid( Object ).hash_code(), String( HYPERION_OBJECT_TYPE_NAME ), nullptr, std::vector< size_t >() );
+
+		return objType;
 	}
 
 	RTTI::RegistryEntry::RegistryEntry( size_t inIdentifier, const String& inName, size_t inParent, std::function< HypPtr< Object >() > inCreateFunc )
@@ -72,7 +74,7 @@ namespace Hyperion
 		static size_t objectTypeId = typeid( Object ).hash_code();
 		if( inIdentifier == objectTypeId )
 		{
-			return m_ObjectTypeInfo;
+			return GetObjectType();
 		}
 		auto& list = getTypeMap();
 
@@ -97,7 +99,7 @@ namespace Hyperion
 
 		if( String::Equals( lowerName, objectName ) )
 		{
-			return m_ObjectTypeInfo;
+			return GetObjectType();
 		}
 
 		auto& list = getTypeMap();
@@ -151,7 +153,7 @@ namespace Hyperion
 		
 		if( inParent == typeid( Object ).hash_code() )
 		{
-			m_ObjectTypeInfo->ChildrenList.push_back( inIdentifier );
+			GetObjectType()->ChildrenList.push_back( inIdentifier );
 		}
 		else
 		{

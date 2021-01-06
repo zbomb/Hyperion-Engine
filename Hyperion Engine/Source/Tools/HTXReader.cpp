@@ -151,7 +151,7 @@ namespace Hyperion
 			Binary::DeserializeUInt16( It, newLOD.Height, false );
 			std::advance( It, 2 );
 			
-			Binary::DeserializeUInt32( It, newLOD.FileOffset, false );
+			Binary::DeserializeUInt32( It, reinterpret_cast< uint32& >( newLOD.FileOffset ), false ); // TODO: UPDATE TO UINT64
 			std::advance( It, 4 );
 
 			Binary::DeserializeUInt32( It, newLOD.LODSize, false );
@@ -178,7 +178,7 @@ namespace Hyperion
 	}
 
 
-	HTXReader::Result HTXReader::ReadRawData( uint32 inOffset, uint32 inSize, std::vector< byte >& outData )
+	HTXReader::Result HTXReader::ReadRawData( uint64 inOffset, uint32 inSize, std::vector< byte >& outData )
 	{
 		// Clear the output data vector
 		std::vector< byte >().swap( outData );
@@ -197,7 +197,7 @@ namespace Hyperion
 		m_Reader.SeekBegin( m_Offset );
 		uint64 fileSize = m_Length == 0 ? (uint64)m_Reader.Size() : m_Length;
 
-		if( inOffset + inSize > fileSize )
+		if( inOffset + (uint64)inSize > fileSize )
 		{
 			#ifdef HYPERION_DEBUG
 			Console::WriteLine( "[DEBUG] HTXReader: Failed to read data from '", m_Target.GetPath().ToString(), "' but the requested range falls outside of the file size" );

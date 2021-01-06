@@ -13,6 +13,10 @@
 #include "Hyperion/Core/Types/ConcurrentQueue.h"
 #include "Hyperion/Console/ConsoleVar.h"
 #include "Hyperion/Library/Math/Transform.h"
+#include "Hyperion/Streaming/BasicStreamingManager.h"
+#include "Hyperion/Renderer/Resource/ResourceManager.h"
+
+#include <atomic>
 
 
 namespace Hyperion
@@ -25,13 +29,7 @@ namespace Hyperion
 	class ProxyLight;
 	class ProxyCamera;
 	class ProxyBase;
-	
-	template< typename T >
-	class AssetRef;
-
 	class TextureAsset;
-	struct RawImageData;
-
 
 	/*
 		Renderer Instance
@@ -43,15 +41,22 @@ namespace Hyperion
 
 		ScreenResolution m_Resolution;
 		bool m_bVSync;
-		IRenderOutput m_Output;
+		void* m_pWindow;
+
+		std::atomic< ScreenResolution > m_CachedResolution;
+		std::atomic< bool > m_bCachedVSync;
 
 		std::shared_ptr< IGraphics > m_API;
 		std::shared_ptr< ProxyScene > m_Scene;
 
+		HypPtr< BasicStreamingManager > m_StreamingManager;
+
 		ConcurrentQueue< std::unique_ptr< RenderCommandBase > > m_ImmediateCommands;
 		ConcurrentQueue< std::unique_ptr< RenderCommandBase > > m_Commands;
 
-		std::map< uint32, std::shared_ptr< ITexture2D > > m_TextureCache;
+		std::shared_ptr< ResourceManager > m_ResourceManager;
+
+		GraphicsAPI m_APIType;
 
 		// Functions for derived classes to define
 		virtual void RenderScene() = 0;
@@ -61,14 +66,27 @@ namespace Hyperion
 	public:
 
 		Renderer() = delete;
-		Renderer( std::shared_ptr< IGraphics >& inAPI, const IRenderOutput& inOutput, const ScreenResolution& inResolution, bool bVSync );
-		~Renderer();
+		Renderer( GraphicsAPI inAPI, void* inWindow, const ScreenResolution& inRes, bool bVSync );
+		virtual ~Renderer();
 
 		Renderer( const Renderer& ) = delete;
 		Renderer( Renderer&& ) = delete;
 
 		Renderer& operator=( const Renderer& ) = delete;
 		Renderer& operator=( Renderer&& ) = delete;
+
+		inline GraphicsAPI GetAPIType() const { return m_APIType; }
+
+		// These two functions are able to be called from any thread
+		inline ScreenResolution GetResolutionSafe() const { return m_CachedResolution.load(); }
+		inline bool IsVSyncOnSafe() const { return m_bCachedVSync.load(); }
+
+		inline ScreenResolution GetResolutionUnsafe() const { return m_Resolution; }
+		inline bool IsVSyncOnUnsafe() const { return m_bVSync; }
+
+		inline HypPtr< BasicStreamingManager > GetStreamingManager() const { return m_StreamingManager; }
+		inline std::shared_ptr< ResourceManager > GetResourceManager() const { return m_ResourceManager; }
+		inline std::shared_ptr< IGraphics > GetAPI() const { return m_API; }
 
 		bool Initialize();
 		void Shutdown();
@@ -88,14 +106,6 @@ namespace Hyperion
 		bool RemoveLight( uint32 inIdentifier );
 
 		inline std::shared_ptr< ProxyScene > GetScene() const { return m_Scene; }
-
-		bool IncreaseTextureAssetLOD( std::shared_ptr< TextureAsset >& inAsset, uint8 inMaxLevel, const std::vector< std::vector< byte > >& inData );
-		bool LowerTextureAssetLOD( std::shared_ptr< TextureAsset >& inAsset, uint8 inMaxLevel );
-		void RemoveTextureAsset( uint32 inIdentifier );
-		void ClearTextureAssetCache();
-
-		friend class RenderManager;
-
 	};
 
 }

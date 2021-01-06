@@ -12,10 +12,21 @@
 
 namespace Hyperion
 {
+
+	class GameInstance;
+
 	namespace Encoding
 	{
 		constexpr uint32 InvalidChar = 0xFFFD;
 	}
+
+	enum class GraphicsAPI
+	{
+		None = 0,
+		DX11 = 1,
+		DX12 = 2,
+		OpenGL = 3
+	};
 
 	typedef unsigned int ObjectID;
 	constexpr ObjectID OBJECT_INVALID	= 0;
@@ -47,10 +58,40 @@ namespace Hyperion
 	constexpr auto THREAD_RENDERER	= "renderer";
 	constexpr auto THREAD_POOL		= "pool";
 
+	// Flags 
+	constexpr uint32 FLAG_NONE				= 0U;
+
+	constexpr uint32 FLAG_RENDERER_DX11		= 0b00000000'00000000'00000001'00000000;
+	constexpr uint32 FLAG_RENDERER_DX12		= 0b00000000'00000000'00000010'00000000;
+	constexpr uint32 FLAG_RENDERER_OGL		= 0b00000000'00000000'00000100'00000000;
+	constexpr uint32 FLAG_RENDERER_VSYNC	= 0b00000000'00000000'00001000'00000000;
+
+	// Types
+	// TODO: Move this into its own file for runtime settings
+	// Static settings?
+	// We were going to make them read only, and we can create a whole file filled with them
+	constexpr auto TYPE_OVERRIDE_GAME_INSTANCE = "gameinstance";
+
+	// Default Resolution
+	// TODO: Make this dynamic, select a default using the graphics api to see whats available, monitor aspect ratio, etc...
+	constexpr uint32 DEFAULT_RESOLUTION_WIDTH		= 1080;
+	constexpr uint32 DEFAULT_RESOLUTION_HEIGHT		= 720;
+	constexpr bool DEFAULT_RESOLUTION_FULLSCREEN	= false;
+
+	constexpr uint32 MIN_RESOLUTION_WIDTH	= 480;
+	constexpr uint32 MIN_RESOLUTION_HEIGHT	= 360;
+
+	// Default Graphics API per Platform
+	constexpr uint32 DEFAULT_API_WIN32	= FLAG_RENDERER_DX11;
+	constexpr uint32 DEFAULT_API_OSX	= FLAG_RENDERER_OGL;
+
+
+
 	/*
 		Maximum number of LODs that a texture can have, this makes the max texture width/height is 65,536px
 	*/
 	constexpr uint8 TEXTURE_MAX_LODS = 15;
+	constexpr uint8 MODEL_MAX_LODS = 10;
 
 	enum class TextureFormat
 	{

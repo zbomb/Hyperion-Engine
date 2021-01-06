@@ -9,21 +9,21 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
-#include "Hyperion/Renderer/Types/IRenderTarget.h"
+#include "Hyperion/Renderer/Resource/RenderTarget.h"
 
 
 namespace Hyperion
 {
 
-	class DirectX11RenderTarget : public IRenderTarget
+	class DirectX11RenderTarget : public RRenderTarget
 	{
 
 	protected:
 
 		ID3D11RenderTargetView* m_RenderTarget;
 
-		DirectX11RenderTarget( std::shared_ptr< ITexture2D > inTexture )
-			: IRenderTarget( inTexture ), m_RenderTarget( nullptr )
+		DirectX11RenderTarget( std::shared_ptr< RTexture2D > inTexture )
+			: RRenderTarget( inTexture ), m_RenderTarget( nullptr )
 		{
 		}
 

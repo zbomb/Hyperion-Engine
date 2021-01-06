@@ -8,18 +8,20 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/Threading.h"
+#include "Hyperion/Core/Object.h"
 
 
 namespace Hyperion
 {
+
 
 	class ThreadManager
 	{
 
 	private:
 
-		static std::map< std::string, std::shared_ptr< TickedThread > > m_TickedThreads;
-		static std::map< std::string, std::shared_ptr< CustomThread > > m_CustomThreads;
+		static std::map< std::string, HypPtr< TickedThread > > m_TickedThreads;
+		static std::map< std::string, HypPtr< CustomThread > > m_CustomThreads;
 		static std::vector< std::shared_ptr< PoolWorkerThread > > m_TaskPoolThreads;
 
 		static bool m_bRunning;
@@ -82,9 +84,9 @@ namespace Hyperion
 		}
 
 
-		static std::shared_ptr< Thread > CreateThread( const TickedThreadParameters& );
-		static std::shared_ptr< Thread > CreateThread( const CustomThreadParameters& );
-		static std::shared_ptr< Thread > GetThread( const std::string& );
+		static HypPtr< Thread > CreateThread( const TickedThreadParameters& );
+		static HypPtr< Thread > CreateThread( const CustomThreadParameters& );
+		static HypPtr< Thread > GetThread( const std::string& );
 		static bool DestroyThread( const std::string& );
 		static uint32 GetThreadCount();
 

@@ -7,13 +7,15 @@
 
 #include "Hyperion/Core/GameInstance.h"
 #include "Hyperion/Framework/World.h"
-#include "Hyperion/Core/RenderManager.h"
 #include "Hyperion/Framework/RenderComponent.h"
 #include "Hyperion/Framework/PrimitiveComponent.h"
 #include "Hyperion/Framework/LightComponent.h"
 #include "Hyperion/Framework/CameraComponent.h"
 #include "Hyperion/Framework/LocalPlayer.h"
 #include "Hyperion/Framework/Player.h"
+#include "Hyperion/Core/Engine.h"
+#include "Hyperion/Streaming/BasicStreamingManager.h"
+#include "Hyperion/Renderer/Renderer.h"
 
 
 namespace Hyperion
@@ -123,9 +125,9 @@ namespace Hyperion
 		}
 
 		// Inform streaming manager of the world reset
-		AdaptiveAssetManagerWorldResetEvent Event;
-		RenderManager::GetStreamingManager().OnWorldReset( Event );
-
+		//AdaptiveAssetManagerWorldResetEvent Event;
+		//Engine::GetRenderer()->GetAdaptiveAssetManager()->OnWorldReset( Event );
+		Engine::GetRenderer()->GetStreamingManager()->Reset();
 
 		m_ActiveWorld->m_bActive = false;
 		m_ActiveWorld->OnSetDeactive();
@@ -219,7 +221,7 @@ namespace Hyperion
 		}
 
 		// Add render command to actually remove this component
-		RenderManager::AddCommand( std::make_unique< RemovePrimitiveProxyCommand >( inComp->GetIdentifier() ) );
+		Engine::GetRenderer()->AddCommand( std::make_unique< RemovePrimitiveProxyCommand >( inComp->GetIdentifier() ) );
 		
 		// DEBUG
 		Console::WriteLine( "[DEBUG] GameInstance: Removed primitive component from list/renderer" );
@@ -235,7 +237,7 @@ namespace Hyperion
 		}
 
 		// Add render command to actually remove this component
-		RenderManager::AddCommand( std::make_unique< RemoveLightProxyCommand >( inComp->GetIdentifier() ) );
+		Engine::GetRenderer()->AddCommand( std::make_unique< RemoveLightProxyCommand >( inComp->GetIdentifier() ) );
 
 		// DEBUG
 		Console::WriteLine( "[DEBUG] GameInstance: Removed light component from list/renderer" );
@@ -246,7 +248,7 @@ namespace Hyperion
 	void GameInstance::ProcessRenderUpdates()
 	{
 		// We need to accumulate updates for the streaming system as well
-		AdaptiveAssetManagerObjectUpdateEvent Event;
+		//AdaptiveAssetManagerObjectUpdateEvent Event;
 
 		// Loop through active primitives and process updates
 		for( auto It = m_ActiveRenderComponents.begin(); It != m_ActiveRenderComponents.end(); )
@@ -276,18 +278,18 @@ namespace Hyperion
 			}
 			else if( state == RenderComponentState::Dirty )
 			{
-				if( It->second->UpdateProxy() )
+				if( It->second->PerformProxyUpdate() )
 				{
 					It->second->m_RenderState = RenderComponentState::Clean;
 
 					// Create update entry for this component
-					AdaptiveAssetManagerObjectUpdateEntry Entry;
+					//AdaptiveAssetManagerObjectUpdateEntry Entry;
 
-					Entry.Identifier	= It->second->GetIdentifier();
-					Entry.Position		= It->second->GetPosition();
-					Entry.Radius		= 10.f; // TODO TODO TODO 
+					//Entry.Identifier	= It->second->GetIdentifier();
+					//Entry.Position		= It->second->GetPosition();
+					//Entry.Radius		= 10.f; // TODO TODO TODO 
 
-					Event.Entries.push_back( Entry );
+					//Event.Entries.push_back( Entry );
 				}
 				else
 				{
@@ -302,23 +304,23 @@ namespace Hyperion
 		if( m_LocalPlayer && m_LocalPlayer->IsValid() )
 		{
 			ViewState vs;
-			uint32 screenHeight = RenderManager::GetActiveResolution().Height;
+			uint32 screenHeight = Engine::Get()->GetResolution().Height;
 
 			if( m_LocalPlayer->GetViewState( vs ) || screenHeight != m_LastTickScreenHeight )
 			{
 				// This means the view state has changed
 				// First, lets inform the renderer of the updated view state
-				RenderManager::AddCommand( std::make_unique< UpdateViewStateCommand >( vs ) );
+				Engine::GetRenderer()->AddCommand( std::make_unique< UpdateViewStateCommand >( vs ) );
 
 				// Next, lets inform the streaming manager of the updated view
-				AdaptiveAssetManagerCameraUpdateEvent CameraEvent;
+				//AdaptiveAssetManagerCameraUpdateEvent CameraEvent;
 
-				CameraEvent.CameraInfo.FOV	= vs.FOV;
-				CameraEvent.CameraInfo.Position = vs.Position;
-				CameraEvent.CameraInfo.ScreenHeight = screenHeight;
+				//CameraEvent.CameraInfo.FOV	= vs.FOV;
+				//CameraEvent.CameraInfo.Position = vs.Position;
+				//CameraEvent.CameraInfo.ScreenHeight = screenHeight;
 
 				m_LastTickScreenHeight = screenHeight;
-				RenderManager::GetStreamingManager().OnCameraUpdate( CameraEvent );
+				//Engine::GetRenderer()->GetAdaptiveAssetManager()->OnCameraUpdate( CameraEvent );
 			}
 		}
 		else
@@ -328,7 +330,7 @@ namespace Hyperion
 		}
 
 		// Send event to streaming system to update the position/size of all objects
-		RenderManager::GetStreamingManager().OnPrimitiveUpdate( Event );
+		//Engine::GetRenderer()->GetAdaptiveAssetManager()->OnPrimitiveUpdate( Event );
 	
 	}
 

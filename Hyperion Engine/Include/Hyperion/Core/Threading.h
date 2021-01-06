@@ -10,6 +10,7 @@
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/Memory.h"
 #include "Hyperion/Console/Console.h"
+#include "Hyperion/Core/Object.h"
 
 #include <memory>
 #include <thread>
@@ -93,7 +94,7 @@ namespace Hyperion
 	};
 
 
-	class Thread
+	class Thread : public Object
 	{
 
 	protected:
@@ -105,13 +106,13 @@ namespace Hyperion
 		std::string m_Identifier;
 		bool m_AllowTasks;
 
-		Thread( const std::string& inIdentifier, bool inAllowTasks )
-			: m_Identifier( inIdentifier ), m_AllowTasks( inAllowTasks ), m_State( false )
-		{}
-
 		Thread() = delete;
 
 	public:
+
+		Thread( const std::string& inIdentifier, bool inAllowTasks )
+			: m_Identifier( inIdentifier ), m_AllowTasks( inAllowTasks ), m_State( false )
+		{}
 
 		virtual bool Start() = 0;
 		virtual bool Stop() = 0;
@@ -147,13 +148,14 @@ namespace Hyperion
 		uint32 m_MinTasks;
 		uint32 m_MaxTasks;
 
-		TickedThread( const TickedThreadParameters& params );
 		TickedThread() = delete;
 
 		void ThreadMain();
 		bool RunNextTask();
 
 	public:
+
+		TickedThread( const TickedThreadParameters& params );
 
 		bool Start() override;
 		bool Stop() override;
@@ -170,12 +172,13 @@ namespace Hyperion
 
 		std::function< void( CustomThread& ) > m_MainFunc;
 
-		CustomThread( const CustomThreadParameters& params );
 		CustomThread() = delete;
 
 		void ThreadMain();
 
 	public:
+
+		CustomThread( const CustomThreadParameters& params );
 
 		bool Start() override;
 		bool Stop() override;

@@ -7,12 +7,15 @@
 #include "Hyperion/Renderer/Proxy/ProxyStaticModel.h"
 
 
+
 namespace Hyperion
 {
 
 	ProxyStaticModel::ProxyStaticModel( uint32 inIdentifier )
 		: ProxyPrimitive( inIdentifier )
-	{}
+	{
+
+	}
 
 
 	void ProxyStaticModel::GameInit()
@@ -64,6 +67,15 @@ namespace Hyperion
 		{
 			Console::WriteLine( "[DEBUG] ProxyStaticModel: Shutdown called on wrong thread!" );
 		}
+	}
+
+
+	std::shared_ptr< RMaterial > ProxyStaticModel::GetMaterial( uint8 inSlot )
+	{
+		auto entry = m_Materials.find( inSlot );
+		if( entry == m_Materials.end() ) { return nullptr; }
+
+		return entry->second;
 	}
 
 }

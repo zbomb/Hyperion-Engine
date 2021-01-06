@@ -88,7 +88,7 @@ namespace Hyperion
 	};
 
 
-	class InputManager
+	class InputManager : public Object
 	{
 
 	private:

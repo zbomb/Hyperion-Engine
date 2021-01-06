@@ -17,7 +17,6 @@
 
 namespace Hyperion
 {
-	constexpr uint32 FLAG_CONSOLE_NONE			= 0;
 	constexpr uint32 FLAG_CONSOLE_OS_OUTPUT		= 1;
 
 
@@ -29,10 +28,10 @@ namespace Hyperion
 		static std::atomic< bool > m_bRunning;
 		static std::atomic< bool > m_bOSOutput;
 
-		static std::shared_mutex m_VarListMutex;
-		static std::map< String, std::shared_ptr< ConsoleVarInstanceBase > > m_Vars;
-
-		static std::mutex m_PrintMutex;
+		// Singleton getters, because these will be used during static global var init, and order of init isnt garunteed
+		static std::shared_mutex& GetVarListMutex();
+		static std::map< String, std::shared_ptr< ConsoleVarInstanceBase > >& GetVarList();
+		static std::mutex& GetPrintMutex();
 
 		static bool CreateVar( const std::shared_ptr< ConsoleVarInstanceBase >& inVar );
 
@@ -64,7 +63,7 @@ namespace Hyperion
 
 		Console() = delete;
 
-		static bool Start( uint32 inFlags = FLAG_CONSOLE_NONE );
+		static bool Start( uint32 inFlags = FLAG_NONE );
 		static bool Stop();
 
 		/*
@@ -78,7 +77,8 @@ namespace Hyperion
 				return;
 
 			// Aquire lock
-			std::lock_guard< std::mutex > lock( m_PrintMutex );
+			auto& m = GetPrintMutex();
+			std::lock_guard< std::mutex > lock( m );
 
 			// Loop through arguments, print each, some cool C++17 magic
 			( ( PerformWrite( ToString( args ) ) ), ... );
@@ -106,10 +106,11 @@ namespace Hyperion
 			std::shared_ptr< ConsoleVarInstanceBase > varInst;
 
 			{
-				std::shared_lock< std::shared_mutex > lock( m_VarListMutex );
+				std::shared_lock< std::shared_mutex > lock( GetVarListMutex() );
+				auto& varList = GetVarList();
 
-				auto entry = m_Vars.find( inKey );
-				if( entry == m_Vars.end() || !entry->second )
+				auto entry = varList.find( inKey );
+				if( entry == varList.end() || !entry->second )
 				{
 					WriteLine( "[ERROR] Console: Failed to set '", inKey, " because a cvar with that key doesnt exist" );
 					return false;
@@ -149,9 +150,11 @@ namespace Hyperion
 
 			std::shared_ptr< ConsoleVarInstanceBase > varInst;
 			{
-				std::shared_lock< std::shared_mutex > lock( m_VarListMutex );
-				auto entry = m_Vars.find( inKey );
-				if( entry == m_Vars.end() || !entry->second )
+				std::shared_lock< std::shared_mutex > lock( GetVarListMutex() );
+				auto& varList = GetVarList();
+
+				auto entry = varList.find( inKey );
+				if( entry == varList.end() || !entry->second )
 				{
 					WriteLine( "[ERROR] Console: Failed to get value for '", inKey, "'. Cvar wasnt found" );
 					return false;

@@ -7,7 +7,8 @@
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Framework/Entity.h"
 #include "Hyperion/Framework/World.h"
-#include "Hyperion/Core/GameManager.h"
+#include "Hyperion/Core/Engine.h"
+#include "Hyperion/Core/InputManager.h"
 #include <iostream>
 
 namespace Hyperion
@@ -38,7 +39,7 @@ namespace Hyperion
 		OnCreate();
 
 		// Bind Input
-		BindUserInput( GameManager::GetInputManager() );
+		BindUserInput( *Engine::GetInputManager() );
 	}
 
 
@@ -90,7 +91,7 @@ namespace Hyperion
 		m_Components.clear();
 
 		// Clear Bindings
-		GameManager::GetInputManager().ClearBindings( AquirePointer< Entity >() );
+		Engine::GetInputManager()->ClearBindings( AquirePointer< Entity >() );
 
 		m_bIsSpawned = false;
 		OnDestroy();

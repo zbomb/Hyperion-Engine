@@ -56,8 +56,8 @@ namespace Hyperion
 
 	private:
 
-		std::vector< std::shared_ptr< Thread > > m_TextureWorkerThreads;
-		std::vector< std::shared_ptr< Thread > > m_ModelWorkerThreads;
+		std::vector< HypPtr< Thread > > m_TextureWorkerThreads;
+		std::vector< HypPtr< Thread > > m_ModelWorkerThreads;
 
 		std::map< uint32, std::shared_ptr< AdaptiveTexture > > m_Textures;
 		std::map< uint32, std::shared_ptr< AdaptiveModel > > m_Models;
@@ -83,7 +83,7 @@ namespace Hyperion
 
 		float m_AdaptiveQualityMult;
 
-		std::shared_ptr< Thread > m_Thread;
+		HypPtr< Thread > m_Thread;
 		void ThreadMain( CustomThread& );
 
 		void UpdateSceneView();

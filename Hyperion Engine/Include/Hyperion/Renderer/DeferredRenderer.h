@@ -17,7 +17,8 @@ namespace Hyperion
 
 	public:
 
-		DeferredRenderer( std::shared_ptr< IGraphics >& inAPI, const IRenderOutput& inOutput, const ScreenResolution& inResolution, bool bVSync );
+		DeferredRenderer( GraphicsAPI inAPI, void* inOutput, const ScreenResolution& inResolution, bool bVSync );
+		~DeferredRenderer();
 
 	protected:
 

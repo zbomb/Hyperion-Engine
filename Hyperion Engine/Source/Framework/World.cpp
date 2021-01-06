@@ -6,8 +6,8 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Framework/World.h"
-#include "Hyperion/Core/RenderManager.h"
 #include "Hyperion/Framework/CameraComponent.h"
+
 
 
 namespace Hyperion

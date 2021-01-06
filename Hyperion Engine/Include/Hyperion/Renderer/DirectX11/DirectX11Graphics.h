@@ -13,10 +13,6 @@
 #include "Hyperion/Renderer/IGraphics.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
 #include "Hyperion/Core/String.h"
-#include "Hyperion/Renderer/Types/IBuffer.h"
-#include "Hyperion/Renderer/Types/ITexture.h"
-#include "Hyperion/Renderer/Types/IRenderTarget.h"
-
 
 
 namespace Hyperion
@@ -82,7 +78,7 @@ namespace Hyperion
 		bool SetResolution( const ScreenResolution& inResolution ) override;
 		void SetVSync( bool bVSync ) override;
 
-		bool Initialize( const IRenderOutput& Output ) override;
+		bool Initialize( void* pWindow ) override;
 		void Shutdown() override;
 
 		bool IsRunning() const override;
@@ -98,25 +94,43 @@ namespace Hyperion
 		void DisableZBuffer() override;
 		bool IsZBufferEnabled() override;
 
-		std::shared_ptr< IRenderTarget > GetRenderTarget() override;
-		std::shared_ptr< ITexture2D > GetBackBuffer() override;
+		std::shared_ptr< RRenderTarget > GetRenderTarget() override;
+		std::shared_ptr< RTexture2D > GetBackBuffer() override;
 
 
 		std::vector< ScreenResolution > GetAvailableResolutions() override;
 
 		inline bool AllowAsyncTextureCreation() const override { return true; }
 
-		std::shared_ptr< IBuffer > CreateBuffer( const BufferParameters& inParams ) override;
+		std::shared_ptr< RBuffer > CreateBuffer( const BufferParameters& inParams ) override;
+		std::shared_ptr< RBuffer > CreateBuffer( BufferType ty = BufferType::Vertex ) override;
 		
-		std::shared_ptr< ITexture1D > CreateTexture1D( const Texture1DParameters& inParams ) override;
-		std::shared_ptr< ITexture2D > CreateTexture2D( const Texture2DParameters& inParams ) override;
-		std::shared_ptr< ITexture3D > CreateTexture3D( const Texture3DParameters& inParams ) override;
+		// Texture Creation
+		std::shared_ptr< RTexture1D > CreateTexture1D( const TextureParameters& ) final;
+		std::shared_ptr< RTexture2D > CreateTexture2D( const TextureParameters& ) final;
+		std::shared_ptr< RTexture3D > CreateTexture3D( const TextureParameters& ) final;
+		std::shared_ptr< RTexture1D > CreateTexture1D() final;
+		std::shared_ptr< RTexture2D > CreateTexture2D() final;
+		std::shared_ptr< RTexture3D > CreateTexture3D() final;
 
-		bool CopyTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Target ) override;
-		bool CopyLODTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Dest,
-							uint32 SourceX, uint32 SourceY, uint32 Width, uint32 Height, uint32 DestX, uint32 DestY, uint8 SourceMip, uint8 DestMip ) override;
+		// Texture Copying
+		bool CopyTexture1D( std::shared_ptr< RTexture1D >& inSource, std::shared_ptr< RTexture1D >& inDest ) final;
+		bool CopyTexture2D( std::shared_ptr< RTexture2D >& inSource, std::shared_ptr< RTexture2D >& inDest ) final;
+		bool CopyTexture3D( std::shared_ptr< RTexture3D >& inSource, std::shared_ptr< RTexture3D >& inDest ) final;
 
-		std::shared_ptr< IRenderTarget > CreateRenderTarget( std::shared_ptr< ITexture2D > inSource ) override;
+		bool CopyTexture1DRegion( std::shared_ptr< RTexture1D >& inSource, std::shared_ptr< RTexture1D >& inDest,
+										  uint32 sourceX, uint32 inWidth, uint32 destX, uint8 sourceMip, uint8 targetMip ) final;
+		bool CopyTexture2DRegion( std::shared_ptr< RTexture2D >& inSource, std::shared_ptr< RTexture2D >& inDest, uint32 sourceX, uint32 sourceY,
+										  uint32 inWidth, uint32 inHeight, uint32 destX, uint32 destY, uint8 sourceMip, uint8 targetMip ) final;
+		bool CopyTexture3DRegion( std::shared_ptr< RTexture3D >& inSource, std::shared_ptr< RTexture3D >& inDest, uint32 sourceX, uint32 sourceY, uint32 sourceZ,
+										  uint32 inWidth, uint32 inHeight, uint32 inDepth, uint32 destX, uint32 destY, uint32 destZ, uint8 sourceMip, uint8 targetMip ) final;
+
+		bool CopyTexture1DMip( std::shared_ptr< RTexture1D >& inSource, std::shared_ptr< RTexture1D >& inDest, uint8 sourceMip, uint8 destMip ) final;
+		bool CopyTexture2DMip( std::shared_ptr< RTexture2D >& inSource, std::shared_ptr< RTexture2D >& inDest, uint8 sourceMip, uint8 destMip ) final;
+		bool CopyTexture3DMip( std::shared_ptr< RTexture3D >& inSource, std::shared_ptr< RTexture3D >& inDest, uint8 sourceMip, uint8 destMip ) final;
+
+
+		std::shared_ptr< RRenderTarget > CreateRenderTarget( std::shared_ptr< RTexture2D > inSource ) override;
 	};
 
 }

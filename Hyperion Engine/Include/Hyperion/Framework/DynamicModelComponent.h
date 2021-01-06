@@ -18,17 +18,12 @@ namespace Hyperion
 
 	protected:
 
-		virtual bool PerformProxyCreation()
+		bool UpdateProxy( const std::shared_ptr< ProxyPrimitive >& inPtr ) override
 		{
 			return true; // TODO
 		}
 
-		virtual bool UpdateProxy()
-		{
-			return true; // TODO
-		}
-
-		virtual std::shared_ptr< ProxyPrimitive > CreateProxy()
+		std::shared_ptr< ProxyPrimitive > CreateProxy() override
 		{
 			return nullptr; // TODO
 		}

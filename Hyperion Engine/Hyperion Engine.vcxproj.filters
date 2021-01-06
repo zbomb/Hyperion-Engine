@@ -1,10 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Framework">
       <UniqueIdentifier>{ceeacff1-e10d-44dc-ae7b-43f0d075bd52}</UniqueIdentifier>
     </Filter>
@@ -35,9 +31,6 @@
     <Filter Include="Console">
       <UniqueIdentifier>{5c820a59-d7b8-4d80-b1d4-beb7544699ac}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\Types">
-      <UniqueIdentifier>{74b40527-1a5d-4fdb-a23f-27549b9be0c0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Tools">
       <UniqueIdentifier>{08f86eec-a400-4d06-a8cd-4182b3b7fe69}</UniqueIdentifier>
     </Filter>
@@ -67,6 +60,13 @@
     </Filter>
     <Filter Include="Debugging">
       <UniqueIdentifier>{a475e7a4-9b93-4f19-a28b-15cffa62664c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Renderer\Resource">
+      <UniqueIdentifier>{a0438f79-0806-43d2-a326-12d4842c5f7d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -196,12 +196,6 @@
     <ClInclude Include="Include\Hyperion\Console\Console.h">
       <Filter>Console</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\GameManager.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\RenderManager.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\ThreadManager.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -226,32 +220,17 @@
     <ClInclude Include="Include\Hyperion\Framework\LightComponent.h">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyTest.h">
-      <Filter>Renderer\Proxy</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\TestComponent.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Framework\TestEntity.h">
       <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Buffer.h">
       <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Types\IBuffer.h">
-      <Filter>Renderer\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Types\ITexture.h">
-      <Filter>Renderer\Types</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Assets\TextureAsset.h">
       <Filter>Assets</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Texture.h">
       <Filter>Renderer\DirectX11</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Types\Resource.h">
-      <Filter>Renderer\Types</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Extern\zlib\zconf.h">
       <Filter>Extern\zlib</Filter>
@@ -391,9 +370,6 @@
     <ClInclude Include="Include\Hyperion\Renderer\DeferredRenderer.h">
       <Filter>Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Types\IRenderTarget.h">
-      <Filter>Renderer\Types</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11RenderTarget.h">
       <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
@@ -429,6 +405,34 @@
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\RTTI.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Engine.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Win32\Win32Headers.h">
+      <Filter>Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Include\Hyperion\Streaming\BasicStreamingManager.h">
+      <Filter>Streaming</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resource\ResourceManager.h">
+      <Filter>Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resource\Geometry.h">
+      <Filter>Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resource\Texture.h">
+      <Filter>Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resource\Material.h">
+      <Filter>Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resource\Buffer.h">
+      <Filter>Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resource\RenderTarget.h">
+      <Filter>Renderer\Resource</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -489,12 +493,6 @@
     <ClCompile Include="Source\Console\Console.cpp">
       <Filter>Console</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Core\GameManager.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Core\RenderManager.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Core\ThreadManager.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -511,12 +509,6 @@
       <Filter>Framework</Filter>
     </ClCompile>
     <ClCompile Include="Source\Framework\LightComponent.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Renderer\Proxy\ProxyTest.cpp">
-      <Filter>Renderer\Proxy</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\TestComponent.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
     <ClCompile Include="Source\Renderer\DataTypes.cpp">
@@ -627,10 +619,35 @@
     <ClCompile Include="Source\Core\RTTI.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Core\Engine.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Win32\Win32Main.cpp">
+      <Filter>Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Streaming\BasicStreamingManager.cpp">
+      <Filter>Streaming</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\Resource\ResourceManager.cpp">
+      <Filter>Renderer\Resource</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="String.natvis">
       <Filter>Debugging</Filter>
     </Natvis>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resource\IconLarge.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="Resource\IconSmall.ico">
+      <Filter>Resource</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc">
+      <Filter>Resource</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

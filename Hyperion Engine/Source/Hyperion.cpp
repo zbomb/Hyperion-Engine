@@ -6,21 +6,22 @@
 
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Core/GameManager.h"
-#include "Hyperion/Core/RenderManager.h"
 #include "Hyperion/Core/ThreadManager.h"
+#include "Hyperion/Core/Engine.h"
 
 
 namespace Hyperion
 {
 	bool IsGameThread()
 	{
-		return( std::this_thread::get_id() == GameManager::GetThreadId() );
+		auto th = Engine::Get()->GetGameThread();
+		return( th.IsValid() ? std::this_thread::get_id() == th->GetSystemIdentifier() : false );
 	}
 
 	bool IsRenderThread()
 	{
-		return( std::this_thread::get_id() == RenderManager::GetThreadId() );
+		auto th = Engine::Get()->GetRenderThread();
+		return( th.IsValid() ? std::this_thread::get_id() == th->GetSystemIdentifier() : false );
 	}
 
 	bool IsWorkerThread()

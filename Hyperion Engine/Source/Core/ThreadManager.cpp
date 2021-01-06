@@ -13,8 +13,8 @@ namespace Hyperion
 	/*
 		Static Definitions
 	*/
-	std::map< std::string, std::shared_ptr< TickedThread > > ThreadManager::m_TickedThreads;
-	std::map< std::string, std::shared_ptr< CustomThread > > ThreadManager::m_CustomThreads;
+	std::map< std::string, HypPtr< TickedThread > > ThreadManager::m_TickedThreads;
+	std::map< std::string, HypPtr< CustomThread > > ThreadManager::m_CustomThreads;
 	std::vector< std::shared_ptr< PoolWorkerThread > > ThreadManager::m_TaskPoolThreads;
 	bool ThreadManager::m_bRunning( false );
 
@@ -93,7 +93,7 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr< Thread > ThreadManager::CreateThread( const TickedThreadParameters& params )
+	HypPtr< Thread > ThreadManager::CreateThread( const TickedThreadParameters& params )
 	{
 		// Validate the parameters
 		if( params.Identifier.size() == 0 )
@@ -118,7 +118,7 @@ namespace Hyperion
 		}
 
 		// Next, create the thread in-place
-		auto& newThread = m_TickedThreads[ params.Identifier ] = std::shared_ptr< TickedThread >( new TickedThread( params ) );
+		auto& newThread = m_TickedThreads[ params.Identifier ] = CreateObject< TickedThread >( params );
 
 		// And were going to run it automatically if desired
 		if( params.StartAutomatically )
@@ -130,7 +130,7 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr< Thread > ThreadManager::CreateThread( const CustomThreadParameters& params )
+	HypPtr< Thread > ThreadManager::CreateThread( const CustomThreadParameters& params )
 	{
 		// Validate the parameters
 		if( params.Identifier.size() == 0 )
@@ -150,7 +150,7 @@ namespace Hyperion
 		}
 
 		// Create thread in-place
-		auto& newThread = m_CustomThreads[ params.Identifier ] = std::shared_ptr< CustomThread >( new CustomThread( params ) );
+		auto& newThread = m_CustomThreads[ params.Identifier ] = CreateObject< CustomThread >( params );
 
 		if( params.StartAutomatically )
 		{
@@ -161,7 +161,7 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr< Thread > ThreadManager::GetThread( const std::string& identifier )
+	HypPtr< Thread > ThreadManager::GetThread( const std::string& identifier )
 	{
 		if( identifier.size() == 0 )
 			return nullptr;

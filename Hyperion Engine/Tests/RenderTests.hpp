@@ -9,8 +9,8 @@
 #include <iostream>
 
 #include "Hyperion/Framework/World.h"
-#include "Hyperion/Framework/Entity.h"
-#include "Hyperion/Framework/Component.h"
+#include "Hyperion/Framework/TestEntity.h"
+#include "Hyperion/Core/GameInstance.h"
 
 
 namespace Hyperion
@@ -25,6 +25,11 @@ namespace Tests
 	{
 		Console::WriteLine( "\n---------------------------------------------------------------------------------------------\n[TEST] Running rederer test..." );
 
+		// Lets create some type of entity, thats renderable
+		auto newEnt = CreateObject< TestEntity >();
+		auto world = Engine::GetGame()->GetWorld();
+
+		world->AddEntity( newEnt );
 
 		Console::WriteLine( "\n----> Rederer Test Complete!" );
 		Console::WriteLine( "---------------------------------------------------------------------------------------------" );

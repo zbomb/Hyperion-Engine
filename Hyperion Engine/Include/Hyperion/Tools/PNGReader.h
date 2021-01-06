@@ -7,7 +7,6 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Renderer/Types/ITexture.h"
 
 
 namespace Hyperion

@@ -145,7 +145,8 @@ namespace Hyperion
 		{
 			std::string lowerKey;
 			lowerKey.resize( Key.size() );
-			std::transform( Key.begin(), Key.end(), lowerKey.begin(), std::tolower );
+			std::transform( Key.begin(), Key.end(), lowerKey.begin(), 
+							[] ( unsigned char c ) -> unsigned char { return std::tolower( c ); } );
 
 			for( auto It = m_Languages.begin(); It != m_Languages.end(); It++ )
 			{
@@ -188,7 +189,8 @@ namespace Hyperion
 		}
 
 		// Convert key to lowercase
-		std::transform( In.Key.begin(), In.Key.end(), In.Key.begin(), std::tolower );
+		std::transform( In.Key.begin(), In.Key.end(), In.Key.begin(),
+						[] ( unsigned char c ) -> unsigned char { return std::tolower( c ); } );
 
 		// Check if this key already exists
 		if( LanguageExists( In.Key ) )
@@ -227,7 +229,8 @@ namespace Hyperion
 		// Convert key to lowercase
 		std::string lowerKey;
 		lowerKey.resize( Key.size() );
-		std::transform( Key.begin(), Key.end(), lowerKey.begin(), std::tolower );
+		std::transform( Key.begin(), Key.end(), lowerKey.begin(),
+						[] ( unsigned char c ) -> unsigned char { return std::tolower( c ); } );
 
 		// Create/Update the actual value in the cache
 		std::shared_ptr< Cache::Instance >& Entry = Cache::m_Values[ Key ];
@@ -258,7 +261,8 @@ namespace Hyperion
 		// Ensure key is lowercase
 		std::string lowerKey;
 		lowerKey.resize( Key.size() );
-		std::transform( Key.begin(), Key.end(), lowerKey.begin(), std::tolower );
+		std::transform( Key.begin(), Key.end(), lowerKey.begin(), 
+						[] ( unsigned char c ) -> unsigned char { return std::tolower( c ); } );
 
 		// Check if this is in the dictionary
 		auto Entry = Cache::m_Values.find( lowerKey );
@@ -307,7 +311,8 @@ namespace Hyperion
 		// Convert key to lowercase
 		std::string lowerKey;
 		lowerKey.resize( Key.size() );
-		std::transform( Key.begin(), Key.end(), lowerKey.begin(), std::tolower );
+		std::transform( Key.begin(), Key.end(), lowerKey.begin(),
+						[] ( unsigned char c ) -> unsigned char { return std::tolower( c ); } );
 
 		// Clear the data ptr from this value in the cache, if theres no refs.. then we can erase it
 		auto Entry = Cache::m_Values.find( lowerKey );
@@ -1824,7 +1829,8 @@ namespace Hyperion
 		// Ensure the key is lowercase
 		std::string lowerKey;
 		lowerKey.resize( inKey.size() );
-		std::transform( inKey.begin(), inKey.end(), lowerKey.begin(), std::tolower );
+		std::transform( inKey.begin(), inKey.end(), lowerKey.begin(),
+						[] ( unsigned char c ) -> unsigned char { return std::tolower( c ); } );
 
 		// Ensure were not using a localized string as the default
 		if( inDefault.IsLocalized() )

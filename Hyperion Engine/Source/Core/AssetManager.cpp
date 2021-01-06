@@ -12,14 +12,21 @@ namespace Hyperion
 {
 	// Static data structures
 	std::map< uint32, AssetInstanceInfo > AssetManager::m_Cache;
-	std::map< uint32, AssetTypeInfo > AssetManager::m_Types;
 	std::mutex AssetManager::m_CacheMutex;
+
+
+	std::map< uint32, AssetTypeInfo >& AssetManager::GetTypes()
+	{
+		static std::map< uint32, AssetTypeInfo > types;
+		return types;
+	}
 
 
 	// Function definitions
 	bool AssetManager::TypeExists( uint32 inIdentifier )
 	{
-		return( inIdentifier != ASSET_TYPE_INVALID && m_Types.find( inIdentifier ) != m_Types.end() );
+		auto& types = GetTypes();
+		return( inIdentifier != ASSET_TYPE_INVALID && types.find( inIdentifier ) != types.end() );
 	}
 
 
@@ -34,9 +41,10 @@ namespace Hyperion
 		{
 			return false;
 		}
+		auto& types = GetTypes();
 
-		auto entry = m_Types.find( inIdentifier );
-		if( entry == m_Types.end() || entry->second.Identifier == ASSET_TYPE_INVALID )
+		auto entry = types.find( inIdentifier );
+		if( entry == types.end() || entry->second.Identifier == ASSET_TYPE_INVALID )
 		{
 			return false;
 		}
@@ -54,7 +62,7 @@ namespace Hyperion
 			return false;
 		}
 
-		m_Types.emplace( inInfo.Identifier, inInfo );
+		GetTypes().emplace( inInfo.Identifier, inInfo );
 		return true;
 	}
 

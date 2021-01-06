@@ -23,13 +23,16 @@ namespace Hyperion
 
 	protected:
 
+		std::weak_ptr< ProxyLight > m_Proxy;
+
 		bool PerformProxyCreation() override;
+		bool PerformProxyUpdate() override;
 
 		void AddToRenderer() override;
 		void RemoveFromRenderer() override;
 
 		virtual std::shared_ptr< ProxyLight > CreateProxy() = 0;
-
+		virtual bool UpdateProxy( const std::shared_ptr< ProxyLight >& ) = 0;
 	};
 
 }

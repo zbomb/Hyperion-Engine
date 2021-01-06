@@ -353,27 +353,29 @@ namespace Hyperion
 	/*------------------------------------------------------------------------------------------
 		DirectX11Graphics::Initialize 
 	------------------------------------------------------------------------------------------*/
-	bool DirectX11Graphics::Initialize( const IRenderOutput& Output )
+	bool DirectX11Graphics::Initialize( void* pWindow )
 	{
 		Console::WriteLine( "[STATUS] DX11: Initializing..." );
 
-		if( !Output.Value )
+		if( !pWindow )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to initialize.. output window invalid!" );
 			return false;
 		}
 
+		HWND windowHandle = static_cast< HWND >( pWindow );
+
 		// If any resources are still open.. shut them down
 		ShutdownResources();
 
 		// Initialize our resoource using the parameters we have set
-		if( !InitializeResources( Output.Value, m_Resolution ) )
+		if( !InitializeResources( windowHandle, m_Resolution ) )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to initialize.. resources couldnt be initialized..." );
 			return false;
 		}
 
-		m_Output = Output.Value;
+		m_Output = windowHandle;
 
 		// Generate view matricies based on resolution
 		GenerateMatricies( m_Resolution, DirectX::XM_PIDIV4, SCREEN_NEAR, SCREEN_FAR );
@@ -955,7 +957,7 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr< IRenderTarget > DirectX11Graphics::GetRenderTarget()
+	std::shared_ptr< RRenderTarget > DirectX11Graphics::GetRenderTarget()
 	{
 		if( m_RenderTarget && m_RenderTarget->IsValid() )
 		{
@@ -966,7 +968,7 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr< ITexture2D > DirectX11Graphics::GetBackBuffer()
+	std::shared_ptr< RTexture2D > DirectX11Graphics::GetBackBuffer()
 	{
 		if( m_BackBuffer && m_BackBuffer->IsValid() )
 		{
@@ -977,7 +979,7 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr< IBuffer > DirectX11Graphics::CreateBuffer( const BufferParameters& inParams )
+	std::shared_ptr< RBuffer > DirectX11Graphics::CreateBuffer( const BufferParameters& inParams )
 	{
 		if( !m_Device )
 		{
@@ -1056,6 +1058,13 @@ namespace Hyperion
 		return newBuffer;
 	}
 
+
+	std::shared_ptr< RBuffer > DirectX11Graphics::CreateBuffer( BufferType inType /* = BufferType::Vertex */ )
+	{
+		return std::shared_ptr< DirectX11Buffer >( new DirectX11Buffer( inType ) );
+	}
+
+
 	// TODO: Aallow multiple bind flags, instead of just a single one
 	D3D11_BIND_FLAG TranslateBindFlags( TextureBindTarget inTarget )
 	{
@@ -1072,11 +1081,21 @@ namespace Hyperion
 		}
 	}
 
-	std::shared_ptr< ITexture1D > DirectX11Graphics::CreateTexture1D( const Texture1DParameters& inParams )
+
+		// Texture Creation
+	std::shared_ptr< RTexture1D > DirectX11Graphics::CreateTexture1D( const TextureParameters& inParams )
 	{
-		if( !m_Device )
+		HYPERION_VERIFY( m_Device, "[DX11] Attempt to run graphics command, but the device is null!" );
+
+		auto mipCount = (uint32)inParams.Data.size();
+		if( mipCount > TEXTURE_MAX_LODS || mipCount == 0 ) // TODO: Calculate max mip levels possible for this texture
 		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create 1D texture.. device state was null!" );
+			Console::WriteLine( "[Warning] DX11: Failed to create Texture1D! Invalid number of mip levels specified! (", inParams.Data.size(), ")" );
+			return nullptr;
+		}
+		else if( inParams.bAutogenMips && mipCount != 1 )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to create Texture1D! Autogen mip levels selected, but invalid number of mips specified (", mipCount, ")" );
 			return nullptr;
 		}
 
@@ -1085,7 +1104,7 @@ namespace Hyperion
 		ZeroMemory( &Desc, sizeof( Desc ) );
 
 		Desc.Width		= inParams.Width;
-		Desc.MipLevels	= 1;
+		Desc.MipLevels	= inParams.bAutogenMips ? 0 : mipCount;
 		Desc.ArraySize	= 1;
 		Desc.MiscFlags	= 0;
 
@@ -1093,7 +1112,7 @@ namespace Hyperion
 		Desc.BindFlags	= TranslateBindFlags( inParams.Target );
 
 		Desc.CPUAccessFlags = 0;
-		if( inParams.Dynamic )
+		if( inParams.bDynamic )
 		{
 			Desc.Usage				= D3D11_USAGE_DYNAMIC;
 			Desc.CPUAccessFlags		|= D3D11_CPU_ACCESS_WRITE;
@@ -1103,34 +1122,49 @@ namespace Hyperion
 			Desc.Usage = D3D11_USAGE_DEFAULT;
 		}
 
-		if( inParams.CanCPURead )
+		if( inParams.bCPURead )
 		{
 			Desc.CPUAccessFlags |= D3D11_CPU_ACCESS_READ;
 		}
 
-		// Now that we have the format built, lets create the structure for the starting data (if any)
-		D3D11_SUBRESOURCE_DATA Data;
-		ZeroMemory( &Data, sizeof( Data ) );
+		// Create an array of subresource data structures for the mip data
+		std::vector< D3D11_SUBRESOURCE_DATA > mipData;
 
-		Data.pSysMem = inParams.Data;
+		for( auto i = 0; i < inParams.Data.size(); i++ )
+		{
+			auto& res_data = mipData.emplace_back( D3D11_SUBRESOURCE_DATA() );
+
+			res_data.pSysMem			= inParams.Data[ i ].Data;
+			res_data.SysMemPitch		= 0;
+			res_data.SysMemSlicePitch	= 0;
+		}
+		
 
 		// Finally, lets create the texture
 		std::shared_ptr< DirectX11Texture1D > Output( new DirectX11Texture1D() );
-		if( FAILED( m_Device->CreateTexture1D( &Desc, &Data, Output->GetAddress() ) ) )
+		if( FAILED( m_Device->CreateTexture1D( &Desc, mipData.data(), Output->GetAddress() ) ) )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to create 1D texture! API Call failed" );
 			return nullptr;
 		}
-		
+
 		return Output;
 	}
 
 
-	std::shared_ptr< ITexture2D > DirectX11Graphics::CreateTexture2D( const Texture2DParameters& inParams )
+	std::shared_ptr< RTexture2D > DirectX11Graphics::CreateTexture2D( const TextureParameters& inParams )
 	{
-		if( !m_Device )
+		HYPERION_VERIFY( m_Device, "[DX11] Attempt to run graphics command, but the device is null!" );
+
+		auto mipCount = (uint32)inParams.Data.size();
+		if( mipCount > TEXTURE_MAX_LODS || mipCount == 0 ) // TODO: Calculate max mip levels possible for this texture
 		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create 2D texture.. device state was null!" );
+			Console::WriteLine( "[Warning] DX11: Failed to create Texture2D! Invalid number of mip levels specified! (", inParams.Data.size(), ")" );
+			return nullptr;
+		}
+		else if( inParams.bAutogenMips && mipCount != 1 )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to create Texture2D! Autogen mip levels selected, but invalid number of mips specified (", mipCount, ")" );
 			return nullptr;
 		}
 
@@ -1140,7 +1174,7 @@ namespace Hyperion
 
 		Desc.Width			= inParams.Width;
 		Desc.Height			= inParams.Height;
-		Desc.MipLevels		= inParams.MipLevels;
+		Desc.MipLevels		= inParams.bAutogenMips ? 0 : mipCount;
 		Desc.ArraySize		= 1;
 		Desc.MiscFlags		= 0;
 
@@ -1152,7 +1186,7 @@ namespace Hyperion
 		Desc.SampleDesc.Quality		= 0;
 
 		Desc.CPUAccessFlags = 0;
-		if( inParams.Dynamic )
+		if( inParams.bDynamic )
 		{
 			Desc.Usage = D3D11_USAGE_DYNAMIC;
 			Desc.CPUAccessFlags |= D3D11_CPU_ACCESS_WRITE;
@@ -1162,30 +1196,26 @@ namespace Hyperion
 			Desc.Usage = D3D11_USAGE_DEFAULT;
 		}
 
-		if( inParams.CanCPURead )
+		if( inParams.bCPURead )
 		{
 			Desc.CPUAccessFlags |= D3D11_CPU_ACCESS_READ;
 		}
 
 		// Now that we have the format built, lets create the structure for the starting data (if any)
-		std::vector< D3D11_SUBRESOURCE_DATA > DataArray;
-		DataArray.resize( inParams.Data.size() );
+		std::vector< D3D11_SUBRESOURCE_DATA > mipData;
 
-		for( auto i = 0; i < DataArray.size(); i++ )
+		for( uint32 i = 0; i < mipCount; i++ )
 		{
-			auto& data = DataArray.at( i );
-			ZeroMemory( &data, sizeof( data ) );
+			auto& data = mipData.emplace_back( D3D11_SUBRESOURCE_DATA() );
 
-			auto& source = inParams.Data.at( i );
-			
-			data.pSysMem			= source.Data;
-			data.SysMemPitch		= source.RowDataSize;
+			data.pSysMem			= inParams.Data[ i ].Data;
+			data.SysMemPitch		= inParams.Data[ i ].RowSize;
 			data.SysMemSlicePitch	= 0;
 		}
 
 		// Finally, lets create the texture
 		std::shared_ptr< DirectX11Texture2D > Output( new DirectX11Texture2D() );
-		if( FAILED( m_Device->CreateTexture2D( &Desc, DataArray.data(), Output->GetAddress() ) ) )
+		if( FAILED( m_Device->CreateTexture2D( &Desc, mipData.data(), Output->GetAddress() ) ) )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to create 2D texture! API Call failed" );
 			return nullptr;
@@ -1195,11 +1225,19 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr< ITexture3D > DirectX11Graphics::CreateTexture3D( const Texture3DParameters& inParams )
+	std::shared_ptr< RTexture3D > DirectX11Graphics::CreateTexture3D( const TextureParameters& inParams )
 	{
-		if( !m_Device )
+		HYPERION_VERIFY( m_Device, "[DX11] Attempt to run graphics command, but the device is null!" );
+
+		auto mipCount = (uint32)inParams.Data.size();
+		if( mipCount > TEXTURE_MAX_LODS || mipCount == 0 ) // TODO: Calculate max mip levels possible for this texture
 		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create 3D texture.. device state was null!" );
+			Console::WriteLine( "[Warning] DX11: Failed to create Texture3D! Invalid number of mip levels specified! (", inParams.Data.size(), ")" );
+			return nullptr;
+		}
+		else if( inParams.bAutogenMips && mipCount != 1 )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to create Texture3D! Autogen mip levels selected, but invalid number of mips specified (", mipCount, ")" );
 			return nullptr;
 		}
 
@@ -1211,14 +1249,14 @@ namespace Hyperion
 		Desc.Height		= inParams.Height;
 		Desc.Depth		= inParams.Depth;
 
-		Desc.MipLevels = 1;
+		Desc.MipLevels = inParams.bAutogenMips ? 0 : mipCount;
 		Desc.MiscFlags = 0;
 
 		Desc.Format = TextureFormatToDXGIFormat( inParams.Format );
 		Desc.BindFlags = TranslateBindFlags( inParams.Target );
 
 		Desc.CPUAccessFlags = 0;
-		if( inParams.Dynamic )
+		if( inParams.bDynamic )
 		{
 			Desc.Usage = D3D11_USAGE_DYNAMIC;
 			Desc.CPUAccessFlags |= D3D11_CPU_ACCESS_WRITE;
@@ -1228,22 +1266,26 @@ namespace Hyperion
 			Desc.Usage = D3D11_USAGE_DEFAULT;
 		}
 
-		if( inParams.CanCPURead )
+		if( inParams.bCPURead )
 		{
 			Desc.CPUAccessFlags |= D3D11_CPU_ACCESS_READ;
 		}
 
 		// Now that we have the format built, lets create the structure for the starting data (if any)
-		D3D11_SUBRESOURCE_DATA Data;
-		ZeroMemory( &Data, sizeof( Data ) );
+		std::vector< D3D11_SUBRESOURCE_DATA > mipData;
 
-		Data.pSysMem			= inParams.Data;
-		Data.SysMemPitch		= inParams.RowDataSize;
-		Data.SysMemSlicePitch	= inParams.LayerDataSize;
+		for( uint32 i = 0; i < mipCount; i++ )
+		{
+			auto& data = mipData.emplace_back( D3D11_SUBRESOURCE_DATA() );
+
+			data.pSysMem			= inParams.Data[ i ].Data;
+			data.SysMemPitch		= inParams.Data[ i ].RowSize;
+			data.SysMemSlicePitch	= inParams.Data[ i ].LayerSize;
+		}
 
 		// Finally, lets create the texture
 		std::shared_ptr< DirectX11Texture3D > Output( new DirectX11Texture3D() );
-		if( FAILED( m_Device->CreateTexture3D( &Desc, &Data, Output->GetAddress() ) ) )
+		if( FAILED( m_Device->CreateTexture3D( &Desc, mipData.data(), Output->GetAddress() ) ) )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to create 3D texture! API Call failed" );
 			return nullptr;
@@ -1253,58 +1295,323 @@ namespace Hyperion
 	}
 
 
-	bool DirectX11Graphics::CopyTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Target )
+	std::shared_ptr< RTexture1D > DirectX11Graphics::CreateTexture1D()
 	{
-		// First, verify everything and get the casted pointers we need
-		if( !Source || !Source->IsValid() || !Target || !Target->IsValid() )
-		{
-			Console::WriteLine( "[WARNING] DirectX11: Failed to copy texture, either source or destination was null/invalid" );
-			return false;
-		}
-
-		// Wish there was a way where we didnt have to perform as many casts and checks for each api call?
-		DirectX11Texture2D* SourcePtr = dynamic_cast<DirectX11Texture2D*>( Source.get() );
-		DirectX11Texture2D* TargetPtr = dynamic_cast<DirectX11Texture2D*>( Target.get() );
-
-		HYPERION_VERIFY( SourcePtr != nullptr && TargetPtr != nullptr, "Attempt to copy textures from a different graphics api!?" );
-		HYPERION_VERIFY( m_DeviceContext, "Attempt to copy textures before initialization or after shutdown?" );
-
-		// Next, call the API function to perform the copy
-		m_DeviceContext->CopyResource( SourcePtr->Get(), TargetPtr->Get() );
-		return true;
-	}
-
-	bool DirectX11Graphics::CopyLODTexture2D( std::shared_ptr< ITexture2D >& Source, std::shared_ptr< ITexture2D >& Dest,
-										   uint32 SourceX, uint32 SourceY, uint32 Width, uint32 Height, uint32 DestX, uint32 DestY, uint8 SourceMip, uint8 DestMip )
-	{
-		if( !Source || !Dest || !Source->IsValid() || !Dest->IsValid() )
-		{
-			Console::WriteLine( "[WARNING] DirectX11: Failed to copy texture regions, either source or destination was null!" );
-			return false;
-		}
-
-		DirectX11Texture2D* SourcePtr = dynamic_cast< DirectX11Texture2D* >( Source.get() );
-		DirectX11Texture2D* DestPtr = dynamic_cast< DirectX11Texture2D* >( Dest.get() );
-
-		HYPERION_VERIFY( SourcePtr != nullptr && DestPtr != nullptr, "Attempt to copy textures from a different graphics api?" );
-		HYPERION_VERIFY( m_DeviceContext, "Attempt to copy textures before initialization or after shutdown?" );
-
-		// Next, could perform further validation, but lets just go ahead for now
-		D3D11_BOX Box;
-		
-		Box.left	= SourceX;
-		Box.right	= SourceX + Width;
-		Box.top		= SourceY;
-		Box.bottom	= SourceY + Height;
-		Box.front	= 0;
-		Box.back	= 1;
-		
-		m_DeviceContext->CopySubresourceRegion( DestPtr->Get(), DestMip, DestX, DestY, 0, SourcePtr->Get(), SourceMip, &Box );
-		return true;
+		//HYPERION_VERIFY( m_Device, "[DX11] Attempt to run graphics command, but the device is null!" );
+		// Create and return an empty texture pointer
+		return std::shared_ptr< DirectX11Texture1D >( new DirectX11Texture1D() );
 	}
 
 
-	std::shared_ptr< IRenderTarget > DirectX11Graphics::CreateRenderTarget( std::shared_ptr< ITexture2D > inTarget )
+	std::shared_ptr< RTexture2D > DirectX11Graphics::CreateTexture2D()
+	{
+		//HYPERION_VERIFY( m_Device, "[DX11] Attempt to run graphics command, but the device is null!" );
+		// Create and return an empty texture pointer
+		return std::shared_ptr< DirectX11Texture2D >( new DirectX11Texture2D() );
+	}
+
+
+	std::shared_ptr< RTexture3D > DirectX11Graphics::CreateTexture3D()
+	{
+		//HYPERION_VERIFY( m_Device, "[DX11] Attempt to run graphics command, but the device is null!" );
+		// Create and return an empty texture pointer
+		return std::shared_ptr< DirectX11Texture3D >( new DirectX11Texture3D() );
+	}
+
+
+	// Texture Copying
+	bool DirectX11Graphics::CopyTexture1D( std::shared_ptr< RTexture1D >& inSource, std::shared_ptr< RTexture1D >& inDest )
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Attempt to run graphics command, but the device is null!" );
+
+		// Verify both textures are valid and allocated
+		if( !inSource || !inDest || !inSource->IsValid() || !inDest->IsValid() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy 1D Texture! Either the source or destination were invalid/null" );
+			return false;
+		} 
+
+		// Cast the textures to our API's type
+		DirectX11Texture1D* sourcePtr	= dynamic_cast< DirectX11Texture1D* >( inSource.get() );
+		DirectX11Texture1D* destPtr		= dynamic_cast< DirectX11Texture1D* >( inDest.get() );
+
+		HYPERION_VERIFY( sourcePtr != nullptr && destPtr != nullptr, "[DX11] Texture instances were not this API's texture type?" );
+
+		// Send the copy command to the GPU
+		m_DeviceContext->CopyResource( destPtr->Get(), sourcePtr->Get() );
+		return true;
+	}
+
+
+	bool DirectX11Graphics::CopyTexture2D( std::shared_ptr< RTexture2D >& inSource, std::shared_ptr< RTexture2D >& inDest )
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Attempt to run graphics command, but the device is null!" );
+
+		// Verify both textures are valid and allocated
+		if( !inSource || !inDest || !inSource->IsValid() || !inDest->IsValid() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy 2D Texture! Either the source or destination were invalid/null" );
+			return false;
+		}
+
+		// Cast the textures to our API's type
+		DirectX11Texture2D* sourcePtr	= dynamic_cast<DirectX11Texture2D*>( inSource.get() );
+		DirectX11Texture2D* destPtr		= dynamic_cast<DirectX11Texture2D*>( inDest.get() );
+
+		HYPERION_VERIFY( sourcePtr != nullptr && destPtr != nullptr, "[DX11] Texture instances were not this API's texture type?" );
+
+		// Send the copy command to the GPU
+		m_DeviceContext->CopyResource( destPtr->Get(), sourcePtr->Get() );
+		return true;
+	}
+
+
+	bool DirectX11Graphics::CopyTexture3D( std::shared_ptr< RTexture3D >& inSource, std::shared_ptr< RTexture3D >& inDest )
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Attempt to run graphics command, but the device is null!" );
+
+		// Verify both textures are valid and allocated
+		if( !inSource || !inDest || !inSource->IsValid() || !inDest->IsValid() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy 3D Texture! Either the source or destination were invalid/null" );
+			return false;
+		}
+
+		// Cast the textures to our API's type
+		DirectX11Texture3D* sourcePtr	= dynamic_cast<DirectX11Texture3D*>( inSource.get() );
+		DirectX11Texture3D* destPtr		= dynamic_cast<DirectX11Texture3D*>( inDest.get() );
+
+		HYPERION_VERIFY( sourcePtr != nullptr && destPtr != nullptr, "[DX11] Texture instances were not this API's texture type?" );
+
+		// Send the copy command to the GPU
+		m_DeviceContext->CopyResource( destPtr->Get(), sourcePtr->Get() );
+		return true;
+	}
+
+
+	bool DirectX11Graphics::CopyTexture1DRegion( std::shared_ptr< RTexture1D >& inSource, std::shared_ptr< RTexture1D >& inDest,
+							  uint32 sourceX, uint32 inWidth, uint32 destX, uint8 sourceMip, uint8 targetMip )
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Attempt to run graphics command, but the device is null!" );
+
+		// Validate the texture pointers
+		if( !inSource || !inDest || !inSource->IsValid() || !inDest->IsValid() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy 1D texture! Either the source or destination are invalid/null" );
+			return false;
+		}
+
+		// Ensure the copy is within valid bounds
+		uint32 maxSourceX	= sourceX + inWidth;
+		uint32 maxDestX		= destX + inWidth;
+
+		if( maxSourceX > inSource->GetWidth() || maxDestX > inDest->GetWidth() || sourceMip > inSource->GetMipCount() || targetMip > inDest->GetMipCount() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy 1D texture! The target region is out of bounds for either the source or destination texture" );
+			return false;
+		}
+
+		// Get our API's texture pointers
+		DirectX11Texture1D* sourcePtr	= dynamic_cast< DirectX11Texture1D* >( inSource.get() );
+		DirectX11Texture1D* destPtr		= dynamic_cast< DirectX11Texture1D* >( inDest.get() );
+
+		HYPERION_VERIFY( sourcePtr != nullptr && destPtr != nullptr, "[DX11] Textures instances were not this API's texture type?" );
+
+		// Upload copy command to the GPU
+		D3D11_BOX bounds;
+		bounds.left = sourceX;
+		bounds.right = maxSourceX;
+		bounds.top = 0;
+		bounds.bottom = 1;
+		bounds.front = 0;
+		bounds.back = 1;
+
+		m_DeviceContext->CopySubresourceRegion( destPtr->Get(), targetMip, destX, 0, 0,
+												sourcePtr->Get(), sourceMip, &bounds );
+		return true;
+	}
+
+
+	bool DirectX11Graphics::CopyTexture2DRegion( std::shared_ptr< RTexture2D >& inSource, std::shared_ptr< RTexture2D >& inDest, uint32 sourceX, uint32 sourceY,
+							  uint32 inWidth, uint32 inHeight, uint32 destX, uint32 destY, uint8 sourceMip, uint8 targetMip )
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Attempt to run graphics command, but the device is null!" );
+
+		// Validate the texture pointers
+		if( !inSource || !inDest || !inSource->IsValid() || !inDest->IsValid() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy 2D texture! Either the source or destination are invalid/null" );
+			return false;
+		}
+
+		// Ensure the copy is within valid bounds
+		uint32 maxSourceX	= sourceX + inWidth;
+		uint32 maxDestX		= destX + inWidth;
+		uint32 maxSourceY	= sourceY + inHeight;
+		uint32 maxDestY		= destY + inHeight;
+
+		if( maxSourceX > inSource->GetWidth() || maxDestX > inDest->GetWidth() || sourceMip > inSource->GetMipCount() || targetMip > inDest->GetMipCount() ||
+			maxSourceY > inSource->GetHeight() || maxDestY > inDest->GetHeight() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy 2D texture! The target region is out of bounds for either the source or destination texture" );
+			return false;
+		}
+
+		// Get our API's texture pointers
+		DirectX11Texture2D* sourcePtr	= dynamic_cast< DirectX11Texture2D* >( inSource.get() );
+		DirectX11Texture2D* destPtr		= dynamic_cast< DirectX11Texture2D* >( inDest.get() );
+
+		HYPERION_VERIFY( sourcePtr != nullptr && destPtr != nullptr, "[DX11] Textures instances were not this API's texture type?" );
+
+		// Upload copy command to the GPU
+		D3D11_BOX bounds;
+		bounds.left = sourceX;
+		bounds.right = maxSourceX;
+		bounds.top = sourceY;
+		bounds.bottom = maxSourceY;
+		bounds.front = 0;
+		bounds.back = 1;
+
+		m_DeviceContext->CopySubresourceRegion( destPtr->Get(), targetMip, destX, destY, 0,
+												sourcePtr->Get(), sourceMip, &bounds );
+		return true;
+	}
+
+
+	bool DirectX11Graphics::CopyTexture3DRegion( std::shared_ptr< RTexture3D >& inSource, std::shared_ptr< RTexture3D >& inDest, uint32 sourceX, uint32 sourceY, uint32 sourceZ,
+							  uint32 inWidth, uint32 inHeight, uint32 inDepth, uint32 destX, uint32 destY, uint32 destZ, uint8 sourceMip, uint8 targetMip )
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Attempt to run graphics command, but the device is null!" );
+
+		// Validate the texture pointers
+		if( !inSource || !inDest || !inSource->IsValid() || !inDest->IsValid() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy 3D texture! Either the source or destination are invalid/null" );
+			return false;
+		}
+
+		// Ensure the copy is within valid bounds
+		uint32 maxSourceX	= sourceX + inWidth;
+		uint32 maxDestX		= destX + inWidth;
+		uint32 maxSourceY	= sourceY + inHeight;
+		uint32 maxDestY		= destY + inHeight;
+		uint32 maxSourceZ	= sourceZ + inDepth;
+		uint32 maxDestZ		= destZ + inDepth;
+
+		if( maxSourceX > inSource->GetWidth() || maxDestX > inDest->GetWidth() || sourceMip > inSource->GetMipCount() || targetMip > inDest->GetMipCount() ||
+			maxSourceY > inSource->GetHeight() || maxDestY > inDest->GetHeight() || maxSourceZ > inSource->GetDepth() || maxDestZ > inDest->GetDepth() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy 3D texture! The target region is out of bounds for either the source or destination texture" );
+			return false;
+		}
+
+		// Get our API's texture pointers
+		DirectX11Texture3D* sourcePtr	= dynamic_cast< DirectX11Texture3D* >( inSource.get() );
+		DirectX11Texture3D* destPtr		= dynamic_cast< DirectX11Texture3D* >( inDest.get() );
+
+		HYPERION_VERIFY( sourcePtr != nullptr && destPtr != nullptr, "[DX11] Textures instances were not this API's texture type?" );
+
+		// Upload copy command to the GPU
+		D3D11_BOX bounds;
+		bounds.left = sourceX;
+		bounds.right = maxSourceX;
+		bounds.top = sourceY;
+		bounds.bottom = maxSourceY;
+		bounds.front = sourceZ;
+		bounds.back = maxSourceZ;
+
+		m_DeviceContext->CopySubresourceRegion( destPtr->Get(), targetMip, destX, destY, destZ,
+												sourcePtr->Get(), sourceMip, &bounds );
+		return true;
+	}
+
+
+	bool DirectX11Graphics::CopyTexture1DMip( std::shared_ptr< RTexture1D >& inSource, std::shared_ptr< RTexture1D >& inDest, uint8 sourceMip, uint8 destMip )
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Attempt to run graphics command, but the device is null!" );
+
+		// Validate the texture pointers
+		if( !inSource || !inDest || !inSource->IsValid() || !inDest->IsValid() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy a 1D texture mip level! The source or destination textures were invalid" );
+			return false;
+		}
+
+		// Validate the target mip levels are valid
+		if( sourceMip > inSource->GetMipCount() || destMip > inDest->GetMipCount() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy a 1D texture mip level! The destination or target mip level was out of bounds!" );
+			return false;
+		}
+
+		// TODO: Validate the mip sizes are the same
+
+		// Get the API's texture pointers
+		DirectX11Texture1D* sourcePtr	= dynamic_cast< DirectX11Texture1D* >( inSource.get() );
+		DirectX11Texture1D* destPtr		= dynamic_cast< DirectX11Texture1D* >( inDest.get() );
+
+		HYPERION_VERIFY( sourcePtr != nullptr && destPtr != nullptr, "[DX11] Texture instances were not this API's type?" );
+
+		// Send the copy command to the GPU
+		m_DeviceContext->CopySubresourceRegion( destPtr->Get(), destMip, 0, 0, 0,
+												sourcePtr->Get(), sourceMip, NULL );
+		return true;
+	}
+
+
+	bool DirectX11Graphics::CopyTexture2DMip( std::shared_ptr< RTexture2D >& inSource, std::shared_ptr< RTexture2D >& inDest, uint8 sourceMip, uint8 destMip )
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Attempt to run graphics command, but the device is null!" );
+
+		// Validate the target mip levels are valid
+		if( sourceMip > inSource->GetMipCount() || destMip > inDest->GetMipCount() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy a 2D texture mip level! The destination or target mip level was out of bounds!" );
+			return false;
+		}
+
+		// TODO: Validate the mip sizes are the same
+
+		// Get the API's texture pointers
+		DirectX11Texture2D* sourcePtr	= dynamic_cast< DirectX11Texture2D* >( inSource.get() );
+		DirectX11Texture2D* destPtr		= dynamic_cast< DirectX11Texture2D* >( inDest.get() );
+
+		HYPERION_VERIFY( sourcePtr != nullptr && destPtr != nullptr, "[DX11] Texture instances were not this API's type?" );
+
+		// Send the copy command to the GPU
+		m_DeviceContext->CopySubresourceRegion( destPtr->Get(), destMip, 0, 0, 0,
+												sourcePtr->Get(), sourceMip, NULL );
+		return true;
+	}
+
+
+	bool DirectX11Graphics::CopyTexture3DMip( std::shared_ptr< RTexture3D >& inSource, std::shared_ptr< RTexture3D >& inDest, uint8 sourceMip, uint8 destMip )
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Attempt to run graphics command, but the device is null!" );
+
+		// Validate the target mip levels are valid
+		if( sourceMip > inSource->GetMipCount() || destMip > inDest->GetMipCount() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to copy a 3D texture mip level! The destination or target mip level was out of bounds!" );
+			return false;
+		}
+
+		// TODO: Validate the mip sizes are the same
+
+		// Get the API's texture pointers
+		DirectX11Texture3D* sourcePtr	= dynamic_cast< DirectX11Texture3D* >( inSource.get() );
+		DirectX11Texture3D* destPtr		= dynamic_cast< DirectX11Texture3D* >( inDest.get() );
+
+		HYPERION_VERIFY( sourcePtr != nullptr && destPtr != nullptr, "[DX11] Texture instances were not this API's type?" );
+
+		// Send the copy command to the GPU
+		m_DeviceContext->CopySubresourceRegion( destPtr->Get(), destMip, 0, 0, 0,
+												sourcePtr->Get(), sourceMip, NULL );
+		return true;
+	}
+
+
+	std::shared_ptr< RRenderTarget > DirectX11Graphics::CreateRenderTarget( std::shared_ptr< RTexture2D > inTarget )
 	{
 		if( !m_Device )
 		{

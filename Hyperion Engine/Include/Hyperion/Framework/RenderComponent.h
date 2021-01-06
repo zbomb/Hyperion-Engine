@@ -9,7 +9,6 @@
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Framework/Component.h"
 #include "Hyperion/Renderer/Proxy/ProxyBase.h"
-#include "Hyperion/Core/RenderManager.h"
 
 
 namespace Hyperion
@@ -31,7 +30,7 @@ namespace Hyperion
 	protected:
 
 		virtual bool PerformProxyCreation() = 0;
-		virtual bool UpdateProxy() = 0;
+		virtual bool PerformProxyUpdate() = 0;
 
 		void MarkDirty();
 		void MarkStale();

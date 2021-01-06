@@ -7,12 +7,11 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Renderer/Types/ITexture.h"
 
 
 namespace Hyperion
 {
-
+	
 	enum class ImageFormat
 	{
 		Unknown = 0,
@@ -35,5 +34,5 @@ namespace Hyperion
 		static std::shared_ptr< RawImageData > LoadGeneric( const String& inFilename, std::vector< byte >::const_iterator Begin, std::vector< byte >::const_iterator End );
 
 	};
-
+	
 }

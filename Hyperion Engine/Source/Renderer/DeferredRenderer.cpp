@@ -12,12 +12,16 @@ namespace Hyperion
 
 	
 
-	DeferredRenderer::DeferredRenderer( std::shared_ptr<IGraphics>& inAPI, const IRenderOutput& inOutput, const ScreenResolution& inResolution, bool bVSync )
+	DeferredRenderer::DeferredRenderer( GraphicsAPI inAPI, void* inOutput, const ScreenResolution& inResolution, bool bVSync )
 		: Renderer( inAPI, inOutput, inResolution, bVSync )
 	{
 
 	}
 
+	DeferredRenderer::~DeferredRenderer()
+	{
+		OnShutdown();
+	}
 
 	void DeferredRenderer::OnInitialize()
 	{

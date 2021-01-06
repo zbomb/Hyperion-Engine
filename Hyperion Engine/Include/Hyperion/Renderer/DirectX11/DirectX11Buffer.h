@@ -6,14 +6,14 @@
 
 #pragma once
 
-#include "Hyperion/Renderer/Types/IBuffer.h"
+#include "Hyperion/Renderer/Resource/Buffer.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
 
 
 namespace Hyperion
 {
 
-	class DirectX11Buffer : public IBuffer
+	class DirectX11Buffer : public RBuffer
 	{
 
 	private:

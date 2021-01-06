@@ -175,57 +175,12 @@ namespace Hyperion
 		class FileSystem
 	===============================================================================================================*/
 
-	bool FileSystem::Initialize( bool bDiscoverAssets )
+	bool FileSystem::Initialize( bool bDiscoverAssets, uint32 inFlags /* = FLAGS_NONE */ )
 	{
 		// Check if we need to discover assets through this file system
 		if( bDiscoverAssets )
 		{
-			/*
-			auto f = OpenFile( FilePath( String( "manifest.hht" ), LocalPath::Content, FileSystem::Disk ), FileMode::Read );
-			if( !f || !f->IsValid() )
-			{
-				Console::WriteLine( "[ERROR] FileSystem: The currently selected content system is disk, but there was no content manifest.. no assets will be able to load!" );
-				// Should we return false here? What if there is not supposed to be any content for some reason?
-			}
-			else
-			{
-				// Once we load the file in, we need to seek through it, using some type of reader, and insert all entries into the asset manager
-				HHTReader reader( *f );
-				if( !reader.Validate() )
-				{
-					Console::WriteLine( "[ERROR] FileSystem: The currently selected content system is disk, but the content manifest was invalid!" );
-					// Should we return false here?
-				}
-				else
-				{
-					reader.Begin();
 
-					// Scan through file, and read all table entries
-					uint32 assetCounter = 0;
-
-					while( reader.NextEntry() )
-					{
-						uint32 hashCode;
-						std::vector< byte > strData;
-
-						if( reader.ReadEntry( hashCode, strData ) == HHTReader::Result::Success )
-						{
-							// Paths are stored as a UTF-8 string, and the hash code is a uint32
-							AssetManager::RegisterAsset( hashCode, String( strData, StringEncoding::UTF8 ) );
-							assetCounter++;
-
-							// DEBUG
-							Console::WriteLine( "===> Asset Identifier: ", hashCode, " Asset Path: \"", String( strData, StringEncoding::UTF8 ), "\"" );
-						}
-					}
-
-					Console::WriteLine( "[Status] FileSystem: Discovered ", assetCounter, " assets on disk" );
-				}
-			}
-			*/
-
-			// EDIT: For now, were going to discover assets manually by searching the content folder, instead of relying on a prebuilt asset manifest
-			// this allows us to simplify development for now, and we will get back to virtual file system and network file system on a later date
 			FilePath contentPath( "content/", PathRoot::Game );
 			std::vector< FilePath > foundFiles;
 

@@ -22,7 +22,7 @@
 #include <mutex>
 
 
-#define HYPERION_RENDER_COMMAND( _func_ ) RenderManager::AddCommand( std::make_unique< RenderCommand >( _func_, 0 ) )
+#define HYPERION_RENDER_COMMAND( _func_ ) Hyperion::Engine::GetRenderer()->AddCommand( std::make_unique< Hyperion::RenderCommand >( _func_, 0 ) )
 
 
 namespace Hyperion
@@ -39,43 +39,14 @@ namespace Hyperion
 	constexpr float SCREEN_NEAR		= 0.1f;
 	constexpr float SCREEN_FAR		= 1000.f;
 
-	class IRenderOutput
-	{
-	public:
-
-		#if HYPERION_OS_WIN32
-
-		HWND Value;
-
-		#else
-
-		void* Value;
-
-		#endif
-
-		IRenderOutput()
-		{
-			Value = nullptr;
-		}
-
-		IRenderOutput( const IRenderOutput& inOther )
-		{
-			Value = inOther.Value;
-		}
-
-		~IRenderOutput()
-		{
-			Value = nullptr;
-		}
-
-	};
-
 
 	struct ScreenResolution
 	{
 		uint32 Width;
 		uint32 Height;
 		bool FullScreen;
+
+		bool LoadFromString( const String& inStr );
 	};
 
 
@@ -107,6 +78,10 @@ namespace Hyperion
 		{
 			Flags = 0;
 		}
+
+		RenderCommandBase()
+			: Flags( 0 )
+		{}
 	};
 
 	struct RenderCommand : public RenderCommandBase
