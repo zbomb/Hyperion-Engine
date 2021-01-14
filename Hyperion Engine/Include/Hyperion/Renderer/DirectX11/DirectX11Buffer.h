@@ -20,9 +20,11 @@ namespace Hyperion
 
 		ID3D11Buffer* m_Buffer;
 		BufferType m_Type;
+		uint32 m_Size;
+		uint32 m_Count;
 
 		DirectX11Buffer( BufferType inType )
-			: m_Buffer( nullptr ), m_Type( inType )
+			: m_Buffer( nullptr ), m_Type( inType ), m_Size( 0 )
 		{}
 
 	public:
@@ -30,11 +32,11 @@ namespace Hyperion
 		DirectX11Buffer() = delete;
 
 		DirectX11Buffer( const DirectX11Buffer& inOther )
-			: m_Buffer( inOther.m_Buffer ), m_Type( inOther.m_Type )
+			: m_Buffer( inOther.m_Buffer ), m_Type( inOther.m_Type ), m_Size( inOther.m_Size )
 		{}
 
 		DirectX11Buffer( DirectX11Buffer&& inOther ) noexcept
-			: m_Buffer( std::move( inOther.m_Buffer ) ), m_Type( std::move( inOther.m_Type ) )
+			: m_Buffer( std::move( inOther.m_Buffer ) ), m_Type( std::move( inOther.m_Type ) ), m_Size( std::move( inOther.m_Size ) )
 		{
 			inOther.m_Buffer = nullptr;
 		}
@@ -58,6 +60,21 @@ namespace Hyperion
 		BufferType GetType() const final
 		{
 			return m_Type;
+		}
+
+		uint32 GetSize() const final
+		{
+			return m_Size;
+		}
+
+		void UpdateSize( uint32 inSize )
+		{
+			m_Size = inSize;
+		}
+
+		uint32 GetCount() const final
+		{
+			return m_Count;
 		}
 
 		ID3D11Buffer* GetBuffer()		{ return m_Buffer; }

@@ -89,10 +89,14 @@ namespace Hyperion
                 return;
             }
 
-            if( !MaterialManager.SaveMaterial( m_Material ) )
-            {
-                Core.WriteLine( "[Warning] MaterialEditor: Failed to save material \"", m_Material.Path, "\"" );
-            }
+			if( !MaterialManager.SaveMaterial( m_Material ) )
+			{
+				Core.WriteLine( "[Warning] MaterialEditor: Failed to save material \"", m_Material.Path, "\"" );
+			}
+			else
+			{
+                Core.WriteLine( "=> Saved material \"", m_Material.Path, "\" to disk!" );
+			}
         }
 
         private void ClearValueEditor()
@@ -285,16 +289,8 @@ namespace Hyperion
                         }
                         else
                         {
-                            // Now, we want to find the associated hash code
-                            foreach( var entry in Core.GetManifestManager().GetManifest() )
-                            {
-                                if( entry.Value.Equals( path ) )
-                                {
-                                    tex.Path = path;
-                                    tex.Hash = entry.Key;
-                                    break;
-                                }
-                            }
+                            tex.Path = path;
+                            tex.Hash = Core.CalculateAssetIdentifier( path );
 
                             if( tex.Path == null )
                             {
@@ -672,14 +668,14 @@ namespace Hyperion
                     if( TextInput.Visible )
                     {
                         // Lets validate the texture
-                        if( Core.GetManifestManager().GetManifest().ContainsValue( selectedTexture ) && selectedTexture.EndsWith( ".htx" ) )
+                        if( File.Exists( "content/" + selectedTexture ) && selectedTexture.EndsWith( ".htx" ) )
                         {
                             TextInput.Text = selectedTexture;
                             TextInput.Enabled = false;
                         }
                         else
                         {
-                            Core.WriteLine( "[Warning] MaterialEditor: Selected texture was invalid (", selectedTexture, ")" );
+                            Core.WriteLine( "[Warning] MaterialEditor:  (", selectedTexture, ")" );
                         }
                     }
                 }

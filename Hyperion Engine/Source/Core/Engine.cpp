@@ -430,6 +430,9 @@ namespace Hyperion
 		m_LastGameTick = std::chrono::high_resolution_clock::now();
 		m_FenceWatcher->Reset();
 
+		// Load key bindings
+		m_Input->LoadBindings();
+
 		std::chrono::duration< double > loadTime = std::chrono::high_resolution_clock::now() - loadStart;
 		std::ostringstream ss;
 		ss << std::fixed;
@@ -461,7 +464,7 @@ namespace Hyperion
 		auto now = std::chrono::high_resolution_clock::now();
 
 		// Tick Input System
-		m_Input->DispatchQueue( std::chrono::duration_cast<std::chrono::duration< double, std::milli >>( now - m_LastGameTick ).count() );
+		m_Input->DispatchEvents();
 		m_LastGameTick = now;
 
 		// Tick Objects
@@ -487,7 +490,10 @@ namespace Hyperion
 		m_Game.Clear();
 
 		m_FenceWatcher->Reset();
-		m_Input->ClearAllBindings();
+
+		// Clear key bindings
+		m_Input->ClearBindings();
+		
 	}
 
 
@@ -532,8 +538,6 @@ namespace Hyperion
 
 	void Engine::Stop()
 	{
-		if( m_Input ) { m_Input->ClearAllBindings(); }
-
 		ShutdownGame();
 		ShutdownRenderer();
 		ShutdownServices();

@@ -7,24 +7,23 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Framework/Entity.h"
+#include "Hyperion/Framework/CharacterController.h"
 
 
 namespace Hyperion
 {
-	/*
-		Forward Declarations
-	*/
-	class CameraComponent;
 
-
-	class Player : public Entity
+	class Player : public CharacterController
 	{
+
+	private:
+
+		bool ProcessKeyBinding( const String& inBind );
+		bool ProcessAxisBinding( const String& inBind, float inValue );
 
 	protected:
 
 		uint32 m_PlayerIdentifier;
-		HypPtr< CameraComponent > m_ActiveCamera;
 
 	public:
 
@@ -34,28 +33,16 @@ namespace Hyperion
 		Player( uint32 inIdentifier );
 		virtual ~Player();
 
+		virtual bool HandleKeyBinding( const String& inBinding );
+		virtual bool HandleAxisBinding( const String& inBinding, float inValue );
+
 		/*
 			Getters
 		*/
 		inline uint32 GetPlayerIdentifier() const { return m_PlayerIdentifier; }
-		inline HypPtr< CameraComponent > GetActiveCamera() const { return m_ActiveCamera; }
 
-		/*
-			Member Functions
-		*/
-		void SetActiveCamera( const HypPtr< CameraComponent >& inCamera );
 
-		/*
-			New Hooks
-		*/
-		virtual void OnCameraSelected( const HypPtr< CameraComponent >& inCamera );
-		virtual void OnCameraDeselected( const HypPtr< CameraComponent >& inCamera );
-
-		/*
-			Entity Hook Overrides
-		*/
-		virtual void OnDespawn( const HypPtr< World >& inWorld );
-
+		friend class LocalPlayer;
 	};
 
 }

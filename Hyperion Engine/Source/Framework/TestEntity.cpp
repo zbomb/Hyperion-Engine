@@ -19,9 +19,12 @@ namespace Hyperion
 		// Create our static model component
 		m_Comp = CreateObject< StaticModelComponent >();
 
-		// Set the material
-		m_Comp->SetMaterial( AssetManager::Get< MaterialAsset >( "materials/mat_test.hmat" ), 0 );
-		m_Comp->SetModel( AssetManager::Get< StaticModelAsset >( "models/mdl_test.hsm" ) );
+		// Set the material'
+		auto mat = AssetManager::Get< MaterialAsset >( "materials/test_material.hmat" );
+		auto mdl = AssetManager::Get< StaticModelAsset >( "models/test_model.hsm" );
+
+		m_Comp->SetMaterial( mat, 0 );
+		m_Comp->SetModel( mdl );
 
 		AddComponent( m_Comp, "model" );
 	}

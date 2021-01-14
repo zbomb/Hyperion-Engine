@@ -25,12 +25,21 @@ namespace Hyperion
          * Private Members
         */
         private static Dictionary< string, CommandInfo > m_Commands = new Dictionary<string, CommandInfo>();
-        private static ManifestManager m_Manifest = null;
 
-        /*
-         * Getters
-        */
-        public static ManifestManager GetManifestManager() => m_Manifest;
+
+        public static UInt32 CalculateAssetIdentifier( string inPath )
+		{
+            if( ( inPath?.Length ?? 0 ) == 0 )
+            {
+                return 0;
+            }
+
+            var lowerPath = inPath.Replace( "\\\\", "/" ).Replace( "\\", "/" );
+            if( lowerPath.StartsWith( "content/" ) || lowerPath.StartsWith( "Content/" ) ) { lowerPath = lowerPath.Substring( 8 ); }
+
+            byte[] strData = Encoding.UTF8.GetBytes( lowerPath );
+            return Hashing.ELFHash( strData );
+        }
 
         /*
          * Write Functions
@@ -229,21 +238,14 @@ namespace Hyperion
                 WriteLine( "---> Command system initialized! ", m_Commands.Count, " commands loaded!" );
             }
 
-            WriteLine( "-> Initializing manifest manager..." );
-            m_Manifest = new ManifestManager();
-            WriteLine( "---> Manifest manager initialized!" );
-
-            WriteLine( "-> Initializing reference manager..." );
-            ReferenceManager.ReadFromDisk();
-            WriteLine( "---> Reference manager initialized!" );
-            
+            // Perform asset discovery
+            AssetIdentifierCache.PerformDiscovery();
         }
 
 
         public static void Shutdown()
         {
             WriteLine( "\r\nShutting down..." );
-            m_Manifest = null;
         }
 
     }

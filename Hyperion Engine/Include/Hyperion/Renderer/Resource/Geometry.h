@@ -14,7 +14,6 @@
 namespace Hyperion
 {
 
-
 	struct RGeometricSubObject
 	{
 		uint8 materialSlot;
@@ -51,7 +50,7 @@ namespace Hyperion
 				for( auto oit = it->SubObjects.begin(); oit != it->SubObjects.end(); oit++ )
 				{
 					RGeometricSubObject& obj = lodPtr->subObjects.emplace_back( RGeometricSubObject() );
-					obj.materialSlot = oit->second.MaterialIndex;
+					obj.materialSlot = oit->MaterialIndex;
 				}
 
 				lodPtr->bCached = false;

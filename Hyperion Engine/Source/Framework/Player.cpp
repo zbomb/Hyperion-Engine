@@ -24,60 +24,44 @@ namespace Hyperion
 	}
 
 
-	void Player::SetActiveCamera( const HypPtr< CameraComponent >& inCamera )
+	bool Player::ProcessKeyBinding( const String& inBind )
 	{
-		// First, we want to ensure the camera were targetting is valid
-		if( inCamera && inCamera->IsActive() )
+		// First, check if the derived class can handle this key binding
+		if( HandleKeyBinding( inBind ) ) { return true; }
+
+		// Pass this down to the character
+		if( m_PossessedCharacter && m_PossessedCharacter->IsValid() )
 		{
-			// Deselect the active camera (if there is one)
-			auto thisPtr = AquirePointer< Player >();
-
-			if( m_ActiveCamera && m_ActiveCamera->IsActive() )
-			{
-				m_ActiveCamera->OnDeSelected( thisPtr );
-				OnCameraDeselected( m_ActiveCamera );
-			}
-
-			m_ActiveCamera = inCamera;
-
-			inCamera->OnSelected( thisPtr );
-			OnCameraSelected( inCamera );
+			return m_PossessedCharacter->ProcessKeyBinding( inBind );
 		}
-		else
-		{
-			// If the camera isnt valid (or the input is null) then we will have no valid selected camera
-			if( m_ActiveCamera && m_ActiveCamera->IsActive() )
-			{
-				m_ActiveCamera->OnDeSelected( AquirePointer< Player >() );
-				OnCameraDeselected( m_ActiveCamera );
 
-				m_ActiveCamera.Clear();
-			}
-		}
+		return false;
 	}
 
 
-	void Player::OnCameraSelected( const HypPtr< CameraComponent >& inCamera )
+	bool Player::ProcessAxisBinding( const String& inBind, float inValue )
 	{
+		// First, check if the derived class can handle this axis binding
+		if( HandleAxisBinding( inBind, inValue ) ) { return true; }
 
-	}
-
-
-	void Player::OnCameraDeselected( const HypPtr< CameraComponent >& inCamera )
-	{
-
-	}
-
-
-	void Player::OnDespawn( const HypPtr< World >& inWorld )
-	{
-		if( m_ActiveCamera && m_ActiveCamera->IsActive() )
+		if( m_PossessedCharacter && m_PossessedCharacter->IsValid() )
 		{
-			m_ActiveCamera->OnDeSelected( AquirePointer< Player >() );
-			OnCameraDeselected( m_ActiveCamera );
-
-			m_ActiveCamera.Clear();
+			return m_PossessedCharacter->ProcessAxisBinding( inBind, inValue );
 		}
+
+		return false;
+	}
+
+
+	bool Player::HandleKeyBinding( const String& inKey )
+	{
+		return false;
+	}
+
+
+	bool Player::HandleAxisBinding( const String& inKey, float inValue )
+	{
+		return false;
 	}
 
 

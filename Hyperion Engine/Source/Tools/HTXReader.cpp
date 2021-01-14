@@ -4,6 +4,11 @@
 	© 2019, Zachary Berry
 ==================================================================================================*/
 
+/*
+*	TODO:
+*	- We should be allowing variations in endian order.. currently only works with big endian
+*/
+
 #include "Hyperion/Tools/HTXReader.h"
 #include "Hyperion/Library/Binary.h"
 
@@ -12,7 +17,7 @@ namespace Hyperion
 {
 
 	HTXReader::HTXReader( IFile& inFile, uint64 inOffset, uint64 inLength )
-		: m_Reader( inFile ), m_bValidFormat( false ), m_Target( inFile )
+		: m_Reader( inFile ), m_bValidFormat( false ), m_Target( inFile ), m_Offset( inOffset ), m_Length( inLength )
 	{
 		// Check if this file is a valid texture file
 		m_Reader.SeekOffset( inOffset );
@@ -151,8 +156,11 @@ namespace Hyperion
 			Binary::DeserializeUInt16( It, newLOD.Height, false );
 			std::advance( It, 2 );
 			
-			Binary::DeserializeUInt32( It, reinterpret_cast< uint32& >( newLOD.FileOffset ), false ); // TODO: UPDATE TO UINT64
+			uint32 off = 0;
+			Binary::DeserializeUInt32( It, off, false );
 			std::advance( It, 4 );
+
+			newLOD.FileOffset = off;
 
 			Binary::DeserializeUInt32( It, newLOD.LODSize, false );
 			std::advance( It, 4 );

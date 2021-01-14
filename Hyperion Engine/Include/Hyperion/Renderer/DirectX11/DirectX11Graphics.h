@@ -13,6 +13,8 @@
 #include "Hyperion/Renderer/IGraphics.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
 #include "Hyperion/Core/String.h"
+#include "Hyperion/Renderer/Resource/Geometry.h"
+#include "Hyperion/Renderer/DirectX11/DirectX11Frustum.h"
 
 
 namespace Hyperion
@@ -21,6 +23,9 @@ namespace Hyperion
 	// Forward Declarations
 	class DirectX11RenderTarget;
 	class DirectX11Texture2D;
+	class DirectX11DepthStencil;
+	
+
 
 	class DirectX11Graphics : public IGraphics
 	{
@@ -37,9 +42,12 @@ namespace Hyperion
 		ScreenResolution m_Resolution;
 		bool m_bVSync;
 		bool m_bRunning;
+		bool m_bDepthEnabled;
 
 		uint32 m_GraphicsMemory;
 		String m_GraphicsDevice;
+
+		DirectX11Frustum m_ViewFrustum;
 
 		/*
 			Resource Pointers
@@ -47,9 +55,7 @@ namespace Hyperion
 		ComPtr< IDXGISwapChain > m_SwapChain;
 		ComPtr< ID3D11Device > m_Device;
 		ComPtr< ID3D11DeviceContext > m_DeviceContext;
-		ComPtr< ID3D11Texture2D > m_DepthStencilBuffer;
 		ComPtr< ID3D11RasterizerState > m_RasterizerState;
-		ComPtr< ID3D11DepthStencilView > m_DepthStencilView;
 		ComPtr< ID3D11DepthStencilState > m_DepthStencilState;
 		ComPtr< ID3D11DepthStencilState > m_DepthDisabledState;
 		ComPtr< ID3D11BlendState > m_BlendState;
@@ -57,11 +63,21 @@ namespace Hyperion
 
 		std::shared_ptr< DirectX11RenderTarget > m_RenderTarget;
 		std::shared_ptr< DirectX11Texture2D > m_BackBuffer;
+		std::shared_ptr< DirectX11DepthStencil > m_DepthStencil;
+
+		ComPtr< ID3D11Buffer > m_ScreenVertexList;
+		ComPtr< ID3D11Buffer > m_ScreenIndexList;
 
 		/*
 			Matricies
 		*/
-		DirectX::XMFLOAT4X4 m_ProjectionMatrix, m_WorldMatrix, m_OrthoMatrix, m_ScreenMatrix;
+		DirectX::XMMATRIX m_WorldMatrix, m_ProjectionMatrix, m_OrthoMatrix, m_ScreenMatrix, m_ViewMatrix;
+
+		/*
+		*	Camera Info
+		*/
+		DirectX::XMFLOAT3 m_CameraPosition, m_CameraRotation;
+		float m_FOV;
 
 		/*
 			Helper Functions
@@ -69,6 +85,7 @@ namespace Hyperion
 		bool InitializeResources( HWND Target, ScreenResolution& Resolution );
 		void ShutdownResources();
 		void GenerateMatricies( const ScreenResolution& inRes, float inFOV, float inNear, float inFar );
+		void GenerateScreenGeometry( uint32 inWidth, uint32 inHeight );
 
 	public:
 
@@ -86,6 +103,9 @@ namespace Hyperion
 		void BeginFrame() override;
 		void EndFrame() override;
 
+		void SetCameraInfo( const ViewState& inView ) override;
+		bool CheckViewCull( const Transform3D& inTransform, const AABB& inBounds ) override;
+
 		void EnableAlphaBlending() override;
 		void DisableAlphaBlending() override;
 		bool IsAlphaBlendingEnabled() override;
@@ -96,7 +116,7 @@ namespace Hyperion
 
 		std::shared_ptr< RRenderTarget > GetRenderTarget() override;
 		std::shared_ptr< RTexture2D > GetBackBuffer() override;
-
+		std::shared_ptr< RDepthStencil > GetDepthStencil() override;
 
 		std::vector< ScreenResolution > GetAvailableResolutions() override;
 
@@ -130,7 +150,35 @@ namespace Hyperion
 		bool CopyTexture3DMip( std::shared_ptr< RTexture3D >& inSource, std::shared_ptr< RTexture3D >& inDest, uint8 sourceMip, uint8 destMip ) final;
 
 
-		std::shared_ptr< RRenderTarget > CreateRenderTarget( std::shared_ptr< RTexture2D > inSource ) override;
+		std::shared_ptr< RRenderTarget > CreateRenderTarget( const std::shared_ptr< RTexture2D >& inSource ) final;
+		void ClearRenderTarget( const std::shared_ptr< RRenderTarget >& inTarget, const Color4F& inColor ) final;
+		std::shared_ptr< RDepthStencil > CreateDepthStencil( uint32 inWidth, uint32 inHeight ) final;
+		bool ResizeDepthStencil( const std::shared_ptr< RDepthStencil >& inStencil, uint32 inWidth, uint32 inHeight ) final;
+		void ClearDepthStencil( const std::shared_ptr< RDepthStencil >& inStencil, const Color4F& inColor ) final;
+
+		// Shaders
+		std::shared_ptr< RGBufferShader > CreateGBufferShader( const String& inPixelShader = SHADER_PATH_GBUFFER_PIXEL, const String& inVertexShader = SHADER_PATH_GBUFFER_VERTEX ) final;
+		std::shared_ptr< RLightingShader > CreateLightingShader( const String& inPixelShader = SHADER_PATH_LIGHTING_PIXEL, const String& inVertexShader = SHADER_PATH_LIGHTING_VERTEX ) final;
+		std::shared_ptr< RForwardShader > CreateForwardShader( const String& inPixelShader = SHADER_PATH_FORWARD_PIXEL, const String& inVertexShader = SHADER_PATH_FORWARD_VERTEX ) final;
+		std::shared_ptr< RComputeShader > CreateComputeShader( const String& inShader ) final;
+
+		// Rendering
+		void SetShader( const std::shared_ptr< RShader >& inShader ) final;
+
+		void SetRenderOutputToScreen() final;
+		void SetRenderOutputToTarget( const std::shared_ptr< RRenderTarget >& inTarget, const std::shared_ptr< RDepthStencil >& inStencil ) final;
+		void SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inGBuffer ) final;
+
+		void RenderGeometry( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount ) final;
+		void RenderScreenGeometry() final;
+
+		void GetWorldMatrix( const Transform3D& inObj, Matrix& outMatrix ) final;
+		void GetWorldMatrix( Matrix& outMatrix ) final;
+		void GetViewMatrix( Matrix& outMatrix ) final;
+		void GetProjectionMatrix( Matrix& outMatrix ) final;
+		void GetOrthoMatrix( Matrix& outMatrix ) final;
+		void GetScreenMatrix( Matrix& outMatrix ) final;
+
 	};
 
 }

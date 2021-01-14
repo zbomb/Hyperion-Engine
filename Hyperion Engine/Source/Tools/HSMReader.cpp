@@ -9,7 +9,6 @@
 #include "Hyperion/Assets/MaterialAsset.h"
 #include "Hyperion/Tools/HMATReader.h"
 
-#define HYPERION_HSM_MIN_SIZE 220
 
 
 namespace Hyperion
@@ -33,18 +32,85 @@ namespace Hyperion
 		}
 	}
 
-	// Structs that represent the file structure
-	struct HSM_GlobalData
+	
+	/*
+	*	Data Structures
+	*/
+
+	struct HSM_Vertex
 	{
+		// ----- 0 -----
+
+		float x;
+		float y;
+		float z;
+		float nx;
+		float ny;
+		float nz;
+		float u;
+		float v;
+
+		// ----- 32 -----
+	};
+
+	struct HSM_SubObject
+	{
+		// ----- 0 -----
+
+		uint32 objectID;
+		uint8 materialSlot;
+		uint8 _rsvd1;
+		uint16 _rsvd2;
+
+		// ----- 8 ------
+
+		uint32 vertexOffset;
+		uint32 vertexCount;
+		uint32 indexOffset;
+		uint32 indexCount;
+
+		// ----- 24 -----
+	};
+
+	struct HSM_LOD
+	{
+		// ----- 0 -----
+
+		float minScreenSize; // Not yet implemented
+		uint32 subObjectOffset;
+		uint8 subObjectCount; 
+		uint8 _rsvd1;
+		uint16 _rsvd2;
+
+		// ----- 12 ------
+
+		uint32 collisionOffset;
+		uint32 collisionSize;
+		uint32 _rsvd3;
+
+		// ----- 24 ----- [End of file]
+
+		std::vector< HSM_SubObject > subObjects;
+
+	};
+
+	struct HSM_StaticData
+	{
+		// ----- 0 -----
+
 		uint16 toolsetVersion;
 		uint8 lodCount;
-		uint8 materialCount;
-		uint32 _rsvd1;
+		uint8 _rsvd1;
+		uint32 _rsvd2;
 
-		float boundSphereX;
-		float boundSphereY;
-		float boundSphereZ;
-		float boundSphereRadius;
+		// ----- 8 -----
+
+		float boundsSphereX;
+		float boundsSphereY;
+		float boundsSphereZ;
+		float boundsSphereRadius;
+
+		// ----- 24 ------
 
 		float aabbMinX;
 		float aabbMinY;
@@ -53,122 +119,143 @@ namespace Hyperion
 		float aabbMaxY;
 		float aabbMaxZ;
 
-		// Size 48 bytes
+		// ----- 48 -----
+
 	};
 
-	struct HSM_MaterialInfo
-	{
-		uint32 length;
-		uint32 value;
-
-		// 8 bytes
-	};
-
-	struct HSM_LOD
-	{
-		float minScreenSize;
-		uint32 subObjectOffset;
-		uint32 collisionOffset;
-		uint32 collisionLength;
-
-		uint8 materialCount;
-		uint8 subObjectCount;
-		uint16 _rsvd1;
-		uint32 _rsvd2;
-		uint32 _rsvd3;
-		uint32 _rsvd4;
-
-		std::vector< HSM_MaterialInfo > materialList;
-
-		// 0 Materials: 32 bytes
-	};
-
-	struct HSM_Vertex
-	{
-		float x;
-		float y;
-		float z;
-		float normal;
-		float tangent;
-		float binormal;
-		float u;
-		float v;
-
-		// 32 bytes
-	};
-
-	struct HSM_Object
-	{
-		uint32 objectIndex; // Should we make this a single byte instead?
-		uint32 vertexCount;
-		uint32 vertexOffset;
-		uint32 indexCount;
-		uint32 indexOffset;
-		uint8 materialSlot;
-		uint8 _rsvd1;
-		uint16 _rsvd2;
-
-		// 24 bytes
-	};
-
-	struct HSM_BakedMaterial
-	{
-		std::vector< byte > rawData;
-	};
-
-	struct HSM_CollisionData
-	{
-		std::vector< byte > rawData;
-	};
-
-	// We dont actually use this structure in the program, its really just here to visualize the layout of the file
 	struct HSM_File
 	{
-		uint64 validBytes;
-		HSM_GlobalData globalData;
-		std::vector< HSM_MaterialInfo > globalMaterials;
-		std::vector< HSM_LOD > lodList;
-		std::vector< HSM_Vertex > vertexList;
-		std::vector< uint32 > indexList;
-		std::vector< HSM_Object > objectList;
-		std::vector< HSM_BakedMaterial > materialList; // Min Offset: 220
-		std::vector< HSM_CollisionData > collisionList; // Min Offset: 220
+		// ----- 0 ------
 
-		// Minimum Size:
-		// 8 + 48 + 0 + 32 + 96 + 12 + 24 + 0 + 0 = 220 bytes
+		uint64 validationBytes;
+		uint32 _rsvd1;
+		uint32 _rsvd2;
+
+		// ----- 16 -----
+
+		HSM_StaticData staticData;
+
+		// ------ 64 ------
+
+		std::vector< HSM_LOD > lodList;
+
+		//std::vector< HSM_SubObject > objectList;	In file only, we read it into a more vertical structure
+
+		//std::vector< HSM_Vertex > vertexList;
+		//std::vector< uint32 > indexList;
+
+		//std::vector< byte > collisionData; // To be implemented in the future
 	};
 
-	// Helper functions used to read structures from the file
-	bool readGlobalData( DataReader& inReader, HSM_GlobalData& outData, bool bLittleEndian )
+
+
+	/*
+	*	Functions
+	*/
+	bool readSubObject( DataReader& inReader, HSM_SubObject& outData, bool bLittleEndian )
 	{
-		// Read raw data from the file
+		// Read the raw data in
+		std::vector< byte > rawData;
+		if( inReader.ReadBytes( rawData, 24 ) != DataReader::ReadResult::Success || rawData.size() != 24 )
+		{
+			return false;
+		}
+
+		// Deserialize the data
+		auto it = rawData.begin();
+		Binary::DeserializeUInt32( it, outData.objectID, bLittleEndian );
+		std::advance( it, 4 );
+
+		Binary::DeserializeUInt8( it, outData.materialSlot );
+		std::advance( it, 4 ); // Skips over 3 bytes of reserved data
+
+		Binary::DeserializeUInt32( it, outData.vertexOffset, bLittleEndian );
+		std::advance( it, 4 );
+
+		Binary::DeserializeUInt32( it, outData.vertexCount, bLittleEndian );
+		std::advance( it, 4 );
+
+		Binary::DeserializeUInt32( it, outData.indexOffset, bLittleEndian );
+		std::advance( it, 4 );
+
+		Binary::DeserializeUInt32( it, outData.indexCount, bLittleEndian );
+		std::advance( it, 4 );
+
+		return true;
+	}
+
+
+	bool readLOD( DataReader& inReader, HSM_LOD& outData, bool bLittleEndian )
+	{
+		// Read raw static data in
+		std::vector< byte > rawData;
+		if( inReader.ReadBytes( rawData, 24 ) != DataReader::ReadResult::Success || rawData.size() != 24 )
+		{
+			return false;
+		}
+
+		// Deserialize the static data
+		auto it = rawData.begin();
+		Binary::DeserializeFloat( it, outData.minScreenSize, bLittleEndian );
+		std::advance( it, 4 );
+
+		Binary::DeserializeUInt32( it, outData.subObjectOffset, bLittleEndian );
+		std::advance( it, 4 );
+
+		Binary::DeserializeUInt8( it, outData.subObjectCount );
+		std::advance( it, 4 ); // Skipping 3 bytes of reserved data
+
+		Binary::DeserializeUInt32( it, outData.collisionOffset, bLittleEndian );
+		std::advance( it, 4 );
+
+		Binary::DeserializeUInt32( it, outData.collisionSize, bLittleEndian );
+		std::advance( it, 4 );
+		std::advance( it, 4 ); // Skipping 4 bytes of reserved data
+
+		// Now, lets read in the subobjects
+		for( uint8 i = 0; i < outData.subObjectCount; i++ )
+		{
+			uint32 offset = outData.subObjectOffset + ( i * 24 );
+			inReader.SeekOffset( offset );
+
+			auto& subObj = outData.subObjects.emplace_back( HSM_SubObject() );
+			if( !readSubObject( inReader, subObj, bLittleEndian ) )
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+
+	bool readStaticData( DataReader& inReader, HSM_StaticData& outData, bool bLittleEndian )
+	{
+		// Read raw data in
 		std::vector< byte > rawData;
 		if( inReader.ReadBytes( rawData, 48 ) != DataReader::ReadResult::Success || rawData.size() != 48 )
 		{
 			return false;
 		}
 
-		// Deserialize each value
+		// Deserialize the structure
 		auto it = rawData.begin();
 		Binary::DeserializeUInt16( it, outData.toolsetVersion, bLittleEndian );
 		std::advance( it, 2 );
 
 		Binary::DeserializeUInt8( it, outData.lodCount );
-		std::advance( it, 1 );
+		std::advance( it, 6 ); // Skipping 5 bytes of reserved data
 
-		Binary::DeserializeUInt8( it, outData.materialCount );
-		std::advance( it, 5 ); // 4 bytes of padding here
-		
-		Binary::DeserializeFloat( it, outData.boundSphereX, bLittleEndian );
+		Binary::DeserializeFloat( it, outData.boundsSphereX, bLittleEndian );
 		std::advance( it, 4 );
 
-		Binary::DeserializeFloat( it, outData.boundSphereY, bLittleEndian );
+		Binary::DeserializeFloat( it, outData.boundsSphereY, bLittleEndian );
 		std::advance( it, 4 );
 
-		Binary::DeserializeFloat( it, outData.boundSphereZ, bLittleEndian );
+		Binary::DeserializeFloat( it, outData.boundsSphereZ, bLittleEndian );
 		std::advance( it, 4 );
 
-		Binary::DeserializeFloat( it, outData.boundSphereRadius, bLittleEndian );
+		Binary::DeserializeFloat( it, outData.boundsSphereRadius, bLittleEndian );
 		std::advance( it, 4 );
 
 		Binary::DeserializeFloat( it, outData.aabbMinX, bLittleEndian );
@@ -193,416 +280,110 @@ namespace Hyperion
 	}
 
 
-	bool readMaterialInfoList( DataReader& inReader, uint8 inCount, std::vector< HSM_MaterialInfo >& outList, bool bLittleEndian )
-	{
-		// Break out if there are no materials to read
-		if( inCount == 0 ) { return true; }
-
-		std::vector< byte > rawData;
-		if( inReader.ReadBytes( rawData, inCount * 8 ) != DataReader::ReadResult::Success || rawData.size() != inCount * 8 )
-		{
-			return false;
-		}
-
-		auto it = rawData.begin();
-
-		// Loop through and read each material entry
-		for( uint8 i = 0; i < inCount; i++ )
-		{
-			HSM_MaterialInfo mat;
-
-			Binary::DeserializeUInt32( it, mat.length, bLittleEndian );
-			std::advance( it, 4 );
-
-			Binary::DeserializeUInt32( it, mat.value, bLittleEndian );
-			std::advance( it, 4 );
-
-			outList.push_back( mat );
-		}
-		
-		return true;
-	}
-
-
-	bool validateMaterialInfoList( std::vector< HSM_MaterialInfo >& inList, DataReader& inReader )
-	{
-		auto fileSize = inReader.Size();
-
-		for( auto It = inList.begin(); It != inList.end(); It++ )
-		{
-			if( It->length == 0 )
-			{
-				// Material is externa, value = asset id
-				if( It->value == 0 ) return false;
-			}
-			else
-			{
-				// Material is baked into this file, value = offset
-				if( It->value == 0 || It->value < HYPERION_HSM_MIN_SIZE ) return false;
-				if( It->value + It->length >= fileSize ) return false;
-			}
-		}
-
-		return true;
-	}
-
-
-	// Helper function to read raw LOD data in
-	bool readLODData( DataReader& inReader, HSM_LOD& outData, bool bLittleEndian )
-	{
-		// First, were going to read all of the static data into a buffer and deserialize it
-		std::vector< byte > staticData;
-		if( inReader.ReadBytes( staticData, 32 ) != DataReader::ReadResult::Success || staticData.size() != 32 )
-		{
-			return false;
-		}
-
-		auto it = staticData.begin();
-
-		Binary::DeserializeFloat( it, outData.minScreenSize, bLittleEndian );
-		std::advance( it, 4 );
-
-		Binary::DeserializeUInt32( it, outData.subObjectOffset, bLittleEndian );
-		std::advance( it, 4 );
-
-		Binary::DeserializeUInt32( it, outData.collisionOffset, bLittleEndian );
-		std::advance( it, 4 );
-
-		Binary::DeserializeUInt32( it, outData.collisionLength, bLittleEndian );
-		std::advance( it, 4 );
-
-		Binary::DeserializeUInt8( it, outData.materialCount );
-		std::advance( it, 1 );
-
-		Binary::DeserializeUInt8( it, outData.subObjectCount );
-		std::advance( it, 1 );
-
-		// The next 14 bytes are reserved for future use
-		// TODO: Other static members per-lod need to be read here
-
-		std::advance( it, 14 );
-
-		// Now, we have a material list we need to read in for this LOD
-		if( !readMaterialInfoList( inReader, outData.materialCount, outData.materialList, bLittleEndian ) )
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-
-	bool validateLODData( DataReader& inReader, HSM_LOD& inLOD )
-	{
-		// First, lets check offsets to see if they fall in the proper range
-		auto fSize = inReader.Size();
-
-		if( inLOD.collisionOffset != 0 )
-		{
-			if( inLOD.collisionOffset < HYPERION_HSM_MIN_SIZE )
-			{
-				return false;
-			}
-			else if( inLOD.collisionOffset + inLOD.collisionLength > fSize )
-			{
-				return false;
-			}
-		}
-
-		if( inLOD.subObjectCount == 0 )
-		{
-			return false;
-		}
-		else
-		{
-			if( inLOD.subObjectOffset < 204 || // HYPERION_HSM_MIN_SIZE
-				inLOD.subObjectOffset + ( inLOD.subObjectCount * 24 ) > fSize )
-			{
-				return false;
-			}
-		}
-
-		return validateMaterialInfoList( inLOD.materialList, inReader );
-	}
-
-	std::shared_ptr< MaterialAsset > readBakedMaterial( DataReader& inReader, const FilePath& inPath, uint32 inOffset, uint32 inLength )
-	{
-		// Baked material asset
-		// First, lets generate an asset name and an identifier
-		String assetPath = String( "materials/__baked__/" ).Append( inPath.ToString() );
-		if( assetPath.EndsWith( ".hsm" ) ) { assetPath = assetPath.SubStr( 0, assetPath.Length() - 4 ); }
-
-		uint32 assetId = AssetManager::CalculateIdentifier( assetPath.Append( ".hmat" ) );
-		int err_num = 0;
-
-		// Ensure this doesnt exist already
-		while( AssetManager::Exists( assetId ) )
-		{
-			err_num++;
-
-			String newPath = assetPath.Append( std::to_string( err_num ) ).Append( ".hmat" );
-			assetId = AssetManager::CalculateIdentifier( newPath );
-
-			if( err_num > 100 )
-			{
-				Console::WriteLine( "[ERROR] HSMReader: Failed to generate a valid asset id for a baked material!" );
-				return nullptr;
-			}
-		}
-
-		// We need to build the material, using the HMATReader, create a material asset instance, and 
-		// add it to the asset cache
-		std::vector< byte > buffer;
-
-		inReader.SeekOffset( inOffset );
-		if( inReader.ReadBytes( buffer, inLength ) != DataReader::ReadResult::Success )
-		{
-			Console::WriteLine( "[Warning] HSMReader: Failed to read baked material from the static model file" );
-			return nullptr;
-		}
-
-		GenericBuffer gbuf( buffer, true, false );
-		DataReader reader( gbuf );
-
-		auto mat_ptr = MaterialAsset::LoadFromReader( reader, assetPath, assetId, inOffset, inLength );
-		if( !mat_ptr )
-		{
-			Console::WriteLine( "[Warning] HSMReader: Failed to load baked material from static model file!" );
-			return nullptr;
-		}
-
-		// TODO: Add material to cache, might not have instance info either.. maybe we should discover baked assets during startup...
-
-		// TODO: Implement this!
-		HYPERION_NOT_IMPLEMENTED( "Need to write system to cache materials baked into static model assets!" );
-		return nullptr;
-	}
-
-
 	HSMReader::Result HSMReader::ReadFile( IFile& inFile, std::shared_ptr< StaticModelAsset >& outAsset )
 	{
+		// Validate the parameters
 		if( outAsset == nullptr )
 		{
-			writeReaderError( inFile, "the asset passed in was null!" );
-			Result::Failed;
+			writeReaderError( inFile, "asset was null" );
+			return Result::Failed;
 		}
 
-		// Check the file is valid
-		if( !inFile.IsValid() || !inFile.CanReadStream() )
+		// TODO: Calcualte actual minimum file size for a valid static model
+		if( !inFile.IsValid() || !inFile.CanReadStream() || inFile.GetSize() < 100 )
 		{
-			writeReaderError( inFile, "the file wasnt able to be opened" );
+			writeReaderError( inFile, "invalid file" );
 			return Result::InvalidFile;
 		}
-
-		// Create a data reader
-		DataReader reader( inFile );
 		
-		// Compare against the minimum size
-		const long s_MinimumSize = HYPERION_HSM_MIN_SIZE;
-		if( reader.Size() < s_MinimumSize )
-		{
-			writeReaderError( inFile, "the file wasnt large enough!" );
-			return Result::InvalidFile;
-		}
+		// Now, lets check if the validation bytes are correct, and also determine endian order
+		const uint64 s_ValidBytes			= 0x1AA1FF289DD90010;
+		const uint64 s_ReverseValidBytes	= 0x1000D99D28FFA11A;
 
-		// Now, lets read the validation bytes, which ensures this is a static model file, and tells us the endian order of the data stroed inside
-		const uint64 s_ValidBytes = 0x1AA1FF289DD90010;
-		const uint64 s_ReverseValidBytes = 0x1000D99D28FFA11A;
-		std::vector< byte > headerBlockData;
+		std::vector< byte > headerData;
+		DataReader reader( inFile );
+		reader.SeekBegin();
 
-		if( reader.ReadBytes( headerBlockData, 8 ) != DataReader::ReadResult::Success || headerBlockData.size() != 8 )
+		if( reader.ReadBytes( headerData, 8 ) != DataReader::ReadResult::Success || headerData.size() != 8 )
 		{
 			writeReaderError( inFile, "the file couldnt be read from" );
 			return Result::InvalidFile;
 		}
 
-		uint64 fileValidBytes = 0;
-		Binary::DeserializeUInt64( headerBlockData.begin(), headerBlockData.begin() + 8, fileValidBytes, false ); // Read it as big endian
+		HSM_File fileData;
+		memset( &fileData, 0, sizeof( HSM_File ) );
 
-		bool bLittleEndian = false;
-		if( fileValidBytes == s_ReverseValidBytes )
+		bool bLittleEndian		= false;
+
+		Binary::DeserializeUInt64( headerData.begin(), fileData.validationBytes, false );
+		if( fileData.validationBytes == s_ReverseValidBytes )
 		{
-			// The file type is correct, but, we need to flip the byte order while reading in values that take up multiple bytes
 			bLittleEndian = true;
 		}
-		else if( fileValidBytes != s_ValidBytes )
+		else if( fileData.validationBytes != s_ValidBytes )
 		{
-			writeReaderError( inFile, "the file is not a static model asset!" );
+			writeReaderError( inFile, "file isnt a valid static model" );
 			return Result::InvalidFile;
 		}
 
-		// Now, read the global settings from the file
-		HSM_GlobalData globalData;
-		memset( &globalData, 0, sizeof( globalData ) );
-
-		if( !readGlobalData( reader, globalData, bLittleEndian ) )
+		// Start read main file data in
+		reader.SeekOffset( 16 );
+		if( !readStaticData( reader, fileData.staticData, bLittleEndian ) )
 		{
-			writeReaderError( inFile, "the global data couldnt be read!" );
-			return Result::InvalidFile;
+			writeReaderError( inFile, "failed to read static data" );
+			return Result::MissingData;
 		}
 
-		// Check if this file toolset is compatible with the reader
-		if( !isToolsetCompatible( globalData.toolsetVersion, ToolsetVersion ) )
+		// Ensure the toolset is compatible
+		if( !isToolsetCompatible( fileData.staticData.toolsetVersion, ToolsetVersion ) )
 		{
-			writeReaderError( inFile, "the file toolset version is not compatible" );
+			writeReaderError( inFile, "The toolset version is not compatible" );
 			return Result::InvalidVersion;
 		}
 
-		// Now, we need to load in the 'global' materials
-		std::vector< HSM_MaterialInfo > globalMaterials;
-		if( !readMaterialInfoList( reader, globalData.materialCount, globalMaterials, bLittleEndian ) )
+		// Now, lets read the LOD data in
+		for( uint8 i = 0; i < fileData.staticData.lodCount; i++ )
 		{
-			writeReaderError( inFile, "the global material list couldnt be read!" );
-			return Result::InvalidFile;
-		}
+			reader.SeekOffset( 64 + ( i * 24 ) );
 
-		// Validate this material list
-		if( !validateMaterialInfoList( globalMaterials, reader ) )
-		{
-			writeReaderError( inFile, "the global material list isnt valid" );
-			return Result::InvalidMaterial;
-		}
+			HSM_LOD lod;
+			memset( &lod, 0, sizeof( HSM_LOD ) );
 
-		// Now, we want to start reading the list of LODs
-		std::vector< HSM_LOD > lodList;
-		for( uint8 index = 0; index < globalData.lodCount; index++ )
-		{
-			HSM_LOD lodData;
-			memset( &lodData, 0, sizeof( lodData ) );
-
-			if( !readLODData( reader, lodData, bLittleEndian ) )
+			if( !readLOD( reader, lod, bLittleEndian ) )
 			{
-				std::string err_msg( "the lod at index " );
-				err_msg.append( std::to_string( (int) index ) ).append( " couldnt be read!" );
-
-				writeReaderError( inFile, err_msg );
-				return Result::InvalidFile;
-			}
-			else if( !validateLODData( reader, lodData ) )
-			{
-				std::string err_msg( "the lod at index " );
-				err_msg.append( std::to_string( (int) index ) ).append( " was invalid!" );
-
-				writeReaderError( inFile, err_msg );
-				return Result::InvalidMaterial;
+				writeReaderError( inFile, "Failed to read LOD from file!" );
+				return Result::InvlaidLOD;
 			}
 
-			lodList.emplace_back( std::move( lodData ) );
+			fileData.lodList.push_back( std::move( lod ) );
 		}
+		
+		// Now that the data is read in, we can move it into the asset
+		outAsset->m_BoundingBox.Min		= Vector3D( fileData.staticData.aabbMinX, fileData.staticData.aabbMinY, fileData.staticData.aabbMinZ );
+		outAsset->m_BoundingBox.Max		= Vector3D( fileData.staticData.aabbMaxX, fileData.staticData.aabbMaxY, fileData.staticData.aabbMaxZ );
 
-		// Now, lets fill out the asset with our data, start with bounds info
-		outAsset->m_BoundingBox.Min			= Vector3D( globalData.aabbMinX, globalData.aabbMinY, globalData.aabbMinZ );
-		outAsset->m_BoundingBox.Max			= Vector3D( globalData.aabbMaxX, globalData.aabbMaxY, globalData.aabbMaxZ );
-		outAsset->m_BoundingSphere.Center	= Vector3D( globalData.boundSphereX, globalData.boundSphereY, globalData.boundSphereZ );
-		outAsset->m_BoundingSphere.Radius	= globalData.boundSphereRadius;
+		outAsset->m_BoundingSphere.Center	= Vector3D( fileData.staticData.boundsSphereX, fileData.staticData.boundsSphereY, fileData.staticData.boundsSphereZ );
+		outAsset->m_BoundingSphere.Radius	= fileData.staticData.boundsSphereRadius;
 
-		// Ensure we resize the LOD vector, so exceptions arent thrown when we index them
-		outAsset->m_LODs.resize( globalData.lodCount );
-
-		// Next, fill out global material slots
-		for( int i = 0; i < globalMaterials.size(); i++ )
+		outAsset->m_LODs.resize( fileData.staticData.lodCount );
+		for( uint8 i = 0; i < fileData.staticData.lodCount; i++ )
 		{
-			if( globalMaterials[ i ].length == 0 )
-			{
-				// External material asset
-				auto ptr = AssetManager::Get< MaterialAsset >( globalMaterials[ i ].value );
-				if( !ptr )
-				{
-					Console::WriteLine( "[Warning] HSMReader: Failed to get material for static model asset! (ID#", globalMaterials[ i ].value, ")" );
-					outAsset->m_MaterialSlots[ (uint8) i ] = nullptr;
-				}
-				else
-				{
-					outAsset->m_MaterialSlots[ (uint8) i ] = ptr;
-				}
-			}
-			else
-			{
-				outAsset->m_MaterialSlots[ (uint8) i ] = readBakedMaterial( reader, inFile.GetPath(), globalMaterials[ i ].value, globalMaterials[ i ].length );
-			}
-		}
-
-		// Now that the global materials are loaded, lets move onto the LOD levels
-		for( uint8 i = 0; i < lodList.size(); i++ )
-		{
-			auto& data = lodList.at( i );
-
-			StaticModelAssetLOD newLOD;
-
-			newLOD.Index = i;
-			newLOD.MinScreenSize = data.minScreenSize;
+			outAsset->m_LODs[ i ].Index = i;
+			outAsset->m_LODs[ i ].MinScreenSize = fileData.lodList[ i ].minScreenSize;
 			
-			// Go through, and generate proper material list
-			for( uint8 mi = 0; mi < data.materialList.size(); mi++ )
+			auto& subObjList = outAsset->m_LODs[ i ].SubObjects;
+			subObjList.resize( fileData.lodList[ i ].subObjectCount );
+
+			for( uint8 o = 0; o < fileData.lodList[ i ].subObjectCount; o++ )
 			{
-				if( data.materialList[ mi ].length == 0 )
-				{
-					if( data.materialList[ mi ].value == 0 )
-					{
-						// Null Asset Slot
-						newLOD.MaterialSlots[ mi ] = nullptr;
-					}
-					else
-					{
-						// External Asset
-						auto ptr = AssetManager::Get< MaterialAsset >( data.materialList[ mi ].value );
-						if( ptr == nullptr )
-						{
-							Console::WriteLine( "[Warning] HSMReader: Failed to get external material for static model!" );
-							newLOD.MaterialSlots[ mi ] = nullptr;
-						}
-						else
-						{
-							newLOD.MaterialSlots[ mi ] = ptr;
-						}
-					}
-				}
-				else
-				{
-					// Baked Asset
-					newLOD.MaterialSlots[ mi ] = readBakedMaterial( reader, inFile.GetPath(), data.materialList[ mi ].value, data.materialList[ mi ].length );
-				}
-			}
-			
-			// Now, we need to read all of the subobject data from the file
-			std::vector< byte > objData;
-
-			reader.SeekOffset( data.subObjectOffset );
-			if( reader.ReadBytes( objData, data.subObjectCount * 24 ) != DataReader::ReadResult::Success )
-			{
-				writeReaderError( inFile, "failed to read sub-object(s) for LOD" );
-				return Result::MissingData;
-			}
-
-			auto It = objData.begin();
-			
-			// Now, loop through and de-serialize each of them
-			for( uint8 oi = 0; oi < data.subObjectCount; oi++ )
-			{
-				StaticModelAssetSubModel obj;
-
-				// objectIndex, vertexCount, vertexOffset, indexCount, indexOffset, materialSlot
-				uint32 obj_index;
-				Binary::DeserializeUInt32( It, obj_index, bLittleEndian );
-				std::advance( It, 4 );
-
-				obj.Index = (uint8) obj_index;
-
-				Binary::DeserializeUInt32( It, obj.VertexLength, bLittleEndian );
-				std::advance( It, 4 );
-
-				Binary::DeserializeUInt32( It, obj.VertexOffset, bLittleEndian );
-				std::advance( It, 4 );
-
-				Binary::DeserializeUInt32( It, obj.IndexLength, bLittleEndian );
-				std::advance( It, 4 );
-
-				Binary::DeserializeUInt32( It, obj.IndexOffset, bLittleEndian );
-				std::advance( It, 4 );
-
-				Binary::DeserializeUInt8( It, obj.MaterialIndex );
-				
-				outAsset->m_LODs[ i ].SubObjects[ oi ] = obj;
+				subObjList[ o ].Index = o;
+				subObjList[ o ].IndexOffset		= fileData.lodList[ i ].subObjects[ o ].indexOffset;
+				subObjList[ o ].IndexLength		= fileData.lodList[ i ].subObjects[ o ].indexCount * 4;
+				subObjList[ o ].IndexCount		= fileData.lodList[ i ].subObjects[ o ].indexCount;
+				subObjList[ o ].VertexOffset	= fileData.lodList[ i ].subObjects[ o ].vertexOffset;
+				subObjList[ o ].VertexLength	= fileData.lodList[ i ].subObjects[ o ].vertexCount * 32;
+				subObjList[ o ].VertexCount		= fileData.lodList[ i ].subObjects[ o ].vertexCount;
+				subObjList[ o ].MaterialIndex	= fileData.lodList[ i ].subObjects[ o ].materialSlot;
 			}
 		}
 

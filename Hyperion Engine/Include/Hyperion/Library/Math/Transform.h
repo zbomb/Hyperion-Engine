@@ -14,7 +14,7 @@
 namespace Hyperion
 {
 
-	class Transform3D
+	struct Transform3D
 	{
 
 	public:

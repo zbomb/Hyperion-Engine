@@ -7,26 +7,83 @@
 #pragma once
 
 #include "Hyperion/Core/Object.h"
+#include "Hyperion/Core/Types/ConcurrentQueue.h"
 
-#include <vector>
-#include <functional>
-#include <map>
-#include <chrono>
-#include <queue>
-#include <mutex>
+#include <shared_mutex>
 
 
 namespace Hyperion
 {
+
+	constexpr const char* INPUT_BINDINGS_FILE = "data/key_bindings.cfg";
+
+
+	class InputManager : public Object
+	{
+
+	private:
+
+		struct AxisBinding
+		{
+			String cmd;
+			float mult;
+			bool invert;
+		};
+
+		std::map< Keys, bool > m_KeyDownList;
+		std::map< Keys, String > m_KeyPressBinds;
+		std::map< Keys, String > m_KeyReleaseBinds;
+		std::map< InputAxis, AxisBinding > m_AxisBinds;
+
+		std::shared_mutex m_BindListMutex;
+
+		bool m_bIsMouseCaptured;
+		std::function< void( bool ) > m_CaptureCallback;
+
+		ConcurrentQueue< String > m_KeyEvents;
+		ConcurrentQueue< std::pair< String, float > > m_AxisEvents;
+
+	public:
+
+		InputManager();
+
+		bool BindKey( Keys inKey, const String& inCmd, bool bPress );
+		bool BindAxis( InputAxis inAxis, const String& inCmd, float inMult, bool bInvert );
+
+		bool UnbindKey( const String& inCmd );
+		bool UnbindAxis( const String& inCmd );
+		bool UnbindKey( Keys inKey );
+		bool UnbindAxis( InputAxis inAxis );
+
+		void ClearBindings();
+
+		bool OnKeyPress( Keys inKey );
+		bool OnKeyRelease( Keys inKey );
+		bool OnAxisInput( InputAxis inAxis, float inValue );
+
+		void DispatchEvents();
+
+		void LoadBindings();
+
+		inline bool IsMouseCaptured() const { return m_bIsMouseCaptured; }
+		void CaptureMouse();
+		void ReleaseMouse();
+		void SetCaptureCallback( std::function< void( bool ) > Callback );
+
+	};
+
+
+	/////////////////////////////////////////// Old Code //////////////////////////////////////////////
+
 	/*
 		Forward Declarations
-	*/
+	
 	class Entity;
 
 	/*
 		KeyPressEvent
 		* Structure holding info about a key event, passed as a parameter into key press callbacks
-	*/
+	
 	struct KeyPressEvent
 	{
 		Keys Key;
@@ -36,7 +93,7 @@ namespace Hyperion
 	/*
 		InputAxisEvent
 		* Structure holding info about an axis event, passed as a parameter into axis callbacks
-	*/
+	
 	struct InputAxisEvent
 	{
 		InputAxis Axis;
@@ -46,7 +103,7 @@ namespace Hyperion
 	/*
 		KeyBindInfo
 		* Structure to pass as a parameter to InputManager::BindKey
-	*/
+	
 	struct KeyBindInfo
 	{
 		Keys Key;
@@ -68,7 +125,7 @@ namespace Hyperion
 	/*
 		AxisBindInfo
 		* Structure to pass as a parameter to InputManager::BindAxis
-	*/
+	
 	struct AxisBindInfo
 	{
 		InputAxis Axis;
@@ -162,7 +219,7 @@ namespace Hyperion
 
 		/*
 			Axis and Key Mappings
-		*/
+		
 		std::map< Keys, std::vector< KeyMapping > > m_KeyMappings;
 		std::map< InputAxis, std::vector< AxisMapping > > m_AxisMappings;
 
@@ -171,7 +228,7 @@ namespace Hyperion
 
 		/*
 			Data Members
-		*/
+		
 		bool m_bShutdown;
 		bool m_KeyStates[ 256 ];
 		bool m_bIsMouseCaptured;
@@ -180,7 +237,7 @@ namespace Hyperion
 
 		/*
 			Thread-Safe Event Queue
-		*/
+		
 		std::queue< RawKeyEvent > m_KeyEventQueue;
 		std::queue< RawAxisEvent > m_AxisEventQueue;
 
@@ -225,6 +282,6 @@ namespace Hyperion
 
 
 	};
-
+	*/
 
 }

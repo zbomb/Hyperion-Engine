@@ -32,6 +32,9 @@ namespace Hyperion
 
 		uint32 IndexOffset;
 		uint32 IndexLength;
+
+		uint32 VertexCount;
+		uint32 IndexCount;
 	};
 
 
@@ -42,8 +45,7 @@ namespace Hyperion
 
 		uint8 Index;
 		float MinScreenSize;
-		std::map< uint8, StaticModelAssetSubModel > SubObjects;
-		std::map< uint8, std::shared_ptr< MaterialAsset > > MaterialSlots;
+		std::vector< StaticModelAssetSubModel > SubObjects;
 
 		// TODO: Collision Stuff
 	};
@@ -60,7 +62,6 @@ namespace Hyperion
 		BoundingSphere m_BoundingSphere;
 
 		std::vector< StaticModelAssetLOD > m_LODs;
-		std::map< uint8, std::shared_ptr< MaterialAsset > > m_MaterialSlots;
 
 		FilePath m_DiskPath;
 
@@ -85,21 +86,11 @@ namespace Hyperion
 		std::vector< StaticModelAssetLOD >::const_iterator GetLOD( uint8 inIndex ) const;
 		uint8 GetNumLODs() const { return (uint8)m_LODs.size(); }
 
-		// Material Methods
-		uint8 GetNumGlobalMaterialSlots() const { return (uint8)m_MaterialSlots.size(); }
-		uint8 GetNumOverrideMaterialSlots( uint8 inLOD ) const;
-		std::map< uint8, std::shared_ptr< MaterialAsset > >::const_iterator GetGlobalMaterialsBegin() const { return m_MaterialSlots.begin(); }
-		std::map< uint8, std::shared_ptr< MaterialAsset > >::const_iterator GetGlobalMaterialsEnd() const { return m_MaterialSlots.end(); }
-		std::shared_ptr< MaterialAsset > GetGlobalMaterial( uint8 inSlot ) const;
-		std::map< uint8, std::shared_ptr< MaterialAsset > >::const_iterator GetOverrideMaterialsBegin( uint8 inLOD ) const;
-		std::map< uint8, std::shared_ptr< MaterialAsset > >::const_iterator GetOverrideMaterialsEnd( uint8 inLOD ) const;
-		std::shared_ptr< MaterialAsset > GetOverrideMaterial( uint8 inLOD, uint8 inSlot ) const;
-
 		// SubObject Methods
-		uint8 GetNumSubModels( uint8 inLOD ) const;
-		std::map< uint8, StaticModelAssetSubModel >::const_iterator GetSubModelBegin( uint8 inLOD ) const;
-		std::map< uint8, StaticModelAssetSubModel >::const_iterator GetSubModelEnd( uint8 inLOD ) const;
-		std::map< uint8, StaticModelAssetSubModel >::const_iterator GetSubModel( uint8 inLOD, uint8 inIndex ) const;
+		uint8 GetNumSubModels() const;
+		std::vector< StaticModelAssetSubModel >::const_iterator GetSubModelBegin( uint8 inLOD ) const;
+		std::vector< StaticModelAssetSubModel >::const_iterator GetSubModelEnd( uint8 inLOD ) const;
+		std::vector< StaticModelAssetSubModel >::const_iterator GetSubModel( uint8 inLOD, uint8 inIndex ) const;
 
 		friend class HSMReader;
 

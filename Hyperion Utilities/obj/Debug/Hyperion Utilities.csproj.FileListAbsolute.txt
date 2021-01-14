@@ -20,3 +20,4 @@ D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion Utilities.csproj.CoreCompileIn
 D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion Utilities.csprojAssemblyReference.cache
 D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion.TextureViewer.resources
 D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion.ZoomControl.resources
+D:\Hyperion\Hyperion Utilities\obj\Debug\Hyperion.StaticModelImporter.resources

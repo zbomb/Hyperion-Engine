@@ -4,6 +4,12 @@
 	© 2019, Zachary Berry
 ==================================================================================================*/
 
+/*
+*	TODO:
+*	- Implement universal asset header, containing the asset type identifier, if the asset should be prema-cached
+*	- Cache groups
+*/
+
 #pragma once
 
 #include "Hyperion/Hyperion.h"
@@ -67,6 +73,9 @@ namespace Hyperion
 			- Gets info about an asset type by identifier
 		*/
 		static bool GetType( uint32 inTypeIdentifier, AssetTypeInfo& outInfo );
+
+
+		static uint32 FindTypeFromExtension( const String& inExt );
 
 		/*
 			bool [True if added] AssetManager::RegisterType( const AssetTypeInfo& [Type info structure] )

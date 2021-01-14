@@ -396,5 +396,75 @@ namespace Hyperion
         }
 
 
+        public static byte[] FromVector3D( Vector3D inVec, bool bLittleEndian = false )
+		{
+            var xData = FromFloat( inVec.x, bLittleEndian );
+            var yData = FromFloat( inVec.y, bLittleEndian );
+            var zData = FromFloat( inVec.z, bLittleEndian );
+
+            return new byte[]
+            {
+                xData[ 0 ], xData[ 1 ], xData[ 2 ], xData[ 3 ],
+                yData[ 0 ], yData[ 1 ], yData[ 2 ], yData[ 3 ],
+                zData[ 0 ], zData[ 1 ], zData[ 2 ], zData[ 3 ]
+
+            };
+		}
+
+
+        public static Vector3D GetVector3D( byte[] inData, int inOffset = 0, bool bLittleEndian = false )
+        {
+            if( inData.Length - inOffset < 12 )
+			{
+                Core.WriteLine( "[Warning] Serialization: Failed to deserialize Vec3D, not enough data!" );
+                return new Vector3D();
+            }
+
+            return new Vector3D()
+            {
+                x = GetFloat( inData, inOffset, bLittleEndian ),
+                y = GetFloat( inData, inOffset + 4, bLittleEndian ),
+                z = GetFloat( inData, inOffset + 8, bLittleEndian )
+            };
+        }
+
+
+        public static byte[] FromVertex( Vertex inVert )
+		{
+            byte[] outData = new byte[ 32 ];
+            Array.Copy( FromFloat( inVert.x, true ), 0, outData, 0, 4 );
+            Array.Copy( FromFloat( inVert.y, true ), 0, outData, 4, 4 );
+            Array.Copy( FromFloat( inVert.z, true ), 0, outData, 8, 4 );
+            Array.Copy( FromFloat( inVert.nx, true ), 0, outData, 12, 4 );
+            Array.Copy( FromFloat( inVert.ny, true ), 0, outData, 16, 4 );
+            Array.Copy( FromFloat( inVert.nz, true ), 0, outData, 20, 4 );
+            Array.Copy( FromFloat( inVert.u, true ), 0, outData, 24, 4 );
+            Array.Copy( FromFloat( inVert.v, true ), 0, outData, 28, 4 );
+
+            return outData;
+        }
+
+
+        public static Vertex GetVertex( byte[] inData, int inOffset = 0 )
+		{
+            if( inData.Length - inOffset < 32 )
+			{
+                Core.WriteLine( "[Warning] Serialization: Failed to deserialize vertex, not enough data!" );
+                return new Vertex();
+			}
+
+            return new Vertex(
+                GetFloat( inData, inOffset, true ),
+                GetFloat( inData, inOffset + 4, true ),
+                GetFloat( inData, inOffset + 8, true ),
+                GetFloat( inData, inOffset + 12, true ),
+                GetFloat( inData, inOffset + 16, true ),
+                GetFloat( inData, inOffset + 20, true ),
+                GetFloat( inData, inOffset + 24, true ),
+                GetFloat( inData, inOffset + 28, true )
+            );
+		}
+
+
     }
 }

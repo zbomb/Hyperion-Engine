@@ -55,6 +55,28 @@ namespace Hyperion
 	}
 
 
+	uint32 AssetManager::FindTypeFromExtension( const String& inExt )
+	{
+		if( inExt.IsWhitespaceOrEmpty() || inExt.Length() <= 1 )
+		{
+			return ASSET_TYPE_INVALID;
+		}
+
+		String fixedExt = !inExt.StartsWith( (Char) '.' ) ? inExt.Prepend( "." ).ToLower() : inExt.ToLower();
+
+		auto& types = GetTypes();
+		for( auto it = types.begin(); it != types.end(); it++ )
+		{
+			if( it->second.Extension.ToLower() == fixedExt )
+			{
+				return it->second.Identifier;
+			}
+		}
+
+		return ASSET_TYPE_INVALID;
+	}
+
+
 	bool AssetManager::RegisterType( const AssetTypeInfo& inInfo )
 	{
 		if( inInfo.Identifier == ASSET_TYPE_INVALID || !inInfo.LoaderFunc || TypeExists( inInfo.Identifier ) )
@@ -123,9 +145,19 @@ namespace Hyperion
 	{
 		if( inPath.IsWhitespaceOrEmpty() ) { return ASSET_INVALID; }
 
+		String fixedPath;
+		if( inPath.StartsWith( "content/" ) || inPath.StartsWith( "Content/" ) )
+		{
+			fixedPath = inPath.SubStr( 8, inPath.Length() - 8 );
+		}
+		else
+		{
+			fixedPath = inPath;
+		}
+
 		// Get string data as UTF-8
 		std::vector< byte > rawPathData;
-		inPath.CopyData( rawPathData, StringEncoding::UTF8 );
+		fixedPath.CopyData( rawPathData, StringEncoding::UTF8 );
 
 		// Calculate hash using ELF
 		return Crypto::ELFHash( rawPathData );

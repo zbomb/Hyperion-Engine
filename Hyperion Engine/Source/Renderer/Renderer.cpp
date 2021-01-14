@@ -81,9 +81,70 @@ namespace Hyperion
 			return false;
 		}
 
+		// Cache a list of available resolutions
+		m_AvailableResolutions	= m_API->GetAvailableResolutions();
+		m_bCanChangeResolution	= true;
+
 		// Iniitalize the scene
 		m_Scene->Initialize();
 		OnInitialize();
+
+		return true;
+	}
+
+
+	bool Renderer::ChangeResolution( const ScreenResolution& inRes )
+	{
+		// Check if we have started up and cached the list of available resolutions
+		if( !m_bCanChangeResolution )
+		{
+			Console::WriteLine( "[Warning] Renderer: Failed to change resolution.. renderer hasnt finished init yet!" );
+			return false;
+		}
+
+		// Check if the target resolution is supported
+		if( inRes.Width < MIN_RESOLUTION_WIDTH || inRes.Height < MIN_RESOLUTION_HEIGHT )
+		{
+			Console::WriteLine( "[Warning] Renderer: Failed to change resolution.. target resolution is lower than the minimum" );
+			return false;
+		}
+
+		bool bValid = false;
+		for( auto it = m_AvailableResolutions.begin(); it != m_AvailableResolutions.end(); it++ )
+		{
+			if( inRes.Width == ( *it ).Width && inRes.Height == ( *it ).Height )
+			{
+				bValid = true;
+				break;
+			}
+		}
+
+		if( !bValid )
+		{
+			Console::WriteLine( "[Warning] Renderer: Failed to change resolution.. target resolution is not supported" );
+			return false;
+		}
+
+		// Add a render command to change the resolution, this way we can ensure it happens between render passes
+		AddCommand( std::make_unique< RenderCommand >(
+			[ inRes ] ( Renderer& r )
+			{
+				// Tell the API to update the resolution
+				if( !r.m_API->SetResolution( inRes ) )
+				{
+					Console::WriteLine( "[Warning] Renderer: Failed to change resolution.. API call failed" );
+					return;
+				}
+				
+				// Cache the resolution
+				r.m_CachedResolution.store( inRes );
+
+				// Call OnResolutionUpdated
+				r.OnResolutionChanged( inRes );
+
+				Console::WriteLine( "Renderer: Resolution changed to ", inRes.Width, "x", inRes.Height, " with fullscreen ", ( inRes.FullScreen ? "enabled" : "disabled" ) );
+			} )
+		);
 
 		return true;
 	}
@@ -101,6 +162,12 @@ namespace Hyperion
 	{
 		// First, we need to update the proxy scene
 		UpdateScene();
+
+		// Get the current camera position, so we can pass that data into the renderer
+		ViewState view;
+		GetViewState( view );
+
+		m_API->SetCameraInfo( view );
 
 		// Next, we need to prepare the API for the frame
 		m_API->BeginFrame();

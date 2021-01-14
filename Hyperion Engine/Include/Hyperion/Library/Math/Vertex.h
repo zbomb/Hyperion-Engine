@@ -15,42 +15,56 @@ namespace Hyperion
 		- Data type that holds all info for a vertex inside a model file
 		- Same structure used to pass data directly into the graphics API
 	*/
+	#pragma pack( push, 1 )
 	struct Vertex3D
 	{
-		float X, Y, Z;
-		float tU, tV;
-		float nX, nY, nZ;
-		float tX, tY, tZ;
-		float bX, bY, bZ;
+		float x, y, z;
+		float nx, ny, nz;
+		float u, v;
 	};
+	#pragma pack( pop )
+
+	#pragma pack( push, 1 )
+	struct WindowVertex
+	{
+		float x, y, z;
+		float u, v;
+	};
+	#pragma pack( pop )
 
 	/*
 		structure VertexColor3D
 	*/
+	#pragma pack( push, 1 )
 	struct VertexColor3D
 	{
-		float X, Y, Z;
-		float R, G, B, A;
+		float x, y, z;
+		float r, g, b, a;
 	};
+	#pragma pack( pop )
 
 	/*
 		structure Vertex2D
 		- Data type that holds all info for a vertex used in a 2d context (UI)
 	*/
+	#pragma pack( push, 1 )
 	struct Vertex2D
 	{
-		float X, Y;
-		float tU, tV;
+		float x, y;
+		float u, v;
 	};
+	#pragma pack( pop )
 
 	/*
 		structure VertexColor2D
 		- Data type that holds a colored 2d vertex
 	*/
+	#pragma pack( push, 1 )
 	struct VertexColor2D
 	{
-		float X, Y;
-		float R, G, B, A;
+		float x, y;
+		float r, g, b, a;
 	};
+	#pragma pack( pop )
 
 }

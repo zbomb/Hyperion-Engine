@@ -31,7 +31,8 @@ namespace Hyperion
 		std::map< uint32, HypPtr< RenderComponent > > m_ActiveRenderComponents; // Maybe should move into world..?
 
 		HypPtr< LocalPlayer > m_LocalPlayer;
-		uint32 m_LastTickScreenHeight;
+		Transform3D m_LastTickCameraTransform;
+		float m_LastTickCameraFOV;
 
 	protected:
 

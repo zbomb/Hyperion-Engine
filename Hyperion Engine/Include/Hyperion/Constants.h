@@ -48,7 +48,9 @@ namespace Hyperion
 
 	constexpr uint32 ASSET_INVALID			= 0;
 	constexpr uint32 ASSET_TYPE_INVALID		= 0;
-	constexpr uint32 PLAYER_INVALID			= 0;
+
+	constexpr uint32 PLAYER_LOCAL = 0;
+	constexpr uint32 PLAYER_INVALID = std::numeric_limits< uint32 >::max();
 
 	constexpr uint32 ASSET_TYPE_TEXTURE			= 1;
 	constexpr uint32 ASSET_TYPE_STATICMODEL		= 2;
@@ -66,12 +68,6 @@ namespace Hyperion
 	constexpr uint32 FLAG_RENDERER_OGL		= 0b00000000'00000000'00000100'00000000;
 	constexpr uint32 FLAG_RENDERER_VSYNC	= 0b00000000'00000000'00001000'00000000;
 
-	// Types
-	// TODO: Move this into its own file for runtime settings
-	// Static settings?
-	// We were going to make them read only, and we can create a whole file filled with them
-	constexpr auto TYPE_OVERRIDE_GAME_INSTANCE = "gameinstance";
-
 	// Default Resolution
 	// TODO: Make this dynamic, select a default using the graphics api to see whats available, monitor aspect ratio, etc...
 	constexpr uint32 DEFAULT_RESOLUTION_WIDTH		= 1080;
@@ -81,11 +77,33 @@ namespace Hyperion
 	constexpr uint32 MIN_RESOLUTION_WIDTH	= 480;
 	constexpr uint32 MIN_RESOLUTION_HEIGHT	= 360;
 
-	// Default Graphics API per Platform
-	constexpr uint32 DEFAULT_API_WIN32	= FLAG_RENDERER_DX11;
-	constexpr uint32 DEFAULT_API_OSX	= FLAG_RENDERER_OGL;
+	/*
+	*	Static Settings
+	*	- Eventually we need to create a StaticVar system, where we can set vars from some time of external program
+	*	- Basically, we have a header file (not included in the project file) and is included by the main header
+	*	- Then, settings are saved into this file for build
+	*/
+	constexpr auto TYPE_OVERRIDE_GAME_INSTANCE	= "gameinstance";
+	
+	constexpr uint32 DEFAULT_API_WIN32			= FLAG_RENDERER_DX11;
+	constexpr uint32 DEFAULT_API_OSX			= FLAG_RENDERER_OGL;
 
-
+	constexpr auto SHADER_PATH_GBUFFER_PIXEL	= "shaders/gbuffer.hps";
+	constexpr auto SHADER_PATH_GBUFFER_VERTEX	= "shaders/gbuffer.hvs";
+	constexpr auto SHADER_PATH_LIGHTING_PIXEL	= "shaders/lighting.hps";
+	constexpr auto SHADER_PATH_LIGHTING_VERTEX	= "shaders/lighting.hvs";
+	constexpr auto SHADER_PATH_FORWARD_PIXEL	= "shaders/forward.hps";
+	constexpr auto SHADER_PATH_FORWARD_VERTEX	= "shaders/forward.hvs";
+	
+	enum class ShaderType
+	{
+		None		= 0,
+		GBuffer		= 1,
+		Lighting	= 2,
+		Forward		= 3,
+		Compute		= 4,
+		Custom		= 5
+	};
 
 	/*
 		Maximum number of LODs that a texture can have, this makes the max texture width/height is 65,536px
@@ -222,7 +240,8 @@ namespace Hyperion
 	{
 		None		= 0,
 		Pressed		= 1,
-		Released	= 2
+		Released	= 2,
+		Any			= 3
 	};
 
 	enum class Keys

@@ -64,17 +64,6 @@ namespace Hyperion
 
 	void CameraComponent::OnDespawn( const HypPtr< World >& inWorld )
 	{
-		// Force all active players to deselect this camera
-		auto thisPtr = AquirePointer< CameraComponent >();
-
-		for( auto& p : m_ActivePlayers )
-		{
-			if( p && p->IsSpawned() )
-			{
-				p->SetActiveCamera( nullptr );
-			}
-		}
-
 		m_ActivePlayers.clear();
 	}
 

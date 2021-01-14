@@ -5,15 +5,315 @@
 ==================================================================================================*/
 
 #include "Hyperion/Core/InputManager.h"
-#include "Hyperion/Framework/Entity.h"
+#include "Hyperion/Core/GameInstance.h"
+#include "Hyperion/Framework/LocalPlayer.h"
+#include "Hyperion/Core/Engine.h"
+#include "Hyperion/File/FileSystem.h"
 #include <iostream>
 #include <algorithm>
 #include <map>
+
+/*
+*	TODO: Move to RawInput API instead of mucking with windows events to read input into the game engine
+*/
 
 
 namespace Hyperion
 {
 
+	InputManager::InputManager()
+		: m_bIsMouseCaptured( false )
+	{}
+
+
+	bool InputManager::BindKey( Keys inKey, const String& inCmd, bool bPress )
+	{
+		std::unique_lock< std::shared_mutex > lock( m_BindListMutex );
+
+		if( inCmd.IsWhitespaceOrEmpty() )
+		{
+			Console::WriteLine( "[Warning] InputManager: Failed to bind key, input string was invalid" );
+			return false;
+		}
+
+		if( bPress )
+		{
+			if( m_KeyPressBinds.find( inKey ) != m_KeyPressBinds.end() )
+			{
+				Console::WriteLine( "[Warning] InputManager: failed to bind \"", inCmd, "\" (press) because the key was already bound" );
+				return false;
+			}
+
+			m_KeyPressBinds[ inKey ] = inCmd;
+		}
+		else
+		{
+			if( m_KeyReleaseBinds.find( inKey ) != m_KeyReleaseBinds.end() )
+			{
+				Console::WriteLine( "[Warning] InputManager: Failed to bind \"", inCmd, "\" (release) because the key was already bound" );
+				return false;
+			}
+
+			m_KeyReleaseBinds[ inKey ] = inCmd;
+		}
+
+		return true;
+	}
+
+
+	bool InputManager::BindAxis( InputAxis inAxis, const String& inCmd, float inMult, bool bInvert )
+	{
+		std::unique_lock< std::shared_mutex > lock( m_BindListMutex );
+		if( inCmd.IsWhitespaceOrEmpty() )
+		{
+			Console::WriteLine( "[Warning] InputManager: Failed to bind axis, input string was invalid" );
+			return false;
+		}
+
+		if( m_AxisBinds.find( inAxis ) != m_AxisBinds.end() )
+		{
+			Console::WriteLine( "[Warning] InputManager: Failed to bind axis \"", inCmd, "\" because the axis is already bound" );
+			return false;
+		}
+
+		m_AxisBinds[ inAxis ].cmd = inCmd;
+		m_AxisBinds[ inAxis ].invert = bInvert;
+		m_AxisBinds[ inAxis ].mult = inMult;
+
+		return true;
+	}
+
+
+	bool InputManager::UnbindKey( const String& inKey )
+	{
+		std::unique_lock< std::shared_mutex > lock( m_BindListMutex );
+		bool bFound = false;
+
+		for( auto it = m_KeyPressBinds.begin(); it != m_KeyPressBinds.end(); )
+		{
+			if( it->second.Equals( inKey ) )
+			{
+				it = m_KeyPressBinds.erase( it );
+				bFound = true;
+			}
+			else
+			{
+				it++;
+			}
+		}
+
+		for( auto it = m_KeyReleaseBinds.begin(); it != m_KeyReleaseBinds.end(); )
+		{
+			if( it->second.Equals( inKey ) )
+			{
+				it = m_KeyReleaseBinds.erase( it );
+				bFound = true;
+			}
+			else
+			{
+				it++;
+			}
+		}
+
+		return bFound;
+	}
+
+
+	bool InputManager::UnbindKey( Keys inKey )
+	{
+		std::unique_lock< std::shared_mutex > lock( m_BindListMutex );
+		auto pressVal = m_KeyPressBinds.erase( inKey );
+		auto releaseVal = m_KeyReleaseBinds.erase( inKey );
+
+		return pressVal || releaseVal;
+	}
+
+
+	bool InputManager::UnbindAxis( const String& inAxis )
+	{
+		std::unique_lock< std::shared_mutex > lock( m_BindListMutex );
+		bool bFound = false;
+
+		for( auto it = m_AxisBinds.begin(); it != m_AxisBinds.end(); )
+		{
+			if( it->second.cmd.Equals( inAxis ) )
+			{
+				it = m_AxisBinds.erase( it );
+				bFound = true;
+			}
+		}
+
+		return bFound;
+	}
+
+
+	bool InputManager::UnbindAxis( InputAxis inAxis )
+	{
+		std::unique_lock< std::shared_mutex > lock( m_BindListMutex );
+		return m_AxisBinds.erase( inAxis );
+	}
+
+
+	void InputManager::ClearBindings()
+	{
+		std::unique_lock< std::shared_mutex > lock( m_BindListMutex );
+		m_KeyPressBinds.clear();
+		m_KeyReleaseBinds.clear();
+		m_AxisBinds.clear();
+	}
+
+
+	bool InputManager::OnKeyPress( Keys inKey )
+	{
+		// Check if this key is already being pressed down
+		if( m_KeyDownList[ inKey ] ) { return true; }
+
+		// Get shared lock on the key binding list, and lookup binding
+		std::shared_lock< std::shared_mutex > lock( m_BindListMutex );
+
+		auto entry = m_KeyPressBinds.find( inKey );
+		if( entry == m_KeyPressBinds.end() ) { return false; }
+		if( entry->second.IsEmpty() ) { return false; }
+
+		// Insert into key event queue
+		m_KeyEvents.Push( entry->second );
+		m_KeyDownList[ inKey ] = true;
+
+		return true;
+	}
+
+
+	bool InputManager::OnKeyRelease( Keys inKey )
+	{
+		// Check if this key isnt down
+		if( !m_KeyDownList[ inKey ] ) { return true; }
+
+		// Get shared lock on key binding list, and lookup the binding
+		std::shared_lock< std::shared_mutex > lock( m_BindListMutex );
+
+		auto entry = m_KeyReleaseBinds.find( inKey );
+		if( entry == m_KeyReleaseBinds.end() ) { return false; }
+		if( entry->second.IsEmpty() ) { return false; }
+
+		// Insert event into key event queue
+		m_KeyEvents.Push( entry->second );
+		m_KeyDownList[ inKey ] = false;
+
+		return true;
+	}
+
+
+	bool InputManager::OnAxisInput( InputAxis inAxis, float inValue )
+	{
+		// TODO: Pass raw event into UI system
+
+		// Get shared lock on axis binding list, and lookup the binding
+		std::shared_lock< std::shared_mutex > lock( m_BindListMutex );
+
+		auto entry = m_AxisBinds.find( inAxis );
+		if( entry == m_AxisBinds.end() ) { return false; }
+		if( entry->second.cmd.IsEmpty() ) { return false; }
+
+		// Apply multiplier and invert
+		float finalValue = inValue * entry->second.mult * ( entry->second.invert ? -1.f : 1.f );
+
+		m_AxisEvents.Push( std::make_pair( entry->second.cmd, finalValue ) );
+		return true;
+	}
+
+
+	void InputManager::DispatchEvents()
+	{
+		// Get the local player to dispatch events into
+		auto game = Engine::GetGame();
+		auto localPlayer = game ? game->GetLocalPlayer() : nullptr;
+
+		if( !localPlayer || !localPlayer->IsValid() )
+		{
+			Console::WriteLine( "[ERROR] InputManager: Failed to dispatch user input events! LocalPlayer was null" );
+			return;
+		}
+
+		// Pop all input events, and dispatch them
+		auto keyEvent = m_KeyEvents.PopValue();
+		while( keyEvent.first )
+		{
+			localPlayer->ProcessKeyBinding( keyEvent.second );
+			keyEvent = m_KeyEvents.PopValue();
+		}
+
+		auto axisEvent = m_AxisEvents.PopValue();
+		while( axisEvent.first )
+		{
+			localPlayer->ProcessAxisBinding( axisEvent.second.first, axisEvent.second.second );
+			axisEvent = m_AxisEvents.PopValue();
+		}
+	}
+
+
+	void InputManager::LoadBindings()
+	{
+		// Clear out any current bindinds
+		m_KeyPressBinds.clear();
+		m_KeyReleaseBinds.clear();
+		m_AxisBinds.clear();
+
+		String filePath( INPUT_BINDINGS_FILE );
+		auto f = FileSystem::OpenFile( FilePath( filePath ), FileMode::Read );
+
+		if( !f || !f->IsValid() )
+		{
+			// There is no file, so lets load the defaults for the current operating system
+			// TODO
+
+			// For now, were just going to hard code some defaults
+			BindKey( Keys::W, "+forward", true );
+			BindKey( Keys::W, "-forward", false );
+			BindKey( Keys::S, "+back", true );
+			BindKey( Keys::S, "-back", false );
+			BindKey( Keys::A, "+left", true );
+			BindKey( Keys::A, "-left", false );
+			BindKey( Keys::D, "+right", true );
+			BindKey( Keys::D, "-right", false );
+
+			BindAxis( InputAxis::MouseX, "view_x", 1.f, false );
+			BindAxis( InputAxis::MouseY, "view_y", 1.f, false );
+		}
+		else
+		{
+			HYPERION_NOT_IMPLEMENTED( "Reading key bindings from file" );
+		}
+
+	}
+
+
+	void InputManager::CaptureMouse()
+	{
+		m_bIsMouseCaptured = true;
+
+		if( m_CaptureCallback )
+			m_CaptureCallback( true );
+	}
+
+
+	void InputManager::ReleaseMouse()
+	{
+		m_bIsMouseCaptured = false;
+
+		if( m_CaptureCallback )
+			m_CaptureCallback( false );
+	}
+
+
+	void InputManager::SetCaptureCallback( std::function< void( bool ) > Callback )
+	{
+		m_CaptureCallback = Callback;
+	}
+
+
+
+
+	/*
 	InputManager::InputManager()
 	{
 		m_bShutdown = false;
@@ -200,7 +500,7 @@ namespace Hyperion
 	/*
 		InputManager::HandleKeyPress( Keys )
 		* Puts a new key event in the queue, so the game engine can dispatch on next tick
-	*/
+	
 	void InputManager::HandleKeyPress( Keys inKey )
 	{
 		if( inKey != Keys::NONE )
@@ -217,7 +517,7 @@ namespace Hyperion
 	/*
 		InputManager::HandleKeyRelease( Keys )
 		* Puts a new key event in the queue, so the game engine can dispatch on next tick
-	*/
+	
 	void InputManager::HandleKeyRelease( Keys inKey )
 	{
 		if( inKey != Keys::NONE )
@@ -234,7 +534,7 @@ namespace Hyperion
 	/*
 		InputManager::HandleAxisInput( InputAxis, int, int )
 		* Puts a new axis input event in the queue, so the game engine can dispatch on next tick
-	*/
+	
 	void InputManager::HandleAxisInput( InputAxis Type, int Delta, int NewValue )
 	{
 		// Were going to create a new axis input event, and put it in the thread-safe queue
@@ -254,7 +554,7 @@ namespace Hyperion
 	/*
 		InputManager::DispatchQueue( double )
 		* Goes through the key and axis queues, and dispatches any events
-	*/
+	
 	void InputManager::DispatchQueue( double Delta )
 	{
 		// We want to lock the queues, and copy the contents, and clear them
@@ -342,7 +642,7 @@ namespace Hyperion
 		InputManager::DispatchKeyPress( Keys )
 		* INTERNAL
 		* Dispatches the actual key press event to any bound objects
-	*/
+	
 	void InputManager::DispatchKeyPress( Keys inKey )
 	{
 		auto KeyNumber = (unsigned int) inKey;
@@ -365,7 +665,7 @@ namespace Hyperion
 				{
 					// We want to make sure all requirments are met before calling the event
 					// Also, we want to ensure the actual object reference is valid
-					if( It->Type == KeyEvent::Pressed && It->Target && It->Target->IsValid() && It->Callback )
+					if( ( It->Type == KeyEvent::Pressed || It->Type == KeyEvent::Any ) && It->Target && It->Target->IsValid() && It->Callback )
 					{
 						if( It->bRequireAlt && ( !IsKeyDown( Keys::LALT ) && !IsKeyDown( Keys::RALT ) ) )
 							continue;
@@ -390,7 +690,7 @@ namespace Hyperion
 				{
 					// We want to make sure all requirments are met before calling the event
 					// Also, we want to ensure the actual object reference is valid
-					if( It->Type == KeyEvent::Pressed && It->Callback )
+					if( ( It->Type == KeyEvent::Pressed || It->Type == KeyEvent::Any ) && It->Callback )
 					{
 						if( It->bRequireAlt && ( !IsKeyDown( Keys::LALT ) && !IsKeyDown( Keys::RALT ) ) )
 							continue;
@@ -414,7 +714,7 @@ namespace Hyperion
 		InputManager::DispatchKeyRelease( Keys )
 		* INTERNAL
 		* Dispatches the actual key press event to any bound objects
-	*/
+	
 	void InputManager::DispatchKeyRelease( Keys inKey )
 	{
 		auto KeyNumber = (unsigned int) inKey;
@@ -436,7 +736,7 @@ namespace Hyperion
 				{
 					// We want to make sure all requirments are met before calling the event
 					// Also, we want to ensure the actual object reference is valid
-					if( It->Type == KeyEvent::Released && It->Target && It->Target->IsValid() && It->Callback )
+					if( ( It->Type == KeyEvent::Released || It->Type == KeyEvent::Any ) && It->Target && It->Target->IsValid() && It->Callback )
 					{
 						if( It->bRequireAlt && ( !IsKeyDown( Keys::LALT ) && !IsKeyDown( Keys::RALT ) ) )
 							continue;
@@ -458,7 +758,7 @@ namespace Hyperion
 			{
 				for( auto It = rawkeyBindings->second.begin(); It != rawkeyBindings->second.end(); It++ )
 				{
-					if( It->Type == KeyEvent::Released && It->Callback )
+					if( ( It->Type == KeyEvent::Released || It->Type == KeyEvent::Any ) && It->Callback )
 					{
 						if( It->bRequireAlt && ( !IsKeyDown( Keys::LALT ) && !IsKeyDown( Keys::RALT ) ) )
 							continue;
@@ -481,7 +781,7 @@ namespace Hyperion
 		InputManager::DispatchAxisEvent( RawAxisEvent, double )
 		* INTERNAL
 		* Calculates and dispatches an axis event to bound objects
-	*/
+	
 	void InputManager::DispatchAxisEvent( InputAxis Axis, int Value, double Delta )
 	{
 		// We want to calculate the total axis input
@@ -514,7 +814,7 @@ namespace Hyperion
 			InputAxisEvent Event;
 			Event.Axis = Axis;
 
-			for( auto It = axisBindings->second.begin(); It != axisBindings->second.end(); It++ )
+			for( auto It = rawaxisBindings->second.begin(); It != rawaxisBindings->second.end(); It++ )
 			{
 				// Ensure the object and callback are valid
 				if( It->Callback )
@@ -547,29 +847,7 @@ namespace Hyperion
 		return m_KeyStates[ KeyNumber ];
 	}
 
-
-
-	void InputManager::CaptureMouse()
-	{
-		m_bIsMouseCaptured = true;
-
-		if( m_CaptureCallback )
-			m_CaptureCallback( true );
-	}
-
-	void InputManager::ReleaseMouse()
-	{
-		m_bIsMouseCaptured = false;
-
-		if( m_CaptureCallback )
-			m_CaptureCallback( false );
-	}
-
-	void InputManager::SetCaptureCallback( std::function< void( bool ) > Callback )
-	{
-		m_CaptureCallback = Callback;
-	}
-
+	*/
 }
 
 HYPERION_REGISTER_OBJECT_TYPE( InputManager, Object );

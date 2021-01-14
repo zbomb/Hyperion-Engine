@@ -275,7 +275,7 @@ namespace Hyperion
 				uint64 lodOffset = offset + headerInfo.LODs[ i ].FileOffset;
 				uint32 lodLength = headerInfo.LODs[ i ].LODSize;
 
-				HYPERION_VERIFY( lodLength <= offset + length, "[StreamingManager] Failed to load LOD, texture data ran past end of file section" );
+				HYPERION_VERIFY( length == 0 || ( lodLength <= offset + length ), "[StreamingManager] Failed to load LOD, texture data ran past end of file section" );
 
 				std::vector< byte > data;
 				reader.SeekOffset( lodOffset );
@@ -309,12 +309,6 @@ namespace Hyperion
 		auto fpath		= inAsset->GetDiskPath();
 		auto offset		= inAsset->GetFileOffset();
 		auto length		= inAsset->GetFileLength();
-
-		// TODO: Implement subObjects
-		// For now, were just going to use SubObject #0 as the lod 
-
-		// TODO: Implement material slots
-		// For now, were just going to use a single material for all LODs
 
 		auto fHandle = FileSystem::OpenFile( fpath, FileMode::Read );
 		if( !fHandle || !fHandle->IsValid() )
@@ -353,15 +347,15 @@ namespace Hyperion
 					auto& di = indexList.emplace_back( std::vector< byte >() );
 					auto& vi = vertexList.emplace_back( std::vector< byte >() );
 
-					reader.SeekOffset( offset + sit->second.IndexOffset );
-					if( reader.ReadBytes( di, sit->second.IndexLength ) != DataReader::ReadResult::Success )
+					reader.SeekOffset( offset + sit->IndexOffset );
+					if( reader.ReadBytes( di, sit->IndexLength ) != DataReader::ReadResult::Success )
 					{
 						Console::WriteLine( "[Warning] StreamingManager: Failed to load LOD in \"", inAsset->GetPath(), "\" because the index data couldnt be read from file" );
 						return;
 					}
 
-					reader.SeekOffset( offset + sit->second.VertexOffset );
-					if( reader.ReadBytes( vi, sit->second.VertexLength ) != DataReader::ReadResult::Success )
+					reader.SeekOffset( offset + sit->VertexOffset );
+					if( reader.ReadBytes( vi, sit->VertexLength ) != DataReader::ReadResult::Success )
 					{
 						Console::WriteLine( "[Warning] StreamingManager: Failed to laod LOD in \"", inAsset->GetPath(), "\" because the vertex data couldnt be read from file" );
 						return;

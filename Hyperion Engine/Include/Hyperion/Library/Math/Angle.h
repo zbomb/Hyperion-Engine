@@ -108,6 +108,18 @@ namespace Hyperion
 			Roll = 0.f;
 		}
 
+
+		void ClampContents()
+		{
+			// We want to get each component into the range of 0 to 360, where 0 is inclusive
+			while( Pitch >= 360.f ) { Pitch -= 360.f; }
+			while( Yaw >= 360.f ) { Yaw -= 360.f; }
+			while( Roll >= 360.f ) { Roll -= 360.f; }
+			while( Pitch < 0.f ) { Pitch += 360.f; }
+			while( Yaw < 0.f ) { Yaw += 360.f; }
+			while( Roll < 0.f ) { Roll += 360.f; }
+		}
+
 	};
 
 }

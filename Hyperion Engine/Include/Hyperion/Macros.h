@@ -38,3 +38,10 @@
 // Attributes
 #define HYPERION_NODISCARD [[nodiscard]]
 #define HYPERION_UNUSED [[maybe_unused]]
+
+// Bit-field checks
+#define HYPERION_HAS_FLAG( bitField, flag ) ( ( (uint32) bitField & (uint32) flag ) == (uint32) flag )
+
+// Math
+#define HYPERION_DEG_TO_RAD( val ) ( val * 0.0174532925f )
+#define HYPERION_RAD_TO_DEG( val ) ( val * 57.2957795f )

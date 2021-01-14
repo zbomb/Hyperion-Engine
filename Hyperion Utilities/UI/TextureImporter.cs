@@ -140,7 +140,7 @@ namespace Hyperion
 			}
 
 			// Calculate the asset hash
-			uint assetHash = bNewFile ? Core.GetManifestManager().CalculateAssetId( relPath ) : 0;
+			uint assetHash = bNewFile ? Core.CalculateAssetIdentifier( relPath ) : 0;
 
 			// Get the texture format as a proper enum
 			var formatIndex = formatBox.SelectedIndex;

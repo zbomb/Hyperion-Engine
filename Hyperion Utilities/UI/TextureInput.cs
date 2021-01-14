@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
+
 
 namespace Hyperion
 {
@@ -22,14 +24,13 @@ namespace Hyperion
             TextureList.Items.Clear();
 
             // We want to discover all texture assets and add them to the list
-            var manifest = Core.GetManifestManager().GetManifest();
-            foreach( var entry in manifest )
-            {
+            foreach( var entry in AssetIdentifierCache.GetList() )
+			{
                 if( entry.Value.EndsWith( ".htx" ) )
-                {
+				{
                     TextureList.Items.Add( entry.Value );
-                }
-            }
+				}
+			}
         }
 
         private void SelectButton_Click( object sender, EventArgs e )

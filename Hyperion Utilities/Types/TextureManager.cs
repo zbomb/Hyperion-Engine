@@ -224,7 +224,7 @@ namespace Hyperion
 			}
 
 			// We also want to calculate the asset identifier for this texture
-			uint assetId = Core.GetManifestManager()?.CalculateAssetId( contentPath ) ?? 0;
+			uint assetId = Core.CalculateAssetIdentifier( contentPath );
 			if( assetId == 0 )
 			{
 				Core.WriteLine( "[Warning] TextureManager: Failed to load texture \"", inPath, "\", couldnt calculate asset id" );
@@ -442,15 +442,9 @@ namespace Hyperion
 				return false;
 			}
 
-			if( bNewFile )
-			{
-				if( !( Core.GetManifestManager()?.AddEntry( inTexture.Hash, relPath ) ?? false ) )
-				{
-					Core.WriteLine( "[Warning] TextureManager: Wrote texture \"", inTexture.Path, "\" but failed to add new asset id to the manifest!" );
-				}
-			}
-
 			fStream?.Dispose();
+			AssetIdentifierCache.RegisterAsset( relPath );
+
 			return true;
 		}
 

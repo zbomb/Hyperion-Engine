@@ -40,51 +40,51 @@ d:\hyperion\hyperion engine\build\debug\lightcomponent.obj
 d:\hyperion\hyperion engine\build\debug\entity.obj
 d:\hyperion\hyperion engine\build\debug\dynamicmodelcomponent.obj
 d:\hyperion\hyperion engine\build\debug\component.obj
-d:\hyperion\hyperion engine\build\debug\hvbreader.obj
-d:\hyperion\hyperion engine\build\debug\htxwriter.obj
-d:\hyperion\hyperion engine\build\debug\htxreader.obj
 d:\hyperion\hyperion engine\build\debug\hsmreader.obj
 d:\hyperion\hyperion engine\build\debug\hmatwriter.obj
 d:\hyperion\hyperion engine\build\debug\hmatreader.obj
 d:\hyperion\hyperion engine\build\debug\hhtwriter.obj
 d:\hyperion\hyperion engine\build\debug\hhtreader.obj
 d:\hyperion\hyperion engine\build\debug\deflate.obj
+d:\hyperion\hyperion engine\build\debug\basicstreamingmanager.obj
 d:\hyperion\hyperion engine\build\debug\adaptivetexture.obj
 d:\hyperion\hyperion engine\build\debug\adaptivestaticmodel.obj
 d:\hyperion\hyperion engine\build\debug\adaptivedynamicmodel.obj
 d:\hyperion\hyperion engine\build\debug\adaptiveassetmanager.obj
+d:\hyperion\hyperion engine\build\debug\texturecache.obj
 d:\hyperion\hyperion engine\build\debug\renderer.obj
 d:\hyperion\hyperion engine\build\debug\proxytest.obj
 d:\hyperion\hyperion engine\build\debug\proxystaticmodel.obj
 d:\hyperion\hyperion engine\build\debug\proxyscene.obj
 d:\hyperion\hyperion engine\build\debug\proxybase.obj
+d:\hyperion\hyperion engine\build\debug\geometrycache.obj
 d:\hyperion\hyperion engine\build\debug\directx11graphics.obj
 d:\hyperion\hyperion engine\build\debug\deferredrenderer.obj
 d:\hyperion\hyperion engine\build\debug\win32platform.obj
+d:\hyperion\hyperion engine\build\debug\win32main.obj
 d:\hyperion\hyperion engine\build\debug\win32filesystem.obj
 d:\hyperion\hyperion engine\build\debug\pngreader.obj
 d:\hyperion\hyperion engine\build\debug\imageloader.obj
-d:\hyperion\hyperion engine\build\debug\win32main.obj
-d:\hyperion\hyperion engine\build\debug\basicstreamingmanager.obj
-d:\hyperion\hyperion engine\build\debug\texturecache.obj
-d:\hyperion\hyperion engine\build\debug\geometrycache.obj
-d:\hyperion\build\debug\hyperion.ilk
+d:\hyperion\hyperion engine\build\debug\hvbreader.obj
+d:\hyperion\hyperion engine\build\debug\htxwriter.obj
+d:\hyperion\hyperion engine\build\debug\htxreader.obj
+d:\hyperion\hyperion engine\build\debug\resourcemanager.obj
+d:\hyperion\build\debug\%gbuffer.hps
+d:\hyperion\build\debug\%gbuffer.hvs
+d:\hyperion\build\debug\%lighting.hps
+d:\hyperion\build\debug\%lighting.hvs
 d:\hyperion\build\debug\hyperion.exe
+d:\hyperion\build\debug\hyperion.ilk
 d:\hyperion\build\debug\hyperion.pdb
 d:\hyperion\hyperion engine\resource.rc
 d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\cl.command.1.tlog
 d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\cl.read.1.tlog
 d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\cl.write.1.tlog
-d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link-cvtres.read.1.tlog
-d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link-cvtres.write.1.tlog
-d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link-rc.read.1.tlog
-d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link-rc.write.1.tlog
-d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link.11992-cvtres.read.1.tlog
-d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link.11992-cvtres.write.1.tlog
-d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link.11992-rc.read.1.tlog
-d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link.11992-rc.write.1.tlog
-d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link.11992.read.1.tlog
-d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link.11992.write.1.tlog
+d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\dxc.command.1.tlog
+d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\dxc.read.1.tlog
+d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\dxc.write.1.tlog
+d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\fxc.command.1.tlog
+d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\fxc.read.1.tlog
 d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link.command.1.tlog
 d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link.read.1.tlog
 d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link.write.1.tlog

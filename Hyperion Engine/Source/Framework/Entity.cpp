@@ -8,7 +8,6 @@
 #include "Hyperion/Framework/Entity.h"
 #include "Hyperion/Framework/World.h"
 #include "Hyperion/Core/Engine.h"
-#include "Hyperion/Core/InputManager.h"
 #include <iostream>
 
 namespace Hyperion
@@ -89,9 +88,6 @@ namespace Hyperion
 
 		compListCopy.clear();
 		m_Components.clear();
-
-		// Clear Bindings
-		Engine::GetInputManager()->ClearBindings( AquirePointer< Entity >() );
 
 		m_bIsSpawned = false;
 		OnDestroy();
@@ -646,7 +642,9 @@ namespace Hyperion
 	{
 		if( m_Parent && m_Parent->IsValid() )
 		{
-			return m_Parent->GetWorldRotation() + GetRotation();
+			auto out = m_Parent->GetWorldRotation() + GetRotation();
+			out.ClampContents();
+			return out;
 		}
 		else
 		{
@@ -678,7 +676,10 @@ namespace Hyperion
 	{
 		if( m_Parent && m_Parent->IsValid() )
 		{
-			return m_Parent->GetWorldTransform() + GetTransform();
+			auto out = m_Parent->GetWorldTransform() + GetTransform();
+			out.Rotation.ClampContents();
+
+			return out;
 		}
 		else
 		{
@@ -707,6 +708,8 @@ namespace Hyperion
 	void Entity::SetRotation( const Angle3D& inRotation )
 	{
 		m_Transform.Rotation = inRotation;
+		m_Transform.Rotation.ClampContents();
+
 		OnLocalTransformChanged();
 
 		TransmitEntityFunction( &Entity::OnWorldTransformChanged );
@@ -733,6 +736,8 @@ namespace Hyperion
 	void Entity::SetTransform( const Transform3D& inTransform )
 	{
 		m_Transform = inTransform;
+		m_Transform.Rotation.ClampContents();
+
 		OnLocalTransformChanged();
 
 		TransmitEntityFunction( &Entity::OnWorldTransformChanged );

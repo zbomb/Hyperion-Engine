@@ -529,7 +529,7 @@ namespace Hyperion
 				// In the future, there might be a better way to accomplish this, were currently using the diameter of the boudning sphere to approximate
 				// the size of a texture needed to cover this object, at a 1:1 ratio between texture pixels and screen pixels
 				// OPTIMIZE OPTIMIZE OPTIMIZE
-				auto diameterPx = Geometry::CalculateScreenSizeInPixels( m_CameraInfo.Position, m_CameraInfo.FOV, bounds, m_CameraInfo.ScreenHeight );
+				auto diameterPx = GeometryLibrary::CalculateScreenSizeInPixels( m_CameraInfo.Position, m_CameraInfo.FOV, bounds, m_CameraInfo.ScreenHeight );
 
 				It->second->m_ScreenSize	= diameterPx * Math::PIf;
 				It->second->m_Dirty			= false;

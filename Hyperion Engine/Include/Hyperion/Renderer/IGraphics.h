@@ -10,6 +10,10 @@
 #include "Hyperion/Renderer/DataTypes.h"
 #include "Hyperion/Renderer/Resource/Texture.h"
 #include "Hyperion/Renderer/Resource/Buffer.h"
+#include "Hyperion/Renderer/Resource/Shader.h"
+#include "Hyperion/Renderer/Resource/Geometry.h"
+#include "Hyperion/Renderer/Resource/DepthStencil.h"
+#include "Hyperion/Library/Color.h"
 
 
 namespace Hyperion
@@ -21,6 +25,7 @@ namespace Hyperion
 	struct BufferParameters;
 
 	class RRenderTarget;
+	struct AABB;
 
 
 	class IGraphics
@@ -42,6 +47,9 @@ namespace Hyperion
 		virtual void BeginFrame() = 0;
 		virtual void EndFrame() = 0;
 
+		virtual void SetCameraInfo( const ViewState& inView ) = 0;
+		virtual bool CheckViewCull( const Transform3D& inTransform, const AABB& inBounds ) = 0;
+
 		virtual void EnableAlphaBlending() = 0;
 		virtual void DisableAlphaBlending() = 0;
 		virtual bool IsAlphaBlendingEnabled() = 0;
@@ -52,6 +60,7 @@ namespace Hyperion
 
 		virtual std::shared_ptr< RRenderTarget > GetRenderTarget() = 0;
 		virtual std::shared_ptr< RTexture2D > GetBackBuffer() = 0;
+		virtual std::shared_ptr< RDepthStencil > GetDepthStencil() = 0;
 
 		virtual std::vector< ScreenResolution > GetAvailableResolutions() = 0;
 
@@ -86,7 +95,37 @@ namespace Hyperion
 		virtual bool CopyTexture3DMip( std::shared_ptr< RTexture3D >& inSource, std::shared_ptr< RTexture3D >& inDest, uint8 sourceMip, uint8 destMip ) = 0;
 
 		// Render Target Creation
-		virtual std::shared_ptr< RRenderTarget > CreateRenderTarget( std::shared_ptr< RTexture2D > inTarget ) = 0;
+		virtual std::shared_ptr< RRenderTarget > CreateRenderTarget( const std::shared_ptr< RTexture2D >& inTarget ) = 0;
+		virtual void ClearRenderTarget( const std::shared_ptr< RRenderTarget >& inTarget, const Color4F& inColor ) = 0;
+
+		// Depth Buffer Creation/Resizing
+		// TODO: Rename to 'DepthBuffer'?
+		virtual std::shared_ptr< RDepthStencil > CreateDepthStencil( uint32 inWidth, uint32 inHeight ) = 0;
+		virtual bool ResizeDepthStencil( const std::shared_ptr< RDepthStencil >& inStencil, uint32 inWidth, uint32 inHeight ) = 0;
+		virtual void ClearDepthStencil( const std::shared_ptr< RDepthStencil >& inStenci, const Color4F& inColor ) = 0;
+
+		// Shaders
+		virtual std::shared_ptr< RGBufferShader > CreateGBufferShader( const String& inPixelShader = SHADER_PATH_GBUFFER_PIXEL, const String& inVertexShader = SHADER_PATH_GBUFFER_VERTEX ) = 0;
+		virtual std::shared_ptr< RLightingShader > CreateLightingShader( const String& inPixelShader = SHADER_PATH_LIGHTING_PIXEL, const String& inVertexShader = SHADER_PATH_LIGHTING_VERTEX ) = 0;
+		virtual std::shared_ptr< RForwardShader > CreateForwardShader( const String& inPixelShader = SHADER_PATH_FORWARD_PIXEL, const String& inVertexShader = SHADER_PATH_FORWARD_VERTEX ) = 0;
+		virtual std::shared_ptr< RComputeShader > CreateComputeShader( const String& inShader ) = 0;
+
+		// Rendering
+		virtual void SetShader( const std::shared_ptr< RShader >& inShader ) = 0;
+
+		virtual void SetRenderOutputToScreen() = 0;
+		virtual void SetRenderOutputToTarget( const std::shared_ptr< RRenderTarget >& inRenderTarget, const std::shared_ptr< RDepthStencil >& inDepthStencil ) = 0;
+		virtual void SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inGBuffer ) = 0;
+		
+		virtual void RenderGeometry( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 indexCount ) = 0;
+		virtual void RenderScreenGeometry() = 0;
+
+		virtual void GetWorldMatrix( const Transform3D& inObjPosition, Matrix& outMatrix ) = 0;
+		virtual void GetWorldMatrix( Matrix& outMatrix ) = 0;
+		virtual void GetViewMatrix( Matrix& outMatrix ) = 0;
+		virtual void GetProjectionMatrix( Matrix& outMatrix ) = 0;
+		virtual void GetOrthoMatrix( Matrix& outMatrix ) = 0;
+		virtual void GetScreenMatrix( Matrix& outMatrix ) = 0;
 
 		friend class TextureCache;
 	};

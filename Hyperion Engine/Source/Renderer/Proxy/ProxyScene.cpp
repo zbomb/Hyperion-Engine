@@ -170,8 +170,6 @@ namespace Hyperion
 	{
 		m_ViewState			= inState;
 		m_bViewStateDirty	= true;
-
-		Console::WriteLine( "============> DEBUG DEBUG: Proxy Scene View State Updated!!!!" ); // DEBUG ONLY TEMP
 	}
 
 	void ProxyScene::OnCameraUpdate()

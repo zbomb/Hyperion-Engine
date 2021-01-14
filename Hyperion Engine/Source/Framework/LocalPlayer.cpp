@@ -8,7 +8,10 @@
 #include "Hyperion/Framework/Player.h"
 #include "Hyperion/Framework/CameraComponent.h"
 #include "Hyperion/Library/Math/MathCore.h"
+#include "Hyperion/Core/Engine.h"
+#include "Hyperion/Core/InputManager.h"
 
+#include <functional>
 
 
 namespace Hyperion
@@ -16,8 +19,7 @@ namespace Hyperion
 
 	LocalPlayer::LocalPlayer()
 	{
-		// Default FOV for 'LastViewState'
-		m_LastViewState.FOV = Math::PIf / 4.f; // TODO: We need to come up with a FOV system
+
 	}
 
 
@@ -27,64 +29,50 @@ namespace Hyperion
 	}
 
 
-	uint32 LocalPlayer::GetPlayerIdentifier() const
+	bool LocalPlayer::ProcessKeyBinding( const String& inEvent )
 	{
-		if( m_PlayerEntity.IsValid() && m_PlayerEntity->IsSpawned() )
+		if( m_PlayerEntity && m_PlayerEntity->IsValid() )
 		{
-			return m_PlayerEntity->GetPlayerIdentifier();
+			return m_PlayerEntity->ProcessKeyBinding( inEvent );
 		}
 
-		// We get assigned a player identifier by the server during the join sequence
-		// So, if we havent been assigned a player entity, then we dont actually have an identifier
-		return PLAYER_INVALID;
+		return false;
+	}
+
+	bool LocalPlayer::ProcessAxisBinding( const String& inEvent, float inValue )
+	{
+		if( m_PlayerEntity && m_PlayerEntity->IsValid() )
+		{
+			return m_PlayerEntity->ProcessAxisBinding( inEvent, inValue );
+		}
+
+		return false;
 	}
 
 
-	HypPtr< CameraComponent > LocalPlayer::GetActiveCamera() const
+	void LocalPlayer::SetPlayer( const HypPtr< Player >& inPlayer )
 	{
-		if( m_PlayerEntity.IsValid() && m_PlayerEntity->IsSpawned() )
-		{
-			return m_PlayerEntity->GetActiveCamera();
-		}
-
-		return nullptr;
-	}
-
-
-	bool LocalPlayer::GetViewState( ViewState& outState )
-	{
-		// We return true whenever the view state has changed since the last call
-		auto camera = GetActiveCamera();
-		if( camera && camera->IsActive() )
-		{
-			outState.Position	= camera->GetPosition();
-			outState.Rotation	= camera->GetRotation();
-			outState.FOV		= Math::PIf / 4.f;		// TODO: Move this into a console command?
-		}
-		else
-		{
-			// If there is no active camera, we want to keep using the last known camera position
-			outState = m_LastViewState;
-			return false;
-		}
-
-		// Check if the current state differs from the cached state
-		if( outState != m_LastViewState )
-		{
-			m_LastViewState = outState;
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-
-	void LocalPlayer::SetPlayerEntity( const HypPtr< Player >& inPlayer )
-	{
-		// TODO: Possess hooks? and unposses hooks?
 		m_PlayerEntity = inPlayer;
+	}
+
+
+	void LocalPlayer::GetActiveCameraTransform( Transform3D& outTransform )
+	{
+		auto character = m_PlayerEntity ? m_PlayerEntity->GetCharacter() : nullptr;
+		auto camera = character ? character->GetCamera() : nullptr;
+
+		if( camera && camera->IsValid() )
+		{
+			outTransform = camera->GetWorldTransform();
+		}
+		else
+		{
+			// TODO: Get level default camera position? Like a spawn position or something
+			outTransform.Position.Clear();
+			outTransform.Rotation.Clear();
+		}
+
+		outTransform.Scale.Clear();
 	}
 
 }

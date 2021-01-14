@@ -32,7 +32,7 @@ namespace Hyperion
                 Callback    = (a) =>
                 {
                     // We need to calculate the hash before calling the function to open the editor
-                    uint id = Core.GetManifestManager()?.CalculateAssetId( a.First() ) ?? 0;
+                    uint id = Core.CalculateAssetIdentifier( a.First() );
                     if( id == 0 )
                     {
                         Core.WriteLine( "Failed to open editor, invalid material name \"", a.First(), "\"" );
@@ -216,10 +216,9 @@ namespace Hyperion
             }
 
             // Add an entry to the manifest for this new file
-            var manifest    = Core.GetManifestManager();
-            uint id         = manifest?.CalculateAssetId( fileName ) ?? 0;
+            uint id = Core.CalculateAssetIdentifier( fileName );
 
-            if( id == 0 || !manifest.AddEntry( id, fileName ) )
+            if( id == 0 )
             {
                 Core.WriteLine( "Failed to open new material file in editor, because an asset ID couldnt be generated! Please restart tool program to properly load this asset in" );
                 return;
@@ -230,121 +229,6 @@ namespace Hyperion
             {
                 Core.WriteLine( "[Warning] MateriallEditor: Created new material file, but failed to open it in the editor!" );
             }
-
-        }
-
-
-        /*-------------------------------------------------------------------------------------------------
-         *      Reference Managing
-         * ------------------------------------------------------------------------------------------------*/
-         public static void RegisterAssetTypes()
-         {
-            ReferenceManager.RegisterAssetType(
-                "Material",
-                ".hmat",
-                OnMaterialRefChanged,
-                OnMaterialRefDeleted
-            );
-         }
-
-
-        public static bool OnMaterialRefChanged( string inPath, uint oldId, uint newId )
-        {
-            // First, validate the parameters
-            if( ( inPath?.Length ?? 0 ) == 0 || oldId == 0 || newId == 0 )
-            {
-                Core.WriteLine( "[Warning] MaterialManager: Failed to update ref in a material file, path/id invalid!" );
-                return false;
-            }
-
-            // Attempt to open the material file
-            if( !LoadMaterial( inPath, out Material mat ) )
-            {
-                Core.WriteLine( "[Warning] MaterialManager: Failed to update ref in \"", inPath, "\" because it couldnt be loaded" );
-                return false;
-            }
-
-            // Look through the properties for textures matching the 'oldId'
-            bool bFound = false;
-            foreach( var Entry in mat.Properties )
-            {
-                if( Entry.Value != null && Entry.Value.GetType() == typeof( TextureReference ) )
-                {
-                    var texRef = (TextureReference) Entry.Value;
-                    if( texRef.Hash == oldId )
-                    {
-                        texRef.Hash = newId;
-                        bFound = true;
-                    }
-                }
-            }
-
-            if( !bFound )
-            {
-                Core.WriteLine( "[Warning] MaterialManager: When attempting ref update in \"", inPath, "\" the ref couldnt be found" );
-                return false;
-            }
-
-            if( !SaveMaterial( mat ) )
-            {
-                Core.WriteLine( "[Warning] MaterialManager: Failed to update refs in \"", inPath, "\" because it couldnt be saved!" );
-                return false;
-            }
-
-            return true;
-        }
-
-
-        public static bool OnMaterialRefDeleted( string inPath, uint oldId )
-        {
-            // First, we want to validate the parameters
-            if( ( inPath?.Length ?? 0 ) == 0 || oldId == 0 )
-            {
-                Core.WriteLine( "[Warning] MaterialManager: Failed to delete ref in material, because the path/id is invalid" );
-                return false;
-            }
-
-            // Attempt to open the material file
-            if( !LoadMaterial( inPath, out Material mat ) )
-            {
-                Core.WriteLine( "[Warning] MaterialManager: Failed to delete ref in \"", inPath, "\" because it couldnt be loaded" );
-                return false;
-            }
-
-            // Look through the properties for textures matching the 'oldId'
-            bool bFound = false;
-            var newProps = new Dictionary< string, object >();
-
-            foreach( var entry in mat.Properties)
-            {
-                if( entry.Value != null && entry.Value.GetType() == typeof( TextureReference ) )
-                {
-                    var texRef = (TextureReference) entry.Value;
-                    if( texRef.Hash == oldId )
-                    {
-                        bFound = true;
-                        continue;
-                    }
-                }
-
-                newProps.Add( entry.Key, entry.Value );
-            }
-
-            mat.Properties = newProps;
-
-            if( !bFound )
-            {
-                Core.WriteLine( "[Warning] MaterialManager: When attempting ref delete in \"", inPath, "\" the ref couldnt be found" );
-                return false;
-            }
-
-            if( !SaveMaterial( mat ) )
-            {
-                Core.WriteLine( "[Warning] MaterialManager: Failed to delete ref in \"", inPath, "\" because it couldnt be saved!" );
-                return false;
-            }
-
-            return true;
 
         }
 
@@ -377,7 +261,7 @@ namespace Hyperion
                 inPath = "content/" + inPath;
             }
 
-            uint assetId = Core.GetManifestManager()?.CalculateAssetId( assetPath ) ?? 0;
+            uint assetId = Core.CalculateAssetIdentifier( inPath );
             if( assetId == 0 )
             {
                 Core.WriteLine( "[Warning] MaterialManager: Failed to load material \"", inPath, "\" because the id ended up invalid" );
@@ -541,7 +425,21 @@ namespace Hyperion
                         var id = Serialization.GetUInt32( keyValueData, keyLength, false );
 
                         // Now, lookup the texture path
-                        var path = Core.GetManifestManager().GetAssetPath( id );
+                        string path = null;
+                        var dir = new DirectoryInfo( "content/textures" );
+
+                        foreach( var f in dir.GetFiles( "*.htx", SearchOption.AllDirectories ) )
+						{
+                            string p = f.Name;
+                            if( !p.StartsWith( "textures/" ) ) { p = "textures/" + p; }
+
+                            if( Core.CalculateAssetIdentifier( p ) == id )
+							{
+                                path = p;
+                                break;
+							}
+						}
+
                         if( path == null )
                         {
                             Core.WriteLine( "[Warning] MaterialManager: Read a texture property for \"", inPath, "\" but couldnt find the texture path from identifier (", id, ")" );
@@ -728,9 +626,6 @@ namespace Hyperion
                 fStream.Seek( 0, SeekOrigin.Begin );
 
                 fStream.Write( fileData.ToArray(), 0, fileData.Count );
-
-                // Now, we want to inform the ref manager of what textures were referencing from this material
-                ReferenceManager.SetRefsFrom( inMat.Identifier, refList );
             }
             catch( Exception Ex )
             {
@@ -739,13 +634,9 @@ namespace Hyperion
                 return false;
             }
 
-            // The writing of the material was successful, if we created a new file, we need to make an entry in the manifest
-            if( bWasCreate && ( !Core.GetManifestManager()?.AddEntry( inMat.Identifier, inMat.Path ) ?? false ) )
-            {
-                Core.WriteLine( "[Warning] MaterialManager: Saved material file \"", inMat.Path, "\" but we couldnt add a manifest entry!" );
-            }
-
             fStream?.Dispose();
+            AssetIdentifierCache.RegisterAsset( relPath );
+
             return true;
         }
 

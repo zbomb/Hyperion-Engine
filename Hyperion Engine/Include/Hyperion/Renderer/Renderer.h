@@ -46,6 +46,9 @@ namespace Hyperion
 		std::atomic< ScreenResolution > m_CachedResolution;
 		std::atomic< bool > m_bCachedVSync;
 
+		std::vector< ScreenResolution > m_AvailableResolutions;
+		std::atomic< bool > m_bCanChangeResolution;
+
 		std::shared_ptr< IGraphics > m_API;
 		std::shared_ptr< ProxyScene > m_Scene;
 
@@ -61,7 +64,7 @@ namespace Hyperion
 		// Functions for derived classes to define
 		virtual void RenderScene() = 0;
 		virtual void OnInitialize() = 0;
-		virtual void OnShutdown() = 0;
+		virtual void OnResolutionChanged( const ScreenResolution& inRes ) = 0;
 
 	public:
 
@@ -84,7 +87,9 @@ namespace Hyperion
 		inline ScreenResolution GetResolutionUnsafe() const { return m_Resolution; }
 		inline bool IsVSyncOnUnsafe() const { return m_bVSync; }
 
-		inline HypPtr< BasicStreamingManager > GetStreamingManager() const { return m_StreamingManager; }
+		bool ChangeResolution( const ScreenResolution& inRes );
+
+		inline HypPtr< BasicStreamingManager > GetStreamingManager() const { return m_StreamingManager; } // TODO: Make this a normal shared_ptr?
 		inline std::shared_ptr< ResourceManager > GetResourceManager() const { return m_ResourceManager; }
 		inline std::shared_ptr< IGraphics > GetAPI() const { return m_API; }
 

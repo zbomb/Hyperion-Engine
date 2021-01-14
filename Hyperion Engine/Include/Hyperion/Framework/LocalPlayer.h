@@ -17,7 +17,8 @@ namespace Hyperion
 		Forward Declarations
 	*/
 	class Player;
-	class CameraComponent;
+	struct Transform3D;
+
 
 
 	class LocalPlayer : public Object
@@ -26,20 +27,19 @@ namespace Hyperion
 	private:
 
 		HypPtr< Player > m_PlayerEntity;
-		ViewState m_LastViewState;
 
-		void SetPlayerEntity( const HypPtr< Player >& inPlayer );
+		void SetPlayer( const HypPtr< Player >& inPlayer );
 
 	public:
 
 		LocalPlayer();
 		~LocalPlayer();
 
-		uint32 GetPlayerIdentifier() const;
-		HypPtr< CameraComponent > GetActiveCamera() const;
-		bool GetViewState( ViewState& outState );
+		void GetActiveCameraTransform( Transform3D& outTransform );
+		bool ProcessKeyBinding( const String& inKey );
+		bool ProcessAxisBinding( const String& inAxis, float inValue );
 
-		inline HypPtr< Player > GetPlayerEntity() const { return m_PlayerEntity; }
+		inline HypPtr< Player > GetPlayer() const { return m_PlayerEntity; }
 
 		// TODO: Friend in the class that will assign the player entity to this local player
 		// For now, were just going to perform this in the game intance

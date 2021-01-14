@@ -23,3 +23,26 @@
 #include <DirectXMath.h>
 
 #include <wrl.h>
+
+
+namespace Hyperion
+{
+
+	/*
+	*	Structures
+	*/
+	struct MatrixBuffer
+	{
+		DirectX::XMMATRIX World;
+		DirectX::XMMATRIX View;
+		DirectX::XMMATRIX Projection;
+	};
+	
+
+	struct CamerBuffer
+	{
+		DirectX::XMFLOAT3 Position;
+		float _RSVD_;
+	};
+
+}

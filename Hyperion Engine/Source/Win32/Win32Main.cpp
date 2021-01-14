@@ -228,6 +228,7 @@ int Impl_Main( HINSTANCE inInstance, LPWSTR inCmdLine, int inCmdShow )
 		{
 			// Check for user input
 			bool bHandled = false;
+
 			if( message.message >= WM_MOUSEFIRST && message.message <= WM_MOUSELAST )
 			{
 				bHandled = HandleMouseInput( message, *inputManager );
@@ -443,29 +444,32 @@ bool HandleMouseInput( MSG& inMsg, Hyperion::InputManager& inManager )
 	{
 		if( inManager.IsMouseCaptured() )
 		{
-			// Move mouse to capture position
-			CenterCursor();
-		}
-		else
-		{
 			// Figure out how much the mouse has moved since the last input
 			LONG MouseX = GET_X_LPARAM( inMsg.lParam );
 			LONG MouseY = GET_Y_LPARAM( inMsg.lParam );
 
 			LONG DeltaX = MouseX - pCursorCenter.x;
 			LONG DeltaY = MouseY - pCursorCenter.y;
+			
+			// Get the size of the window
+			RECT screenSize{};
+			GetWindowRect( hWindow, &screenSize );
+
+			float xValue = ( (float) DeltaX / (float) ( screenSize.right - screenSize.left ) ) * 100.f;
+			float yValue = ( (float) DeltaY / (float) ( screenSize.bottom - screenSize.top ) ) * 100.f;
+
+			// Move mouse to capture position
+			CenterCursor();
 
 			// Dispatch mouse moved event, and update the position where the cursor will be set on re-capture
 			if( DeltaX != 0L )
 			{
-				inManager.HandleAxisInput( Hyperion::InputAxis::MouseX, DeltaX, MouseX );
-				pCursorCenter.x = MouseX;
+				inManager.OnAxisInput( Hyperion::InputAxis::MouseX, xValue );
 			}
 
 			if( DeltaY != 0L )
 			{
-				inManager.HandleAxisInput( Hyperion::InputAxis::MouseY, DeltaY, MouseY );
-				pCursorCenter.y = MouseY;
+				inManager.OnAxisInput( Hyperion::InputAxis::MouseY, yValue );
 			}
 		}
 	}
@@ -489,11 +493,11 @@ bool HandleMouseInput( MSG& inMsg, Hyperion::InputManager& inManager )
 			{
 				if( bIsPress )
 				{
-					inManager.HandleKeyPress( MouseButton );
+					inManager.OnKeyPress( MouseButton );
 				}
 				else
 				{
-					inManager.HandleKeyRelease( MouseButton );
+					inManager.OnKeyRelease( MouseButton );
 				}
 
 				bHandled = true;
@@ -530,13 +534,13 @@ bool HandleKeyboardInput( MSG& inMsg, Hyperion::InputManager& inManager )
 
 	if( inMsg.message == WM_KEYDOWN )
 	{
-		inManager.HandleKeyPress( PressedKey );
+		inManager.OnKeyPress( PressedKey );
 		return true;
 	}
 
 	if( inMsg.message == WM_KEYUP )
 	{
-		inManager.HandleKeyRelease( PressedKey );
+		inManager.OnKeyRelease( PressedKey );
 		return true;
 	}
 
@@ -683,5 +687,19 @@ Hyperion::Keys TranslateKeyboardButton( MSG& inMessage, bool& outWasPress )
 	// TODO TODO TODO:
 	// Create an array, where the index is the keycode value from windows, and the value is the hyperion key code
 	outWasPress = false;
+
+	switch( LOWORD( inMessage.wParam ) )
+	{
+	case 87:
+	case 119:
+		return Hyperion::Keys::W;
+	case 0x53:
+		return Hyperion::Keys::S;
+	case 0x41:
+		return Hyperion::Keys::A;
+	case 0x44:
+		return Hyperion::Keys::D;
+	}
+
 	return Hyperion::Keys::NONE;
 }

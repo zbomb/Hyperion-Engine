@@ -64,6 +64,19 @@ namespace Hyperion
 			return GetTexture( inKey ) != nullptr;
 		}
 
+		bool AreTexturesLoaded() const
+		{
+			for( auto it = m_Textures.begin(); it != m_Textures.end(); it++ )
+			{
+				if( !it->second || !it->second->IsValid() )
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
 		void SetValue( const String& inKey, const std::any& inValue )
 		{
 			if( inKey.IsWhitespaceOrEmpty() ) { return; }

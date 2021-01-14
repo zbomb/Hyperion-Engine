@@ -30,6 +30,7 @@ namespace Tests
 		auto world = Engine::GetGame()->GetWorld();
 
 		world->AddEntity( newEnt );
+		newEnt->SetPosition( Vector3D( 0.f, 0.f, 30.f ) );
 
 		Console::WriteLine( "\n----> Rederer Test Complete!" );
 		Console::WriteLine( "---------------------------------------------------------------------------------------------" );

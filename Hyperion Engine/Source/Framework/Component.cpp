@@ -230,18 +230,23 @@ namespace Hyperion
 	----------------------------------------------------------------------*/
 	Angle3D Component::GetWorldRotation() const
 	{
+		Angle3D Output;
+
 		if( m_Parent )
 		{
-			return( m_Parent->GetWorldRotation() + m_Transform.Rotation );
+			Output = m_Parent->GetWorldRotation() + m_Transform.Rotation;
 		}
 		else if( m_Owner )
 		{
-			return( m_Owner->GetWorldRotation() + m_Transform.Rotation );
+			Output = m_Owner->GetWorldRotation() + m_Transform.Rotation;
 		}
 		else
 		{
 			return m_Transform.Rotation;
 		}
+
+		Output.ClampContents();
+		return Output;
 	}
 
 
@@ -270,18 +275,23 @@ namespace Hyperion
 	----------------------------------------------------------------------*/
 	Transform3D Component::GetWorldTransform() const
 	{
+		Transform3D Output;
+
 		if( m_Parent )
 		{
-			return( m_Parent->GetWorldTransform() + m_Transform );
+			Output = m_Parent->GetWorldTransform() + m_Transform;
 		}
 		else if( m_Owner )
 		{
-			return( m_Owner->GetWorldTransform() + m_Transform );
+			Output = m_Owner->GetWorldTransform() + m_Transform;
 		}
 		else
 		{
-			return m_Transform;
+			Output = m_Transform;
 		}
+
+		Output.Rotation.ClampContents();
+		return Output;
 	}
 
 
@@ -303,6 +313,8 @@ namespace Hyperion
 	void Component::SetRotation( const Angle3D& inRotation )
 	{
 		m_Transform.Rotation = inRotation;
+		m_Transform.Rotation.ClampContents();
+
 		OnLocalTransformChanged();
 
 		TransmitFunction( &Component::OnWorldTransformChanged );
@@ -327,6 +339,8 @@ namespace Hyperion
 	void Component::SetTransform( const Transform3D& inTransform )
 	{
 		m_Transform = inTransform;
+		m_Transform.Rotation.ClampContents();
+
 		OnLocalTransformChanged();
 
 		TransmitFunction( &Component::OnWorldTransformChanged );

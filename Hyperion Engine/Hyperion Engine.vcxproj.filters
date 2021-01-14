@@ -68,6 +68,12 @@
     <Filter Include="Renderer\Resource">
       <UniqueIdentifier>{a0438f79-0806-43d2-a326-12d4842c5f7d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Renderer\DirectX11\Shaders">
+      <UniqueIdentifier>{82014213-04f7-4b0e-a7b2-e89772710c7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{e99a36ec-ce0e-4130-a843-244be6cbb71d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Hyperion\Hyperion.h">
@@ -434,6 +440,48 @@
     <ClInclude Include="Include\Hyperion\Renderer\Resource\RenderTarget.h">
       <Filter>Renderer\Resource</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resource\Shader.h">
+      <Filter>Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\GBuffer.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DirectX11GBufferShader.h">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DirectX11LightingShader.h">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DirectX11ForwardShader.h">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Frustum.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resource\DepthStencil.h">
+      <Filter>Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11DepthStencil.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Color.h">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\AI.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\MovementComponent.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\Character.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\CharacterController.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\NoClipMovementComponent.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework\Entity.cpp">
@@ -631,6 +679,39 @@
     <ClCompile Include="Source\Renderer\Resource\ResourceManager.cpp">
       <Filter>Renderer\Resource</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DirectX11GBufferShader.cpp">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DirectX11LightingShader.cpp">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DirectX11ForwardShader.cpp">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\GBuffer.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Library\Color.cpp">
+      <Filter>Library</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Texture.cpp">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\MovementComponent.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\AI.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\Character.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\CharacterController.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Framework\NoClipMovementComponent.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="String.natvis">
@@ -649,5 +730,19 @@
     <ResourceCompile Include="Resource.rc">
       <Filter>Resource</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\gbuffer_vertex.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\lighting_pixel.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\lighting_vertex.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\gbuffer_pixel.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

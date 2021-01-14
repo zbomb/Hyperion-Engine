@@ -14,9 +14,10 @@ namespace Hyperion
 
 	enum class TextureBindTarget
 	{
-		Shader			= 1,
-		Render			= 2,
-		DepthStencil	= 3
+		None			= 0b0,
+		Shader			= 0b1,
+		Render			= 0b10,
+		DepthStencil	= 0b100
 	};
 
 
@@ -39,7 +40,7 @@ namespace Hyperion
 		uint32 Depth;
 		bool bDynamic;
 		bool bCPURead;
-		TextureBindTarget Target;
+		uint32 BindTargets;
 		TextureFormat Format;
 		bool bAutogenMips;
 
@@ -47,7 +48,7 @@ namespace Hyperion
 
 		TextureParameters()
 			: Width( 0 ), Height( 1 ), Depth( 1 ), bDynamic( false ), bCPURead( false ),
-			Target( TextureBindTarget::Shader ), Format( TextureFormat::NONE ), bAutogenMips( false )
+			BindTargets( (uint32)TextureBindTarget::Shader ), Format( TextureFormat::NONE ), bAutogenMips( false )
 		{}
 	};
 
@@ -67,13 +68,16 @@ namespace Hyperion
 		virtual uint32 GetDepth() const = 0;
 		virtual bool IsDynamic() const = 0;
 		virtual bool CanCPURead() const = 0;
-		virtual TextureBindTarget GetBindTarget() const = 0;
+		virtual uint32 GetBindTargets() const = 0;
 		virtual TextureFormat GetFormat() const = 0;
 
 		virtual bool IsValid() const = 0;
 		virtual void Shutdown() = 0;
 
-
+		bool HasBindTarget( TextureBindTarget inTarget )
+		{
+			return( ( GetBindTargets() & (uint32)inTarget ) == (uint32)inTarget );
+		}
 	};
 
 

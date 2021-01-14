@@ -27,7 +27,7 @@ namespace Hyperion
 		{
 			if( it->second )
 			{
-				auto texPtr = Get2DTexture( it->second->GetIdentifier() );
+				auto texPtr = Get2DTexture( it->second->GetIdentifier() ); // LEFT OFF HERE: This is runnin on the game thread, because CreateProxy runs on the game thread
 				HYPERION_VERIFY( texPtr != nullptr, "[ResourceManager] Failed to get pointer for texture" );
 
 				mat->AddTexture( it->first, texPtr );
@@ -130,6 +130,7 @@ namespace Hyperion
 			vparams.Size		= (uint32)inVertexData[ i ].size();
 			vparams.Type		= BufferType::Vertex;
 			vparams.Data		= inVertexData[ i ].data();
+			vparams.Count		= vparams.Size / 32;
 
 			targetLOD->subObjects[ i ].vertexBuffer = Engine::GetRenderer()->GetAPI()->CreateBuffer( vparams );
 
@@ -140,6 +141,7 @@ namespace Hyperion
 			iparams.Size		= (uint32)inIndexData[ i ].size();
 			iparams.Type		= BufferType::Index;
 			iparams.Data		= inIndexData[ i ].data();
+			iparams.Count		= iparams.Size / 4;
 
 			targetLOD->subObjects[ i ].indexBuffer = Engine::GetRenderer()->GetAPI()->CreateBuffer( iparams );
 
@@ -224,6 +226,11 @@ namespace Hyperion
 			data = std::make_shared< RGeometryData >( inAsset );
 			m_Geometry.emplace( id, std::shared_ptr< RGeometry >( new RGeometry( id, data ) ) );
 		}
+		else
+		{
+			// TODO: Better way to do this? 
+			data = entry->second->m_Data;
+		}
 
 		if( inVertexData.size() != data->GetLODCount() )
 		{
@@ -257,10 +264,11 @@ namespace Hyperion
 				vparams.CanCPURead	= false;
 				vparams.Dynamic		= false;
 				vparams.Type		= BufferType::Vertex;
-				vparams.Size		= (uint32)vertexDataList[ j ].size();
+				vparams.Size		= (uint32) vertexDataList[ j ].size();
+				vparams.Count		= vparams.Size / 32;
 				vparams.Data		= vertexDataList[ j ].data();
 
-				lodPtr->subObjects[ j ].indexBuffer = api->CreateBuffer( vparams );
+				lodPtr->subObjects[ j ].vertexBuffer = api->CreateBuffer( vparams );
 
 				BufferParameters iparams;
 
@@ -268,9 +276,10 @@ namespace Hyperion
 				iparams.Dynamic		= false;
 				iparams.Type		= BufferType::Index;
 				iparams.Size		= (uint32)indexDataList[ j ].size();
+				iparams.Count		= iparams.Size / 4;
 				iparams.Data		= indexDataList[ j ].data();
 
-				lodPtr->subObjects[ j ].vertexBuffer = api->CreateBuffer( iparams );
+				lodPtr->subObjects[ j ].indexBuffer = api->CreateBuffer( iparams );
 
 				HYPERION_VERIFY( lodPtr->subObjects[ j ].indexBuffer && lodPtr->subObjects[ j ].vertexBuffer, "[ResourceManager] Failed to create buffers" );
 			}
@@ -484,7 +493,7 @@ namespace Hyperion
 		params.Width		= maxLOD.Width;
 		params.Height		= maxLOD.Height;
 		params.bAutogenMips	= false;
-		params.Target		= TextureBindTarget::Shader;
+		params.BindTargets	= (uint32)TextureBindTarget::Shader;
 
 		for( uint8 i = 0; i < newLODCount; i++ )
 		{
@@ -564,7 +573,7 @@ namespace Hyperion
 						else
 						{
 							// TODO: Allow update of 1D and 3D textures
-							HYPERION_VERIFY( entry->second.type == TextureType::Tex1D, "[ResourceManager] Attempt to update 2D texture!" );
+							HYPERION_VERIFY( entry->second.type == TextureType::Tex2D, "[ResourceManager] Attempt to update non-2D texture!" );
 
 							if( entry->second.ptr )
 							{
@@ -618,7 +627,7 @@ namespace Hyperion
 		params.Format		= textureHeader.Format;
 		params.Width		= maxLOD.Width;
 		params.Height		= maxLOD.Height;
-		params.Target		= TextureBindTarget::Shader;
+		params.BindTargets	= (uint32)TextureBindTarget::Shader;
 
 		if( IsRenderThread() )
 		{

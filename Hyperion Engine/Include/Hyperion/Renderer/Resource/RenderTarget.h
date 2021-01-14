@@ -19,22 +19,23 @@ namespace Hyperion
 	protected:
 
 		std::shared_ptr< RTexture2D > m_TargetTexture;
+		TextureFormat m_Format;
 
-		RRenderTarget( std::shared_ptr< RTexture2D > inTexture )
-			: m_TargetTexture( inTexture )
+		RRenderTarget( const std::shared_ptr< RTexture2D >& inTexture )
+			: m_TargetTexture( inTexture ), m_Format( inTexture ? inTexture->GetFormat() : TextureFormat::NONE )
 		{
 			if( !m_TargetTexture || !m_TargetTexture->IsValid() )
 			{
-				Console::WriteLine( "[ERROR] Renderer: Failed to create render target! Source texture was null or invalid!" );
-				m_TargetTexture = nullptr;
+				Console::WriteLine( "[Warning] Renderer: Failed to create render target! Source texture was null or invalid!" );
+				m_TargetTexture.reset();
 			}
 			else
 			{
 				// Ensure this texture is able to be used as a render target
-				if( ( (int) m_TargetTexture->GetBindTarget() & (int) TextureBindTarget::Render ) == 0 )
+				if( !m_TargetTexture->HasBindTarget( TextureBindTarget::Render ) )
 				{
-					Console::WriteLine( "[ERROR] Renderer: failed to create render target! Source texture is not bound properly!" );
-					m_TargetTexture = nullptr;
+					Console::WriteLine( "[Warning] Renderer: Failed to create render target! Target texture isnt able to be rendered to" );
+					m_TargetTexture.reset();
 				}
 			}
 		}
@@ -54,8 +55,10 @@ namespace Hyperion
 
 		std::shared_ptr< RTexture2D > GetTargetTexture()
 		{
-			return m_TargetTexture;
+			return m_TargetTexture && m_TargetTexture->IsValid() ? m_TargetTexture : nullptr;
 		}
+
+		inline TextureFormat GetFormat() const { return m_Format; }
 
 		virtual bool IsValid() const = 0;
 		virtual void Shutdown() = 0;

@@ -541,6 +541,7 @@ namespace Hyperion
 		return HypPtr< _To >( pCasted, inPtr.state, inPtr.id );
 	}
 
+
 	template< typename _Ty, class... Args >
 	HypPtr< _Ty > CreateObject( Args&& ... args )
 	{
@@ -567,6 +568,7 @@ namespace Hyperion
 
 		return HypPtr< _Ty >( newObj, state, newId );
 	}
+
 
 	template< typename _TTy >
 	void DestroyObject( HypPtr< _TTy >& inPtr )

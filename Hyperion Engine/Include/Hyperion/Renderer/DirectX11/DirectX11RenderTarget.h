@@ -20,13 +20,35 @@ namespace Hyperion
 
 	protected:
 
-		ID3D11RenderTargetView* m_RenderTarget;
+		Microsoft::WRL::ComPtr< ID3D11RenderTargetView > m_RenderTarget;
 
-		DirectX11RenderTarget( std::shared_ptr< RTexture2D > inTexture )
+		DirectX11RenderTarget( const std::shared_ptr< RTexture2D >& inTexture, const Microsoft::WRL::ComPtr< ID3D11Device >& inDevice )
 			: RRenderTarget( inTexture ), m_RenderTarget( nullptr )
 		{
-		}
+			HYPERION_VERIFY( inDevice, "[DX11] Device was null!" );
 
+			if( m_TargetTexture && m_TargetTexture->IsValid() )
+			{
+				auto* texPtr = dynamic_cast< DirectX11Texture2D* >( inTexture.get() );
+				HYPERION_VERIFY( texPtr != nullptr || texPtr->Get() == nullptr, "[DX11] Failed to cast texture2d to api type" );
+
+				// Create the D3D11 render target
+				D3D11_RENDER_TARGET_VIEW_DESC targetDesc;
+				ZeroMemory( &targetDesc, sizeof( targetDesc ) );
+
+				D3D11_TEXTURE2D_DESC texDesc;
+				texPtr->Get()->GetDesc( &texDesc );
+
+				targetDesc.Format				= texDesc.Format;
+				targetDesc.ViewDimension		= D3D11_RTV_DIMENSION_TEXTURE2D;
+				targetDesc.Texture2D.MipSlice	= 0;
+
+				if( FAILED( inDevice->CreateRenderTargetView( texPtr->Get(), &targetDesc, m_RenderTarget.GetAddressOf() ) ) || m_RenderTarget.Get() == NULL )
+				{
+					Console::WriteLine( "[Warning] DX11: Failed to create texture render target!" );
+				}
+			}
+		}
 
 	public:
 
@@ -37,7 +59,7 @@ namespace Hyperion
 
 		bool IsValid() const final
 		{
-			return m_TargetTexture != nullptr && m_RenderTarget != nullptr;
+			return m_TargetTexture && m_TargetTexture->IsValid() && m_RenderTarget;
 		}
 
 		void Shutdown() final
@@ -45,19 +67,19 @@ namespace Hyperion
 			m_TargetTexture.reset();
 			if( m_RenderTarget )
 			{
-				m_RenderTarget->Release();
-				m_RenderTarget = nullptr;
+				//m_RenderTarget->Release();
+				m_RenderTarget.Reset();
 			}
 		}
 
 		ID3D11RenderTargetView* Get()
 		{
-			return IsValid() ? m_RenderTarget : nullptr;
+			return m_RenderTarget ? m_RenderTarget.Get() : nullptr;
 		}
 
 		ID3D11RenderTargetView** GetAddress()
 		{
-			return &m_RenderTarget;
+			return m_RenderTarget ? m_RenderTarget.GetAddressOf() : nullptr;
 		}
 
 		friend class DirectX11Graphics;

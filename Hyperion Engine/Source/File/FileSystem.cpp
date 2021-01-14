@@ -7,6 +7,7 @@
 #include "Hyperion/File/FileSystem.h"
 #include "Hyperion/Core/AssetManager.h"
 #include "Hyperion/Tools/HHTReader.h"
+#include "Hyperion/Core/Platform.h"
 
 
 namespace Hyperion
@@ -184,8 +185,6 @@ namespace Hyperion
 			FilePath contentPath( "content/", PathRoot::Game );
 			std::vector< FilePath > foundFiles;
 
-			Console::WriteLine( "------> DEBUG: Performing asset discovery" );
-
 			if( !DirectoryExists( contentPath ) )
 			{
 				Console::WriteLine( "[Warning] FileSystem: Failed to discover assets.. no content folder found??" );
@@ -193,19 +192,35 @@ namespace Hyperion
 			}
 
 			FindFiles( contentPath, foundFiles, true );
+			auto rootPath = Platform::GetExecutablePath();
 
 			for( const auto& f : foundFiles )
 			{
-				auto strPath = f.RelativePath().TrimBegin( "content/" );
-				auto utfStr = strPath.GetU8Str();
+				auto strPath = f.ToString();
+				auto npath = strPath.SubStr( rootPath.Length() + 1, strPath.Length() - rootPath.Length() );
+
+				if( npath.StartsWith( "content/" ) )
+				{
+					npath = npath.SubStr( 8, npath.Length() - 8 );
+				}
+
+				auto utfStr = npath.GetU8Str();
 				std::vector< byte > utfData( utfStr.begin(), utfStr.end() );
 
 				uint32 hashCode = Crypto::ELFHash( utfData );
 
-				// DEBUG
-				Console::WriteLine( "----> Asset Found: \"", strPath, "\" \t Hash Code: ", hashCode );
+				AssetInstanceInfo newAsset;
+				newAsset.AlwaysCached	= false;
+				newAsset.AssetType		= AssetManager::FindTypeFromExtension( f.Extension() ); // TODO: This is extreemly inefficient.
+				newAsset.Identifier		= hashCode;
+				newAsset.Offset			= 0;
+				newAsset.Length			= 0;
+				newAsset.Path			= npath;
+
+				AssetManager::RegisterAsset( newAsset );
 			}
 
+			Console::WriteLine( "[FileSystem] Discovered ", foundFiles.size(), " content files on disk" );
 		}
 
 		return true;
@@ -483,7 +498,7 @@ namespace Hyperion
 	}
 
 
-	void FileSystem::FindFiles( const FilePath& inPath, std::vector< FilePath >& Out, std::function< bool( const FilePath& ) > inPredicate, bool bIncludeSubFolders /* = false */ )
+	void FileSystem::FindFiles( const FilePath& inPath, std::vector< FilePath >& Out, std::function< bool( const FilePath& ) > inPredicate, bool bRecursive /* = false */ )
 	{
 		// Basically, we want to get a list of all files and directories in this path
 		auto stdPath = inPath.ToCPath( true );
@@ -499,19 +514,44 @@ namespace Hyperion
 					Out.push_back( fPath );
 				}
 			}
-			else if( entry.is_directory() && bIncludeSubFolders )
+			else if( entry.is_directory() && bRecursive )
 			{
-				FindFiles( FilePath( entry.path(), PathRoot::SystemRoot ), Out, inPredicate, bIncludeSubFolders );
+				FindFiles( FilePath( entry.path(), PathRoot::SystemRoot ), Out, inPredicate, bRecursive );
+			}
+		}
+	}
+
+	
+	void FileSystem::FindDirectories( const FilePath& inPath, std::vector< FilePath >& Out, std::function< bool( const FilePath& ) > inPredicate, bool bRecursive /* = false */ )
+	{
+		// Basically, we want to get a list of all files and directories in this path
+		auto stdPath = inPath.ToCPath( true );
+		if( !std::filesystem::is_directory( stdPath ) ) { return; }
+
+		for( auto& entry : std::filesystem::directory_iterator( stdPath ) )
+		{
+			if( entry.is_directory() )
+			{
+				FilePath fPath( entry.path(), PathRoot::SystemRoot );
+				if( inPredicate( fPath ) )
+				{
+					Out.push_back( fPath );
+				}
+
+				if( bRecursive )
+				{
+					FindFiles( FilePath( entry.path(), PathRoot::SystemRoot ), Out, inPredicate, bRecursive );
+				}
 			}
 		}
 	}
 
 
-	void FileSystem::FindFiles( const FilePath& inPath, std::vector< FilePath >& Out, bool bIncludeSubFolders /* = false */ )
+	void FileSystem::FindFiles( const FilePath& inPath, std::vector< FilePath >& Out, bool bRecursive /* = false */ )
 	{
 		auto stdPath = inPath.ToCPath( true );
 		if( !std::filesystem::is_directory( stdPath ) ) { return; }
-
+		
 		for( auto& entry : std::filesystem::directory_iterator( stdPath ) )
 		{
 			if( entry.is_regular_file() )
@@ -519,14 +559,32 @@ namespace Hyperion
 				FilePath fPath( String( entry.path().generic_u8string(), StringEncoding::UTF8 ), PathRoot::SystemRoot );
 				Out.push_back( fPath );
 			}
-			else if( entry.is_directory() && bIncludeSubFolders )
+			else if( entry.is_directory() && bRecursive )
 			{
-				FilePath fPath( String( entry.path().generic_u8string(), StringEncoding::UTF8 ), PathRoot::SystemRoot );
-				Out.push_back( fPath );
+				FindFiles( FilePath( entry.path(), PathRoot::SystemRoot ), Out, bRecursive );
 			}
 		}
 	}
 
 
+	void FileSystem::FindDirectories( const FilePath& inPath, std::vector< FilePath >& Out, bool bRecursive /* = false */ )
+	{
+		auto stdPath = inPath.ToCPath( true );
+		if( !std::filesystem::is_directory( stdPath ) ) { return; }
 
+		for( auto& entry : std::filesystem::directory_iterator( stdPath ) )
+		{
+			if( entry.is_directory() )
+			{
+				FilePath fPath( String( entry.path().generic_u8string(), StringEncoding::UTF8 ), PathRoot::SystemRoot );
+				Out.push_back( fPath );
+
+				if( bRecursive )
+				{
+					FindFiles( FilePath( entry.path(), PathRoot::SystemRoot ), Out, bRecursive );
+
+				}
+			}
+		}
+	}
 }

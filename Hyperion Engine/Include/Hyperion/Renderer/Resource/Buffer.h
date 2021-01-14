@@ -35,6 +35,7 @@ namespace Hyperion
 		bool CanCPURead;
 		bool Dynamic;
 		uint32 Size;
+		uint32 Count;
 		const void* Data;
 
 		BufferParameters()
@@ -55,6 +56,8 @@ namespace Hyperion
 		virtual BufferType GetType() const = 0;
 		virtual void Shutdown() = 0;
 		virtual bool IsValid() const = 0;
+		virtual uint32 GetSize() const = 0;
+		virtual uint32 GetCount() const = 0;
 
 	};
 

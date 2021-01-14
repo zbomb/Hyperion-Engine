@@ -47,72 +47,9 @@ namespace Hyperion
 		return It;
 	}
 
-	uint8 StaticModelAsset::GetNumOverrideMaterialSlots( uint8 inLOD ) const
+	uint8 StaticModelAsset::GetNumSubModels() const
 	{
-		// Get this LOD, ensure its valid
-		auto It = GetLOD( inLOD );
-		if( It == m_LODs.end() )
-		{
-			return 0;
-		}
-
-		// Return the coun tof material slots...
-		return (uint8)It->MaterialSlots.size();
-	}
-
-	std::shared_ptr< MaterialAsset > StaticModelAsset::GetGlobalMaterial( uint8 inSlot ) const
-	{
-		auto f = m_MaterialSlots.find( inSlot );
-		if( f == m_MaterialSlots.end() )
-		{
-			return nullptr;
-		}
-
-		return f->second;
-	}
-
-	std::map<uint8, std::shared_ptr<MaterialAsset>>::const_iterator StaticModelAsset::GetOverrideMaterialsBegin( uint8 inLOD ) const
-	{
-		auto lodIter = GetLOD( inLOD );
-		if( lodIter == m_LODs.end() )
-		{
-			throw;
-		}
-
-		return lodIter->MaterialSlots.begin();
-	}
-
-	std::map<uint8, std::shared_ptr<MaterialAsset>>::const_iterator StaticModelAsset::GetOverrideMaterialsEnd( uint8 inLOD ) const
-	{
-		auto lodIter = GetLOD( inLOD );
-		if( lodIter == m_LODs.end() )
-		{
-			throw;
-		}
-
-		return lodIter->MaterialSlots.end();
-	}
-
-	std::shared_ptr< MaterialAsset > StaticModelAsset::GetOverrideMaterial( uint8 inLOD, uint8 inSlot ) const
-	{
-		auto lodIter = GetLOD( inLOD );
-		if( lodIter == m_LODs.end() )
-		{
-			return nullptr;
-		}
-
-		auto entry = lodIter->MaterialSlots.find( inSlot );
-		if( entry == lodIter->MaterialSlots.end() )
-		{
-			return nullptr;
-		}
-
-		return entry->second;
-	}
-
-	uint8 StaticModelAsset::GetNumSubModels( uint8 inLOD ) const
-	{
-		auto lodIter = GetLOD( inLOD );
+		auto lodIter = GetLOD( 0 );
 		if( lodIter == m_LODs.end() )
 		{
 			return 0;
@@ -121,7 +58,7 @@ namespace Hyperion
 		return (uint8)lodIter->SubObjects.size();
 	}
 
-	std::map<uint8, StaticModelAssetSubModel>::const_iterator StaticModelAsset::GetSubModelBegin( uint8 inLOD ) const
+	std::vector< StaticModelAssetSubModel>::const_iterator StaticModelAsset::GetSubModelBegin( uint8 inLOD ) const
 	{
 		auto lodIter = GetLOD( inLOD );
 		if( lodIter == m_LODs.end() )
@@ -132,7 +69,7 @@ namespace Hyperion
 		return lodIter->SubObjects.begin();
 	}
 
-	std::map<uint8, StaticModelAssetSubModel>::const_iterator StaticModelAsset::GetSubModelEnd( uint8 inLOD ) const
+	std::vector< StaticModelAssetSubModel>::const_iterator StaticModelAsset::GetSubModelEnd( uint8 inLOD ) const
 	{
 		auto lodIter = GetLOD( inLOD );
 		if( lodIter == m_LODs.end() )
@@ -143,7 +80,7 @@ namespace Hyperion
 		return lodIter->SubObjects.end();
 	}
 
-	std::map<uint8, StaticModelAssetSubModel>::const_iterator StaticModelAsset::GetSubModel( uint8 inLOD, uint8 inIndex ) const
+	std::vector< StaticModelAssetSubModel>::const_iterator StaticModelAsset::GetSubModel( uint8 inLOD, uint8 inIndex ) const
 	{
 		auto lodIter = GetLOD( inLOD );
 		if( lodIter == m_LODs.end() )

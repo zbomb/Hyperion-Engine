@@ -1,0 +1,290 @@
+/*==================================================================================================
+	Hyperion Engine
+	Source/Renderer/DirectX11/Shaders/DirectX11LightingShader.cpp
+	© 2021, Zachary Berry
+==================================================================================================*/
+
+
+#include "Hyperion/Renderer/DirectX11/Shaders/DirectX11LightingShader.h"
+#include "Hyperion/File/FileSystem.h"
+#include "Hyperion/Library/Math/Geometry.h"
+#include "Hyperion/Renderer/GBuffer.h"
+#include "Hyperion/Renderer/DirectX11/DirectX11Texture.h"
+
+
+
+namespace Hyperion
+{
+
+
+
+	DirectX11LightingShader::DirectX11LightingShader( const String& inPixelShader, const String& inVertexShader )
+		: m_PixelShaderPath( inPixelShader ), m_VertexShaderPath( inVertexShader )
+	{
+	}
+
+
+	DirectX11LightingShader::~DirectX11LightingShader()
+	{
+	}
+
+
+	bool DirectX11LightingShader::Initialize( ID3D11Device* inDevice, ID3D11DeviceContext* inContext )
+	{
+		HYPERION_VERIFY( inDevice != nullptr && inContext != nullptr, "[DX11] Failed to create shader, device was nullptr" );
+		m_Context = inContext;
+
+		// First, lets get the data for both shaders
+		if( m_PixelShaderPath.IsWhitespaceOrEmpty() || m_VertexShaderPath.IsWhitespaceOrEmpty() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to create Lighting shader, path(s) were invalid" );
+			return false;
+		}
+
+		auto pixelFile		= FileSystem::OpenFile( FilePath( m_PixelShaderPath, PathRoot::Game ), FileMode::Read );
+		auto vertexFile		= FileSystem::OpenFile( FilePath( m_VertexShaderPath, PathRoot::Game ), FileMode::Read );
+
+		if( !pixelFile || !vertexFile || !pixelFile->IsValid() || !vertexFile->IsValid() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to create Lighting shader, the shaders werent found on disk" );
+			return false;
+		}
+
+		std::vector< byte > pixelShaderData;
+		std::vector< byte > vertexShaderData;
+
+		{
+			DataReader reader( pixelFile );
+			reader.SeekBegin();
+
+			if( reader.ReadBytes( pixelShaderData, reader.Size() ) != DataReader::ReadResult::Success || pixelShaderData.size() == 0 )
+			{
+				Console::WriteLine( "[Warning] DX11: Failed to create Lighting shader, the pixel shader couldnt be read" );
+				return false;
+			}
+		}
+		{
+			DataReader reader( vertexFile );
+
+			if( reader.ReadBytes( vertexShaderData, reader.Size() ) != DataReader::ReadResult::Success || vertexShaderData.size() == 0 )
+			{
+				Console::WriteLine( "[Warning] DX11: Failed to create Lighting shader, the vertex shader couldnt be read" );
+				return false;
+			}
+		}
+
+		// Now, lets use DX11 to create the shaders
+		if( FAILED( inDevice->CreateVertexShader( vertexShaderData.data(), vertexShaderData.size(), NULL, m_VertexShader.GetAddressOf() ) ) || m_VertexShader.Get() == NULL )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to create Lighting shader, the vertex shader couldnt be created" );
+			return false;
+		}
+
+		if( FAILED( inDevice->CreatePixelShader( pixelShaderData.data(), pixelShaderData.size(), NULL, m_PixelShader.GetAddressOf() ) ) || m_PixelShader.Get() == NULL )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to create Lighting shader, the pixel shader couldnt be created" );
+			Shutdown();
+
+			return false;
+		}
+
+		// Next, create the input layout
+		D3D11_INPUT_ELEMENT_DESC inputDesc[ 2 ];
+
+		inputDesc[ 0 ].SemanticName				= "POSITION";
+		inputDesc[ 0 ].SemanticIndex			= 0;
+		inputDesc[ 0 ].Format					= DXGI_FORMAT_R32G32B32_FLOAT;
+		inputDesc[ 0 ].InputSlot				= 0;
+		inputDesc[ 0 ].AlignedByteOffset		= 0;
+		inputDesc[ 0 ].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
+		inputDesc[ 0 ].InstanceDataStepRate		= 0;
+
+		inputDesc[ 1 ].SemanticName				= "TEXCOORD";
+		inputDesc[ 1 ].SemanticIndex			= 0;
+		inputDesc[ 1 ].Format					= DXGI_FORMAT_R32G32_FLOAT;
+		inputDesc[ 1 ].InputSlot				= 0;
+		inputDesc[ 1 ].AlignedByteOffset		= D3D11_APPEND_ALIGNED_ELEMENT;
+		inputDesc[ 1 ].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
+		inputDesc[ 1 ].InstanceDataStepRate		= 0;
+
+		if( FAILED( inDevice->CreateInputLayout( inputDesc, 2, vertexShaderData.data(), vertexShaderData.size(), m_InputLayout.GetAddressOf() ) ) || m_InputLayout.Get() == NULL )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to create Lighting shader, the input layout couldnt be created" );
+			Shutdown();
+
+			return false;
+		}
+
+		// Now, we need to setup samplers and buffers
+		D3D11_BUFFER_DESC matrixBufferDesc;
+		ZeroMemory( &matrixBufferDesc, sizeof( matrixBufferDesc ) );
+
+		matrixBufferDesc.Usage					= D3D11_USAGE_DYNAMIC;
+		matrixBufferDesc.ByteWidth				= sizeof( MatrixBuffer );
+		matrixBufferDesc.BindFlags				= D3D11_BIND_CONSTANT_BUFFER;
+		matrixBufferDesc.CPUAccessFlags			= D3D11_CPU_ACCESS_WRITE;
+		matrixBufferDesc.MiscFlags				= 0;
+		matrixBufferDesc.StructureByteStride	= 0;
+
+		if( FAILED( inDevice->CreateBuffer( &matrixBufferDesc, NULL, m_MatrixBuffer.GetAddressOf() ) ) || m_MatrixBuffer.Get() == NULL )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to create Lighting shader, the matrix buffer coudnt be created" );
+			Shutdown();
+
+			return false;
+		}
+
+		D3D11_SAMPLER_DESC samplerDesc;
+		ZeroMemory( &samplerDesc, sizeof( samplerDesc ) );
+
+			// Create texture sampler description
+		samplerDesc.Filter				= D3D11_FILTER_MIN_MAG_MIP_POINT;
+		samplerDesc.AddressU			= D3D11_TEXTURE_ADDRESS_CLAMP;
+		samplerDesc.AddressV			= D3D11_TEXTURE_ADDRESS_CLAMP;
+		samplerDesc.AddressW			= D3D11_TEXTURE_ADDRESS_CLAMP;
+		samplerDesc.MipLODBias			= 0.0f;
+		samplerDesc.MaxAnisotropy		= 1;
+		samplerDesc.ComparisonFunc		= D3D11_COMPARISON_ALWAYS;
+		samplerDesc.BorderColor[ 0 ]	= 0;
+		samplerDesc.BorderColor[ 1 ]	= 0;
+		samplerDesc.BorderColor[ 2 ]	= 0;
+		samplerDesc.BorderColor[ 3 ]	= 0;
+		samplerDesc.MinLOD				= 0;
+		samplerDesc.MaxLOD				= D3D11_FLOAT32_MAX;
+
+		if( FAILED( inDevice->CreateSamplerState( &samplerDesc, m_SamplerState.GetAddressOf() ) ) || m_SamplerState.Get() == NULL )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to create Lighting shader, the sampler couldnt be created" );
+			Shutdown();
+
+			return false;
+		}
+
+		Console::WriteLine( "DX11: Lighting shader initialized successfully!" );
+		return true;
+	}
+
+
+	void DirectX11LightingShader::Shutdown()
+	{
+		if( m_SamplerState )
+		{
+			m_SamplerState->Release();
+			m_SamplerState.Reset();
+		}
+
+		if( m_MatrixBuffer )
+		{
+			m_MatrixBuffer->Release();
+			m_MatrixBuffer.Reset();
+		}
+
+		if( m_InputLayout )
+		{
+			m_InputLayout->Release();
+			m_InputLayout.Reset();
+		}
+
+		if( m_PixelShader )
+		{
+			m_PixelShader->Release();
+			m_PixelShader.Reset();
+		}
+
+		if( m_VertexShader )
+		{
+			m_VertexShader->Release();
+			m_VertexShader.Reset();
+		}
+	}
+
+
+	bool DirectX11LightingShader::IsValid() const
+	{
+		return m_PixelShader && m_VertexShader;
+	}
+
+
+	bool DirectX11LightingShader::UploadGBuffer( const std::shared_ptr<GBuffer>& inBuffer )
+	{
+		HYPERION_VERIFY( m_Context, "[DX11] Device context was null!" );
+
+		// Upload the G-Buffer to the pixel shader
+		if( !inBuffer || !inBuffer->IsValid() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to upload G-Buffer to pixel shader, was null!" );
+			return false;
+		}
+
+		auto* diffuseTexture	= dynamic_cast< DirectX11Texture2D* >( inBuffer->GetDiffuseRoughnessTexture().get() );
+		auto* normalTexture		= dynamic_cast< DirectX11Texture2D* >( inBuffer->GetNormalDepthTexture().get() );
+		auto* specularTexture	= dynamic_cast< DirectX11Texture2D* >( inBuffer->GetSpecularTexture().get() );
+
+		if( !diffuseTexture || !normalTexture || !specularTexture || !diffuseTexture->IsValid() || !normalTexture->IsValid() || !specularTexture->IsValid() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to upload G-Buffer to pixel shader, textures were null" );
+			return false;
+		}
+
+		ID3D11ShaderResourceView* resourceList[] = { diffuseTexture->GetView(), normalTexture->GetView(), specularTexture->GetView() };
+		m_Context->PSSetShaderResources( 0, 3, resourceList );
+	
+		ID3D11SamplerState* samplerList[] = { m_SamplerState.Get() };
+		m_Context->PSSetSamplers( 0, 1, samplerList );
+
+		return true;
+	}
+
+
+	bool DirectX11LightingShader::UploadMatrixData( const Matrix& inWorld, const Matrix& inView, const Matrix& inProjection )
+	{
+		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
+
+		// Prepare the matricies to be uploaded to the graphics card
+		DirectX::XMMATRIX world( inWorld.GetData() );
+		DirectX::XMMATRIX view( inView.GetData() );
+		DirectX::XMMATRIX projection( inProjection.GetData() );
+
+		world		= DirectX::XMMatrixTranspose( world );
+		view		= DirectX::XMMatrixTranspose( view );
+		projection	= DirectX::XMMatrixTranspose( projection );
+
+		// Now we need to map the buffer and set the matricies
+		D3D11_MAPPED_SUBRESOURCE mappedResource{};
+		auto res = m_Context->Map( m_MatrixBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource );
+		if( FAILED( res ) )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to map matrix buffer!" );
+			return false;
+		}
+
+		auto* bufferPtr			= (MatrixBuffer*) mappedResource.pData;
+		bufferPtr->World		= world;
+		bufferPtr->View			= view;
+		bufferPtr->Projection	= projection;
+
+		m_Context->Unmap( m_MatrixBuffer.Get(), 0 );
+
+		// Now, set the buffer in the vertex shader
+		ID3D11Buffer* bufferList[] = { m_MatrixBuffer.Get() };
+		m_Context->VSSetConstantBuffers( 0, 1, bufferList );
+
+		return true;
+	}
+
+
+	void DirectX11LightingShader::ClearGBufferResources()
+	{
+		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
+
+		ID3D11ShaderResourceView* resources[] = { NULL, NULL, NULL };
+		m_Context->PSSetShaderResources( 0, 3, resources );
+	}
+
+
+	bool DirectX11LightingShader::UploadLighting()
+	{
+		return true;
+	}
+
+}

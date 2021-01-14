@@ -21,8 +21,16 @@
 namespace Hyperion
 {
 
+	/*
+	*	ConsoleVars
+	*/
+	ConsoleVar< float > g_CVar_FOV = ConsoleVar< float >(
+		"r_fov", "Field of view multiplier", 0.5f, 0.f, 1.f
+	);
+
+
 	GameInstance::GameInstance()
-		: m_ActiveWorld( nullptr ), m_LocalPlayer( nullptr ), m_LastTickScreenHeight( 0 )
+		: m_ActiveWorld( nullptr ), m_LocalPlayer( nullptr )
 	{
 		
 	}
@@ -34,41 +42,25 @@ namespace Hyperion
 
 	void GameInstance::Initialize()
 	{
-		// We need to create the local player instance
+		// TODO: Create a system to setup a game instance, and world changes
+		// First, create the local player object
 		m_LocalPlayer = CreateObject< LocalPlayer >();
+		
+		// Next, create the world and the needed entities
+		auto newWorld	= CreateObject< World >();
+		auto character	= CreateObject< Character >();
+		auto player		= CreateObject< Player >( PLAYER_LOCAL );
 
-		// DEBUG
-		auto newWorld = CreateObject< World >();
-		if( SetActiveWorld( newWorld ) )
-		{
-			Console::WriteLine( "[DEBUG] GameInstance: Default world set!" );
-		}
-		else
-		{
-			Console::WriteLine( "[DEBUG] GameInstance: Default world couldnt be loaded!" );
-		}
+		newWorld->AddEntity( player );
+		newWorld->AddEntity( character );
 
-		// MORE DEBUG
-		if( newWorld->SpawnWorld() )
-		{
-			Console::WriteLine( "[DEBUG] GameInstance: Spawned default world" );
-		}
-		else
-		{
-			Console::WriteLine( "[DEBUG] GameInstance: Default world couldnt be spawned!" );
-		}
+		m_LocalPlayer->SetPlayer( player );
+		player->PossessCharacter( character );
 
-		// MORE MORE DEBUG
-		// Eventually, we need a world spawning system, and a joining system
-		auto newPlayer = CreateObject< Player >( 1 );
-		if( !newWorld->AddEntity( newPlayer ) )
+		// Finally, lets set the acive world and spawn everything in
+		if( !SetActiveWorld( newWorld ) || !newWorld->SpawnWorld() )
 		{
-			Console::WriteLine( "[DEBUG] GameInstance: Failed to add player to world!" );
-		}
-		else
-		{
-			Console::WriteLine( "[DEBUG] GameInstance: Added player to world" );
-			m_LocalPlayer->SetPlayerEntity( newPlayer );
+			Console::WriteLine( "[ERROR] Game: Failed to setup and spawn the world!" );
 		}
 
 		OnStart();
@@ -301,36 +293,30 @@ namespace Hyperion
 		}
 
 		// Next, we want to get the current view state
-		if( m_LocalPlayer && m_LocalPlayer->IsValid() )
+		HYPERION_VERIFY( m_LocalPlayer && m_LocalPlayer->IsValid(), "[GAME] LocalPlayer was null!" );
+		
+		// Update renderer view state if the camera info has changed since last tick
+		Transform3D cameraTransform{};
+		m_LocalPlayer->GetActiveCameraTransform( cameraTransform );
+
+		// Calculate the field of view
+		// 0.0 = pi/8, 0.5 = pi/4, 1 = 3pi/8
+		float fovValue = ( Math::PIf * ( g_CVar_FOV.GetValue() + 0.5f ) ) / 4.f;
+
+		if( cameraTransform != m_LastTickCameraTransform || fovValue != m_LastTickCameraFOV )
 		{
-			ViewState vs;
-			uint32 screenHeight = Engine::Get()->GetResolution().Height;
+			ViewState newView;
+			newView.Position	= cameraTransform.Position;
+			newView.Rotation	= cameraTransform.Rotation;
+			newView.FOV			= fovValue;
 
-			if( m_LocalPlayer->GetViewState( vs ) || screenHeight != m_LastTickScreenHeight )
-			{
-				// This means the view state has changed
-				// First, lets inform the renderer of the updated view state
-				Engine::GetRenderer()->AddCommand( std::make_unique< UpdateViewStateCommand >( vs ) );
+			m_LastTickCameraFOV			= fovValue;
+			m_LastTickCameraTransform	= cameraTransform;
 
-				// Next, lets inform the streaming manager of the updated view
-				//AdaptiveAssetManagerCameraUpdateEvent CameraEvent;
-
-				//CameraEvent.CameraInfo.FOV	= vs.FOV;
-				//CameraEvent.CameraInfo.Position = vs.Position;
-				//CameraEvent.CameraInfo.ScreenHeight = screenHeight;
-
-				m_LastTickScreenHeight = screenHeight;
-				//Engine::GetRenderer()->GetAdaptiveAssetManager()->OnCameraUpdate( CameraEvent );
-			}
+			Engine::GetRenderer()->AddCommand(
+				std::make_unique< UpdateViewStateCommand >( newView )
+			);
 		}
-		else
-		{
-			// DEBUG
-			Console::WriteLine( "[ERROR] GameInstance: Failed to update renderer.. local player instance was null?" );
-		}
-
-		// Send event to streaming system to update the position/size of all objects
-		//Engine::GetRenderer()->GetAdaptiveAssetManager()->OnPrimitiveUpdate( Event );
 	
 	}
 
@@ -355,38 +341,6 @@ namespace Hyperion
 
 		return false;
 	}
-
-	/*
-	bool GameInstance::SetActiveCamera( const HypPtr< CameraComponent >& inCamera )
-	{
-		if( !inCamera || !inCamera->IsValid() )
-		{
-			Console::WriteLine( "[ERROR] GameInstance: Attempt to set  invalid camera component as the active scene camera" );
-			return false;
-		}
-
-		m_ActiveCamera = inCamera;
-		uint32 cameraIdentifier = m_ActiveCamera->GetIdentifier();
-
-		// Add render command to update the active camera in the proxy scene
-		HYPERION_RENDER_COMMAND(
-			[ cameraIdentifier ] ( Renderer& inRenderer )
-			{
-				auto scene = inRenderer.GetScene();
-				if( scene )
-				{
-					scene->SetActiveCamera( cameraIdentifier );
-				}
-				else
-				{
-					Console::WriteLine( "[ERROR] Renderer: Failed to set active camera.. scene was null!" );
-				}
-			}
-		);
-
-		return true;
-	}
-	*/
 
 }
 

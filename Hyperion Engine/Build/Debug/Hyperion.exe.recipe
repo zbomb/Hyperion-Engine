@@ -5,7 +5,20 @@
       <FullPath>D:\Hyperion\Build\Debug\Hyperion.exe</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
-  <ContentFiles />
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>D:\Hyperion\Build\Debug\shaders\gbuffer.hps</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\Hyperion\Build\Debug\shaders\gbuffer.hvs</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\Hyperion\Build\Debug\shaders\lighting.hps</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\Hyperion\Build\Debug\shaders\lighting.hvs</FullPath>
+    </ContentFile>
+  </ContentFiles>
   <SatelliteDlls />
   <NonRecipeFileRefs />
 </Project>

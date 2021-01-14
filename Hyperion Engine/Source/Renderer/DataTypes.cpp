@@ -84,6 +84,6 @@ namespace Hyperion
 			return;
 		}
 
-		
+		scene->UpdateViewState( m_Payload );
 	}
 }
