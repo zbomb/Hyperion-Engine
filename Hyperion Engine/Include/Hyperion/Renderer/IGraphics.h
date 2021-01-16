@@ -11,7 +11,7 @@
 #include "Hyperion/Renderer/Resource/Texture.h"
 #include "Hyperion/Renderer/Resource/Buffer.h"
 #include "Hyperion/Renderer/Resource/Shader.h"
-#include "Hyperion/Renderer/Resource/Geometry.h"
+#include "Hyperion/Renderer/Resource/Mesh.h"
 #include "Hyperion/Renderer/Resource/DepthStencil.h"
 #include "Hyperion/Library/Color.h"
 
@@ -48,7 +48,7 @@ namespace Hyperion
 		virtual void EndFrame() = 0;
 
 		virtual void SetCameraInfo( const ViewState& inView ) = 0;
-		virtual bool CheckViewCull( const Transform3D& inTransform, const AABB& inBounds ) = 0;
+		virtual bool CheckViewCull( const Transform& inTransform, const AABB& inBounds ) = 0;
 
 		virtual void EnableAlphaBlending() = 0;
 		virtual void DisableAlphaBlending() = 0;
@@ -117,10 +117,10 @@ namespace Hyperion
 		virtual void SetRenderOutputToTarget( const std::shared_ptr< RRenderTarget >& inRenderTarget, const std::shared_ptr< RDepthStencil >& inDepthStencil ) = 0;
 		virtual void SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inGBuffer ) = 0;
 		
-		virtual void RenderGeometry( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 indexCount ) = 0;
-		virtual void RenderScreenGeometry() = 0;
+		virtual void RenderMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 indexCount ) = 0;
+		virtual void RenderScreenMesh() = 0;
 
-		virtual void GetWorldMatrix( const Transform3D& inObjPosition, Matrix& outMatrix ) = 0;
+		virtual void GetWorldMatrix( const Transform& inObjPosition, Matrix& outMatrix ) = 0;
 		virtual void GetWorldMatrix( Matrix& outMatrix ) = 0;
 		virtual void GetViewMatrix( Matrix& outMatrix ) = 0;
 		virtual void GetProjectionMatrix( Matrix& outMatrix ) = 0;

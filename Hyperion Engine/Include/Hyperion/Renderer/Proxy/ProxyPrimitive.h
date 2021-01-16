@@ -7,7 +7,7 @@
 #pragma once
 
 #include "Hyperion/Renderer/Proxy/ProxyBase.h"
-#include "Hyperion/Library/Math/Geometry.h"
+#include "Hyperion/Library/Geometry.h"
 
 
 namespace Hyperion
@@ -30,7 +30,7 @@ namespace Hyperion
 			: ProxyBase( inIdentifier )
 		{}
 
-		virtual Transform3D GetWorldTransform() const = 0;
+		virtual Transform GetWorldTransform() const = 0;
 		virtual uint8 GetActiveLOD() const = 0;
 		virtual uint8 GetLODCount() const = 0;
 		virtual std::map< uint8, std::shared_ptr< RMaterial > > GetMaterials() const = 0;

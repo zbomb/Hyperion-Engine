@@ -1,0 +1,84 @@
+
+
+Euler -> Quaternion
+
+
+Roll [Axis = {0,0,1}]
+W: cos( roll / 2.f )
+X: 0
+Y: 0
+Z: sin( roll / 2.f )
+
+
+Pitch [Axis = {1,0,0}]
+W: cos( pitch / 2.f )
+X: sin( pitch / 2.f )
+Y: 0
+Z: 0
+
+Yaw [Axis = {0,1,0}]
+W: cos( yaw / 2.f )
+X: 0
+Y: sin( yaw / 2.f )
+Z: 0
+
+
+
+We then multiply roll and pitch
+
+Roll * Pitch:
+W: cos( roll / 2.f ) * cos( pitch / 2.f ) - 0 - 0 - 0
+X: cos( roll / 2.f ) * sin( pitch / 2.f ) + 0 + 0 - 0
+Y: 0 - 0 + 0 + sin( roll / 2.f ) * sin( pitch / 2.f )
+Z: 0 + 0 - 0 + sin( roll / 2.f )  * cos( pitch / 2.f ) 
+
+Simplify:
+W: cos( roll / 2.f ) * cos( pitch / 2.f )
+X: cos( roll / 2.f ) * sin( pitch / 2.f )
+Y: sin( roll / 2.f ) * sin( pitch / 2.f )
+Z: sin( roll / 2.f ) * cos( pitch / 2.f )
+
+
+
+Then, multiply in Yaw
+W: cos( roll / 2.f ) * cos( pitch / 2.f ) * cos( yaw / 2.f ) + 0 - sin( roll / 2.f ) * sin( pitch / 2.f ) * sin( yaw / 2.f ) - 0
+X: 0 + cos( roll / 2.f ) * sin( pitch / 2.f ) * cos( yaw / 2.f ) + 0 - sin( roll / 2.f ) * cos( pitch / 2.f ) * sin( yaw / 2.f )
+Y: cos( roll / 2.f ) * cos( pitch / 2.f ) * sin( yaw / 2.f ) - 0 + sin( roll / 2.f ) * sin( pitch / 2.f ) * cos( yaw / 2.f ) + 0
+Z: 0 + cos( roll / 2.f ) * sin( pitch / 2.f ) * sin( yaw / 2.f ) - 0 + sin( roll / 2.f ) * cos( pitch / 2.f ) * cos( yaw / 2.f )
+
+
+Simplify....
+
+W: cos( roll / 2.f ) * cos( pitch / 2.f ) * cos( yaw / 2.f ) - sin( roll / 2.f ) * sin( pitch / 2.f ) * sin( yaw / 2.f )
+X: cos( roll / 2.f ) * sin( pitch / 2.f ) * cos( yaw / 2.f ) - sin( roll / 2.f ) * cos( pitch / 2.f ) * sin( yaw / 2.f )
+Y: cos( roll / 2.f ) * cos( pitch / 2.f ) * sin( yaw / 2.f ) + sin( roll / 2.f ) * sin( pitch / 2.f ) * cos( yaw / 2.f )
+Z: cos( roll / 2.f ) * sin( pitch / 2.f ) * sin( yaw / 2.f ) + sin( roll / 2.f ) * cos( pitch / 2.f ) * cos( yaw / 2.f )
+
+--------------------------------- Roll Calc ---------------------------------------------------------
+
+sin( roll / 2 ) * sin( pitch / 2 ) * sin( yaw / 2 ) + W = cos( roll / 2 ) * cos( pitch / 2 ) * cos( yaw / 2 )
+
+cos( roll / 2 ) = sin( roll / 2 ) * sin( pitch / 2 ) * sin( yaw / 2 ) + W
+				  -------------------------------------------------------
+				  cos( pitch / 2 ) * cos( yaw / 2 )
+-
+
+cos(roll/2) = sin(pitch/2) * sin(yaw/2) + W
+----------    -----------------------------
+sin(roll/2)   cos(pitch/2) * cos(yaw/2)
+
+    1           sin(pitch/2) * sin(yaw/2) + W
+-----------  =  ------------------------------
+tan(roll/2)     cos(pitch/2) * cos(yaw/2)
+
+tan(roll/2)  =  ( cos(pitch/2) * cos(yaw/2) ) / ( sin(pitch/2) * sin(yaw/2) + W )
+
+roll = 2 * arctan( ( cos(pitch/2) * cos(yaw/2) ) / ( sin(pitch/2) * sin(yaw/2) + W ) )
+
+
+------------------------------------------------------------------------------------------------------------
+
+
+
+
+{ W = cos( hr ) * cos( hp ) * cos( hy ) - sin( hr ) * sin( hp ) * sin( hy ), X = cos( hr ) * sin( hp ) * cos( hy ) - sin( hr ) * cos( hp ) * sin( hy ), Y = cos( hr ) * cos( hp ) * sin( hy ) + sin( hr ) * sin( hp ) * cos( hy ), Z = cos( hr ) * sin( hp ) * sin( hy ) + sin( hr ) * cos( hp ) * cos( hy ) }

@@ -52,6 +52,8 @@ namespace Hyperion
 		m_PossessedCharacter = inTarget;
 		inTarget->PerformPossession( AquirePointer< CharacterController >() );
 		OnCharacterPossessed( inTarget );
+
+		return true;
 	}
 
 

@@ -55,9 +55,6 @@
     <Filter Include="File">
       <UniqueIdentifier>{16f5991a-7bf3-4919-8151-8b43c24b787c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Library\Math">
-      <UniqueIdentifier>{049f238a-30de-445f-a7af-a08ae7308c99}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Debugging">
       <UniqueIdentifier>{a475e7a4-9b93-4f19-a28b-15cffa62664c}</UniqueIdentifier>
     </Filter>
@@ -382,24 +379,6 @@
     <ClInclude Include="Include\Hyperion\Tools\HSMReader.h">
       <Filter>Tools</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Library\Math\Geometry.h">
-      <Filter>Library\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Library\Math\MathCore.h">
-      <Filter>Library\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Library\Math\Vertex.h">
-      <Filter>Library\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Library\Math\Vector.h">
-      <Filter>Library\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Library\Math\Angle.h">
-      <Filter>Library\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Library\Math\Transform.h">
-      <Filter>Library\Math</Filter>
-    </ClInclude>
     <ClInclude Include="Tests\HSMTests.hpp">
       <Filter>Tests</Filter>
     </ClInclude>
@@ -423,9 +402,6 @@
       <Filter>Streaming</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\Resource\ResourceManager.h">
-      <Filter>Renderer\Resource</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Resource\Geometry.h">
       <Filter>Renderer\Resource</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\Resource\Texture.h">
@@ -481,6 +457,18 @@
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Framework\NoClipMovementComponent.h">
       <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resource\Mesh.h">
+      <Filter>Renderer\Resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Geometry.h">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Library\Math.h">
+      <Filter>Library</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\InputTypes.h">
+      <Filter>Root</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -652,12 +640,6 @@
     <ClCompile Include="Source\Tools\HSMReader.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Library\Math\Geometry.cpp">
-      <Filter>Library\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Library\Math\MathCore.cpp">
-      <Filter>Library\Math</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Assets\StaticModelAsset.cpp">
       <Filter>Assets</Filter>
     </ClCompile>
@@ -711,6 +693,12 @@
     </ClCompile>
     <ClCompile Include="Source\Framework\NoClipMovementComponent.cpp">
       <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Library\Math.cpp">
+      <Filter>Library</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Library\Geometry.cpp">
+      <Filter>Library</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

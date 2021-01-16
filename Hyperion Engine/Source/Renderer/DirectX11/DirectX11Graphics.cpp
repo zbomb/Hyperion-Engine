@@ -11,7 +11,7 @@
 #include "Hyperion/Renderer/DirectX11/Shaders/DirectX11GBufferShader.h"
 #include "Hyperion/Renderer/DirectX11/Shaders/DirectX11ForwardShader.h"
 #include "Hyperion/Renderer/DirectX11/Shaders/DirectX11LightingShader.h"
-#include "Hyperion/Library/Math/Geometry.h"
+#include "Hyperion/Library/Geometry.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11DepthStencil.h"
 #include "Hyperion/Renderer/GBuffer.h"
 
@@ -321,7 +321,7 @@ namespace Hyperion
 		ViewState defaultView;
 
 		defaultView.Position	= Vector3D( 0.f, 0.f, 0.f );
-		defaultView.Rotation	= Angle3D( 0.f, 0.f, 0.f );
+		defaultView.Rotation	= Quaternion();
 		defaultView.FOV			= DirectX::XM_PIDIV4;
 
 		SetCameraInfo( defaultView );
@@ -739,25 +739,20 @@ namespace Hyperion
 	{
 		// Check if the camera has changed since last update
 		if( !m_bRunning || m_CameraPosition.x != inView.Position.X || m_CameraPosition.y != inView.Position.Y || m_CameraPosition.z != inView.Position.Z ||
-			m_CameraRotation.x != inView.Rotation.Pitch || m_CameraRotation.y != inView.Rotation.Yaw || m_CameraRotation.z != inView.Rotation.Roll || m_FOV != inView.FOV )
+			m_CameraRotation.m128_f32[ 0 ] != inView.Rotation.X || m_CameraRotation.m128_f32[ 1 ] != inView.Rotation.Y || m_CameraRotation.m128_f32[ 2 ] != inView.Rotation.Z ||
+			m_CameraRotation.m128_f32[ 3 ] != inView.Rotation.W || m_FOV != inView.FOV )
 		{
 			// Update cached camera potiion/rotation
 			m_CameraPosition.x = inView.Position.X;
 			m_CameraPosition.y = inView.Position.Y;
 			m_CameraPosition.z = inView.Position.Z;
 
-			m_CameraRotation.x = inView.Rotation.Pitch;
-			m_CameraRotation.y = inView.Rotation.Yaw;
-			m_CameraRotation.z = inView.Rotation.Roll;
+			m_CameraRotation = DirectX::XMVectorSet( -inView.Rotation.X, -inView.Rotation.Y, -inView.Rotation.Z, inView.Rotation.W );
 
 			m_FOV = inView.FOV;
 
 			// Re-calculate view matrix
-			auto rot = DirectX::XMMatrixRotationRollPitchYaw(
-				HYPERION_DEG_TO_RAD( m_CameraRotation.x ),
-				HYPERION_DEG_TO_RAD( m_CameraRotation.y ),
-				HYPERION_DEG_TO_RAD( m_CameraRotation.z )
-			);
+			auto rot = DirectX::XMMatrixRotationQuaternion( m_CameraRotation );
 
 			auto up			= DirectX::XMVectorSet( 0.f, 1.f, 0.f, 1.f );
 			auto dir		= DirectX::XMVectorSet( 0.f, 0.f, 1.f, 1.f );
@@ -775,10 +770,10 @@ namespace Hyperion
 	}
 
 
-	bool DirectX11Graphics::CheckViewCull( const Transform3D& inTransform, const AABB& inBounds )
+	bool DirectX11Graphics::CheckViewCull( const Transform& inTransform, const AABB& inBounds )
 	{
 		DirectX::XMFLOAT3 pos{ inTransform.Position.X, inTransform.Position.Y, inTransform.Position.Z };
-		DirectX::XMFLOAT3 rot{ inTransform.Rotation.Pitch, inTransform.Rotation.Yaw, inTransform.Rotation.Roll };
+		DirectX::XMVECTOR rot = DirectX::XMVectorSet( inTransform.Rotation.X, inTransform.Rotation.Y, inTransform.Rotation.Z, inTransform.Rotation.W );
 		DirectX::XMFLOAT3 min{ inBounds.Min.X, inBounds.Min.Y, inBounds.Min.Z };
 		DirectX::XMFLOAT3 max{ inBounds.Max.X, inBounds.Max.Y, inBounds.Max.Z };
 
@@ -2055,7 +2050,7 @@ namespace Hyperion
 	}
 
 
-	void DirectX11Graphics::RenderGeometry( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount )
+	void DirectX11Graphics::RenderMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount )
 	{
 		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device context was null" );
 
@@ -2080,7 +2075,7 @@ namespace Hyperion
 	}
 
 
-	void DirectX11Graphics::RenderScreenGeometry()
+	void DirectX11Graphics::RenderScreenMesh()
 	{
 		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device context was null!" );
 		HYPERION_VERIFY( m_ScreenVertexList && m_ScreenIndexList, "[DX11] Screen geometry was null!" );
@@ -2096,15 +2091,11 @@ namespace Hyperion
 	}
 
 
-	void DirectX11Graphics::GetWorldMatrix( const Transform3D& inObj, Matrix& outMatrix )
+	void DirectX11Graphics::GetWorldMatrix( const Transform& inObj, Matrix& outMatrix )
 	{
-		// We need to calculate the relative position and rotation of the object to the camera
-		auto relativePosition = DirectX::XMFLOAT3( inObj.Position.X - m_CameraPosition.x, inObj.Position.Y - m_CameraPosition.y, inObj.Position.Z - m_CameraPosition.z );
-		auto relativeRotation = DirectX::XMFLOAT3( inObj.Rotation.Pitch - m_CameraRotation.x, inObj.Rotation.Yaw - m_CameraRotation.y, inObj.Rotation.Roll - m_CameraRotation.z );
-
-		auto out	= m_WorldMatrix;
-		out			*= DirectX::XMMatrixRotationRollPitchYaw( HYPERION_DEG_TO_RAD( relativeRotation.x ), HYPERION_DEG_TO_RAD( relativeRotation.y ), HYPERION_DEG_TO_RAD( relativeRotation.z ) );
-		out			*= DirectX::XMMatrixTranslation( relativePosition.x, relativePosition.y, relativePosition.z );
+		auto out = m_WorldMatrix;
+		out *= DirectX::XMMatrixRotationQuaternion( DirectX::XMVectorSet( inObj.Rotation.X, inObj.Rotation.Y, inObj.Rotation.Z, inObj.Rotation.W ) );
+		out *= DirectX::XMMatrixTranslation( inObj.Position.X, inObj.Position.Y, inObj.Position.Z );
 
 		outMatrix.AssignData( out.r[ 0 ].m128_f32 );
 	}

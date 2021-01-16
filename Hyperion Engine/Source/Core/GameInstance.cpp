@@ -296,7 +296,7 @@ namespace Hyperion
 		HYPERION_VERIFY( m_LocalPlayer && m_LocalPlayer->IsValid(), "[GAME] LocalPlayer was null!" );
 		
 		// Update renderer view state if the camera info has changed since last tick
-		Transform3D cameraTransform{};
+		Transform cameraTransform{};
 		m_LocalPlayer->GetActiveCameraTransform( cameraTransform );
 
 		// Calculate the field of view
@@ -307,7 +307,8 @@ namespace Hyperion
 		{
 			ViewState newView;
 			newView.Position	= cameraTransform.Position;
-			newView.Rotation	= cameraTransform.Rotation;
+			auto cameraEuler	= cameraTransform.Rotation.GetEulerAngles();
+			newView.Rotation	= Quaternion( Angle3D( cameraEuler.Pitch, cameraEuler.Yaw, 0.f ) );
 			newView.FOV			= fovValue;
 
 			m_LastTickCameraFOV			= fovValue;
@@ -321,7 +322,7 @@ namespace Hyperion
 	}
 
 
-	bool GameInstance::AddEntityToActiveWorld( const HypPtr< Entity >& inEnt, const Transform3D& inTransform )
+	bool GameInstance::AddEntityToActiveWorld( const HypPtr< Entity >& inEnt, const Transform& inTransform )
 	{
 		if( m_ActiveWorld && m_ActiveWorld->IsValid() )
 		{

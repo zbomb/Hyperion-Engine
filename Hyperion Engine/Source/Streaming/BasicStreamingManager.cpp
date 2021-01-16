@@ -368,14 +368,14 @@ namespace Hyperion
 		}
 
 		// Now, upload data to VRAM
-		Engine::GetRenderer()->GetResourceManager()->UploadFullGeometry( inAsset, vertexData, indexData );
+		Engine::GetRenderer()->GetResourceManager()->UploadFullMesh( inAsset, vertexData, indexData );
 	}
 
 
 	void BasicStreamingManager::UnloadStaticModel( const std::shared_ptr< StaticModelAsset >& inAsset )
 	{
 		HYPERION_VERIFY( inAsset != nullptr, "[BasicStreamingManager] Attempt to load/unload asset that is null!" );
-		Engine::GetRenderer()->GetResourceManager()->RemoveFullGeometry( inAsset );
+		Engine::GetRenderer()->GetResourceManager()->RemoveFullMesh( inAsset );
 	}
 
 
@@ -395,7 +395,7 @@ namespace Hyperion
 
 	void BasicStreamingManager::Reset()
 	{
-		Engine::GetRenderer()->GetResourceManager()->ClearGeometry();
+		Engine::GetRenderer()->GetResourceManager()->ClearMeshes();
 		Engine::GetRenderer()->GetResourceManager()->ClearTextures();
 	}
 }

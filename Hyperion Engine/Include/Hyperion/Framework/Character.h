@@ -42,6 +42,12 @@ namespace Hyperion
 		virtual void OnCreate() override;
 		virtual void OnDestroy() override;
 
+		virtual void MoveForward( float inScalar );
+		virtual void MoveRight( float inScalar );
+		virtual void LookUp( float inScalar );
+		virtual void LookRight( float inScalar );
+
+		// Old input system
 		virtual bool HandleKeyBinding( const String& inKey );
 		virtual bool HandleAxisBinding( const String& inAxis, float inValue );
 

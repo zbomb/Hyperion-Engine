@@ -18,6 +18,13 @@ namespace Hyperion
 
 	public:
 
+		// New input system
+		virtual void MoveForward( float inScalar );
+		virtual void MoveRight( float inScalar );
+		virtual void LookUp( float inScalar );
+		virtual void LookRight( float inScalar );
+
+		// Old input system
 		virtual bool HandleKeyBinding( const String& inBind );
 		virtual bool HandleAxisBinding( const String& inBind, float inValue );
 

@@ -8,7 +8,7 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Streaming/DataTypes.h"
-#include "Hyperion/Library/Math/MathCore.h"
+#include "Hyperion/Library/Math.h"
 
 
 

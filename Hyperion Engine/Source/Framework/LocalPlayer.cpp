@@ -7,7 +7,7 @@
 #include "Hyperion/Framework/LocalPlayer.h"
 #include "Hyperion/Framework/Player.h"
 #include "Hyperion/Framework/CameraComponent.h"
-#include "Hyperion/Library/Math/MathCore.h"
+#include "Hyperion/Library/Geometry.h"
 #include "Hyperion/Core/Engine.h"
 #include "Hyperion/Core/InputManager.h"
 
@@ -56,7 +56,7 @@ namespace Hyperion
 	}
 
 
-	void LocalPlayer::GetActiveCameraTransform( Transform3D& outTransform )
+	void LocalPlayer::GetActiveCameraTransform( Transform& outTransform )
 	{
 		auto character = m_PlayerEntity ? m_PlayerEntity->GetCharacter() : nullptr;
 		auto camera = character ? character->GetCamera() : nullptr;

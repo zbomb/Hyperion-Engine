@@ -62,10 +62,9 @@ static_assert( true, "[HYPERION] Couldnt detect the OS this is targetting!" );
 #include "Hyperion/Ints.h"
 #include "Hyperion/Macros.h"
 #include "Hyperion/Console/Console.h"
-#include "Hyperion/Library/Math/Angle.h"
 #include "Hyperion/Core/Types/Color.h"
 #include "Hyperion/Core/Types/Point.h"
-#include "Hyperion/Library/Math/Vector.h"
+#include "Hyperion/Library/Geometry.h"
 
 #include <sstream>
 #include <thread>

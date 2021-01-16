@@ -131,7 +131,7 @@ namespace Hyperion
 							if( vertBuffer && indxBuffer && matPtr )
 							{
 								m_GBufferShader->UploadMaterial( matPtr );
-								m_API->RenderGeometry( vertBuffer, indxBuffer, indxBuffer->GetCount() );
+								m_API->RenderMesh( vertBuffer, indxBuffer, indxBuffer->GetCount() );
 							}
 
 						}
@@ -160,7 +160,7 @@ namespace Hyperion
 		m_LightingShader->UploadGBuffer( m_GBuffer );
 		m_LightingShader->UploadMatrixData( worldMatrix, viewMatrix, projectionMatrix );
 		
-		m_API->RenderScreenGeometry();
+		m_API->RenderScreenMesh();
 
 		m_API->EnableZBuffer();
 

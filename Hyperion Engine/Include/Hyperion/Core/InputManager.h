@@ -8,6 +8,7 @@
 
 #include "Hyperion/Core/Object.h"
 #include "Hyperion/Core/Types/ConcurrentQueue.h"
+#include "Hyperion/InputTypes.h"
 
 #include <shared_mutex>
 
@@ -15,11 +16,107 @@
 namespace Hyperion
 {
 
-	constexpr const char* INPUT_BINDINGS_FILE = "data/key_bindings.cfg";
+	constexpr const char* INPUT_BINDINGS_FILE				= "data/key_bindings.cfg";
 
 
 	class InputManager : public Object
 	{
+		
+	private:
+
+		struct AxisBinding
+		{
+			uint32 Identifier;
+			float Multiplier;
+			bool bInvert;
+			bool bUseFullRange;
+		};
+
+
+		struct ButtonBinding
+		{
+			uint32 Identifier;
+			bool bIsAction;
+			bool bInvert; // If this is an action, this determins if action is called on release instead. If this is a state binding, it inverts the button state
+		};
+
+		struct ButtonState
+		{
+			bool bActionState;
+			bool bState;
+		};
+
+		struct ButtonUpdate
+		{
+			bool bIsAction;
+			bool bState;
+		};
+
+		// Binding lookup happens in OS thread, an event is created and placed into the concurrent queue
+		std::map< Hyperion::Keys, ButtonBinding > m_ButtonBindings;
+		std::map< Hyperion::InputAxis, AxisBinding > m_AxisBindings;
+		std::map< uint32, bool > m_BoundEvents;
+
+		std::shared_mutex m_BindingsMutex;
+
+		// Then, every game tick, the concurrent queue is read, and the binding state is updated
+		std::map< uint32, ButtonState > m_ActionStates;
+		std::map< uint32, bool > m_ButtonStates;
+		std::map< uint32, float > m_AxisStates;
+
+		ConcurrentQueue< std::pair< uint32, ButtonUpdate > > m_ButtonUpdates;
+		ConcurrentQueue< std::pair< uint32, float > > m_AxisUpdates;
+		
+		bool m_bIsMouseCaptured;
+		std::function< void( bool ) > m_CaptureCallback;
+
+		/*
+		*	There are 3 types of inputs
+		*	1. Scalar Input
+		*	2. State Input
+		*	3. Action Input
+		* 
+		*	Scalars have an associated float value, either between [0,1] or [-1,1]
+		*	Whenever a scalar input happens, its stored for a frame in the axis state table, for other objects to poll
+		* 
+		*	State inputs can be polled at any time, and it checks if a button is currently pressed down
+		* 
+		*	Action inputs check for a button being pressed (or released), and only stays in the cache for a single frame
+		*/
+
+
+	public:
+
+		InputManager();
+
+		bool AddActionBinding( Keys inKey, uint32 inIdentifier, bool bOnRelease = false );
+		bool AddStateBinding( Keys inKey, uint32 inIdentifier, bool bInvert = false );
+		bool AddScalarBinding( InputAxis inAxis, uint32 inIdentifier, bool bUseFullRange = false, bool bInvertValues = false, float inMultiplier = 1.f );
+
+		bool RemoveButtonBind( Keys inKey );
+		bool RemoveAxisBind( InputAxis inAxis );
+		bool RemoveBind( uint32 inIdentifier );
+		void RemoveAllBindings();
+
+		void LoadBindingsFromDisk();
+		void ProcessUpdates();
+
+		void PushKeyState( Keys inKey, bool inState );
+		void PushAxisState( InputAxis inAxis, float inState, bool bFullRange = false );
+
+		bool PollAction( uint32 inIdentifier );
+		bool PollState( uint32 inIdentifier );
+		float PollScalar( uint32 inIdentifier );
+
+		inline bool IsMouseCaptured() const { return m_bIsMouseCaptured; }
+		void CaptureMouse();
+		void ReleaseMouse();
+		void SetCaptureCallback( std::function< void( bool ) > Callback );
+
+
+		/*
+		*	OLD SYSTEM
+		
 
 	private:
 
@@ -69,7 +166,7 @@ namespace Hyperion
 		void CaptureMouse();
 		void ReleaseMouse();
 		void SetCaptureCallback( std::function< void( bool ) > Callback );
-
+		*/
 	};
 
 

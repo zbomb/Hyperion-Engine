@@ -230,25 +230,24 @@ namespace Hyperion
 	----------------------------------------------------------------------*/
 	Angle3D Component::GetWorldRotation() const
 	{
-		Angle3D Output;
+		return GetWorldQuaternion().GetEulerAngles();
+	}
 
+	Quaternion Component::GetWorldQuaternion() const
+	{
 		if( m_Parent )
 		{
-			Output = m_Parent->GetWorldRotation() + m_Transform.Rotation;
+			return( m_Parent->GetWorldQuaternion() * m_Transform.Rotation );
 		}
 		else if( m_Owner )
 		{
-			Output = m_Owner->GetWorldRotation() + m_Transform.Rotation;
+			return( m_Owner->GetWorldQuaternion() * m_Transform.Rotation );
 		}
 		else
 		{
 			return m_Transform.Rotation;
 		}
-
-		Output.ClampContents();
-		return Output;
 	}
-
 
 	/*----------------------------------------------------------------------
 		Component::GetWorldScale
@@ -273,9 +272,9 @@ namespace Hyperion
 	/*----------------------------------------------------------------------
 		Component::GetWorldTransform
 	----------------------------------------------------------------------*/
-	Transform3D Component::GetWorldTransform() const
+	Transform Component::GetWorldTransform() const
 	{
-		Transform3D Output;
+		Transform Output;
 
 		if( m_Parent )
 		{
@@ -290,7 +289,6 @@ namespace Hyperion
 			Output = m_Transform;
 		}
 
-		Output.Rotation.ClampContents();
 		return Output;
 	}
 
@@ -312,11 +310,14 @@ namespace Hyperion
 	----------------------------------------------------------------------*/
 	void Component::SetRotation( const Angle3D& inRotation )
 	{
-		m_Transform.Rotation = inRotation;
-		m_Transform.Rotation.ClampContents();
+		SetQuaternion( Quaternion( inRotation ) );
+	}
 
+
+	void Component::SetQuaternion( const Quaternion& inQuat )
+	{
+		m_Transform.Rotation = inQuat;
 		OnLocalTransformChanged();
-
 		TransmitFunction( &Component::OnWorldTransformChanged );
 	}
 
@@ -336,13 +337,34 @@ namespace Hyperion
 	/*----------------------------------------------------------------------
 		Component::SetTransform
 	----------------------------------------------------------------------*/
-	void Component::SetTransform( const Transform3D& inTransform )
+	void Component::SetTransform( const Transform& inTransform )
 	{
 		m_Transform = inTransform;
-		m_Transform.Rotation.ClampContents();
 
 		OnLocalTransformChanged();
+		TransmitFunction( &Component::OnWorldTransformChanged );
+	}
 
+
+	void Component::Translate( const Vector3D& inVec )
+	{
+		m_Transform = m_Transform.TranslateTransform( inVec );
+		OnLocalTransformChanged();
+		TransmitFunction( &Component::OnWorldTransformChanged );
+	}
+
+	void Component::Rotate( const Quaternion& inQuat )
+	{
+		m_Transform = m_Transform.RotateTransform( inQuat );
+		OnLocalTransformChanged();
+		TransmitFunction( &Component::OnWorldTransformChanged );
+	}
+
+
+	void Component::Rotate( const Angle3D& inEuler )
+	{
+		m_Transform = m_Transform.RotateTransform( inEuler );
+		OnLocalTransformChanged();
 		TransmitFunction( &Component::OnWorldTransformChanged );
 	}
 

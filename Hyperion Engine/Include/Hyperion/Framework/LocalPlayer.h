@@ -17,7 +17,7 @@ namespace Hyperion
 		Forward Declarations
 	*/
 	class Player;
-	struct Transform3D;
+	struct Transform;
 
 
 
@@ -35,7 +35,7 @@ namespace Hyperion
 		LocalPlayer();
 		~LocalPlayer();
 
-		void GetActiveCameraTransform( Transform3D& outTransform );
+		void GetActiveCameraTransform( Transform& outTransform );
 		bool ProcessKeyBinding( const String& inKey );
 		bool ProcessAxisBinding( const String& inAxis, float inValue );
 

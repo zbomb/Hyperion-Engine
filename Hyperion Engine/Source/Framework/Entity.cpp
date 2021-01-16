@@ -640,15 +640,18 @@ namespace Hyperion
 	----------------------------------------------------------------------*/
 	Angle3D Entity::GetWorldRotation() const
 	{
+		return GetWorldQuaternion().GetEulerAngles();
+	}
+
+	Quaternion Entity::GetWorldQuaternion() const
+	{
 		if( m_Parent && m_Parent->IsValid() )
 		{
-			auto out = m_Parent->GetWorldRotation() + GetRotation();
-			out.ClampContents();
-			return out;
+			return m_Parent->GetWorldQuaternion() * GetQuaternion();
 		}
 		else
 		{
-			return GetRotation();
+			return GetQuaternion();
 		}
 	}
 
@@ -672,14 +675,11 @@ namespace Hyperion
 	/*----------------------------------------------------------------------
 		Entity::GetWorldTransform 
 	----------------------------------------------------------------------*/
-	Transform3D Entity::GetWorldTransform() const
+	Transform Entity::GetWorldTransform() const
 	{
 		if( m_Parent && m_Parent->IsValid() )
 		{
-			auto out = m_Parent->GetWorldTransform() + GetTransform();
-			out.Rotation.ClampContents();
-
-			return out;
+			return m_Parent->GetWorldTransform() + GetTransform();
 		}
 		else
 		{
@@ -707,8 +707,12 @@ namespace Hyperion
 	----------------------------------------------------------------------*/
 	void Entity::SetRotation( const Angle3D& inRotation )
 	{
-		m_Transform.Rotation = inRotation;
-		m_Transform.Rotation.ClampContents();
+		SetQuaternion( Quaternion( inRotation ) );
+	}
+
+	void Entity::SetQuaternion( const Quaternion& inQuat )
+	{
+		m_Transform.Rotation = inQuat;
 
 		OnLocalTransformChanged();
 
@@ -733,13 +737,39 @@ namespace Hyperion
 	/*----------------------------------------------------------------------
 		Entity::SetTransform 
 	----------------------------------------------------------------------*/
-	void Entity::SetTransform( const Transform3D& inTransform )
+	void Entity::SetTransform( const Transform& inTransform )
 	{
 		m_Transform = inTransform;
-		m_Transform.Rotation.ClampContents();
 
 		OnLocalTransformChanged();
 
+		TransmitEntityFunction( &Entity::OnWorldTransformChanged );
+		TransmitComponentFunction( true, &Component::OnWorldTransformChanged );
+	}
+
+
+	void Entity::Translate( const Vector3D& inVec )
+	{
+		m_Transform = m_Transform.TranslateTransform( inVec );
+		OnLocalTransformChanged();
+		TransmitEntityFunction( &Entity::OnWorldTransformChanged );
+		TransmitComponentFunction( true, &Component::OnWorldTransformChanged );
+	}
+
+
+	void Entity::Rotate( const Quaternion& inQuat )
+	{
+		m_Transform = m_Transform.RotateTransform( inQuat );
+		OnLocalTransformChanged();
+		TransmitEntityFunction( &Entity::OnWorldTransformChanged );
+		TransmitComponentFunction( true, &Component::OnWorldTransformChanged );
+	}
+
+
+	void Entity::Rotate( const Angle3D& inEuler )
+	{
+		m_Transform = m_Transform.RotateTransform( inEuler );
+		OnLocalTransformChanged();
 		TransmitEntityFunction( &Entity::OnWorldTransformChanged );
 		TransmitComponentFunction( true, &Component::OnWorldTransformChanged );
 	}

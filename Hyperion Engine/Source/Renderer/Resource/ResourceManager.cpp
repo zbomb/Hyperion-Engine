@@ -38,7 +38,7 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr< RGeometryData > ResourceManager::GetGeometryData( uint32 inIdentifier )
+	std::shared_ptr< RMeshData > ResourceManager::GetMeshData( uint32 inIdentifier )
 	{
 		if( inIdentifier == ASSET_INVALID ) { return nullptr; }
 
@@ -49,30 +49,30 @@ namespace Hyperion
 	}
 
 
-	bool ResourceManager::IsGeometryLODCached( uint32 inIdentifier, uint8 inLOD )
+	bool ResourceManager::IsMeshLODCached( uint32 inIdentifier, uint8 inLOD )
 	{
 		if( inLOD > MODEL_MAX_LODS ) { return false; }
 
-		auto ptr = GetGeometryData( inIdentifier );
+		auto ptr = GetMeshData( inIdentifier );
 		return ptr ? ptr->IsLODCached( inLOD ) : false;
 	}
 
 
-	bool ResourceManager::IsGeometryFullyCached( uint32 inIdentifier )
+	bool ResourceManager::IsMeshFullyCached( uint32 inIdentifier )
 	{
-		auto ptr = GetGeometryData( inIdentifier );
+		auto ptr = GetMeshData( inIdentifier );
 		return ptr ? ptr->IsFullyCached() : false;
 	}
 
 
-	bool ResourceManager::IsGeometryPartiallyCached( uint32 inIdentifier )
+	bool ResourceManager::IsMeshPartiallyCached( uint32 inIdentifier )
 	{
-		auto ptr = GetGeometryData( inIdentifier );
+		auto ptr = GetMeshData( inIdentifier );
 		return ptr ? ptr->IsPartiallyCached() : false;
 	}
 
 
-	bool ResourceManager::UploadGeometryLOD( const std::shared_ptr<StaticModelAsset>& inAsset, uint8 inLOD,
+	bool ResourceManager::UploadMeshLOD( const std::shared_ptr<StaticModelAsset>& inAsset, uint8 inLOD,
 											 const std::vector< std::vector<byte> >& inVertexData, const std::vector< std::vector<byte> >& inIndexData )
 	{
 		// Validate parameters
@@ -86,22 +86,22 @@ namespace Hyperion
 		if( !IsRenderThread() )
 		{
 			Engine::GetRenderer()->AddCommand(
-				std::make_unique< RenderCommand >( std::bind( &ResourceManager::UploadGeometryLOD, this, inAsset, inLOD, inVertexData, inIndexData ) )
+				std::make_unique< RenderCommand >( std::bind( &ResourceManager::UploadMeshLOD, this, inAsset, inLOD, inVertexData, inIndexData ) )
 			);
 
 			return true;
 		}
 
 		// Check if there is an existing geometry instance, create one if not
-		std::shared_ptr< RGeometryData > data;
+		std::shared_ptr< RMeshData > data;
 
 		auto id		= inAsset->GetIdentifier();
 		auto entry	= m_Geometry.find( id );
 
 		if( entry == m_Geometry.end() )
 		{
-			data = std::make_shared< RGeometryData >( inAsset );
-			m_Geometry.emplace( id, std::shared_ptr< RGeometry >( new RGeometry( id, data ) ) );
+			data = std::make_shared< RMeshData >( inAsset );
+			m_Geometry.emplace( id, std::shared_ptr< RMesh >( new RMesh( id, data ) ) );
 		}
 
 		auto targetLOD = data->GetLOD( inLOD );
@@ -153,7 +153,7 @@ namespace Hyperion
 	}
 
 
-	bool ResourceManager::RemoveGeometryLOD( const std::shared_ptr<StaticModelAsset>& inAsset, uint8 inLOD )
+	bool ResourceManager::RemoveMeshLOD( const std::shared_ptr<StaticModelAsset>& inAsset, uint8 inLOD )
 	{
 		// Validate Parameters
 		if( !inAsset || inLOD > MODEL_MAX_LODS )
@@ -166,7 +166,7 @@ namespace Hyperion
 		if( !IsRenderThread() )
 		{
 			Engine::GetRenderer()->AddCommand(
-				std::make_unique< RenderCommand >( std::bind( &ResourceManager::RemoveGeometryLOD, this, inAsset, inLOD ) )
+				std::make_unique< RenderCommand >( std::bind( &ResourceManager::RemoveMeshLOD, this, inAsset, inLOD ) )
 			);
 
 			return true;
@@ -195,7 +195,7 @@ namespace Hyperion
 	}
 
 
-	bool ResourceManager::UploadFullGeometry( const std::shared_ptr<StaticModelAsset>& inAsset, 
+	bool ResourceManager::UploadFullMesh( const std::shared_ptr<StaticModelAsset>& inAsset, 
 											  const std::vector< std::vector<std::vector<byte>>>& inVertexData, const std::vector< std::vector<std::vector<byte>>>& inIndexData )
 	{
 		// Validate parameters
@@ -209,22 +209,22 @@ namespace Hyperion
 		if( !IsRenderThread() )
 		{
 			Engine::GetRenderer()->AddCommand(
-				std::make_unique< RenderCommand >( std::bind( &ResourceManager::UploadFullGeometry, this, inAsset, inVertexData, inIndexData ) )
+				std::make_unique< RenderCommand >( std::bind( &ResourceManager::UploadFullMesh, this, inAsset, inVertexData, inIndexData ) )
 			);
 
 			return true;
 		}
 
 		// Check if there is an existing geometry instance, create one if not
-		std::shared_ptr< RGeometryData > data;
+		std::shared_ptr< RMeshData > data;
 
 		auto id		= inAsset->GetIdentifier();
 		auto entry	= m_Geometry.find( id );
 
 		if( entry == m_Geometry.end() )
 		{
-			data = std::make_shared< RGeometryData >( inAsset );
-			m_Geometry.emplace( id, std::shared_ptr< RGeometry >( new RGeometry( id, data ) ) );
+			data = std::make_shared< RMeshData >( inAsset );
+			m_Geometry.emplace( id, std::shared_ptr< RMesh >( new RMesh( id, data ) ) );
 		}
 		else
 		{
@@ -291,13 +291,13 @@ namespace Hyperion
 	}
 
 
-	bool ResourceManager::RemoveFullGeometry( const std::shared_ptr<StaticModelAsset>& inAsset )
+	bool ResourceManager::RemoveFullMesh( const std::shared_ptr<StaticModelAsset>& inAsset )
 	{
 		if( !inAsset ) { return false; }
 
 		if( !IsRenderThread() )
 		{
-			Engine::GetRenderer()->AddCommand( std::make_unique< RenderCommand >( std::bind( &ResourceManager::RemoveFullGeometry, this, inAsset ) ) );
+			Engine::GetRenderer()->AddCommand( std::make_unique< RenderCommand >( std::bind( &ResourceManager::RemoveFullMesh, this, inAsset ) ) );
 			return true;
 		}
 
@@ -326,18 +326,18 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr<RGeometry> ResourceManager::GetGeometry( const std::shared_ptr<StaticModelAsset>& inAsset )
+	std::shared_ptr<RMesh> ResourceManager::GetMesh( const std::shared_ptr<StaticModelAsset>& inAsset )
 	{
 		if( !inAsset ) { return nullptr; }
 		
 		// Find geometry entry
 		auto id = inAsset->GetIdentifier();
 		auto entry = m_Geometry.find( id );
-		std::shared_ptr< RGeometry > ptr;
+		std::shared_ptr< RMesh > ptr;
 
 		if( entry == m_Geometry.end() )
 		{
-			ptr = m_Geometry.emplace( id, std::shared_ptr< RGeometry >( new RGeometry( id ) ) ).first->second;
+			ptr = m_Geometry.emplace( id, std::shared_ptr< RMesh >( new RMesh( id ) ) ).first->second;
 		}
 		else
 		{
@@ -347,7 +347,7 @@ namespace Hyperion
 		// Ensure geometry entry is valid
 		if( !ptr->m_Data )
 		{
-			ptr->m_Data = std::make_shared< RGeometryData >( inAsset );
+			ptr->m_Data = std::make_shared< RMeshData >( inAsset );
 		}
 
 		// Return the pointer
@@ -355,7 +355,7 @@ namespace Hyperion
 	}
 
 
-	void ResourceManager::ClearGeometry()
+	void ResourceManager::ClearMeshes()
 	{
 		if( IsRenderThread() )
 		{
@@ -363,7 +363,7 @@ namespace Hyperion
 		}
 		else
 		{
-			Engine::GetRenderer()->AddCommand( std::make_unique< RenderCommand >( std::bind( &ResourceManager::ClearGeometry, this ) ) );
+			Engine::GetRenderer()->AddCommand( std::make_unique< RenderCommand >( std::bind( &ResourceManager::ClearMeshes, this ) ) );
 		}
 	}
 

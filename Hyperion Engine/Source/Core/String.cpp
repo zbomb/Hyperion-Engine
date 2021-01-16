@@ -11,7 +11,7 @@
 #include "Hyperion/Core/String.h"
 #include "Hyperion/Library/UTF8.hpp"
 #include "Hyperion/Library/UTF16.hpp"
-#include "Hyperion/Library/Math/MathCore.h"
+#include "Hyperion/Library/Math.h"
 #include "Hyperion/Library/Binary.h"
 
 

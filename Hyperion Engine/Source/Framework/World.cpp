@@ -117,7 +117,7 @@ namespace Hyperion
 		return true;
 	}
 
-	bool World::AddEntityAt( const HypPtr< Entity >& inEnt, Transform3D inTransform )
+	bool World::AddEntityAt( const HypPtr< Entity >& inEnt, Transform inTransform )
 	{
 		// Validate Entity
 		if( !inEnt || !inEnt->IsValid() || inEnt->GetWorld() )

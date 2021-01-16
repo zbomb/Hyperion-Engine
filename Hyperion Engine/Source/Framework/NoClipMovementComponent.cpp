@@ -6,7 +6,7 @@
 
 #include "Hyperion/Framework/NoClipMovementComponent.h"
 #include "Hyperion/Framework/Entity.h"
-#include "Hyperion/Library/Math/Geometry.h"
+#include "Hyperion/Library/Geometry.h"
 
 
 
@@ -23,6 +23,32 @@ namespace Hyperion
 	}
 
 
+	// New Input System
+	void NoClipMovementComponent::MoveForward( float inScalar )
+	{
+
+	}
+
+
+	void NoClipMovementComponent::MoveRight( float inScalar )
+	{
+
+	}
+
+
+	void NoClipMovementComponent::LookUp( float inScalar )
+	{
+
+	}
+
+
+	void NoClipMovementComponent::LookRight( float inScalar )
+	{
+
+	}
+
+
+	// Old Input System
 	bool NoClipMovementComponent::HandleKeyBinding( const String& inCommand )
 	{
 		if( inCommand == "+forward" )
@@ -74,11 +100,13 @@ namespace Hyperion
 		{
 			if( inCommand == "view_x" )
 			{
-				owner->SetRotation( owner->GetRotation() + Angle3D( 0.f, inValue, 0.f ) );
+				auto currentRotation = owner->GetRotation();
+				owner->SetRotation( Angle3D( currentRotation.Pitch, currentRotation.Yaw + inValue, 0.f ) );
 			}
 			else if( inCommand == "view_y" )
 			{
-				owner->SetRotation( owner->GetRotation() + Angle3D( inValue, 0.f, 0.f ) );
+				auto currentRotation = owner->GetRotation();
+				owner->SetRotation( Angle3D( currentRotation.Pitch + inValue, currentRotation.Yaw, 0.f ) );
 			}
 			else return false;
 		}
@@ -118,13 +146,11 @@ namespace Hyperion
 
 		if( owner && owner->IsSpawned() && ( movementX != 0.f || movementZ != 0.f ) )
 		{
-			auto fwdAngle		= owner->GetRotation();
-			auto rightAngle		= owner->GetRotation() + Angle3D( 0, 90.f, 0.f );
+			auto ownerEuler = owner->GetQuaternion().GetEulerAngles();
+			auto ownerFwd		= ownerEuler.GetDirectionVector();
+			auto ownerRight = Angle3D( 0.f, ownerEuler.Yaw + 90.f, 0.f ).GetDirectionVector();
 
-			auto fwdVec		= GeometryLibrary::GetDirectionVectorFromAngle( fwdAngle );
-			auto rightVec	= GeometryLibrary::GetDirectionVectorFromAngle( rightAngle );
-
-			GetOwner()->SetPosition( GetOwner()->GetPosition() + ( ( fwdVec * movementZ ) + ( rightVec * movementX ) ) * 0.25f );
+			owner->Translate( ( ownerFwd * movementZ + ownerRight * movementX ) * 0.25f );
 		}
 	}
 

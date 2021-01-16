@@ -26,6 +26,345 @@ namespace Hyperion
 	{}
 
 
+	bool InputManager::AddActionBinding( Keys inKey, uint32 inIdentifier, bool bOnRelease )
+	{
+		if( inKey == Keys::NONE || inIdentifier == INPUT_NONE ) { return false; }
+
+		// Aquire a full lock on the binding mutex so we can write into the binding list
+		std::unique_lock< std::shared_mutex > lock( m_BindingsMutex );
+
+		// Ensure this event isnt already bound to
+		if( m_BoundEvents[ inIdentifier ] )
+		{
+			Console::WriteLine( "[Warning] InputManager: Failed to add action binding, another key is already bound to event (", inIdentifier, ")" );
+			return false;
+		}
+
+		// Tag this ID as bound
+		m_BoundEvents[ inIdentifier ] = true;
+
+		// Create new binding info, and insert into this keys bind list
+		ButtonBinding newBind{};
+		newBind.Identifier	= inIdentifier;
+		newBind.bIsAction	= true;
+		newBind.bInvert		= bOnRelease;
+
+		m_ButtonBindings[ inKey ] = newBind;
+		return true;
+	}
+
+
+	bool InputManager::AddStateBinding( Keys inKey, uint32 inIdentifier, bool bInvert )
+	{
+		if( inKey == Keys::NONE || inIdentifier == INPUT_NONE ) { return false; }
+
+		// Aquire a full lock on the binding mutex so we can write into the binding list
+		std::unique_lock< std::shared_mutex > lock( m_BindingsMutex );
+
+		// Ensure this event isnt already bound to
+		if( m_BoundEvents[ inIdentifier ] )
+		{
+			Console::WriteLine( "[Warning] InputManager: Failed to add state binding, another key is already bound to event (", inIdentifier, ")" );
+			return false;
+		}
+
+		// Tag this ID as bound
+		m_BoundEvents[ inIdentifier ] = true;
+
+		// Create new binding info, and insert into this keys bind list
+		ButtonBinding newBind{};
+		newBind.Identifier	= inIdentifier;
+		newBind.bIsAction	= false;
+		newBind.bInvert		= bInvert;
+
+		m_ButtonBindings[ inKey ] = newBind;
+		return true;
+	}
+
+
+	bool InputManager::AddScalarBinding( InputAxis inAxis, uint32 inIdentifier, bool bUseFullRange, bool bInvertValues, float inMultiplier )
+	{
+		if( inAxis == InputAxis::None || inIdentifier == INPUT_NONE ) { return false; }
+
+		// Aquire lock on the binding list mutex
+		std::unique_lock< std::shared_mutex > lock( m_BindingsMutex );
+
+		// Ensure an axis isnt already bound to this event
+		if( m_BoundEvents[ inIdentifier ] )
+		{
+			Console::WriteLine( "[Warning] InputManager: Failed to add axis binding, the input (", inIdentifier, ") already is bound" );
+			return false;
+		}
+
+		// Tag this input as bound
+		m_BoundEvents[ inIdentifier ] = true;
+
+		AxisBinding newBind{};
+		newBind.Identifier			= inIdentifier;
+		newBind.Multiplier			= inMultiplier;
+		newBind.bUseFullRange		= bUseFullRange;
+		newBind.bInvert				= bInvertValues;
+
+		m_AxisBindings[ inAxis ] = newBind;
+		return true;
+	}
+
+
+	bool InputManager::RemoveButtonBind( Keys inKey )
+	{
+		if( inKey == Keys::NONE ) { return false; }
+		std::unique_lock< std::shared_mutex > lock( m_BindingsMutex );
+
+		auto it = m_ButtonBindings.find( inKey );
+		if( it == m_ButtonBindings.end() ) { return true; }
+
+		m_BoundEvents[ it->second.Identifier ] = false;
+		m_ButtonBindings.erase( it );
+		return true;
+	}
+
+
+	bool InputManager::RemoveAxisBind( InputAxis inAxis )
+	{
+		if( inAxis == InputAxis::None ) { return false; }
+		std::unique_lock< std::shared_mutex > lock( m_BindingsMutex );
+		
+		auto it = m_AxisBindings.find( inAxis );
+		if( it == m_AxisBindings.end() ) { return true; }
+
+		m_BoundEvents[ it->second.Identifier ] = false;
+		m_AxisBindings.erase( it );
+		return true;
+	}
+
+
+	bool InputManager::RemoveBind( uint32 inIdentifier )
+	{
+		if( inIdentifier == INPUT_NONE ) { return false; }
+		std::unique_lock< std::shared_mutex > lock( m_BindingsMutex );
+
+		for( auto it = m_ButtonBindings.begin(); it != m_ButtonBindings.end(); )
+		{
+			if( it->second.Identifier == inIdentifier )
+			{
+				it = m_ButtonBindings.erase( it );
+			}
+			else
+			{
+				it++;
+			}
+		}
+
+		m_BoundEvents[ inIdentifier ] = false;
+		return true;
+	}
+
+
+	void InputManager::RemoveAllBindings()
+	{
+		Console::WriteLine( "InputManager: Clearing all input bindings!" );
+
+		std::unique_lock< std::shared_mutex > lock( m_BindingsMutex );
+		m_ButtonBindings.clear();
+		m_AxisBindings.clear();
+		m_BoundEvents.clear();
+	}
+
+
+	void InputManager::LoadBindingsFromDisk()
+	{
+		// Clear out any current bindinds
+		RemoveAllBindings();
+
+		String filePath( INPUT_BINDINGS_FILE );
+		auto f = FileSystem::OpenFile( FilePath( filePath ), FileMode::Read );
+
+		if( !f || !f->IsValid() )
+		{
+			// There is no file, so lets load the defaults for the current operating system
+			// TODO
+
+			// For now, were just going to hard code some defaults
+			AddStateBinding( Keys::W, INPUT_STATE_MOVE_FORWARD );
+			AddStateBinding( Keys::S, INPUT_STATE_MOVE_BACKWARD );
+			AddStateBinding( Keys::A, INPUT_STATE_MOVE_LEFT );
+			AddStateBinding( Keys::D, INPUT_STATE_MOVE_RIGHT );
+
+			AddScalarBinding( InputAxis::MouseX, INPUT_AXIS_LOOK_YAW, true, false, 1.f );
+			AddScalarBinding( InputAxis::MouseY, INPUT_AXIS_LOOK_PITCH, true, false, 1.f );
+		}
+		else
+		{
+			HYPERION_NOT_IMPLEMENTED( "Reading key bindings from file" );
+		}
+	}
+
+
+	void InputManager::ProcessUpdates()
+	{
+		// This gets called to update the button and axis states
+		// First, clear out some info about the button state
+		for( auto it = m_ActionStates.begin(); it != m_ActionStates.end(); it++ )
+		{
+			it->second.bActionState = false;
+		}
+
+		// Now, lets process button updates
+		auto button_update = m_ButtonUpdates.PopValue();
+		while( button_update.first )
+		{
+			// Proces an action update, if the state goes from 'false' to 'true', flag the action as activated
+			if( button_update.second.second.bIsAction )
+			{
+				auto& entry = m_ActionStates[ button_update.second.first ];
+				if( !entry.bState && button_update.second.second.bState )
+				{
+					entry.bActionState = true;
+				}
+
+				// Update the press state
+				entry.bState = button_update.second.second.bState;
+			}
+			else
+			{
+				// Process a normal button state update
+				m_ButtonStates[ button_update.second.first ] = button_update.second.second.bState;
+			}
+
+			// Pop the next update
+			button_update = m_ButtonUpdates.PopValue();
+		}
+
+		// Process axis updates
+		auto axis_update = m_AxisUpdates.PopValue();
+		while( axis_update.first )
+		{
+			m_AxisStates[ axis_update.second.first ] = axis_update.second.second;
+
+			// Pop the next update
+			axis_update = m_AxisUpdates.PopValue();
+		}
+	}
+
+
+	void InputManager::PushKeyState( Keys inKey, bool inState )
+	{
+		// Disregard the key update if there is nothing bound to this key
+		std::shared_lock< std::shared_mutex > lock( m_BindingsMutex );
+		auto entry = m_ButtonBindings.find( inKey );
+		if( entry == m_ButtonBindings.end() ) { return; }
+
+		// Next, figure out the event bound to this key, determine what the state should be, and push into the queue
+		ButtonUpdate update{};
+		update.bIsAction = entry->second.bIsAction;
+		update.bState = entry->second.bInvert ? !inState : inState;
+
+		m_ButtonUpdates.Push( std::make_pair( entry->second.Identifier, update ) );
+	}
+
+
+	void InputManager::PushAxisState( InputAxis inAxis, float inState, bool bFullRange )
+	{
+		// Disregard axis update if there is nothing bound to this axis
+		std::shared_lock< std::shared_mutex > lock( m_BindingsMutex );
+		auto entry = m_AxisBindings.find( inAxis );
+		if( entry == m_AxisBindings.end() ) { return; }
+
+		// Next, figure out what to pass to the game thread
+		if( bFullRange )
+		{
+			// Clamp input between [-1,1]
+			if( inState < -1.f ) { inState = -1.f; }
+			else if( inState > 1.f ) { inState = 1.f; }
+
+			if( !entry->second.bUseFullRange )
+			{
+				inState = ( inState + 1.f ) * 0.5f;
+			}
+		}
+		else
+		{
+			// Clamp input between [0,1]
+			if( inState < 0.f ) { inState = 0.f; }
+			else if( inState > 1.f ) { inState = 1.f; }
+
+			if( entry->second.bUseFullRange )
+			{
+				inState = ( inState * 2.f ) - 1.f;
+			}
+		}
+
+		// Scale, and select proper sign
+		float finalValue = inState * entry->second.Multiplier;
+		finalValue = entry->second.bInvert ? -finalValue : finalValue;
+
+		m_AxisUpdates.Push( std::make_pair( entry->second.Identifier, finalValue ) );
+	}
+
+
+	bool InputManager::PollAction( uint32 inIdentifier )
+	{
+		if( inIdentifier == INPUT_NONE ) { return false; }
+
+		auto entry = m_ActionStates.find( inIdentifier );
+		if( entry == m_ActionStates.end() ) { return false; }
+
+		return entry->second.bActionState;
+	}
+
+
+	bool InputManager::PollState( uint32 inIdentifier )
+	{
+		if( inIdentifier == INPUT_NONE ) { return false; }
+
+		auto entry = m_ButtonStates.find( inIdentifier );
+		if( entry == m_ButtonStates.end() ) { return false; }
+
+		return entry->second;
+	}
+
+
+	float InputManager::PollScalar( uint32 inIdentifier )
+	{
+		if( inIdentifier == INPUT_NONE ) { return 0.f; }
+
+		auto entry = m_AxisStates.find( inIdentifier );
+		if( entry == m_AxisStates.end() ) { return 0.f; }
+
+		return entry->second;
+	}
+
+
+	void InputManager::CaptureMouse()
+	{
+		m_bIsMouseCaptured = true;
+
+		if( m_CaptureCallback )
+			m_CaptureCallback( true );
+	}
+
+
+	void InputManager::ReleaseMouse()
+	{
+		m_bIsMouseCaptured = false;
+
+		if( m_CaptureCallback )
+			m_CaptureCallback( false );
+	}
+
+
+	void InputManager::SetCaptureCallback( std::function< void( bool ) > Callback )
+	{
+		m_CaptureCallback = Callback;
+	}
+
+
+
+	/*
+	*	OLD SYSTEM
+	
+
+
 	bool InputManager::BindKey( Keys inKey, const String& inCmd, bool bPress )
 	{
 		std::unique_lock< std::shared_mutex > lock( m_BindListMutex );

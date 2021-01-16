@@ -58,7 +58,7 @@ namespace Hyperion
 		bool DespawnWorld();
 
 		bool AddEntity( const HypPtr< Entity >& inTarget );
-		bool AddEntityAt( const HypPtr< Entity >& inTarget, Transform3D inTransform );
+		bool AddEntityAt( const HypPtr< Entity >& inTarget, Transform inTransform );
 		bool RemoveEntity( const HypPtr< Entity >& inTarget );
 
 		HypPtr< Entity > GetEntity( uint32 inIdentifier );

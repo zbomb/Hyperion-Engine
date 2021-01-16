@@ -7,7 +7,7 @@
 #pragma once
 
 #include "Hyperion/Core/Object.h"
-#include "Hyperion/Library/Math/Transform.h"
+#include "Hyperion/Library/Geometry.h"
 #include "Hyperion/Core/String.h"
 
 #include <vector>
@@ -37,7 +37,7 @@ namespace Hyperion
 
 		std::map< String, HypPtr< Component > > m_Children;
 
-		Transform3D m_Transform;
+		Transform m_Transform;
 
 		String m_ComponentIdentifier;
 
@@ -114,19 +114,26 @@ namespace Hyperion
 		inline String GetComponentIdentifier() const { return m_ComponentIdentifier; }
 
 		inline Vector3D GetPosition() const			{ return m_Transform.Position; }
-		inline Angle3D GetRotation() const			{ return m_Transform.Rotation; }
+		inline Angle3D GetRotation() const			{ return m_Transform.Rotation.GetEulerAngles(); }
+		inline Quaternion GetQuaternion() const		{ return m_Transform.Rotation; }
 		inline Vector3D GetScale() const			{ return m_Transform.Scale; }
-		inline Transform3D GetTransform() const		{ return m_Transform; }
+		inline Transform GetTransform() const		{ return m_Transform; }
 
 		Vector3D GetWorldPosition() const;
 		Angle3D GetWorldRotation() const;
+		Quaternion GetWorldQuaternion() const;
 		Vector3D GetWorldScale() const;
-		Transform3D GetWorldTransform() const;
+		Transform GetWorldTransform() const;
 
 		void SetPosition( const Vector3D& inPosition );
 		void SetRotation( const Angle3D& inRotation );
+		void SetQuaternion( const Quaternion& inQuat );
 		void SetScale( const Vector3D& inScale );
-		void SetTransform( const Transform3D& inTransform );
+		void SetTransform( const Transform& inTransform );
+
+		void Translate( const Vector3D& inPos );
+		void Rotate( const Quaternion& inQuat );
+		void Rotate( const Angle3D& inEuler );
 
 		/*-------------------------------------------------------
 			Hook Transmission

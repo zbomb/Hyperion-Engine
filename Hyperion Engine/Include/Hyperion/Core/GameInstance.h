@@ -8,7 +8,7 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/Object.h"
-#include "Hyperion/Library/Math/Transform.h"
+#include "Hyperion/Library/Geometry.h"
 
 
 namespace Hyperion
@@ -31,7 +31,7 @@ namespace Hyperion
 		std::map< uint32, HypPtr< RenderComponent > > m_ActiveRenderComponents; // Maybe should move into world..?
 
 		HypPtr< LocalPlayer > m_LocalPlayer;
-		Transform3D m_LastTickCameraTransform;
+		Transform m_LastTickCameraTransform;
 		float m_LastTickCameraFOV;
 
 	protected:
@@ -56,7 +56,7 @@ namespace Hyperion
 		inline HypPtr< World > GetWorld() const { return m_ActiveWorld; }
 		inline HypPtr< LocalPlayer > GetLocalPlayer() const { return m_LocalPlayer; }
 
-		bool AddEntityToActiveWorld( const HypPtr< Entity >& inEnt, const Transform3D& inTransform = Transform3D() );
+		bool AddEntityToActiveWorld( const HypPtr< Entity >& inEnt, const Transform& inTransform = Transform() );
 		bool RemoveEntityFromActiveWorld( const HypPtr< Entity >& inEnt );
 
 		/*

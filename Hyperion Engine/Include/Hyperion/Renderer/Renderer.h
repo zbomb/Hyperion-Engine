@@ -12,7 +12,7 @@
 #include "Hyperion/Renderer/DataTypes.h"
 #include "Hyperion/Core/Types/ConcurrentQueue.h"
 #include "Hyperion/Console/ConsoleVar.h"
-#include "Hyperion/Library/Math/Transform.h"
+#include "Hyperion/Library/Geometry.h"
 #include "Hyperion/Streaming/BasicStreamingManager.h"
 #include "Hyperion/Renderer/Resource/ResourceManager.h"
 

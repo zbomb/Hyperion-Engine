@@ -7,7 +7,7 @@
 
 #include "Hyperion/Streaming/AdaptiveTexture.h"
 #include "Hyperion/Streaming/AdaptiveAssetManager.h" // For console vars
-#include "Hyperion/Library/Math/MathCore.h"
+#include "Hyperion/Library/Math.h"
 
 
 namespace Hyperion

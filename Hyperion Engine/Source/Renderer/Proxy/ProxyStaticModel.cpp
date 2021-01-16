@@ -45,7 +45,7 @@ namespace Hyperion
 
 		// First, get geometry resource pointer
 		auto resManager = Engine::GetRenderer()->GetResourceManager();
-		m_Model = resManager->GetGeometry( m_ModelAsset );
+		m_Model = resManager->GetMesh( m_ModelAsset );
 
 		if( !m_Model )
 		{
@@ -101,7 +101,7 @@ namespace Hyperion
 	}
 
 
-	Transform3D ProxyStaticModel::GetWorldTransform() const
+	Transform ProxyStaticModel::GetWorldTransform() const
 	{
 		return m_Transform;
 	}

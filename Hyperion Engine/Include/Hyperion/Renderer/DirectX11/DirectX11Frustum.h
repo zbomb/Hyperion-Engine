@@ -197,7 +197,7 @@ namespace Hyperion
 		*	DirectX11Frustum::CheckAABB
 		*	- Returns true if the given AABB intersects the frustum
 		*/
-		bool CheckAABB( const DirectX::XMFLOAT3& inMin, const DirectX::XMFLOAT3& inMax, const DirectX::XMFLOAT3& inPosition, const DirectX::XMFLOAT3& inRotationDeg )
+		bool CheckAABB( const DirectX::XMFLOAT3& inMin, const DirectX::XMFLOAT3& inMax, const DirectX::XMFLOAT3& inPosition, const DirectX::XMVECTOR& inQuaternion )
 		{
 			// Calculate the other points
 			DirectX::XMVECTOR bottomFrontLeft		= DirectX::XMLoadFloat3( &inMin );
@@ -211,23 +211,15 @@ namespace Hyperion
 			DirectX::XMVECTOR topBackRight			= DirectX::XMLoadFloat3( &inMax );
 
 			// Rotate Verticies
-			if( inRotationDeg.x != 0.f || inRotationDeg.y != 0.f || inRotationDeg.z != 0.f )
-			{
-				auto rotMatrix = DirectX::XMMatrixRotationRollPitchYaw(
-					HYPERION_DEG_TO_RAD( inRotationDeg.x ),
-					HYPERION_DEG_TO_RAD( inRotationDeg.y ),
-					HYPERION_DEG_TO_RAD( inRotationDeg.z )
-				);
-
-				bottomFrontLeft		= DirectX::XMVector3TransformCoord( bottomFrontLeft, rotMatrix );
-				bottomFrontRight	= DirectX::XMVector3TransformCoord( bottomFrontRight, rotMatrix );
-				bottomBackLeft		= DirectX::XMVector3TransformCoord( bottomBackLeft, rotMatrix );
-				bottomBackRight		= DirectX::XMVector3TransformCoord( bottomBackRight, rotMatrix );
-				topFrontLeft		= DirectX::XMVector3TransformCoord( topFrontLeft, rotMatrix );
-				topFrontRight		= DirectX::XMVector3TransformCoord( topFrontRight, rotMatrix );
-				topBackLeft			= DirectX::XMVector3TransformCoord( topBackLeft, rotMatrix );
-				topBackRight		= DirectX::XMVector3TransformCoord( topBackRight, rotMatrix );
-			}
+			auto rotMatrix = DirectX::XMMatrixRotationQuaternion( inQuaternion );
+			bottomFrontLeft		= DirectX::XMVector3TransformCoord( bottomFrontLeft, rotMatrix );
+			bottomFrontRight	= DirectX::XMVector3TransformCoord( bottomFrontRight, rotMatrix );
+			bottomBackLeft		= DirectX::XMVector3TransformCoord( bottomBackLeft, rotMatrix );
+			bottomBackRight		= DirectX::XMVector3TransformCoord( bottomBackRight, rotMatrix );
+			topFrontLeft		= DirectX::XMVector3TransformCoord( topFrontLeft, rotMatrix );
+			topFrontRight		= DirectX::XMVector3TransformCoord( topFrontRight, rotMatrix );
+			topBackLeft			= DirectX::XMVector3TransformCoord( topBackLeft, rotMatrix );
+			topBackRight		= DirectX::XMVector3TransformCoord( topBackRight, rotMatrix );
 
 			// Translate verticies
 			if( inPosition.x != 0.f || inPosition.y != 0.f || inPosition.z != 0.f )

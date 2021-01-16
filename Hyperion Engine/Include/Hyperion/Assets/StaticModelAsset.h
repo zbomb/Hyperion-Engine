@@ -9,7 +9,7 @@
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/AssetManager.h"
 #include "Hyperion/Assets/MaterialAsset.h"
-#include "Hyperion/Library/Math/Geometry.h"
+#include "Hyperion/Library/Geometry.h"
 
 
 namespace Hyperion

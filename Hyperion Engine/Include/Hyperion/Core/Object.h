@@ -430,6 +430,15 @@ namespace Hyperion
 			}
 		}
 
+		void PerformInput( InputManager& im, double delta )
+		{
+			if( bRequiresInput )
+			{
+				// Call UpdateInput
+				UpdateInput( im, delta );
+			}
+		}
+
 		void PerformInitialize()
 		{
 			HYPERION_VERIFY( m_Identifier != 0 && m_ThisState && m_IsValid, "Attempt to initialize object with invalid state" );
@@ -446,6 +455,7 @@ namespace Hyperion
 
 			m_IsValid		= false;
 			bRequiresTick	= false;
+			bRequiresInput = false;
 		}
 
 	protected:
@@ -462,12 +472,17 @@ namespace Hyperion
 		{
 		}
 
+		virtual void UpdateInput( InputManager& im, double delta )
+		{
+		}
+
 	public:
 
 		bool bRequiresTick;
+		bool bRequiresInput;
 
 		Object()
-			: bRequiresTick( false ), m_IsValid( true ), m_LastTick( std::chrono::high_resolution_clock::now() ), m_Identifier( 0 )
+			: bRequiresTick( false ), m_IsValid( true ), m_LastTick( std::chrono::high_resolution_clock::now() ), m_Identifier( 0 ), bRequiresInput( false )
 		{}
 
 		virtual ~Object()
@@ -508,6 +523,7 @@ namespace Hyperion
 		friend void DestroyObject( HypPtr< _TTy >& inPtr );
 
 		friend void TickObjects();
+		friend void TickObjectsInput( InputManager&, double );
 	};
 
 	extern std::map< uint32, std::shared_ptr< _ObjectState > > __objCache;
@@ -604,6 +620,7 @@ namespace Hyperion
 	}
 
 	void TickObjects();
+	void TickObjectsInput( InputManager& );
 
 
 	/*

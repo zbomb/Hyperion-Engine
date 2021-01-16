@@ -9,7 +9,7 @@
 #include "Hyperion/File/FileSystem.h"
 #include "Hyperion/Renderer/Resource/Material.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11Texture.h"
-#include "Hyperion/Library/Math/Geometry.h"
+#include "Hyperion/Library/Geometry.h"
 
 
 namespace Hyperion

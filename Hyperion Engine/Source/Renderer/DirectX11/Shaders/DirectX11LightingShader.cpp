@@ -7,7 +7,7 @@
 
 #include "Hyperion/Renderer/DirectX11/Shaders/DirectX11LightingShader.h"
 #include "Hyperion/File/FileSystem.h"
-#include "Hyperion/Library/Math/Geometry.h"
+#include "Hyperion/Library/Geometry.h"
 #include "Hyperion/Renderer/GBuffer.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11Texture.h"
 

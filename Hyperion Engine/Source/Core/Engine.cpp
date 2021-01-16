@@ -431,7 +431,7 @@ namespace Hyperion
 		m_FenceWatcher->Reset();
 
 		// Load key bindings
-		m_Input->LoadBindings();
+		m_Input->LoadBindingsFromDisk();
 
 		std::chrono::duration< double > loadTime = std::chrono::high_resolution_clock::now() - loadStart;
 		std::ostringstream ss;
@@ -461,10 +461,11 @@ namespace Hyperion
 			return;
 		}
 
-		auto now = std::chrono::high_resolution_clock::now();
-
 		// Tick Input System
-		m_Input->DispatchEvents();
+		m_Input->ProcessUpdates();
+		auto now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration< double > dur = now - m_LastGameTick;
+		TickObjectsInput( *m_Input, dur.count() );
 		m_LastGameTick = now;
 
 		// Tick Objects
@@ -492,7 +493,7 @@ namespace Hyperion
 		m_FenceWatcher->Reset();
 
 		// Clear key bindings
-		m_Input->ClearBindings();
+		m_Input->RemoveAllBindings();
 		
 	}
 

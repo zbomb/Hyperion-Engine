@@ -28,6 +28,13 @@ namespace Hyperion
 
 		NoClipMovementComponent();
 
+		// New input system
+		void MoveForward( float inScalar ) override;
+		void MoveRight( float inScalar ) override;
+		void LookUp( float inScalar ) override;
+		void LookRight( float inScalar ) override;
+
+		// Old input system
 		bool HandleKeyBinding( const String& inBind ) override;
 		bool HandleAxisBinding( const String& inBind, float inValue ) override;
 

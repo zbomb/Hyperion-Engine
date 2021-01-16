@@ -15,13 +15,13 @@ namespace Hyperion
 	struct ViewState
 	{
 		Vector3D Position;
-		Angle3D Rotation;
+		Quaternion Rotation;
 		float FOV;
 
 		ViewState()
 		{
 			Position		= Vector3D( 0.f, 0.f, 0.f );
-			Rotation		= Angle3D( 0.f, 0.f, 0.f );
+			Rotation		= Quaternion();
 			FOV				= 0.f;
 		}
 

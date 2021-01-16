@@ -8,7 +8,7 @@
 
 // Hyperion Includes
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Library/Math/Transform.h"
+#include "Hyperion/Library/Geometry.h"
 
 
 namespace Hyperion
@@ -29,7 +29,7 @@ namespace Hyperion
 			: m_Identifier( inIdentifier )
 		{}
 
-		Transform3D m_Transform;
+		Transform m_Transform;
 
 		virtual void GameInit() {}
 		virtual void RenderInit() {}
@@ -38,7 +38,7 @@ namespace Hyperion
 		virtual void Shutdown() {}
 		inline uint32 GetIdentifier() const { return m_Identifier; }
 
-		inline Transform3D GetTransform() const { return m_Transform; }
+		inline Transform GetTransform() const { return m_Transform; }
 	};
 
 }

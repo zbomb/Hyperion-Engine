@@ -11,7 +11,7 @@
 #include "Hyperion/Core/ThreadManager.h"
 #include "Hyperion/Core/Asset.h"
 #include "Hyperion/Assets/TextureAsset.h"
-#include "Hyperion/Library/Math/MathCore.h"
+#include "Hyperion/Library/Math.h"
 
 
 /*

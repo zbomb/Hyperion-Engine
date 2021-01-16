@@ -13,7 +13,7 @@
 #include "Hyperion/Renderer/IGraphics.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
 #include "Hyperion/Core/String.h"
-#include "Hyperion/Renderer/Resource/Geometry.h"
+#include "Hyperion/Renderer/Resource/Mesh.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11Frustum.h"
 
 
@@ -76,7 +76,8 @@ namespace Hyperion
 		/*
 		*	Camera Info
 		*/
-		DirectX::XMFLOAT3 m_CameraPosition, m_CameraRotation;
+		DirectX::XMFLOAT3 m_CameraPosition;
+		DirectX::XMVECTOR m_CameraRotation;
 		float m_FOV;
 
 		/*
@@ -104,7 +105,7 @@ namespace Hyperion
 		void EndFrame() override;
 
 		void SetCameraInfo( const ViewState& inView ) override;
-		bool CheckViewCull( const Transform3D& inTransform, const AABB& inBounds ) override;
+		bool CheckViewCull( const Transform& inTransform, const AABB& inBounds ) override;
 
 		void EnableAlphaBlending() override;
 		void DisableAlphaBlending() override;
@@ -169,10 +170,10 @@ namespace Hyperion
 		void SetRenderOutputToTarget( const std::shared_ptr< RRenderTarget >& inTarget, const std::shared_ptr< RDepthStencil >& inStencil ) final;
 		void SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inGBuffer ) final;
 
-		void RenderGeometry( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount ) final;
-		void RenderScreenGeometry() final;
+		void RenderMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount ) final;
+		void RenderScreenMesh() final;
 
-		void GetWorldMatrix( const Transform3D& inObj, Matrix& outMatrix ) final;
+		void GetWorldMatrix( const Transform& inObj, Matrix& outMatrix ) final;
 		void GetWorldMatrix( Matrix& outMatrix ) final;
 		void GetViewMatrix( Matrix& outMatrix ) final;
 		void GetProjectionMatrix( Matrix& outMatrix ) final;

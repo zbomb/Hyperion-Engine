@@ -29,6 +29,18 @@ namespace Hyperion
 	}
 
 
+	void TickObjectsInput( InputManager& im, double delta )
+	{
+		for( auto it = __objCache.begin(); it != __objCache.end(); it++ )
+		{
+			if( it->second && it->second->valid && it->second->ptr )
+			{
+				it->second->ptr->PerformInput( im, delta );
+			}
+		}
+	}
+
+
 	HypPtr< Type > Object::GetType() const
 	{
 		// First, we want to find the 'actual' type of this object, and not the type of pointer being used to refer to it

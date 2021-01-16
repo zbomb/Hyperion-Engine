@@ -7,7 +7,7 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Renderer/Resource/Geometry.h"
+#include "Hyperion/Renderer/Resource/Mesh.h"
 #include "Hyperion/Renderer/Resource/Material.h"
 #include "Hyperion/Assets/MaterialAsset.h"
 #include "Hyperion/Assets/TextureAsset.h"
@@ -41,11 +41,11 @@ namespace Hyperion
 		};
 
 
-		std::map< uint32, std::shared_ptr< RGeometry > > m_Geometry;
+		std::map< uint32, std::shared_ptr< RMesh > > m_Geometry;
 		std::map< uint32, TextureEntry > m_Textures;
 
 
-		std::shared_ptr< RGeometryData > GetGeometryData( uint32 inIdentifier );
+		std::shared_ptr< RMeshData > GetMeshData( uint32 inIdentifier );
 
 	public:
 
@@ -57,21 +57,21 @@ namespace Hyperion
 		/*
 		*	Geometry Cache
 		*/
-		bool IsGeometryLODCached( uint32 inIdentifier, uint8 inLOD );
-		bool IsGeometryFullyCached( uint32 inIdentifier );
-		bool IsGeometryPartiallyCached( uint32 inIdentifier );
+		bool IsMeshLODCached( uint32 inIdentifier, uint8 inLOD );
+		bool IsMeshFullyCached( uint32 inIdentifier );
+		bool IsMeshPartiallyCached( uint32 inIdentifier );
 
-		bool UploadGeometryLOD( const std::shared_ptr< StaticModelAsset >& inAsset, uint8 inLOD, 
+		bool UploadMeshLOD( const std::shared_ptr< StaticModelAsset >& inAsset, uint8 inLOD, 
 								const std::vector< std::vector< byte > >& inVertexData, 
 								const std::vector< std::vector< byte > >& inIndexData );
-		bool RemoveGeometryLOD( const std::shared_ptr< StaticModelAsset >& inAsset, uint8 inLOD );
-		bool UploadFullGeometry( const std::shared_ptr< StaticModelAsset >& inAsset, 
+		bool RemoveMeshLOD( const std::shared_ptr< StaticModelAsset >& inAsset, uint8 inLOD );
+		bool UploadFullMesh( const std::shared_ptr< StaticModelAsset >& inAsset, 
 								 const std::vector< std::vector< std::vector< byte > > >& inVertexData, 
 								 const std::vector< std::vector< std::vector< byte > > >& inIndexData );
-		bool RemoveFullGeometry( const std::shared_ptr< StaticModelAsset >& inAsset );
+		bool RemoveFullMesh( const std::shared_ptr< StaticModelAsset >& inAsset );
 
-		std::shared_ptr< RGeometry > GetGeometry( const std::shared_ptr< StaticModelAsset >& inAsset );
-		void ClearGeometry();
+		std::shared_ptr< RMesh > GetMesh( const std::shared_ptr< StaticModelAsset >& inAsset );
+		void ClearMeshes();
 
 		/*
 		*	Texture Cache

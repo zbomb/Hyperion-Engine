@@ -7,7 +7,7 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Library/Math/MathCore.h"
+#include "Hyperion/Library/Math.h"
 
 
 namespace Hyperion

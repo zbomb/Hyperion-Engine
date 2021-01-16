@@ -109,6 +109,42 @@ namespace Hyperion
 	}
 
 
+	void Character::MoveForward( float inScalar )
+	{
+		if( m_Movement && m_Movement->IsValid() )
+		{
+			
+		}
+	}
+
+
+	void Character::MoveRight( float inScalar )
+	{
+		if( m_Movement && m_Movement->IsValid() )
+		{
+
+		}
+	}
+
+
+	void Character::LookUp( float inScalar )
+	{
+		if( m_Movement && m_Movement->IsValid() )
+		{
+
+		}
+	}
+
+
+	void Character::LookRight( float inScalar )
+	{
+		if( m_Movement && m_Movement->IsValid() )
+		{
+
+		}
+	}
+
+
 	bool Character::HandleKeyBinding( const String& inBind )
 	{
 		return false;

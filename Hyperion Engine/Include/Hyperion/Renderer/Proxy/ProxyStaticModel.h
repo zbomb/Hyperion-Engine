@@ -9,7 +9,8 @@
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Renderer/Proxy/ProxyPrimitive.h"
 #include "Hyperion/Renderer/Resource/Material.h"
-#include "Hyperion/Renderer/Resource/Geometry.h"
+#include "Hyperion/Library/Geometry.h"
+#include "Hyperion/Renderer/Resource/Mesh.h"
 
 
 namespace Hyperion
@@ -22,7 +23,7 @@ namespace Hyperion
 
 	protected:
 
-		std::shared_ptr< RGeometry > m_Model;
+		std::shared_ptr< RMesh > m_Model;
 		std::map< uint8, std::shared_ptr< RMaterial > > m_Materials;
 
 		std::shared_ptr< StaticModelAsset > m_ModelAsset;
@@ -42,10 +43,10 @@ namespace Hyperion
 		void BeginShutdown() override;
 		void Shutdown() override;
 		
-		inline std::shared_ptr< RGeometry > GetModel() const { return m_Model; }
+		inline std::shared_ptr< RMesh > GetModel() const { return m_Model; }
 		std::shared_ptr< RMaterial > GetMaterial( uint8 inSlot );
 
-		Transform3D GetWorldTransform() const override;
+		Transform GetWorldTransform() const override;
 		uint8 GetActiveLOD() const override;
 		AABB GetAABB() const override;
 		BoundingSphere GetBoundingSphere() const override;
