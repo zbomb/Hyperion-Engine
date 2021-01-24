@@ -10,10 +10,12 @@
 
 
 // Debug Defines
+#ifdef _DEBUG
 #define HYPERION_DEBUG
 #define HYPERION_DEBUG_OBJECT
 #define HYPERION_DEBUG_RENDERER
 #define HYPERION_DEBUG_ASSETS
+#endif
 
 // External Defines
 
@@ -33,10 +35,7 @@
 //////////////////////////////////////////////
 /////// Do not edit below this line!!! ///////
 //////////////////////////////////////////////
-
-#ifndef HYPERION_CONFIG_2D
 #define HYPERION_CONFIG_3D
-#endif
 
 // Operating System
 #if _WIN32

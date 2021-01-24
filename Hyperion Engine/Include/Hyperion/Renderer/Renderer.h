@@ -56,6 +56,7 @@ namespace Hyperion
 
 		ConcurrentQueue< std::unique_ptr< RenderCommandBase > > m_ImmediateCommands;
 		ConcurrentQueue< std::unique_ptr< RenderCommandBase > > m_Commands;
+		std::atomic< bool > m_AllowCommands;
 
 		std::shared_ptr< ResourceManager > m_ResourceManager;
 
@@ -63,7 +64,6 @@ namespace Hyperion
 
 		// Functions for derived classes to define
 		virtual void RenderScene() = 0;
-		virtual void OnInitialize() = 0;
 		virtual void OnResolutionChanged( const ScreenResolution& inRes ) = 0;
 
 	public:
@@ -93,8 +93,13 @@ namespace Hyperion
 		inline std::shared_ptr< ResourceManager > GetResourceManager() const { return m_ResourceManager; }
 		inline std::shared_ptr< IGraphics > GetAPI() const { return m_API; }
 
-		bool Initialize();
-		void Shutdown();
+		// Derived method requires call to Renderer::Initialize
+		virtual bool Initialize();
+
+		// Derived method requires call to Renderer::Shutdown
+		// Also, in derived class destructor.. call Shutdown
+		virtual void Shutdown();
+
 		void Frame();
 
 		void UpdateScene();

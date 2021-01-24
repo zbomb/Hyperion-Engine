@@ -29,27 +29,6 @@ namespace Hyperion
 	}
 
 
-	bool LocalPlayer::ProcessKeyBinding( const String& inEvent )
-	{
-		if( m_PlayerEntity && m_PlayerEntity->IsValid() )
-		{
-			return m_PlayerEntity->ProcessKeyBinding( inEvent );
-		}
-
-		return false;
-	}
-
-	bool LocalPlayer::ProcessAxisBinding( const String& inEvent, float inValue )
-	{
-		if( m_PlayerEntity && m_PlayerEntity->IsValid() )
-		{
-			return m_PlayerEntity->ProcessAxisBinding( inEvent, inValue );
-		}
-
-		return false;
-	}
-
-
 	void LocalPlayer::SetPlayer( const HypPtr< Player >& inPlayer )
 	{
 		m_PlayerEntity = inPlayer;

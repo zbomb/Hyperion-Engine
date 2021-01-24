@@ -17,15 +17,15 @@ cbuffer MatrixBuffer
 struct VertexInput
 {
 	float4 Position : POSITION;
-	float2 TexCoord : TEXCOORD0;
 	float3 Normal : NORMAL;
+	float2 TexCoord : TEXCOORD0;
 };
 
 struct PixelOutput
 {
 	float4 Position : SV_POSITION;
-	float2 TexCoord : TEXCOORD0;
 	float3 Normal : NORMAL;
+	float2 TexCoord : TEXCOORD0;
 };
 
 

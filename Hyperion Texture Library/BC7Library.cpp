@@ -49,9 +49,13 @@ namespace Hyperion
 
 		outTexture.pData = outPtr;
 
+		
+
 		CMP_CompressOptions options = { 0 };
 		options.dwSize = sizeof( options );
-		options.fquality = 1.0f;
+		//options.bUseCGCompress = true;
+		options.nEncodeWith = CMP_GPU;
+		options.fquality = 0.01f;
 		options.dwnumThreads = 8;
 
 		// Were going to let the algorithm choose the compression mode used, but, we want to ensure if there
@@ -127,7 +131,7 @@ namespace Hyperion
 
 		CMP_CompressOptions options ={ 0 };
 		options.dwSize = sizeof( options );
-		options.fquality = 1.0f;
+		options.fquality = 0.25f;
 		options.dwnumThreads = 8;
 
 		CMP_ERROR err = CMP_ConvertTexture( &inTexture, &outTexture, &options, NULL );

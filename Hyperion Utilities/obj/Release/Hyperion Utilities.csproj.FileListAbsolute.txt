@@ -15,3 +15,6 @@ D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion Utilities.csproj.CoreCompile
 D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion Utilities.csproj.CopyComplete
 D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion Utilities.exe
 D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion Utilities.pdb
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion.StaticModelImporter.resources
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion.TextureViewer.resources
+D:\Hyperion\Hyperion Utilities\obj\Release\Hyperion.ZoomControl.resources

@@ -28,6 +28,13 @@ namespace Hyperion
 		OpenGL = 3
 	};
 
+	enum class LightType
+	{
+		Point = 1,
+		Spot = 2,
+		Directional = 3
+	};
+
 	typedef unsigned int ObjectID;
 	constexpr ObjectID OBJECT_INVALID	= 0;
 	constexpr ObjectID OBJECT_NONE		= 0;
@@ -60,6 +67,10 @@ namespace Hyperion
 	constexpr auto THREAD_RENDERER	= "renderer";
 	constexpr auto THREAD_POOL		= "pool";
 
+	constexpr uint32 RENDERER_CLUSTER_COUNT_X = 15;
+	constexpr uint32 RENDERER_CLUSTER_COUNT_Y = 10;
+	constexpr uint32 RENDERER_CLUSTER_COUNT_Z = 24;
+
 	// Flags 
 	constexpr uint32 FLAG_NONE				= 0U;
 
@@ -88,12 +99,14 @@ namespace Hyperion
 	constexpr uint32 DEFAULT_API_WIN32			= FLAG_RENDERER_DX11;
 	constexpr uint32 DEFAULT_API_OSX			= FLAG_RENDERER_OGL;
 
-	constexpr auto SHADER_PATH_GBUFFER_PIXEL	= "shaders/gbuffer.hps";
-	constexpr auto SHADER_PATH_GBUFFER_VERTEX	= "shaders/gbuffer.hvs";
-	constexpr auto SHADER_PATH_LIGHTING_PIXEL	= "shaders/lighting.hps";
-	constexpr auto SHADER_PATH_LIGHTING_VERTEX	= "shaders/lighting.hvs";
-	constexpr auto SHADER_PATH_FORWARD_PIXEL	= "shaders/forward.hps";
-	constexpr auto SHADER_PATH_FORWARD_VERTEX	= "shaders/forward.hvs";
+	constexpr auto SHADER_PATH_GBUFFER_PIXEL			= "shaders/gbuffer.hps";
+	constexpr auto SHADER_PATH_GBUFFER_VERTEX			= "shaders/gbuffer.hvs";
+	constexpr auto SHADER_PATH_LIGHTING_PIXEL			= "shaders/lighting.hps";
+	constexpr auto SHADER_PATH_LIGHTING_VERTEX			= "shaders/lighting.hvs";
+	constexpr auto SHADER_PATH_FORWARD_PIXEL			= "shaders/forward.hps";
+	constexpr auto SHADER_PATH_FORWARD_VERTEX			= "shaders/forward.hvs";
+	constexpr auto SHADER_PATH_COMPUTE_BUILD_CLUSTERS	= "shaders/build_clusters.hcs";
+	constexpr auto SHADER_PATH_COMPUTE_COMPRESS_CLUSTERS = "shaders/compress_clusters.hcs";
 	
 	enum class ShaderType
 	{
@@ -279,7 +292,6 @@ namespace Hyperion
 		// Modifier Keys
 		TAB			= 123,
 		CAPS		= 27,
-		SHIFT		= 28,
 		LSHIFT		= 29,
 		RSHIFT		= 30,
 		ENTER		= 31,
@@ -630,8 +642,6 @@ namespace Hyperion
 			return ";";
 		case Keys::SEVEN:
 			return "7";
-		case Keys::SHIFT:
-			return "Shift";
 		case Keys::SIX:
 			return "6";
 		case Keys::SPACE:

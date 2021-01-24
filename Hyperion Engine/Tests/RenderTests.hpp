@@ -11,6 +11,7 @@
 #include "Hyperion/Framework/World.h"
 #include "Hyperion/Framework/TestEntity.h"
 #include "Hyperion/Core/GameInstance.h"
+#include "Hyperion/Framework/PointLight.h"
 
 
 namespace Hyperion
@@ -32,83 +33,45 @@ namespace Tests
 		world->AddEntity( newEnt );
 		newEnt->SetPosition( Vector3D( 0.f, 0.f, 30.f ) );
 
+		auto ent2 = CreateObject< TestEntity >();
+		world->AddEntity( ent2 );
+		ent2->SetPosition( Vector3D( 15.f, 0.f, 30.f ) );
+		ent2->SetRotation( Angle3D( 0.f, 45.f, 0.f ) );
+
+		auto ent3 = CreateObject< TestEntity >();
+		world->AddEntity( ent3 );
+		ent3->SetPosition( Vector3D( -5.f, 0.f, 40.f ) );
+		ent3->SetRotation( Angle3D( 0.f, 60.f, 0.f ) );
+
+		auto light = CreateObject< PointLight >();
+		light->SetColor( Color3F( 1.f, 0.f, 0.f ) );
+		light->SetBrightness( 0.8f );;
+		light->SetRadius( 200.f );
+
+		world->AddEntity( light );
+		light->SetPosition( Vector3D( 0.f, 20.f, 0.f ) );
+		
+		auto olight = CreateObject< PointLight >();
+		olight->SetColor( Color3F( 0.f, 0.f, 1.f ) );
+		olight->SetBrightness( 0.8f );
+		olight->SetRadius( 200.f );
+
+		world->AddEntity( olight );
+		olight->SetPosition( Vector3D( 0.f, 10.f, 50.f ) );
+
 		Console::WriteLine( "\n----> Quaternion tests" );
+		Console::WriteLine( "---------> Creating Quaternion with a roll of 45, yaw of 45" );
 
-		// First, lets create a point at (x,y,z) [1,0,0]
-		auto point = Vector3D( 1.f, 0.f, 0.f );
+		Quaternion q( Angle3D( 0.f, 45.f, 45.f ) );
+		Vector3D p( 1.f, 0.f, 0.f );
 
-		// Now, lets create a quaternion to rotate it around the Z axis, 90 degrees
-		// The result should be [0,-1,0]
-		auto rot = Quaternion( Vector3D::GetWorldForward(), 90.f );
-		auto result = rot.RotateVector( point );
-		
-		Console::WriteLine( "-------> Result #1:  ", result.ToString() );
-		
-		// rotate by another 45 degrees on the same axis
-		result = rot.RotateVector( result );
-		Console::WriteLine( "-------> Result #2: ", result.ToString() );
+		Console::WriteLine( "--------> Transforming point at {1,0,0}" );
 
-		// Create a new one along the same axis
-		auto newRot = Quaternion( Vector3D::GetWorldForward(), 45.f );
+		auto p_prime = q.RotateVector( p );
+		Console::WriteLine( "-------------> Result: ", p_prime.ToString() );
 
-		// Rotate again
-		result = newRot.RotateVector( result );
-		Console::WriteLine( "------> Result #3: ", result.ToString() );
-
-		// Rotate 3 more times
-		result = newRot.RotateVector( result );
-		result = newRot.RotateVector( result );
-		result = newRot.RotateVector( result );
-
-		Console::WriteLine( "------> Final Result: ", result.ToString() );
-
-		Console::WriteLine( "\n---> Euler Conversion tests...." );
-
-		// Lets take an angle of... 90 pitch and attempt to apply it to 0,0,1
-		auto fpoint		= Vector3D( 1.f, 0.f, 0.f );
-		auto frot		= Quaternion( Angle3D( 0.f, 0.f, 75.f ) );
-
-		// Roll -> Pitch -> Yaw
-
-		auto fres = frot.RotateVector( fpoint );
-
-		Console::WriteLine( "---------> Result #1: ", fres.ToString() );
-
-		// Now, lets get the axis, rotation from the quaternion
-		auto axisRot = frot.GetRotationAxis();
-		auto rotAmount = frot.GetRotationAmount();
-
-		Console::WriteLine( "--------> Axis: ", axisRot.ToString() );
-		Console::WriteLine( "--------> Degrees: ", rotAmount );
-
-		auto euler = frot.GetEulerAngles();
-		Console::WriteLine( "--------> Euler: ", euler.ToString() );
-
-		Console::WriteLine( "\n\n------------------- Geometry Tests --------------------" );
-
-		// First, lets take two 4d vectors, and do some operations between them
-		Vector4D first( 10.f, 5.f, 1.f, 3.f );
-		Vector4D second( 1.f, 6.f, 12.f, 10.f );
-
-		// Lets calculate the length of each
-		Console::WriteLine( "-----> First Length: ", first.Length() );
-		Console::WriteLine( "-----> Second Length: ", second.Length() );
-
-		// Now, lets calcualte the dot product
-		auto dotResult = first * second;
-
-		Console::WriteLine( "-----> Dot Product: ", dotResult );
-
-		// Calculate distance between the two vectors
-		auto distResult = first.Distance( second );
-		Console::WriteLine( "-----> Distance: ", distResult );
-
-		// Calculate normals for each vector
-		auto firstNorm = first.GetNormalized();
-		auto secondNorm = second.GetNormalized();
-
-		Console::WriteLine( "-----> First Normalized: ", firstNorm.ToString() );
-		Console::WriteLine( "-----> Second Normalized: ", secondNorm.ToString() );
+		auto eu = q.GetEulerAngles();
+		Console::WriteLine( "------------> Euler Angles: ", eu.ToString() );
 
 		Console::WriteLine( "\n----> Rederer Test Complete!" );
 		Console::WriteLine( "---------------------------------------------------------------------------------------------" );

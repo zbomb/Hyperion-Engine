@@ -137,6 +137,7 @@ namespace Hyperion
 		bool IsNormalized() const;
 		String ToString() const;
 		float Dot( const Vector2D& other ) const;
+		Vector2D GetNegated() const;
 
 		/*
 		*	Operators
@@ -149,6 +150,7 @@ namespace Hyperion
 		Vector3D operator+( const Vector3D& other ) const;
 		Vector2D operator+( const Vector2D& Other ) const;
 		Vector2D operator-( const Vector2D& Other ) const;
+		inline Vector2D operator-() const { return GetNegated(); }
 	};
 
 
@@ -204,6 +206,7 @@ namespace Hyperion
 		String ToString() const;
 		float Dot( const Vector3D& other ) const;
 		Vector3D Cross( const Vector3D& other ) const;
+		Vector3D GetNegated() const;
 
 		Vector3D operator*( const Matrix& other ) const;
 		inline float operator*( const Vector3D& other ) const { return Dot( other ); }
@@ -218,6 +221,7 @@ namespace Hyperion
 		Vector3D operator+( const Vector2D& other ) const;
 
 		Vector3D operator-( const Vector2D& other ) const;
+		inline Vector3D operator-() const { return GetNegated(); }
 
 
 
@@ -276,6 +280,7 @@ namespace Hyperion
 		Vector3D GetHomogenous3D() const;
 		Vector4D GetHomogenous4D() const;
 		bool IsHomogenous() const;
+		Vector4D GetNegated() const;
 
 		/*
 		*	Operations
@@ -290,6 +295,7 @@ namespace Hyperion
 		Vector4D operator-( const Vector3D& other ) const;
 		Vector4D operator+( const Vector2D& other ) const;
 		Vector4D operator-( const Vector2D& other ) const;
+		inline Vector4D operator-() const { return GetNegated(); }
 	};
 
 

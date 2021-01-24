@@ -48,7 +48,7 @@ namespace Hyperion
 
 		void Shutdown() final
 		{
-			if( m_Buffer ) m_Buffer->Release();
+			if( m_Buffer ) { m_Buffer->Release(); }
 			m_Buffer = nullptr;
 		}
 

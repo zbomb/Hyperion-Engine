@@ -107,9 +107,9 @@ namespace Hyperion
 		while( Yaw < 0.f ) { Yaw += 360.f; }
 		while( Roll < 0.f ) { Roll += 360.f; }
 
-		if( Pitch > 359.998f ) { Pitch = 0.f; }
-		if( Yaw > 359.998f ) { Yaw = 0.f; }
-		if( Roll > 359.998f ) { Yaw = 0.f; }
+		if( Pitch > 359.998f || Pitch < 0.0001f ) { Pitch = 0.f; }
+		if( Yaw > 359.998f || Yaw < 0.0001f ) { Yaw = 0.f; }
+		if( Roll > 359.998f || Roll < 0.0001f ) { Roll = 0.f; }
 	}
 
 
@@ -228,6 +228,11 @@ namespace Hyperion
 	float Vector2D::Dot( const Vector2D& other ) const
 	{
 		return( ( X * other.X ) + ( Y * other.Y ) );
+	}
+
+	Vector2D Vector2D::GetNegated() const
+	{
+		return Vector2D( -X, -Y );
 	}
 
 	Vector2D Vector2D::operator*( float inScalar ) const
@@ -408,6 +413,11 @@ namespace Hyperion
 			( Z * other.X ) - ( X * other.Z ),
 			( X * other.Y ) - ( Y * other.X )
 		);
+	}
+
+	Vector3D Vector3D::GetNegated() const
+	{
+		return Vector3D( -X, -Y, -Z );
 	}
 
 	Vector3D Vector3D::operator*( const Matrix& other ) const
@@ -670,6 +680,11 @@ namespace Hyperion
 		return( W == 1.f );
 	}
 
+	Vector4D Vector4D::GetNegated() const
+	{
+		return Vector4D( -X, -Y, -Z, -W );
+	}
+
 	Vector4D Vector4D::operator*( const Matrix& other ) const
 	{
 		/*
@@ -758,6 +773,7 @@ namespace Hyperion
 		Z = norm_axis.Z * sin_half_rot;
 	}
 
+	// TODO: All matrix stuff needs review
 	Quaternion::Quaternion( const Matrix& inMatrix )
 	{
 		float abs_w = sqrtf( ( 1.f + inMatrix[ 0 ][ 0 ] + inMatrix[ 1 ][ 1 ] + inMatrix[ 2 ][ 2 ] ) / 4.f );
@@ -810,14 +826,19 @@ namespace Hyperion
 		Angle3D clamped = inEuler;
 		clamped.ClampContents();
 
-		float rh = HYPERION_DEG_TO_RAD( clamped.Roll ) / 2.f;
-		float yh = HYPERION_DEG_TO_RAD( clamped.Yaw ) / 2.f;
-		float ph = HYPERION_DEG_TO_RAD( clamped.Pitch ) / 2.f;
+		// We have to negate the angles, since were using a left-hand system currently
+		// Eventually, I would like to move to a right hand system
+		float cx = cos( HYPERION_DEG_TO_RAD( -inEuler.Pitch ) / 2.f );
+		float cy = cos( HYPERION_DEG_TO_RAD( -inEuler.Yaw ) / 2.f );
+		float cz = cos( HYPERION_DEG_TO_RAD( -inEuler.Roll ) / 2.f );
+		float sx = sin( HYPERION_DEG_TO_RAD( -inEuler.Pitch ) / 2.f );
+		float sy = sin( HYPERION_DEG_TO_RAD( -inEuler.Yaw ) / 2.f );
+		float sz = sin( HYPERION_DEG_TO_RAD( -inEuler.Roll ) / 2.f );
 
-		W = cosf( rh ) * cosf( ph ) * cosf( yh ) - sinf( -rh ) * sinf( -ph ) * sinf( -yh );
-		X = cosf( rh ) * sinf( -ph ) * cosf( yh ) - sinf( -rh ) * cosf( ph ) * sinf( -yh );
-		Y = cosf( rh ) * cosf( ph ) * sinf( -yh ) + sinf( -rh ) * sinf( -ph ) * cosf( yh );
-		Z = cosf( rh ) * sinf( -ph ) * sinf(- yh ) + sinf( -rh ) * cosf( ph ) * cosf( yh );
+		X = ( sx * cy * cz - cx * sy * sz );
+		Y = ( cx * sy * cz + sx * cy * sz );
+		Z = ( cx * cy * sz + sx * sy * cz );
+		W = ( cx * cy * cz - sx * sy * sz );
 	}
 
 	Quaternion::Quaternion( const Quaternion& other )
@@ -918,11 +939,21 @@ namespace Hyperion
 
 	Matrix Quaternion::GetRotationMatrix() const
 	{
+		float xx = X * ( X + X );
+		float xy = X * ( Y + Y );
+		float xz = X * ( Z + Z );
+		float yy = Y * ( Y + Y );
+		float yz = Y * ( Z + Z );
+		float zz = Z * ( Z + Z );
+		float wx = W * ( X + X );
+		float wy = W * ( Y + Y );
+		float wz = W * ( Z + Z );
+
 		return Matrix(
-			1.f - ( 2.f * Y * Y ) - ( 2.f * Z * Z ),	( 2.f * X * Y ) - ( 2.f * W * Z ),			( 2.f * X * Z ) + ( 2.f * W * Y ),			0.f,
-			( 2.f * X * Y ) + ( 2.f * W * Z ),			1.f - ( 2.f * X * X ) - ( 2.f * Z * Z ),	( 2.f * Y * Z ) + ( 2.f * W * X ),			0.f,
-			( 2.f * X * Z ) - ( 2.f * W * Y ),			( 2.f * Y * Z ) - ( 2.f * W * X ),			1.f - ( 2.f * X * X ) - ( 2.f * Y * Y ),	0.f,
-			0.f,										0.f,										0.f,										1.f
+			1.f - ( yy + zz ),	xy - wz,			xz + wy,			0.f,
+			xy + wz,			1.f - ( xx + zz ),	yz - wx,			0.f,
+			xz - wy,			yz + wx,			1.f - ( xx + yy ),	0.f,
+			0.f,				0.f,				0.f,				1.f
 		);
 	}
 
@@ -932,33 +963,33 @@ namespace Hyperion
 		// Roll [Z] -> Pitch [X] -> Yaw [Y]
 		// ZXY
 
-		// Calculate the values we need from the rotation matrix, and use it to generate the euler angles in an ZXY system
-		float m32 = ( 2.f * Y * Z ) - ( 2.f * W * X );
-		float m31 = ( 2.f * X * Z ) - ( 2.f * W * Y );
-		float m33 = 1.f - ( 2.f * X * X ) - ( 2.f * Y * Y );
+		float m11 = 1.f - ( ( 2.f * Y * Y ) + ( 2.f * Z * Z ) );
 		float m12 = ( 2.f * X * Y ) - ( 2.f * W * Z );
-		float m22 = 1.f - ( 2.f * X * X ) - ( 2.f * Z * Z );
 		float m21 = ( 2.f * X * Y ) + ( 2.f * W * Z );
-		float m11 = 1.f - ( 2.f * Y * Y ) - ( 2.f * Z * Z );
-		
+		float m22 = 1.f - ( ( 2.f * X * X ) + ( 2.f * Z * Z ) );
+		float m31 = ( 2.f * X * Z ) - ( 2.f * W * Y );
+		float m32 = ( 2.f * Y * Z ) + ( 2.f * W * X );
+		float m33 = 1.f - ( ( 2.f * X * X ) + ( 2.f * Y * Y ) );
+
 		float pitch = asinf( Math::Clamp( m32, -1.f, 1.f ) );
-		float yaw = 0.f;
-		float roll = 0.f;
+		float yaw = 0.0;
+		float roll = 0.0;
 
 		if( abs( m32 ) < 0.9999f )
 		{
-			yaw = - 1.f * atan2f( -1.f * m31, m33 );
-			roll = -1.f * atan2f( -1.f * m12, m22 );
+			yaw = atan2f( -m31, m33 );
+			roll = atan2f( -m12, m22 );
 		}
 		else
 		{
 			roll = atan2f( m21, m11 );
 		}
 
-		auto output = Angle3D( HYPERION_RAD_TO_DEG( pitch ), HYPERION_RAD_TO_DEG( yaw ), HYPERION_RAD_TO_DEG( roll ) );
+		auto output = Angle3D( HYPERION_RAD_TO_DEG( -pitch ), HYPERION_RAD_TO_DEG( -yaw ), HYPERION_RAD_TO_DEG( -roll ) );
 		output.ClampContents();
 
 		return output;
+	
 	}
 
 	Quaternion Quaternion::operator*( const Quaternion& other ) const
@@ -1140,6 +1171,7 @@ namespace Hyperion
 
 	/*----------------------------------------------------------------------------------------
 		Matrix Function Definitions
+		TODO: Matrix stuff needs review and testing
 	----------------------------------------------------------------------------------------*/
 	Matrix::Matrix()
 		: data{ 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f }

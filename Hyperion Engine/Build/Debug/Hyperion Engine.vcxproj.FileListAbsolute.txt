@@ -2,3 +2,5 @@ D:\Hyperion\Build\Debug\shaders\gbuffer.hps
 D:\Hyperion\Build\Debug\shaders\gbuffer.hvs
 D:\Hyperion\Build\Debug\shaders\lighting.hps
 D:\Hyperion\Build\Debug\shaders\lighting.hvs
+D:\Hyperion\Build\Debug\shaders\build_clusters.hcs
+D:\Hyperion\Build\Debug\shaders\compress_clusters.hcs

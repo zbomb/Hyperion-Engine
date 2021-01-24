@@ -10,6 +10,7 @@
 #include "Hyperion/Library/Geometry.h"
 #include "Hyperion/Renderer/GBuffer.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11Texture.h"
+#include "Hyperion/Renderer/DirectX11/DirectX11ViewClusters.h"
 
 
 
@@ -26,6 +27,7 @@ namespace Hyperion
 
 	DirectX11LightingShader::~DirectX11LightingShader()
 	{
+		Shutdown();
 	}
 
 
@@ -134,6 +136,44 @@ namespace Hyperion
 			return false;
 		}
 
+		// Camera Buffer
+		D3D11_BUFFER_DESC cameraBufferDesc;
+		ZeroMemory( &cameraBufferDesc, sizeof( cameraBufferDesc ) );
+
+		cameraBufferDesc.Usage					= D3D11_USAGE_DYNAMIC;
+		cameraBufferDesc.ByteWidth				= sizeof( CameraBuffer );
+		cameraBufferDesc.BindFlags				= D3D11_BIND_CONSTANT_BUFFER;
+		cameraBufferDesc.CPUAccessFlags			= D3D11_CPU_ACCESS_WRITE;
+		cameraBufferDesc.MiscFlags				= 0;
+		cameraBufferDesc.StructureByteStride	= 0;
+
+		if( FAILED( inDevice->CreateBuffer( &cameraBufferDesc, NULL, m_CameraBuffer.GetAddressOf() ) ) || m_CameraBuffer.Get() == NULL )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to create lighting shader, the camera buffer couldnt be created" );
+			Shutdown();
+
+			return false;
+		}
+
+		// Light Buffer
+		D3D11_BUFFER_DESC lightBufferDesc;
+		ZeroMemory( &lightBufferDesc, sizeof( lightBufferDesc ) );
+
+		lightBufferDesc.Usage					= D3D11_USAGE_DYNAMIC;
+		lightBufferDesc.ByteWidth				= sizeof( LightBuffer );
+		lightBufferDesc.BindFlags				= D3D11_BIND_CONSTANT_BUFFER;
+		lightBufferDesc.CPUAccessFlags			= D3D11_CPU_ACCESS_WRITE;
+		lightBufferDesc.MiscFlags				= 0;
+		lightBufferDesc.StructureByteStride		= 0;
+
+		if( FAILED( inDevice->CreateBuffer( &lightBufferDesc, NULL, m_LightBuffer.GetAddressOf() ) ) || m_LightBuffer.Get() == NULL )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to create lighting shader, the light buffer couldnt be created" );
+			Shutdown();
+
+			return false;
+		}
+
 		D3D11_SAMPLER_DESC samplerDesc;
 		ZeroMemory( &samplerDesc, sizeof( samplerDesc ) );
 
@@ -167,35 +207,13 @@ namespace Hyperion
 
 	void DirectX11LightingShader::Shutdown()
 	{
-		if( m_SamplerState )
-		{
-			m_SamplerState->Release();
-			m_SamplerState.Reset();
-		}
-
-		if( m_MatrixBuffer )
-		{
-			m_MatrixBuffer->Release();
-			m_MatrixBuffer.Reset();
-		}
-
-		if( m_InputLayout )
-		{
-			m_InputLayout->Release();
-			m_InputLayout.Reset();
-		}
-
-		if( m_PixelShader )
-		{
-			m_PixelShader->Release();
-			m_PixelShader.Reset();
-		}
-
-		if( m_VertexShader )
-		{
-			m_VertexShader->Release();
-			m_VertexShader.Reset();
-		}
+		m_CameraBuffer.Reset();
+		m_LightBuffer.Reset();
+		m_SamplerState.Reset();
+		m_MatrixBuffer.Reset();
+		m_InputLayout.Reset();
+		m_PixelShader.Reset();
+		m_VertexShader.Reset();
 	}
 
 
@@ -231,6 +249,51 @@ namespace Hyperion
 	
 		ID3D11SamplerState* samplerList[] = { m_SamplerState.Get() };
 		m_Context->PSSetSamplers( 0, 1, samplerList );
+
+		return true;
+	}
+
+
+	bool DirectX11LightingShader::UploadGBufferData( const Matrix& inView, const Matrix& inProjection )
+	{
+		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
+
+		// We need to extract camera position from view matrix
+		DirectX::XMMATRIX gBufferView( inView.GetData() );
+		DirectX::XMMATRIX gBufferProj( inProjection.GetData() );
+
+		DirectX::XMVECTOR cameraPos, cameraRot, _scale;
+		if( !DirectX::XMMatrixDecompose( &_scale, &cameraRot, &cameraPos, gBufferView ) )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to decompose view matrix" );
+			return false;
+		}
+
+		// Now, we want to build a matrix we can use to project pixels back into 3d space to help calculate lighting
+		auto gbufferTransform	= DirectX::XMMatrixMultiply( DirectX::XMMatrixInverse( nullptr, gBufferProj ), DirectX::XMMatrixInverse( nullptr, gBufferView ) );
+
+		// In the shader, we need the X and Y values to range from [-1,1]
+		// Where -1 is screen min, and 1 is screen max in that particular dimension
+		// Then, depth should range between [0,1] where 0 is SCREEN_NEAR and 1 is SCREEN_FAR
+		// With the X values.... pixel 0 maps to 0
+		// With Y values.... pixel 0 maps to 1
+		D3D11_MAPPED_SUBRESOURCE resource;
+	
+		if( FAILED( m_Context->Map( m_CameraBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource ) ) )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to map camera buffer" );
+			return false;
+		}
+
+		auto* buffer = (CameraBuffer*) resource.pData;
+
+		buffer->CameraPosition			= DirectX::XMFLOAT3( cameraPos.m128_f32[ 0 ], cameraPos.m128_f32[ 1 ], cameraPos.m128_f32[ 3 ] );
+		buffer->InverseViewProjMatrix	= DirectX::XMMatrixTranspose( gbufferTransform );
+
+		m_Context->Unmap( m_CameraBuffer.Get(), 0 );
+
+		ID3D11Buffer* bufferList[] = { m_CameraBuffer.Get() };
+		m_Context->PSSetConstantBuffers( 0, 1, bufferList );
 
 		return true;
 	}
@@ -273,17 +336,81 @@ namespace Hyperion
 	}
 
 
-	void DirectX11LightingShader::ClearGBufferResources()
+	void DirectX11LightingShader::ClearResources()
 	{
 		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
 
-		ID3D11ShaderResourceView* resources[] = { NULL, NULL, NULL };
-		m_Context->PSSetShaderResources( 0, 3, resources );
+		ID3D11ShaderResourceView* resources[] = { NULL, NULL, NULL, NULL };
+		m_Context->PSSetShaderResources( 0, 4, resources );
 	}
 
 
-	bool DirectX11LightingShader::UploadLighting()
+	bool DirectX11LightingShader::UploadLighting( const Color3F& inAmbientColor, float inAmbientIntensity, const std::vector< std::shared_ptr< ProxyLight > >& inLights )
 	{
+		HYPERION_VERIFY( m_Context, "[DX11] Device context was null!" );
+
+		D3D11_MAPPED_SUBRESOURCE mappedResource{};
+		if( FAILED( m_Context->Map( m_LightBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource ) ) )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to map light buffer" );
+			return false;
+		}
+
+		auto* bufferPtr = (LightBuffer*) mappedResource.pData;
+
+		bufferPtr->AmbientColor			= DirectX::XMFLOAT3( inAmbientColor.r, inAmbientColor.g, inAmbientColor.b );
+		bufferPtr->AmbientIntensity		= inAmbientIntensity;
+		bufferPtr->LightCount			= inLights.size();
+	
+		for( int i = 0; i < inLights.size(); i++ )
+		{
+			auto& in_light		= inLights.at( i );
+			auto& out_light		= bufferPtr->lights[ i ];
+
+			if( !in_light )
+			{
+				out_light.Color			= DirectX::XMFLOAT3( 0.f, 0.f, 0.f );
+				out_light.Brightness	= 0.f;
+				out_light.Position		= DirectX::XMFLOAT3( 0.f, 0.f, 0.f );
+				out_light.Radius		= 0.001f;
+			}
+			else
+			{
+				auto in_color	= in_light->GetColor();
+				auto in_pos		= in_light->GetTransform().Position;
+
+				out_light.Color			= DirectX::XMFLOAT3( in_color.r, in_color.g, in_color.b );
+				out_light.Brightness	= in_light->GetBrightness();
+				out_light.Position		= DirectX::XMFLOAT3( in_pos.X, in_pos.Y, in_pos.Z );
+				out_light.Radius		= in_light->GetRadius();
+			}
+		}
+
+		m_Context->Unmap( m_LightBuffer.Get(), 0 );
+
+		ID3D11Buffer* bufferList[] = { m_LightBuffer.Get() };
+		m_Context->PSSetConstantBuffers( 1, 1, bufferList );
+
+		return true;
+	}
+
+
+	bool DirectX11LightingShader::UploadClusterData( const std::shared_ptr< RViewClusters >& inClusters )
+	{
+		HYPERION_VERIFY( m_Context, "[DX11] Device context was null!" );
+
+		DirectX11ViewClusters* clusterInfo = dynamic_cast< DirectX11ViewClusters* >( inClusters.get() );
+		ID3D11ShaderResourceView* srv = clusterInfo ? clusterInfo->GetClusterInfoSRV() : nullptr;
+
+		if( !srv )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to upload cluster info to lighting pixel shader, resource view was null" );
+			return false;
+		}
+
+		ID3D11ShaderResourceView* srvList[] = { srv };
+
+		m_Context->PSSetShaderResources( 3, 1, srvList );
 		return true;
 	}
 

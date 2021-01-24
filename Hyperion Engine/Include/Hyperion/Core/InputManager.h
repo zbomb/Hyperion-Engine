@@ -42,7 +42,7 @@ namespace Hyperion
 
 		struct ButtonState
 		{
-			bool bActionState;
+			uint32 iActionCount;
 			bool bState;
 		};
 
@@ -82,6 +82,10 @@ namespace Hyperion
 		*	State inputs can be polled at any time, and it checks if a button is currently pressed down
 		* 
 		*	Action inputs check for a button being pressed (or released), and only stays in the cache for a single frame
+		* 
+		*	TODO:
+		*	Add a way to have a 'raw mouse position' 
+		*	Basically, the OS layer passes in the mouses screen position, so we are able to use a good feeling cursor in menus
 		*/
 
 
@@ -104,7 +108,7 @@ namespace Hyperion
 		void PushKeyState( Keys inKey, bool inState );
 		void PushAxisState( InputAxis inAxis, float inState, bool bFullRange = false );
 
-		bool PollAction( uint32 inIdentifier );
+		uint32 PollAction( uint32 inIdentifier );
 		bool PollState( uint32 inIdentifier );
 		float PollScalar( uint32 inIdentifier );
 

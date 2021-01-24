@@ -58,6 +58,36 @@ namespace Hyperion
 			}
 		}
 
+		void Shutdown()
+		{
+			/*
+			for( auto it = m_LODs.begin(); it != m_LODs.end(); it++ )
+			{
+				auto lod = *it;
+				if( lod )
+				{
+					for( auto jt = lod->subObjects.begin(); jt != lod->subObjects.end(); jt++ )
+					{
+						if( ( *jt ).indexBuffer )
+						{
+							( *jt ).indexBuffer->Shutdown();
+						}
+
+						( *jt ).indexBuffer.reset();
+
+						if( ( *jt ).vertexBuffer )
+						{
+							( *jt ).vertexBuffer->Shutdown();
+						}
+
+						( *jt ).vertexBuffer.reset();
+					}
+				}
+			}
+			*/
+			m_LODs.clear();
+		}
+
 		inline uint8 GetLODCount() const				{ return (uint8) m_LODs.size(); }
 		inline std::shared_ptr< RMeshLOD > GetLOD( uint8 inLOD ) const { return( ( m_LODs.size() > inLOD ) ? m_LODs.at( inLOD ) : nullptr ); }
 
@@ -107,8 +137,21 @@ namespace Hyperion
 	public:
 
 		RMesh() = delete;
+		~RMesh()
+		{
+			Shutdown();
+		}
 
 		bool IsValid() const { return m_Data != nullptr; }
+		void Shutdown()
+		{
+			//if( m_Data )
+			//{
+			//	m_Data->Shutdown();
+			//}
+
+			m_Data.reset();
+		}
 
 		inline uint32 GetIdentifier() const { return m_Identifier; }
 		inline std::shared_ptr< RMeshData > GetData() const { return m_Data; }

@@ -22,6 +22,7 @@ namespace Hyperion
 
 		Microsoft::WRL::ComPtr< ID3D11RenderTargetView > m_RenderTarget;
 
+
 		DirectX11RenderTarget( const std::shared_ptr< RTexture2D >& inTexture, const Microsoft::WRL::ComPtr< ID3D11Device >& inDevice )
 			: RRenderTarget( inTexture ), m_RenderTarget( nullptr )
 		{
@@ -48,6 +49,10 @@ namespace Hyperion
 					Console::WriteLine( "[Warning] DX11: Failed to create texture render target!" );
 				}
 			}
+			else
+			{
+				Console::WriteLine( "[Warning] DX11: Creating null render target!" );
+			}
 		}
 
 	public:
@@ -64,12 +69,8 @@ namespace Hyperion
 
 		void Shutdown() final
 		{
-			m_TargetTexture.reset();
-			if( m_RenderTarget )
-			{
-				//m_RenderTarget->Release();
-				m_RenderTarget.Reset();
-			}
+			m_RenderTarget.Reset();
+			RRenderTarget::Shutdown();
 		}
 
 		ID3D11RenderTargetView* Get()

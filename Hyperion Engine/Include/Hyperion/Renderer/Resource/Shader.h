@@ -17,43 +17,11 @@ namespace Hyperion
 	class RMesh;
 	class GBuffer;
 	struct Matrix;
+	class RViewClusters;
 
 
 	/*
 	*	TODO: Better shader system
-	*	The current shader class doesnt represent a single 'shader'.. it represents a whole pipeline, IA -> Vertex -> Fragment shader
-	*	So.. we could actually create a system where you can create indivisual shader programs, and then write a code file to represent this program in code
-	*	Then, we can build a ShaderPipeline, using the shader classes
-	*	Then we can do... Renderer::SetShaderPipeline( myPipeline);
-	*	For example:
-	*	
-	*	-- In a Init function --
-	*	auto myPixelShader = ShaderManager::GetPixelShader< MyPixelShaderClass >();
-	*	auto myVertexShader = ShaderManager::GetVertexShader< MyVertexShaderClass >();
-	*	auto shaderPipline = ShaderManager::CreatePipeline();
-	*	
-	*	-- In the render loop --
-	*	api->SetShaderPipeline( shaderPipeline );
-	*	api->SetPipelineOutput( myGBuffer );
-	* 
-	*	auto myPixelShaderType = std::dynamic_cast< ... >( shaderPipeline->GetPixelShader() );
-	*	
-	*	for( ... )
-	*	{
-	*		shaderPipeline->UploadMatrixData( worldMatrix, viewMatrix, projectionMatrix );
-	*		myPixelShaderType->UploadMaterial( myMat );
-	* 
-	*		api->RenderMesh( myMesh );
-	*	}
-	*	
-	*	api->SetShaderPipeline( lightingPipeline );
-	*	api->SetPipelineOutputToScreen();
-	*	
-	*	auto myOtherShader = std::dynamic_cast< ... >( ... );
-	*	myOtherShader->UploadGBuffer( myGBuffer );
-	*	
-	*	// Get screen geometry
-	*	api->RenderScreenGeometry();
 	*/
 	class RShader
 	{
@@ -79,7 +47,7 @@ namespace Hyperion
 		inline ShaderType GetType() const final { return ShaderType::GBuffer; }
 		virtual bool UploadMaterial( const std::shared_ptr< RMaterial >& inMaterial ) = 0;
 		virtual bool UploadMatrixData( const Matrix& inWorldMatrix, const Matrix& inViewMatrix, const Matrix& inProjectionMatrix ) = 0;
-
+		virtual bool UploadClusterData( const std::shared_ptr< RViewClusters >& inClusters ) = 0;
 	};
 
 
@@ -92,9 +60,11 @@ namespace Hyperion
 
 		inline ShaderType GetType() const final { return ShaderType::Lighting; }
 		virtual bool UploadGBuffer( const std::shared_ptr< GBuffer >& inBuffer ) = 0;
+		virtual bool UploadGBufferData( const Matrix& inViewMatrix, const Matrix& inProjectionMatrix ) = 0;
 		virtual bool UploadMatrixData( const Matrix& inWorldMatrix, const Matrix& inViewMatrix, const Matrix& inProjectionMatrix ) = 0;
-		virtual bool UploadLighting() = 0; // TODO: How to do this?
-		virtual void ClearGBufferResources() = 0;
+		virtual bool UploadLighting( const Color3F& inAmbientColor, float inAmbientIntensity, const std::vector< std::shared_ptr< ProxyLight > >& inLightList ) = 0;
+		virtual bool UploadClusterData( const std::shared_ptr< RViewClusters >& inClusters ) = 0;
+		virtual void ClearResources() = 0;
 
 	};
 
@@ -121,8 +91,30 @@ namespace Hyperion
 
 		virtual ~RComputeShader() {}
 
+		virtual void Attach() = 0;
+		virtual void Detach() = 0;
 		inline ShaderType GetType() const final { return ShaderType::Compute; }
+	};
 
+
+	class RBuildClusterShader : public RComputeShader
+	{
+
+	public:
+
+		virtual ~RBuildClusterShader() {}
+		virtual bool UploadViewInfo( const Matrix& inProjectionMatrix, const ScreenResolution& inRes, float inScreenNear, float inScreenFar ) = 0;
+		virtual bool Dispatch( const std::shared_ptr< RViewClusters >& outClusters ) = 0;
+	};
+
+
+	class RCompressClustersShader : public RComputeShader
+	{
+
+	public:
+
+		virtual ~RCompressClustersShader() {}
+		virtual bool Dispatch( const std::shared_ptr< RViewClusters >& outClusters ) = 0;
 	};
 
 

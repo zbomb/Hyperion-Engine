@@ -24,7 +24,7 @@ namespace Hyperion
 
 	DirectX11GBufferShader::~DirectX11GBufferShader()
 	{
-
+		Shutdown();
 	}
 
 
@@ -98,17 +98,17 @@ namespace Hyperion
 		inputDesc[ 0 ].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
 		inputDesc[ 0 ].InstanceDataStepRate		= 0;
 
-		inputDesc[ 1 ].SemanticName				= "TEXCOORD";
+		inputDesc[ 1 ].SemanticName				= "NORMAL";
 		inputDesc[ 1 ].SemanticIndex			= 0;
-		inputDesc[ 1 ].Format					= DXGI_FORMAT_R32G32_FLOAT;
+		inputDesc[ 1 ].Format					= DXGI_FORMAT_R32G32B32_FLOAT;
 		inputDesc[ 1 ].InputSlot				= 0;
 		inputDesc[ 1 ].AlignedByteOffset		= D3D11_APPEND_ALIGNED_ELEMENT;
 		inputDesc[ 1 ].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
 		inputDesc[ 1 ].InstanceDataStepRate		= 0;
 
-		inputDesc[ 2 ].SemanticName				= "NORMAL";
+		inputDesc[ 2 ].SemanticName				= "TEXCOORD";
 		inputDesc[ 2 ].SemanticIndex			= 0;
-		inputDesc[ 2 ].Format					= DXGI_FORMAT_R32G32B32_FLOAT;
+		inputDesc[ 2 ].Format					= DXGI_FORMAT_R32G32_FLOAT;
 		inputDesc[ 2 ].InputSlot				= 0;
 		inputDesc[ 2 ].AlignedByteOffset		= D3D11_APPEND_ALIGNED_ELEMENT;
 		inputDesc[ 2 ].InputSlotClass			= D3D11_INPUT_PER_VERTEX_DATA;
@@ -174,35 +174,11 @@ namespace Hyperion
 
 	void DirectX11GBufferShader::Shutdown()
 	{
-		if( m_SamplerState )
-		{
-			m_SamplerState->Release();
-			m_SamplerState.Reset();
-		}
-
-		if( m_MatrixBuffer )
-		{
-			m_MatrixBuffer->Release();
-			m_MatrixBuffer.Reset();
-		}
-
-		if( m_InputLayout )
-		{
-			m_InputLayout->Release();
-			m_InputLayout.Reset();
-		}
-
-		if( m_PixelShader )
-		{
-			m_PixelShader->Release();
-			m_PixelShader.Reset();
-		}
-
-		if( m_VertexShader )
-		{
-			m_VertexShader->Release();
-			m_VertexShader.Reset();
-		}
+		m_SamplerState.Reset();
+		m_MatrixBuffer.Reset();
+		m_InputLayout.Reset();
+		m_PixelShader.Reset();
+		m_VertexShader.Reset();
 	}
 
 
@@ -277,6 +253,45 @@ namespace Hyperion
 		ID3D11SamplerState* samplerList[] = { m_SamplerState.Get() };
 		m_Context->PSSetSamplers( 0, 1, samplerList );
 
+		return true;
+	}
+
+
+	bool DirectX11GBufferShader::UploadClusterData( const std::shared_ptr< RViewClusters >& inClusters )
+	{
+		HYPERION_VERIFY( m_Context, "[DX11] Context was null!" );
+
+		if( !inClusters )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to upload cluster info to gbuffer shader! Cluster structure was null" );
+			return false;
+		}
+
+		DirectX11ViewClusters* dx11Clusters		= dynamic_cast<DirectX11ViewClusters*>( inClusters.get() );
+
+		D3D11_MAPPED_SUBRESOURCE resource{};
+
+		if( FAILED( m_Context->Map( m_ClusterInfoBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource ) ) )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to upload cluster info to GBuffer shader! Failed to map buffer" );
+			return false;
+		}
+
+		auto* bufferPtr = (ClusterInfoBuffer*) resource.pData;
+
+		bufferPtr->clusterCountX	= RENDERER_CLUSTER_COUNT_X;
+		bufferPtr->clusterCountY	= RENDERER_CLUSTER_COUNT_Y;
+		bufferPtr->clusterSizeX		= inClusters->ClusterSizeX;
+		bufferPtr->clusterSizeY		= inClusters->ClusterSizeY;
+		bufferPtr->depthCalcTermA	= (float)RENDERER_CLUSTER_COUNT_Z / logf( SCREEN_NEAR / SCREEN_FAR );
+		bufferPtr->depthCalcTermB	= bufferPtr->depthCalcTermA * logf( SCREEN_NEAR );
+		
+		m_Context->Unmap( m_ClusterInfoBuffer.Get(), 0 );
+
+		ID3D11Buffer* bufferList[] = { m_ClusterInfoBuffer.Get() };
+		m_Context->PSSetConstantBuffers( 0, 1, bufferList );
+
+		// The actual cluster list is uploaded with the render targets, when the GBuffer is set as the render target (inside DirectX11Graphics)
 		return true;
 	}
 

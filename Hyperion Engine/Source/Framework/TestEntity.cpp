@@ -27,6 +27,8 @@ namespace Hyperion
 		m_Comp->SetModel( mdl );
 
 		AddComponent( m_Comp, "model" );
+
+		bRequiresTick = true;
 	}
 
 
@@ -38,13 +40,19 @@ namespace Hyperion
 
 	void TestEntity::OnSpawn( const HypPtr< World >& inWorld )
 	{
-		Console::WriteLine( "[DEBUG] TestEntity: On spawn!" );
+
 	}
 
 
 	void TestEntity::OnDespawn( const HypPtr< World >& inWorld )
 	{
-		Console::WriteLine( "[DEBUG] TestEntity: On despawn!" );
+
+	}
+
+
+	void TestEntity::Tick( double inDelta )
+	{
+		//m_Comp->Rotate( Angle3D( 0.f, 1.f, 0.f ) );
 	}
 
 }

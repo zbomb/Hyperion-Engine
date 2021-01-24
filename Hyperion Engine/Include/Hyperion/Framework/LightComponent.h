@@ -8,6 +8,7 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Framework/RenderComponent.h"
+#include "Hyperion/Library/Color.h"
 
 
 namespace Hyperion
@@ -24,6 +25,10 @@ namespace Hyperion
 	protected:
 
 		std::weak_ptr< ProxyLight > m_Proxy;
+		LightType m_Type;
+		Color3F m_Color;
+		float m_Brightness;
+		float m_Radius;
 
 		bool PerformProxyCreation() override;
 		bool PerformProxyUpdate() override;
@@ -31,8 +36,22 @@ namespace Hyperion
 		void AddToRenderer() override;
 		void RemoveFromRenderer() override;
 
-		virtual std::shared_ptr< ProxyLight > CreateProxy() = 0;
-		virtual bool UpdateProxy( const std::shared_ptr< ProxyLight >& ) = 0;
+	public:
+
+		LightComponent();
+
+		void SetLightType( LightType inType );
+		inline LightType GetLightType() const { return m_Type; }
+
+		void SetColor( const Color3F& inColor );
+		inline Color3F GetColor() const { return m_Color; }
+
+		void SetBrightness( float inBrightness );
+		inline float GetBrightness() const { return m_Brightness; }
+
+		void SetRadius( float inRadius );
+		inline float GetRadius() const { return m_Radius; }
+
 	};
 
 }

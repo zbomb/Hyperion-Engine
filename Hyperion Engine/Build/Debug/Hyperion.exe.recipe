@@ -7,6 +7,12 @@
   </ProjectOutputs>
   <ContentFiles>
     <ContentFile>
+      <FullPath>D:\Hyperion\Build\Debug\shaders\build_clusters.hcs</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\Hyperion\Build\Debug\shaders\compress_clusters.hcs</FullPath>
+    </ContentFile>
+    <ContentFile>
       <FullPath>D:\Hyperion\Build\Debug\shaders\gbuffer.hps</FullPath>
     </ContentFile>
     <ContentFile>

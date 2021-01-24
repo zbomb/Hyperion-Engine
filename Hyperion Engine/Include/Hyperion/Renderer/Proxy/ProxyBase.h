@@ -29,6 +29,8 @@ namespace Hyperion
 			: m_Identifier( inIdentifier )
 		{}
 
+		virtual ~ProxyBase() {}
+
 		Transform m_Transform;
 
 		virtual void GameInit() {}

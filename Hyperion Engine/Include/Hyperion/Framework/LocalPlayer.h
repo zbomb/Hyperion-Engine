@@ -36,8 +36,6 @@ namespace Hyperion
 		~LocalPlayer();
 
 		void GetActiveCameraTransform( Transform& outTransform );
-		bool ProcessKeyBinding( const String& inKey );
-		bool ProcessAxisBinding( const String& inAxis, float inValue );
 
 		inline HypPtr< Player > GetPlayer() const { return m_PlayerEntity; }
 

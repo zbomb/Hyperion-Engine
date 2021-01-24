@@ -36,6 +36,7 @@ namespace Hyperion
 
 		ProxyStaticModel() = delete;
 		ProxyStaticModel( uint32 inIdentifier );
+		virtual ~ProxyStaticModel();
 
 		void GameInit() override;
 		void RenderInit() override;

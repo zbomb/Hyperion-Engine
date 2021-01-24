@@ -39,6 +39,54 @@ namespace Hyperion
 		RemoveFromRenderer();
 	}
 
+	void RenderComponent::SetPosition( const Vector3D& inPosition )
+	{
+		Component::SetPosition( inPosition );
+		MarkDirty();
+	}
+
+	void RenderComponent::SetRotation( const Angle3D& inRotation )
+	{
+		Component::SetRotation( inRotation );
+		MarkDirty();
+	}
+
+	void RenderComponent::SetQuaternion( const Quaternion& inQuat )
+	{
+		Component::SetQuaternion( inQuat );
+		MarkDirty();
+	}
+
+	void RenderComponent::SetScale( const Vector3D& inScale )
+	{
+		Component::SetScale( inScale );
+		MarkDirty();
+	}
+
+	void RenderComponent::SetTransform( const Transform& inTransform )
+	{
+		Component::SetTransform( inTransform );
+		MarkDirty();
+	}
+
+	void RenderComponent::Translate( const Vector3D& inPos )
+	{
+		Component::Translate( inPos );
+		MarkDirty();
+	}
+
+	void RenderComponent::Rotate( const Quaternion& inQuat )
+	{
+		Component::Rotate( inQuat );
+		MarkDirty();
+	}
+
+	void RenderComponent::Rotate( const Angle3D& inEuler )
+	{
+		Component::Rotate( inEuler );
+		MarkDirty();
+	}
+
 }
 
 

@@ -28,6 +28,7 @@ namespace Hyperion
 		}
 
 		virtual bool IsValid() const = 0;
+		virtual void Shutdown() = 0;
 		
 	};
 

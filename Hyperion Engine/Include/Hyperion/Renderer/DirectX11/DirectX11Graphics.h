@@ -52,6 +52,7 @@ namespace Hyperion
 		/*
 			Resource Pointers
 		*/
+		ComPtr< ID3D11Debug > m_Debug;
 		ComPtr< IDXGISwapChain > m_SwapChain;
 		ComPtr< ID3D11Device > m_Device;
 		ComPtr< ID3D11DeviceContext > m_DeviceContext;
@@ -68,10 +69,15 @@ namespace Hyperion
 		ComPtr< ID3D11Buffer > m_ScreenVertexList;
 		ComPtr< ID3D11Buffer > m_ScreenIndexList;
 
+		// DEBUG 
+		// Floor, just so we have something to cast lights and shadows against
+		ComPtr< ID3D11Buffer > m_FloorVertexList;
+		ComPtr< ID3D11Buffer > m_FloorIndexList;
+
 		/*
 			Matricies
 		*/
-		DirectX::XMMATRIX m_WorldMatrix, m_ProjectionMatrix, m_OrthoMatrix, m_ScreenMatrix, m_ViewMatrix;
+		DirectX::XMMATRIX m_WorldMatrix, m_ProjectionMatrix, m_OrthoMatrix, m_ScreenViewMatrix, m_ViewMatrix;
 
 		/*
 		*	Camera Info
@@ -87,6 +93,8 @@ namespace Hyperion
 		void ShutdownResources();
 		void GenerateMatricies( const ScreenResolution& inRes, float inFOV, float inNear, float inFar );
 		void GenerateScreenGeometry( uint32 inWidth, uint32 inHeight );
+
+		void GenerateFloorGeometry();
 
 	public:
 
@@ -161,24 +169,29 @@ namespace Hyperion
 		std::shared_ptr< RGBufferShader > CreateGBufferShader( const String& inPixelShader = SHADER_PATH_GBUFFER_PIXEL, const String& inVertexShader = SHADER_PATH_GBUFFER_VERTEX ) final;
 		std::shared_ptr< RLightingShader > CreateLightingShader( const String& inPixelShader = SHADER_PATH_LIGHTING_PIXEL, const String& inVertexShader = SHADER_PATH_LIGHTING_VERTEX ) final;
 		std::shared_ptr< RForwardShader > CreateForwardShader( const String& inPixelShader = SHADER_PATH_FORWARD_PIXEL, const String& inVertexShader = SHADER_PATH_FORWARD_VERTEX ) final;
-		std::shared_ptr< RComputeShader > CreateComputeShader( const String& inShader ) final;
+		std::shared_ptr< RBuildClusterShader > CreateBuildClusterShader( const String& inShader = SHADER_PATH_COMPUTE_BUILD_CLUSTERS ) final;
+		std::shared_ptr< RCompressClustersShader > CreateCompressClustersShader( const String& inShader = SHADER_PATH_COMPUTE_COMPRESS_CLUSTERS ) final;
+
+		std::shared_ptr< RViewClusters > CreateViewClusters() final;
 
 		// Rendering
 		void SetShader( const std::shared_ptr< RShader >& inShader ) final;
 
 		void SetRenderOutputToScreen() final;
 		void SetRenderOutputToTarget( const std::shared_ptr< RRenderTarget >& inTarget, const std::shared_ptr< RDepthStencil >& inStencil ) final;
-		void SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inGBuffer ) final;
+		void SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inGBuffer, const std::shared_ptr< RViewClusters >& inClusters ) final;
+		void DetachGBuffer() final;
 
 		void RenderMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount ) final;
 		void RenderScreenMesh() final;
+		void RenderDebugFloor() final;
 
 		void GetWorldMatrix( const Transform& inObj, Matrix& outMatrix ) final;
 		void GetWorldMatrix( Matrix& outMatrix ) final;
 		void GetViewMatrix( Matrix& outMatrix ) final;
 		void GetProjectionMatrix( Matrix& outMatrix ) final;
 		void GetOrthoMatrix( Matrix& outMatrix ) final;
-		void GetScreenMatrix( Matrix& outMatrix ) final;
+		void GetScreenViewMatrix( Matrix& outMatrix ) final;
 
 	};
 

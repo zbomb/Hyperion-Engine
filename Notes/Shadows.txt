@@ -1,0 +1,49 @@
+--------------------------------- HYPERION NOTES -----------------------------------------
+-> Shadowing
+
+
+Now, we need to start investigating methods to apply shadows in the game engine.
+We have a few different types of shadows to render...
+
+
+1. Static shadows
+Shadows caused by static lights, casted by static geometry
+We can optimize here by building scene light info, this will be developed later on once a 'level' system is in place
+
+
+2. Dynamic shadows
+Shadows caused by dynamic lights (or static lights), casted by dynamic (or static) geometry.
+If one of the two are dynamic (i.e. movable) then we need real-time shadowing, thats calculated on the fly.
+
+
+3. Soft shadows (& contact shadows)
+The concept of blurring edges of shadows, to better mimic real life..
+
+
+
+
+
+
+
+
+===========================================================================================
+-> Static shadow ideas
+
+===========================================================================================
+-> Dynamic shadow ideas
+
+The best idea so far, is a mixture of virtual shadow mapping, and cascaded shadow maps to generate 
+real time dynamic shadowing, with minimal memory and computational overhead.
+
+Virtual Shadow Maps Paper:
+http://www.cse.chalmers.se/~uffe/ClusteredWithShadows.pdf
+
+It works with the basic clustered system we plan to put into place.
+
+
+============================================================================================
+-> Soft shadow ideas
+
+One method we can investigate further is, 'Soft Shadow Volumes'
+It seems to be able to be calculated in real time, with varying light 'shapes', and produces high quality output
+

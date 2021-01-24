@@ -26,14 +26,14 @@ namespace Hyperion
 
 	private:
 
-		ID3D11Texture1D* m_Texture;
-		ID3D11ShaderResourceView* m_ResourceView;
+		Microsoft::WRL::ComPtr< ID3D11Texture1D > m_Texture;
+		Microsoft::WRL::ComPtr< ID3D11ShaderResourceView > m_ResourceView;
 
 		DirectX11Texture1D()
 			: m_Texture( nullptr ), m_ResourceView( nullptr )
 		{}
 
-		DirectX11Texture1D( ID3D11Texture1D* inRaw, ID3D11ShaderResourceView* inView = nullptr )
+		DirectX11Texture1D( Microsoft::WRL::ComPtr< ID3D11Texture1D > inRaw, const Microsoft::WRL::ComPtr< ID3D11ShaderResourceView >& inView = nullptr )
 			: m_Texture( inRaw ), m_ResourceView( inView )
 		{}
 
@@ -46,23 +46,14 @@ namespace Hyperion
 
 		void Shutdown() override
 		{
-			if( m_ResourceView )
-			{
-				m_ResourceView->Release();
-				m_ResourceView = nullptr;
-			}
-
-			if( m_Texture )
-			{
-				m_Texture->Release();
-				m_Texture = nullptr;
-			}
+			m_ResourceView.Reset();
+			m_Texture.Reset();
 		}
 
 		bool IsValid() const override
 		{
-			if( m_Texture == nullptr ) { return false; }
-			if( m_ResourceView == nullptr )
+			if( !m_Texture ) { return false; }
+			if( !m_ResourceView )
 			{
 				// Check if this is a shader binded texture
 				return !HYPERION_HAS_FLAG( GetBindTargets(), TextureBindTarget::Shader );
@@ -73,27 +64,27 @@ namespace Hyperion
 
 		ID3D11Texture1D** GetAddress()
 		{
-			return &m_Texture;
+			return m_Texture.GetAddressOf();
 		}
 
 		ID3D11ShaderResourceView** GetViewAddress()
 		{
-			return &m_ResourceView;
+			return m_ResourceView.GetAddressOf();
 		}
 
 		ID3D11Texture1D* Get()
 		{
-			return m_Texture;
+			return m_Texture.Get();
 		}
 
 		ID3D11ShaderResourceView* GetView()
 		{
-			return m_ResourceView;
+			return m_ResourceView.Get();
 		}
 
 		uint32 GetWidth() const final
 		{
-			if( m_Texture == nullptr ) { return 0; }
+			if( !m_Texture ) { return 0; }
 
 			D3D11_TEXTURE1D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -103,7 +94,7 @@ namespace Hyperion
 
 		uint8 GetMipCount() const final
 		{
-			if( m_Texture == nullptr ) { return 0; }
+			if( !m_Texture ) { return 0; }
 
 			D3D11_TEXTURE1D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -113,7 +104,7 @@ namespace Hyperion
 
 		bool IsDynamic() const final
 		{
-			if( m_Texture == nullptr ) { return 0; }
+			if( !m_Texture ) { return 0; }
 
 			D3D11_TEXTURE1D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -123,7 +114,7 @@ namespace Hyperion
 
 		bool CanCPURead() const final
 		{
-			if( m_Texture == nullptr ) { return false; }
+			if( !m_Texture ) { return false; }
 
 			D3D11_TEXTURE1D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -133,7 +124,7 @@ namespace Hyperion
 
 		uint32 GetBindTargets() const final
 		{
-			if( m_Texture == nullptr ) { return (uint32) TextureBindTarget::None; }
+			if( !m_Texture ) { return (uint32) TextureBindTarget::None; }
 
 			D3D11_TEXTURE1D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -143,7 +134,7 @@ namespace Hyperion
 
 		TextureFormat GetFormat() const final
 		{
-			if( m_Texture == nullptr ) { return TextureFormat::NONE; }
+			if( !m_Texture ) { return TextureFormat::NONE; }
 
 			D3D11_TEXTURE1D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -173,14 +164,14 @@ namespace Hyperion
 
 	private:
 
-		ID3D11Texture2D* m_Texture;
-		ID3D11ShaderResourceView* m_ResourceView;
+		Microsoft::WRL::ComPtr< ID3D11Texture2D > m_Texture;
+		Microsoft::WRL::ComPtr< ID3D11ShaderResourceView > m_ResourceView;
 
 		DirectX11Texture2D()
 			: m_Texture( nullptr ), m_ResourceView( nullptr )
 		{}
 
-		DirectX11Texture2D( ID3D11Texture2D* inRawTexture, ID3D11ShaderResourceView* inView = nullptr )
+		DirectX11Texture2D( const Microsoft::WRL::ComPtr< ID3D11Texture2D >& inRawTexture, const Microsoft::WRL::ComPtr< ID3D11ShaderResourceView >& inView = nullptr )
 			: m_Texture( inRawTexture ), m_ResourceView( inView )
 		{}
 
@@ -193,23 +184,14 @@ namespace Hyperion
 
 		void Shutdown() override
 		{
-			if( m_ResourceView )
-			{
-				m_ResourceView->Release();
-				m_ResourceView = nullptr;
-			}
-
-			if( m_Texture )
-			{
-				m_Texture->Release();
-				m_Texture = nullptr;
-			}
+			m_ResourceView.Reset();
+			m_Texture.Reset();
 		}
 
 		bool IsValid() const override
 		{
-			if( m_Texture == nullptr ) { return false; }
-			if( m_ResourceView == nullptr )
+			if( !m_Texture ) { return false; }
+			if( !m_ResourceView )
 			{
 				// Check if this is a shader binded texture
 				return !HYPERION_HAS_FLAG( GetBindTargets(), TextureBindTarget::Shader );
@@ -220,27 +202,27 @@ namespace Hyperion
 
 		ID3D11Texture2D** GetAddress()
 		{
-			return &m_Texture;
+			return m_Texture.GetAddressOf();
 		}
 
 		ID3D11ShaderResourceView** GetViewAddress()
 		{
-			return &m_ResourceView;
+			return m_ResourceView.GetAddressOf();
 		}
 
 		ID3D11Texture2D* Get()
 		{
-			return m_Texture;
+			return m_Texture.Get();
 		}
 
 		ID3D11ShaderResourceView* GetView()
 		{
-			return m_ResourceView;
+			return m_ResourceView.Get();
 		}
 
 		uint32 GetWidth() const final
 		{
-			if( m_Texture == nullptr ) { return 0; }
+			if( !m_Texture ) { return 0; }
 
 			D3D11_TEXTURE2D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -250,7 +232,7 @@ namespace Hyperion
 
 		uint32 GetHeight() const final
 		{
-			if( m_Texture == nullptr ) { return 0; }
+			if( !m_Texture ) { return 0; }
 
 			D3D11_TEXTURE2D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -260,7 +242,7 @@ namespace Hyperion
 
 		uint8 GetMipCount() const final
 		{
-			if( m_Texture == nullptr ) { return 0; }
+			if( !m_Texture ) { return 0; }
 
 			D3D11_TEXTURE2D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -270,7 +252,7 @@ namespace Hyperion
 
 		bool IsDynamic() const final
 		{
-			if( m_Texture == nullptr ) { return false; }
+			if( !m_Texture ) { return false; }
 
 			D3D11_TEXTURE2D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -280,7 +262,7 @@ namespace Hyperion
 
 		bool CanCPURead() const final
 		{
-			if( m_Texture == nullptr ) { return false; }
+			if( !m_Texture ) { return false; }
 
 			D3D11_TEXTURE2D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -290,7 +272,7 @@ namespace Hyperion
 
 		uint32 GetBindTargets() const final
 		{
-			if( m_Texture == nullptr ) { return (uint32)TextureBindTarget::None; }
+			if( !m_Texture ) { return (uint32)TextureBindTarget::None; }
 
 			D3D11_TEXTURE2D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -300,7 +282,7 @@ namespace Hyperion
 
 		TextureFormat GetFormat() const final
 		{
-			if( m_Texture == nullptr ) { return TextureFormat::NONE; }
+			if( !m_Texture ) { return TextureFormat::NONE; }
 
 			D3D11_TEXTURE2D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -331,15 +313,15 @@ namespace Hyperion
 
 	private:
 
-		ID3D11Texture3D* m_Texture;
-		ID3D11ShaderResourceView* m_ResourceView;
+		Microsoft::WRL::ComPtr< ID3D11Texture3D > m_Texture;
+		Microsoft::WRL::ComPtr< ID3D11ShaderResourceView > m_ResourceView;
 
 
 		DirectX11Texture3D()
 			: m_Texture( nullptr ), m_ResourceView( nullptr )
 		{}
 
-		DirectX11Texture3D( ID3D11Texture3D* inRaw, ID3D11ShaderResourceView* inView = nullptr )
+		DirectX11Texture3D( const Microsoft::WRL::ComPtr< ID3D11Texture3D >& inRaw, const Microsoft::WRL::ComPtr< ID3D11ShaderResourceView >& inView = nullptr )
 			: m_Texture( inRaw ), m_ResourceView( inView )
 		{}
 
@@ -352,23 +334,14 @@ namespace Hyperion
 
 		void Shutdown() override
 		{
-			if( m_ResourceView )
-			{
-				m_ResourceView->Release();
-				m_ResourceView = nullptr;
-			}
-
-			if( m_Texture )
-			{
-				m_Texture->Release();
-				m_Texture = nullptr;
-			}
+			m_ResourceView.Reset();
+			m_Texture.Reset();
 		}
 
 		bool IsValid() const override
 		{
-			if( m_Texture == nullptr ) { return false; }
-			if( m_ResourceView == nullptr )
+			if( !m_Texture ) { return false; }
+			if( !m_ResourceView )
 			{
 				// Check if this is a shader binded texture
 				return !HYPERION_HAS_FLAG( GetBindTargets(), TextureBindTarget::Shader );
@@ -379,27 +352,27 @@ namespace Hyperion
 
 		ID3D11Texture3D** GetAddress()
 		{
-			return &m_Texture;
+			return m_Texture.GetAddressOf();
 		}
 
 		ID3D11ShaderResourceView** GetViewAddress()
 		{
-			return &m_ResourceView;
+			return m_ResourceView.GetAddressOf();
 		}
 
 		ID3D11Texture3D* Get()
 		{
-			return m_Texture;
+			return m_Texture.Get();
 		}
 
 		ID3D11ShaderResourceView* GetView()
 		{
-			return m_ResourceView;
+			return m_ResourceView.Get();
 		}
 
 		uint32 GetWidth() const final
 		{
-			if( m_Texture == nullptr ) { return 0; }
+			if( !m_Texture ) { return 0; }
 
 			D3D11_TEXTURE3D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -409,7 +382,7 @@ namespace Hyperion
 
 		uint32 GetHeight() const final
 		{
-			if( m_Texture == nullptr ) { return 0; }
+			if( !m_Texture ) { return 0; }
 
 			D3D11_TEXTURE3D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -419,7 +392,7 @@ namespace Hyperion
 
 		uint32 GetDepth() const final
 		{
-			if( m_Texture == nullptr ) { return 0; }
+			if( !m_Texture ) { return 0; }
 
 			D3D11_TEXTURE3D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -429,7 +402,7 @@ namespace Hyperion
 
 		uint8 GetMipCount() const final
 		{
-			if( m_Texture == nullptr ) { return 0; }
+			if( !m_Texture ) { return 0; }
 
 			D3D11_TEXTURE3D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -439,7 +412,7 @@ namespace Hyperion
 
 		bool IsDynamic() const final
 		{
-			if( m_Texture == nullptr ) { return false; }
+			if( !m_Texture ) { return false; }
 
 			D3D11_TEXTURE3D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -449,7 +422,7 @@ namespace Hyperion
 
 		bool CanCPURead() const final
 		{
-			if( m_Texture == nullptr ) { return false; }
+			if( !m_Texture ) { return false; }
 
 			D3D11_TEXTURE3D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -459,7 +432,7 @@ namespace Hyperion
 
 		uint32 GetBindTargets() const final
 		{
-			if( m_Texture == nullptr ) { return (uint32)TextureBindTarget::None; }
+			if( !m_Texture ) { return (uint32)TextureBindTarget::None; }
 
 			D3D11_TEXTURE3D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -469,7 +442,7 @@ namespace Hyperion
 
 		TextureFormat GetFormat() const final
 		{
-			if( m_Texture == nullptr ) { return TextureFormat::NONE; }
+			if( !m_Texture ) { return TextureFormat::NONE; }
 
 			D3D11_TEXTURE3D_DESC desc;
 			m_Texture->GetDesc( &desc );

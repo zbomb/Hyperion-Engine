@@ -125,15 +125,15 @@ namespace Hyperion
 		Vector3D GetWorldScale() const;
 		Transform GetWorldTransform() const;
 
-		void SetPosition( const Vector3D& inPosition );
-		void SetRotation( const Angle3D& inRotation );
-		void SetQuaternion( const Quaternion& inQuat );
-		void SetScale( const Vector3D& inScale );
-		void SetTransform( const Transform& inTransform );
+		virtual void SetPosition( const Vector3D& inPosition );
+		virtual void SetRotation( const Angle3D& inRotation );
+		virtual void SetQuaternion( const Quaternion& inQuat );
+		virtual void SetScale( const Vector3D& inScale );
+		virtual void SetTransform( const Transform& inTransform );
 
-		void Translate( const Vector3D& inPos );
-		void Rotate( const Quaternion& inQuat );
-		void Rotate( const Angle3D& inEuler );
+		virtual void Translate( const Vector3D& inPos );
+		virtual void Rotate( const Quaternion& inQuat );
+		virtual void Rotate( const Angle3D& inEuler );
 
 		/*-------------------------------------------------------
 			Hook Transmission

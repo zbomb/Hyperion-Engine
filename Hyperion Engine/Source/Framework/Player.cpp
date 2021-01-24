@@ -6,6 +6,7 @@
 
 #include "Hyperion/Framework/Player.h"
 #include "Hyperion/Framework/CameraComponent.h"
+#include "Hyperion/Core/InputManager.h"
 
 
 namespace Hyperion
@@ -14,54 +15,63 @@ namespace Hyperion
 	Player::Player( uint32 inIdentifier )
 		: m_PlayerIdentifier( inIdentifier )
 	{
-
+		// Request user inputs if were the 'local player' controller
+		if( m_PlayerIdentifier == PLAYER_LOCAL )
+		{
+			bRequiresInput = true;
+		}
 	}
 
 
 	Player::~Player()
 	{
-
+		bRequiresInput = false;
 	}
 
 
-	bool Player::ProcessKeyBinding( const String& inBind )
+	void Player::UpdateInput( InputManager& im, double delta )
 	{
-		// First, check if the derived class can handle this key binding
-		if( HandleKeyBinding( inBind ) ) { return true; }
-
-		// Pass this down to the character
-		if( m_PossessedCharacter && m_PossessedCharacter->IsValid() )
+		if( m_PossessedCharacter && m_PossessedCharacter->IsSpawned() )
 		{
-			return m_PossessedCharacter->ProcessKeyBinding( inBind );
+			// First, lets poll for inputs that are relevant
+			bool bFwd			= im.PollState( INPUT_STATE_MOVE_FORWARD );
+			bool bBwd			= im.PollState( INPUT_STATE_MOVE_BACKWARD );
+			bool bRight			= im.PollState( INPUT_STATE_MOVE_RIGHT );
+			bool bLeft			= im.PollState( INPUT_STATE_MOVE_LEFT );
+			float fPitch		= im.PollScalar( INPUT_AXIS_LOOK_PITCH );
+			float fYaw			= im.PollScalar( INPUT_AXIS_LOOK_YAW );
+			bool bLookUp		= im.PollState( INPUT_STATE_LOOK_UP );
+			bool bLookDown		= im.PollState( INPUT_STATE_LOOK_DOWN );
+			bool bLookRight		= im.PollState( INPUT_STATE_LOOK_RIGHT );
+			bool bLookLeft		= im.PollState( INPUT_STATE_LOOK_LEFT );
+			bool bSprint		= im.PollState( INPUT_STATE_SPRINT );
+			bool bDown			= im.PollState( INPUT_STATE_MOVE_DOWN );
+			bool bUp			= im.PollState( INPUT_STATE_MOVE_UP );
+
+			// Now, lets calculate our movement vector
+			Vector3D movementVec(
+				( bFwd ? 1.f : 0.f ) - ( bBwd ? 1.f : 0.f ),
+				( bRight ? 1.f : 0.f ) - ( bLeft ? 1.f : 0.f ),
+				( bUp ? 1.f : 0.f ) - ( bDown ? 1.f : 0.f )
+			);
+
+			// And our look vector
+			Vector2D lookVec(
+				fPitch + ( bLookDown ? 1.f : 0.f ) - ( bLookUp ? 1.f : 0.f ),
+				fYaw + ( bLookRight ? 1.f : 0.f ) - ( bLookLeft ? 1.f : 0.f )
+			);
+
+			// Determine if we should apply a look input, or a movement input
+			if( movementVec.X != 0.f || movementVec.Y != 0.f || movementVec.Z != 0.f )
+			{
+				m_PossessedCharacter->SetMovementInput( bSprint ? movementVec * 2.f : movementVec );
+			}
+
+			if( lookVec.X != 0.f || lookVec.Y != 0.f )
+			{
+				m_PossessedCharacter->SetLookInput( lookVec );
+			}
 		}
-
-		return false;
-	}
-
-
-	bool Player::ProcessAxisBinding( const String& inBind, float inValue )
-	{
-		// First, check if the derived class can handle this axis binding
-		if( HandleAxisBinding( inBind, inValue ) ) { return true; }
-
-		if( m_PossessedCharacter && m_PossessedCharacter->IsValid() )
-		{
-			return m_PossessedCharacter->ProcessAxisBinding( inBind, inValue );
-		}
-
-		return false;
-	}
-
-
-	bool Player::HandleKeyBinding( const String& inKey )
-	{
-		return false;
-	}
-
-
-	bool Player::HandleAxisBinding( const String& inKey, float inValue )
-	{
-		return false;
 	}
 
 

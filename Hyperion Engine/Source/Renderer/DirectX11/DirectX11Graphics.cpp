@@ -14,6 +14,7 @@
 #include "Hyperion/Library/Geometry.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11DepthStencil.h"
 #include "Hyperion/Renderer/GBuffer.h"
+#include "Hyperion/Renderer/DirectX11/Shaders/DirectX11Compute.h"
 
 
 namespace Hyperion
@@ -50,7 +51,7 @@ namespace Hyperion
 			IDXGIOutput* output = nullptr;
 			if( FAILED( m_SwapChain->GetContainingOutput( &output ) ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to get reoslution list.. couldnt get output device" );
+				Console::WriteLine( "[ERROR] DX11: Failed to get reoslution list.. couldnt get output device" );
 				return false;
 			}
 
@@ -58,7 +59,7 @@ namespace Hyperion
 			uint32 numberModes = 0;
 			if( FAILED( output->GetDisplayModeList( DXGI_FORMAT_R8G8B8A8_UNORM, 0, &numberModes, NULL ) ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to get reoslution list.. couldnt get display modes list" );
+				Console::WriteLine( "[ERROR] DX11: Failed to get reoslution list.. couldnt get display modes list" );
 				output->Release();
 				return false;
 			}
@@ -70,7 +71,7 @@ namespace Hyperion
 			// Fill out this array
 			if( FAILED( output->GetDisplayModeList( DXGI_FORMAT_R8G8B8A8_UNORM, 0, &numberModes, supportedModes ) ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to get resolution list.. couldnt fill display modes list!" );
+				Console::WriteLine( "[ERROR] DX11: Failed to get resolution list.. couldnt fill display modes list!" );
 				output->Release();
 				delete[] supportedModes;
 				return false;
@@ -96,7 +97,7 @@ namespace Hyperion
 
 			if( !bFoundMode )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. selected resolution of ", inResolution.Width, "x", inResolution.Height, " is invalid!" );
+				Console::WriteLine( "[ERROR] DX11: Failed to update resolution.. selected resolution of ", inResolution.Width, "x", inResolution.Height, " is invalid!" );
 				return false;
 			}
 
@@ -119,14 +120,14 @@ namespace Hyperion
 					// Resize our swap chain target
 					if( FAILED( m_SwapChain->ResizeTarget( &targetMode ) ) )
 					{
-						Console::WriteLine( "[ERROR] DX11Renderer: Failed to update reoslution.. couldnt resize swap chain target" );
+						Console::WriteLine( "[ERROR] DX11: Failed to update reoslution.. couldnt resize swap chain target" );
 						return false;
 					}
 
 					// Set swap chain to fullscreen
 					if( FAILED( m_SwapChain->SetFullscreenState( TRUE, NULL ) ) )
 					{
-						Console::WriteLine( "[ERROR] DX11Renderer: Failed to update reoslution.. couldnt set fullscreen state" );
+						Console::WriteLine( "[ERROR] DX11: Failed to update reoslution.. couldnt set fullscreen state" );
 						return false;
 					}
 				}
@@ -135,7 +136,7 @@ namespace Hyperion
 					// Disable fullscreen
 					if( FAILED( m_SwapChain->SetFullscreenState( FALSE, NULL ) ) )
 					{
-						Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. couldnt exit fullscreen mode" );
+						Console::WriteLine( "[ERROR] DX11: Failed to update resolution.. couldnt exit fullscreen mode" );
 						return false;
 					}
 
@@ -143,7 +144,7 @@ namespace Hyperion
 					RECT newSize = { 0, 0, (long) targetMode.Width, (long) targetMode.Height };
 					if( !AdjustWindowRectEx( &newSize, WS_OVERLAPPEDWINDOW, false, WS_EX_OVERLAPPEDWINDOW ) )
 					{
-						Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. couldnt resize window when exiting fullscreen" );
+						Console::WriteLine( "[ERROR] DX11: Failed to update resolution.. couldnt resize window when exiting fullscreen" );
 						return false;
 					}
 
@@ -155,7 +156,7 @@ namespace Hyperion
 			// Resize the target
 			if( FAILED( m_SwapChain->ResizeTarget( &targetMode ) ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update reoslution.. couldnt resize swap chain target" );
+				Console::WriteLine( "[ERROR] DX11: Failed to update reoslution.. couldnt resize swap chain target" );
 				return false;
 			}
 
@@ -166,19 +167,19 @@ namespace Hyperion
 			// Resize the swap chain buffers
 			if( FAILED( m_SwapChain->ResizeBuffers( 0, 0, 0, DXGI_FORMAT_UNKNOWN, DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH ) ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. couldnt update swap chain buffer size" );
+				Console::WriteLine( "[ERROR] DX11: Failed to update resolution.. couldnt update swap chain buffer size" );
 				return false;
 			}
 
 			if( FAILED( m_SwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), (void**)m_BackBuffer->GetAddress() ) ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. coudlnt recreate back buffer" );
+				Console::WriteLine( "[ERROR] DX11: Failed to update resolution.. coudlnt recreate back buffer" );
 				return false;
 			}
 
 			if( FAILED( m_Device->CreateRenderTargetView( m_BackBuffer->Get(), NULL, m_RenderTarget->GetAddress() ) ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to update resolution.. couldnt create render target view" );
+				Console::WriteLine( "[ERROR] DX11: Failed to update resolution.. couldnt create render target view" );
 				return false;
 			}
 
@@ -232,7 +233,7 @@ namespace Hyperion
 			IDXGIOutput* output = nullptr;
 			if( FAILED( m_SwapChain->GetContainingOutput( &output ) ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to get reoslution list.. couldnt get output device" );
+				Console::WriteLine( "[ERROR] DX11: Failed to get reoslution list.. couldnt get output device" );
 				return outputList;
 			}
 
@@ -240,7 +241,7 @@ namespace Hyperion
 			uint32 numberModes = 0;
 			if( FAILED( output->GetDisplayModeList( DXGI_FORMAT_R8G8B8A8_UNORM, 0, &numberModes, NULL ) ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to get reoslution list.. couldnt get display modes list" );
+				Console::WriteLine( "[ERROR] DX11: Failed to get reoslution list.. couldnt get display modes list" );
 				output->Release();
 				return outputList;
 			}
@@ -252,7 +253,7 @@ namespace Hyperion
 			// Fill out this array
 			if( FAILED( output->GetDisplayModeList( DXGI_FORMAT_R8G8B8A8_UNORM, 0, &numberModes, supportedModes ) ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to get resolution list.. couldnt fill display modes list!" );
+				Console::WriteLine( "[ERROR] DX11: Failed to get resolution list.. couldnt fill display modes list!" );
 				output->Release();
 				delete[] supportedModes;
 				return outputList;
@@ -292,6 +293,8 @@ namespace Hyperion
 	------------------------------------------------------------------------------------------*/
 	bool DirectX11Graphics::Initialize( void* pWindow )
 	{
+		HYPERION_VERIFY( !m_Device && !m_DeviceContext, "[DX11] Attempt to init graphics api, but it is already initialized" );
+
 		Console::WriteLine( "[STATUS] DX11: Initializing..." );
 
 		if( !pWindow )
@@ -301,9 +304,6 @@ namespace Hyperion
 		}
 
 		HWND windowHandle = static_cast< HWND >( pWindow );
-
-		// If any resources are still open.. shut them down
-		ShutdownResources();
 
 		// Initialize our resoource using the parameters we have set
 		if( !InitializeResources( windowHandle, m_Resolution ) )
@@ -336,12 +336,11 @@ namespace Hyperion
 	------------------------------------------------------------------------------------------*/
 	void DirectX11Graphics::Shutdown()
 	{
-		if( !m_bRunning )
-			return;
+		if( m_bRunning )
+		{
+			Console::WriteLine( "DirectX11: Shutting down..." );
+		}
 
-		Console::WriteLine( "[STATUS] DX11: Shutting down..." );
-
-		// Shutdown any open resources
 		ShutdownResources();
 		m_bRunning = false;
 	}
@@ -361,7 +360,7 @@ namespace Hyperion
 		if( !Target ) return false;
 
 		// Create pointers to dxgi resources we will create in our try block
-		IDXGIFactory* ptrFactory			= nullptr;
+		IDXGIFactory1* ptrFactory			= nullptr;
 		IDXGIAdapter* ptrAdapter			= nullptr;
 		IDXGIOutput* ptrOutput				= nullptr;
 		DXGI_MODE_DESC* ptrDisplayModes		= nullptr;
@@ -369,10 +368,10 @@ namespace Hyperion
 		try
 		{
 			// Create graphics interface factory
-			HRESULT res = CreateDXGIFactory( __uuidof( IDXGIFactory ), (void**) &ptrFactory );
+			HRESULT res = CreateDXGIFactory1( __uuidof( IDXGIFactory1 ), (void**) &ptrFactory );
 			if( FAILED( res ) || !ptrFactory )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create graphics interface factory" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt create graphics interface factory" );
 				throw std::exception();
 			}
 
@@ -380,14 +379,14 @@ namespace Hyperion
 			res = ptrFactory->EnumAdapters( 0, &ptrAdapter );
 			if( FAILED( res ) || !ptrAdapter )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt enumerate adapters" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt enumerate adapters" );
 				throw std::exception();
 			}
 
 			res = ptrAdapter->EnumOutputs( 0, &ptrOutput );
 			if( FAILED( res ) || !ptrOutput )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt enum outputs!" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt enum outputs!" );
 				throw std::exception();
 			}
 
@@ -395,7 +394,7 @@ namespace Hyperion
 			res = ptrOutput->GetDisplayModeList( DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, NULL );
 			if( FAILED( res ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt get display modes list" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt get display modes list" );
 				throw std::exception();
 			}
 
@@ -403,13 +402,13 @@ namespace Hyperion
 			res = ptrOutput->GetDisplayModeList( DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, ptrDisplayModes );
 			if( FAILED( res ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt fill display mode list" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt fill display mode list" );
 				throw std::exception();
 			}
 
 			if( numModes <= 0 )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: There are no supported display modes! Failed to initialize" );
+				Console::WriteLine( "[ERROR] DX11: There are no supported display modes! Failed to initialize" );
 				throw std::exception();
 			}
 
@@ -430,9 +429,9 @@ namespace Hyperion
 			if( !bResolutionSupported )
 			{
 				// We need to default to one of the modes in the list
-				Console::WriteLine( "[WARNING] DX11Renderer: Selected resolution (", Resolution.Width, "x", Resolution.Height, ") wasnt supported.. defaulting!" );
+				Console::WriteLine( "[WARNING] DX11: Selected resolution (", Resolution.Width, "x", Resolution.Height, ") wasnt supported.. defaulting!" );
 				selectedMode = ptrDisplayModes[ numModes - 1 ];
-				Console::WriteLine( "[WARNING] DX11Renderer: Defaulting to resolution (", selectedMode.Width, "x", selectedMode.Height, ")" );
+				Console::WriteLine( "[WARNING] DX11: Defaulting to resolution (", selectedMode.Width, "x", selectedMode.Height, ")" );
 			}
 
 			// Update stored resolution to the supported one
@@ -446,12 +445,99 @@ namespace Hyperion
 			res = ptrAdapter->GetDesc( &videoCardDescription );
 			if( FAILED( res ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. coudlnt read video card information" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. coudlnt read video card information" );
 				throw std::exception();
 			}
 
 			m_GraphicsMemory	= (uint32)( videoCardDescription.DedicatedVideoMemory / 1024 / 1024 );
 			m_GraphicsDevice	= String( std::wstring( videoCardDescription.Description ), StringEncoding::UTF16 );
+
+			// Resize window to match our target resolution
+			RECT newSize = { 0, 0, (long) Resolution.Width, (long) Resolution.Height };
+			if( !AdjustWindowRectEx( &newSize, WS_OVERLAPPEDWINDOW, false, WS_EX_OVERLAPPEDWINDOW ) )
+			{
+				Console::WriteLine( "[ERROR] DX11: Failed to resize window during initialization!\n" );
+				throw std::exception();
+			}
+
+			// Center the window
+			SetWindowPos( m_Output, HWND_TOP, 0, 0, newSize.right - newSize.left, newSize.bottom - newSize.top, SWP_NOMOVE );
+
+			// Create swap chain
+			DXGI_SWAP_CHAIN_DESC swapChainDesc;
+			ZeroMemory( &swapChainDesc, sizeof( swapChainDesc ) );
+
+			swapChainDesc.BufferCount			= 2;
+			swapChainDesc.BufferDesc.Width		= selectedMode.Width;
+			swapChainDesc.BufferDesc.Height		= selectedMode.Height;
+			swapChainDesc.BufferDesc.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
+			swapChainDesc.BufferUsage			= DXGI_USAGE_RENDER_TARGET_OUTPUT;
+			swapChainDesc.OutputWindow			= Target;
+			swapChainDesc.SampleDesc.Count		= 1;
+			swapChainDesc.SampleDesc.Quality	= 0;
+			swapChainDesc.SwapEffect			= DXGI_SWAP_EFFECT_FLIP_DISCARD; 
+			swapChainDesc.Flags					= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+			swapChainDesc.Windowed				= !Resolution.FullScreen;
+
+			swapChainDesc.BufferDesc.RefreshRate.Numerator		= m_bVSync ? selectedMode.RefreshRate.Numerator : 0;
+			swapChainDesc.BufferDesc.RefreshRate.Denominator	= m_bVSync ? selectedMode.RefreshRate.Denominator : 1;
+
+			// Create the device and context
+			D3D_FEATURE_LEVEL targetFeatureLevels[] = { D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0 };
+			D3D_FEATURE_LEVEL loadedFeatureLevel;
+			UINT deviceFlags = 0;
+
+			#ifdef HYPERION_DEBUG_RENDERER
+			deviceFlags = D3D11_CREATE_DEVICE_DEBUG;
+			#endif
+
+			res = D3D11CreateDevice( ptrAdapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, deviceFlags, targetFeatureLevels, 2, D3D11_SDK_VERSION, 
+									 m_Device.ReleaseAndGetAddressOf(), &loadedFeatureLevel, m_DeviceContext.ReleaseAndGetAddressOf() );
+
+			if( FAILED( res ) || !m_Device || !m_DeviceContext )
+			{
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize, device couldnt be created" );
+				throw std::exception();
+			}
+
+			// Check feature level
+			if( loadedFeatureLevel == D3D_FEATURE_LEVEL_11_0 )
+			{
+				Console::WriteLine( "DX11: Couldnt load DirectX 11.1, instead using 11.0" );
+			}
+			else if( loadedFeatureLevel != D3D_FEATURE_LEVEL_11_1 )
+			{
+				Console::WriteLine( "[ERROR] DX11: Failed to load required feature level!" );
+				throw std::exception();
+			}
+
+			// Now, lets create the swap chain
+			res = ptrFactory->CreateSwapChain( m_Device.Get(), &swapChainDesc, m_SwapChain.ReleaseAndGetAddressOf() );
+			if( FAILED( res ) || !m_SwapChain )
+			{
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize, swap chain couldnt be created" );
+				throw std::exception();
+			}
+			
+			// If were debugging, then query for the debug interface
+#ifdef HYPERION_DEBUG_RENDERER
+			res = m_Device->QueryInterface< ID3D11Debug >( m_Debug.GetAddressOf() );
+			if( FAILED( res ) )
+			{
+				Console::WriteLine( "[ERROR] DX11: Failed to get debug interface!" );
+				throw std::exception();
+			}
+#endif
+
+			// Get back buffer texture
+			m_BackBuffer = std::shared_ptr< DirectX11Texture2D >( new DirectX11Texture2D() );
+			res = m_SwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), (void**) m_BackBuffer->GetAddress() );
+
+			if( FAILED( res ) )
+			{
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt get pointer to the back buffer" );
+				throw std::exception();
+			}
 
 			// Release everything we dont need anymore
 			delete[] ptrDisplayModes;
@@ -466,70 +552,11 @@ namespace Hyperion
 			ptrFactory->Release();
 			ptrFactory = nullptr;
 
-			// Resize window to match our target resolution
-			RECT newSize = { 0, 0, (long) Resolution.Width, (long) Resolution.Height };
-			if( !AdjustWindowRectEx( &newSize, WS_OVERLAPPEDWINDOW, false, WS_EX_OVERLAPPEDWINDOW ) )
-			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to resize window during initialization!\n" );
-				throw std::exception();
-			}
-
-			// Center the window
-			SetWindowPos( m_Output, HWND_TOP, 0, 0, newSize.right - newSize.left, newSize.bottom - newSize.top, SWP_NOMOVE );
-
-			// Create swap chain
-			DXGI_SWAP_CHAIN_DESC swapChainDesc;
-			ZeroMemory( &swapChainDesc, sizeof( swapChainDesc ) );
-
-			// DEBUD SET BACK TO 2
-			swapChainDesc.BufferCount			= 1;
-			swapChainDesc.BufferDesc.Width		= selectedMode.Width;
-			swapChainDesc.BufferDesc.Height		= selectedMode.Height;
-			swapChainDesc.BufferDesc.Format		= DXGI_FORMAT_R8G8B8A8_UNORM;
-			swapChainDesc.BufferUsage			= DXGI_USAGE_RENDER_TARGET_OUTPUT;
-			swapChainDesc.OutputWindow			= Target;
-			swapChainDesc.SampleDesc.Count		= 1;
-			swapChainDesc.SampleDesc.Quality	= 0;
-			swapChainDesc.SwapEffect			= DXGI_SWAP_EFFECT_DISCARD; // DEB SET BACZK
-			swapChainDesc.Flags					= 0; // DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-			swapChainDesc.Windowed				= !Resolution.FullScreen;
-
-			swapChainDesc.BufferDesc.RefreshRate.Numerator = m_bVSync ? selectedMode.RefreshRate.Numerator : 0;
-			swapChainDesc.BufferDesc.RefreshRate.Denominator = m_bVSync ? selectedMode.RefreshRate.Denominator : 1;
-			
-			// Create swap chain, device and context
-			D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_1;
-
-#ifdef HYPERION_DEBUG_RENDERER
-			res = D3D11CreateDeviceAndSwapChain( NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG, &featureLevel, 1,
-				D3D11_SDK_VERSION, &swapChainDesc, m_SwapChain.GetAddressOf(), m_Device.GetAddressOf(), NULL, m_DeviceContext.GetAddressOf() );
-#else
-			res = D3D11CreateDeviceAndSwapChain( NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, &featureLevel, 1, 
-					D3D11_SDK_VERSION, &swapChainDesc, m_SwapChain.GetAddressOf(), m_Device.GetAddressOf(), NULL, m_DeviceContext.GetAddressOf() );
-#endif
-
-			if( FAILED( res ) )
-			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create swap chain and device!" );
-				throw std::exception();
-			}
-
-			// Get back buffer texture
-			m_BackBuffer = std::shared_ptr< DirectX11Texture2D >( new DirectX11Texture2D() );
-			res = m_SwapChain->GetBuffer( 0, __uuidof( ID3D11Texture2D ), (void**) m_BackBuffer->GetAddress() );
-
-			if( FAILED( res ) )
-			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt get pointer to the back buffe" );
-				throw std::exception();
-			}
-
 			// Create render target view
 			m_RenderTarget = std::shared_ptr< DirectX11RenderTarget >( new DirectX11RenderTarget( m_BackBuffer, m_Device ) );
-			res = m_Device->CreateRenderTargetView( m_BackBuffer->Get(), NULL, m_RenderTarget->GetAddress() );
-			if( FAILED( res ) )
+			if( !m_RenderTarget || !m_RenderTarget->IsValid() )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create render target view" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt create back buffer render target!" );
 				throw std::exception();
 			}
 
@@ -560,7 +587,7 @@ namespace Hyperion
 			res = m_Device->CreateDepthStencilState( &depthStencilDesc, m_DepthStencilState.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create depth stencil state" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt create depth stencil state" );
 				throw std::exception();
 			}
 
@@ -572,7 +599,7 @@ namespace Hyperion
 			m_DepthStencil = std::dynamic_pointer_cast<DirectX11DepthStencil>( CreateDepthStencil( selectedMode.Width, selectedMode.Height ) );
 			if( !m_DepthStencil || !m_DepthStencil->IsValid() )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create depth stencil" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt create depth stencil" );
 				throw std::exception();
 			}
 
@@ -585,7 +612,7 @@ namespace Hyperion
 			ZeroMemory( &rasterDesc, sizeof( rasterDesc ) );
 
 			rasterDesc.AntialiasedLineEnable	= false;
-			rasterDesc.CullMode					= D3D11_CULL_NONE;
+			rasterDesc.CullMode					= D3D11_CULL_BACK;
 			rasterDesc.DepthBias				= 0;
 			rasterDesc.DepthBiasClamp			= 0.f;
 			rasterDesc.DepthClipEnable			= true;
@@ -598,7 +625,7 @@ namespace Hyperion
 			res = m_Device->CreateRasterizerState( &rasterDesc, m_RasterizerState.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create rasterizer" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt create rasterizer" );
 				throw std::exception();
 			}
 
@@ -606,7 +633,7 @@ namespace Hyperion
 			m_DeviceContext->RSSetState( m_RasterizerState.Get() );
 
 			// Setup viewport
-			D3D11_VIEWPORT viewport;
+			D3D11_VIEWPORT viewport{};
 			viewport.Height		= (FLOAT)selectedMode.Height;
 			viewport.Width		= (FLOAT)selectedMode.Width;
 			viewport.MinDepth	= 0.f;
@@ -639,7 +666,7 @@ namespace Hyperion
 			res = m_Device->CreateDepthStencilState( &depthDisabledDesc, m_DepthDisabledState.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create depth disabled state" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt create depth disabled state" );
 				throw std::exception();
 			}
 
@@ -659,7 +686,7 @@ namespace Hyperion
 			res = m_Device->CreateBlendState( &blendDesc, m_BlendState.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create normal blend state" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt create normal blend state" );
 				throw std::exception();
 			}
 
@@ -668,7 +695,7 @@ namespace Hyperion
 			res = m_Device->CreateBlendState( &blendDesc, m_BlendDisabledState.GetAddressOf() );
 			if( FAILED( res ) )
 			{
-				Console::WriteLine( "[ERROR] DX11Renderer: Failed to initialize resources.. couldnt create alpha disabled blend state" );
+				Console::WriteLine( "[ERROR] DX11: Failed to initialize resources.. couldnt create alpha disabled blend state" );
 				throw std::exception();
 			}
 
@@ -677,6 +704,7 @@ namespace Hyperion
 
 			// Create screen geometry
 			GenerateScreenGeometry( selectedMode.Width, selectedMode.Height );
+			GenerateFloorGeometry();
 
 		}
 		catch( ... )
@@ -690,7 +718,7 @@ namespace Hyperion
 			return false;
 		}
 
-		Console::WriteLine( "[GOOD] DX11Renderer: Resource initialization complete!" );
+		Console::WriteLine( "DX11: Resources initialized!" );
 		return true;
 	}
 
@@ -719,6 +747,8 @@ namespace Hyperion
 	{
 		if( m_ScreenVertexList )	{ m_ScreenVertexList.Reset(); }
 		if( m_ScreenIndexList )		{ m_ScreenIndexList.Reset(); }
+		if( m_FloorVertexList )		{ m_FloorVertexList.Reset(); }
+		if( m_FloorIndexList )		{ m_FloorIndexList.Reset(); }
 		//if( m_CommonStates )		{ m_CommonStates.reset(); }
 		if( m_BackBuffer )			{ m_BackBuffer.reset(); }
 		//if( m_EffectFactory )		{ m_EffectFactory->ReleaseCache(); m_EffectFactory.reset(); }
@@ -729,9 +759,20 @@ namespace Hyperion
 		if( m_BlendState )			{ m_BlendState.Reset(); }
 		if( m_BlendDisabledState )	{ m_BlendDisabledState.Reset(); }
 		if( m_RenderTarget )		{ m_RenderTarget.reset(); }
-		if( m_DeviceContext )		{ m_DeviceContext.Reset(); }
-		if( m_Device )				{ m_Device.Reset(); }
 		if( m_SwapChain )			{ m_SwapChain->SetFullscreenState( false, nullptr ); m_SwapChain.Reset(); }
+		if( m_Device )				{ m_Device.Reset(); }
+
+	#ifdef HYPERION_DEBUG_RENDERER
+		if( m_DeviceContext ) { m_DeviceContext->ClearState(); m_DeviceContext->Flush(); }
+		if( m_Debug )
+		{
+			m_Debug->ReportLiveDeviceObjects( D3D11_RLDO_DETAIL );
+			m_Debug.Reset();
+		}
+		if( m_DeviceContext ) { m_DeviceContext.Reset(); }
+	#else
+		if( m_DeviceContext )		{ m_DeviceContext->ClearState(); m_DeviceContext->Flush(); m_DeviceContext.Reset(); }
+	#endif
 	}
 
 
@@ -790,13 +831,13 @@ namespace Hyperion
 		float aspectRatio	= (float) inRes.Width / (float) inRes.Height;
 		auto up				= DirectX::XMVectorSet( 0.f, 1.f, 0.f, 1.f );
 		auto lookAt			= DirectX::XMVectorSet( 0.f, 0.f, 1.f, 1.f );
-		auto pos			= DirectX::XMVectorSet( 0.f, 0.f, 0.f, 1.f ); // TODO: In another project, I had this as -0.1f
+		auto pos			= DirectX::XMVectorSet( 0.f, 0.f, -0.1f, 1.f ); // TODO: In another project, I had this as -0.1f
 
 		// Generate static matricies
-		m_ProjectionMatrix	= DirectX::XMMatrixPerspectiveFovLH( inFOV, aspectRatio, inNear, inFar );
-		m_WorldMatrix		= DirectX::XMMatrixIdentity();
-		m_OrthoMatrix		= DirectX::XMMatrixOrthographicLH( (float)inRes.Width, (float)inRes.Height, inNear, inFar );
-		m_ScreenMatrix		= DirectX::XMMatrixLookAtLH( pos, lookAt, up );
+		m_ProjectionMatrix		= DirectX::XMMatrixPerspectiveFovLH( inFOV, aspectRatio, inNear, inFar );
+		m_WorldMatrix			= DirectX::XMMatrixIdentity();
+		m_OrthoMatrix			= DirectX::XMMatrixOrthographicLH( (float)inRes.Width, (float)inRes.Height, inNear, inFar );
+		m_ScreenViewMatrix		= DirectX::XMMatrixLookAtLH( pos, lookAt, up );
 	}
 
 
@@ -895,6 +936,103 @@ namespace Hyperion
 	}
 
 
+	void DirectX11Graphics::GenerateFloorGeometry()
+	{
+		Vertex3D verts[ 4 ]{};
+
+		float texRepeatDistance = 10.f;
+
+		// Top Left
+		verts[ 0 ].x	= -5000.f;
+		verts[ 0 ].y	= 0.f;
+		verts[ 0 ].z	= 5000.f;
+		verts[ 0 ].nx	= 0.f;
+		verts[ 0 ].ny	= 1.f;
+		verts[ 0 ].nz	= 0.f;
+		verts[ 0 ].u	= 0.f;
+		verts[ 0 ].v	= 0.f;
+
+		// Top Right
+		verts[ 1 ].x	= 5000;
+		verts[ 1 ].y	= 0.f;
+		verts[ 1 ].z	= 5000;
+		verts[ 1 ].nx	= 0.f;
+		verts[ 1 ].ny	= 1.f;
+		verts[ 1 ].nz	= 0.f;
+		verts[ 1 ].u	= 500.f;
+		verts[ 1 ].v	= 0.f;
+
+		// Bottom Left
+		verts[ 2 ].x	= -5000.f;
+		verts[ 2 ].y	= 0.f;
+		verts[ 2 ].z	= -5000.f;
+		verts[ 2 ].nx	= 0.f;
+		verts[ 2 ].ny	= 1.f;
+		verts[ 2 ].nz	= 0.f;
+		verts[ 2 ].u	= 0.f;
+		verts[ 2 ].v	= 500.f;
+
+		// Bottom Right
+		verts[ 3 ].x	= 5000.f;
+		verts[ 3 ].y	= 0.f;
+		verts[ 3 ].z	= -5000.f;
+		verts[ 3 ].nx	= 0.f;
+		verts[ 3 ].ny	= 1.f;
+		verts[ 3 ].nz	= 0.f;
+		verts[ 3 ].u	= 500.f;
+		verts[ 3 ].v	= 500.f;
+
+		uint32 indexList[] = { 0, 3, 2, 0, 1, 3 };
+
+		D3D11_BUFFER_DESC vertDesc;
+		ZeroMemory( &vertDesc, sizeof( vertDesc ) );
+
+		vertDesc.Usage					= D3D11_USAGE_DEFAULT;
+		vertDesc.ByteWidth				= sizeof( Vertex3D ) * 4;
+		vertDesc.BindFlags				= D3D11_BIND_VERTEX_BUFFER;
+		vertDesc.CPUAccessFlags			= 0;
+		vertDesc.MiscFlags				= 0;
+		vertDesc.StructureByteStride	= 0;
+
+		D3D11_SUBRESOURCE_DATA vertexData;
+		ZeroMemory( &vertexData, sizeof( vertexData ) );
+
+		vertexData.pSysMem				= (void*) verts;
+		vertexData.SysMemPitch			= 0;
+		vertexData.SysMemSlicePitch		= 0;
+
+		if( FAILED( m_Device->CreateBuffer( &vertDesc, &vertexData, m_FloorVertexList.GetAddressOf() ) ) || !m_FloorVertexList )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create floor vertex list!" );
+			return;
+		}
+
+		D3D11_BUFFER_DESC indexDesc;
+		ZeroMemory( &indexDesc, sizeof( indexDesc ) );
+
+		indexDesc.Usage					= D3D11_USAGE_DEFAULT;
+		indexDesc.ByteWidth				= sizeof( uint32 ) * 6;
+		indexDesc.BindFlags				= D3D11_BIND_INDEX_BUFFER;
+		indexDesc.CPUAccessFlags		= 0;
+		indexDesc.MiscFlags				= 0;
+		indexDesc.StructureByteStride	= 0;
+
+		D3D11_SUBRESOURCE_DATA indexData;
+		ZeroMemory( &indexData, sizeof( indexData ) );
+
+		indexData.pSysMem			= (void*) indexList;
+		indexData.SysMemPitch		= 0;
+		indexData.SysMemSlicePitch	= 0;
+
+		if( FAILED( m_Device->CreateBuffer( &indexDesc, &indexData, m_FloorIndexList.GetAddressOf() ) ) || !m_FloorIndexList )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create floor index list!" );
+			return;
+		}
+
+	}
+
+
 	/*------------------------------------------------------------------------------------------
 		DirectX11Graphics::EnableAlphaBlending 
 	------------------------------------------------------------------------------------------*/
@@ -909,7 +1047,7 @@ namespace Hyperion
 		}
 		else
 		{
-			Console::WriteLine( "[ERROR] DX11Renderer: Failed to enable alpha blending" );
+			Console::WriteLine( "[ERROR] DX11: Failed to enable alpha blending" );
 		}
 	}
 
@@ -928,7 +1066,7 @@ namespace Hyperion
 		}
 		else
 		{
-			Console::WriteLine( "[ERROR] DX11Renderer: Failed to disable alpha blending" );
+			Console::WriteLine( "[ERROR] DX11: Failed to disable alpha blending" );
 		}
 	}
 
@@ -949,7 +1087,7 @@ namespace Hyperion
 		}
 		else
 		{
-			Console::WriteLine( "[ERROR] DX11Renderer: Failed to check if alpha blending is enabled" );
+			Console::WriteLine( "[ERROR] DX11: Failed to check if alpha blending is enabled" );
 			return false;
 		}
 
@@ -968,7 +1106,7 @@ namespace Hyperion
 		}
 		else
 		{
-			Console::WriteLine( "[ERROR] DX11Renderer: Failed to enable Z buffer" );
+			Console::WriteLine( "[ERROR] DX11: Failed to enable Z buffer" );
 		}
 	}
 
@@ -984,7 +1122,7 @@ namespace Hyperion
 		}
 		else
 		{
-			Console::WriteLine( "[ERROR] DX11Renderer: Failed to dsiable Z buffer" );
+			Console::WriteLine( "[ERROR] DX11: Failed to dsiable Z buffer" );
 		}
 	}
 
@@ -1003,7 +1141,7 @@ namespace Hyperion
 		}
 		else
 		{
-			Console::WriteLine( "[ERROR] DX11Renderer: Failed to check if Z buffer is enabled" );
+			Console::WriteLine( "[ERROR] DX11: Failed to check if Z buffer is enabled" );
 			return true;
 		}
 
@@ -1868,16 +2006,54 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr<RComputeShader> DirectX11Graphics::CreateComputeShader( const String& inShader )
+	std::shared_ptr< RBuildClusterShader > DirectX11Graphics::CreateBuildClusterShader( const String& inPath )
 	{
-		// Validate parameters
-		if( inShader.IsWhitespaceOrEmpty() )
+		if( inPath.IsWhitespaceOrEmpty() )
 		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create compute shader! The target path were invalid" );
+			Console::WriteLine( "[ERROR] DX11: Failed to create build clusters compute shader, the path was invalid" );
 			return nullptr;
 		}
 
-		return std::shared_ptr<RComputeShader>();
+		auto newShader = std::make_shared< DirectX11BuildClusterShader >( inPath );
+		if( !newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) )
+		{
+			Console::WriteLine( "[ERROR] DX11: failed to create 'BuildClusters' compute shader! Couldnt initialize!" );
+			return nullptr;
+		}
+
+		return newShader;
+	}
+
+
+	std::shared_ptr< RCompressClustersShader > DirectX11Graphics::CreateCompressClustersShader( const String& inPath )
+	{
+		if( inPath.IsWhitespaceOrEmpty() )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create compress clusters compute shader, the path was invalid" );
+			return nullptr;
+		}
+
+		auto newShader = std::make_shared< DirectX11CompressClustersShader >( inPath );
+		if( !newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create 'Compress Clusters' compute shader! Couldnt initialize" );
+			return nullptr;
+		}
+
+		return newShader;
+	}
+
+
+	std::shared_ptr< RViewClusters > DirectX11Graphics::CreateViewClusters()
+	{
+		auto output = std::make_shared< DirectX11ViewClusters >();
+		if( !output->Initialize( m_Device.Get() ) )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to create view clusters!" );
+			return nullptr;
+		}
+
+		return output;
 	}
 
 
@@ -1932,6 +2108,11 @@ namespace Hyperion
 			pixelShader		= lshaderPtr->GetPixelShader();
 			inputLayout		= lshaderPtr->GetInputLayout();
 
+			break;
+		}
+		case ShaderType::Compute:
+		{
+			HYPERION_VERIFY( true, "[DX11] Attempt to use a compute shader in render pipeline" );
 			break;
 		}
 		default:
@@ -2010,7 +2191,7 @@ namespace Hyperion
 	}
 
 
-	void DirectX11Graphics::SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inBuffer )
+	void DirectX11Graphics::SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inBuffer, const std::shared_ptr< RViewClusters >& inClusters )
 	{
 		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device context was null" );
 
@@ -2019,22 +2200,33 @@ namespace Hyperion
 			Console::WriteLine( "[Warning] DX11: Failed to set render output to the gbuffer, the gbuffer was invalid" );
 			return;
 		}
+		else if( !inClusters || !inClusters->IsValid() )
+		{
+			Console::WriteLine( "[Warning] DX11: Failed to set render output to gbuffer, the cluster list was invalid" );
+			return;
+		}
 
 		// Set the OM output to the textures in the g-buffer
 		auto* diffPtr		= dynamic_cast< DirectX11RenderTarget* >( inBuffer->GetDiffuseRoughnessTarget().get() );
 		auto* normPtr		= dynamic_cast< DirectX11RenderTarget* >( inBuffer->GetNormalDepthTarget().get() );
 		auto* specPtr		= dynamic_cast< DirectX11RenderTarget* >( inBuffer->GetSpecularTarget().get() );
 		auto* depthStencil	= dynamic_cast< DirectX11DepthStencil* >( inBuffer->GetDepthStencil().get() );
+		auto* clusters		= dynamic_cast< DirectX11ViewClusters* >( inClusters.get() );
 
 		// These shouldnt fail, since IsValid() returned true
 		HYPERION_VERIFY( diffPtr && normPtr && specPtr, "[DX11] Render targets couldnt be casted to the api type?" );
 		HYPERION_VERIFY( depthStencil, "[DX11] Depth stencil couldnt be casted to api type?" );
-
-		
+		HYPERION_VERIFY( clusters, "[DX11] View clusters couldnt be casted to api type?" );
 
 		ID3D11RenderTargetView* renderTargets[] = { diffPtr->Get(), normPtr->Get(), specPtr->Get() };
-		m_DeviceContext->OMSetRenderTargets( 3, renderTargets, depthStencil->GetStencilView() );
+		ID3D11UnorderedAccessView* uavList[] = { clusters->GetClusterInfoUAV() };
+		//UINT initCounts[] = { RENDERER_CLUSTER_COUNT_X * RENDERER_CLUSTER_COUNT_Y * RENDERER_CLUSTER_COUNT_Z };
 
+		// Unfortunatley, we have to set the render targets and UAVs in one call, I would prefer to move the UAV upload to
+		// GBufferShader::UploadClusterInfo, because it makes much more sense
+		m_DeviceContext->OMSetRenderTargetsAndUnorderedAccessViews( 3, renderTargets, depthStencil->GetStencilView(), 3, 1, uavList, NULL );
+		//m_DeviceContext->OMSetRenderTargets( 3, renderTargets, depthStencil->GetStencilView() );
+	
 		D3D11_VIEWPORT viewport{};
 
 		viewport.Width		= (FLOAT)inBuffer->GetWidth();
@@ -2047,6 +2239,17 @@ namespace Hyperion
 		HYPERION_VERIFY( viewport.Width > 0 && viewport.Height > 0, "[DX11] GBuffer has invalid dimensions?" );
 
 		m_DeviceContext->RSSetViewports( 1, &viewport );
+	}
+
+
+	void DirectX11Graphics::DetachGBuffer()
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Context was null!" );
+		
+		ID3D11RenderTargetView* renderTargets[] = { NULL, NULL, NULL };
+		ID3D11UnorderedAccessView* uavList[] = { NULL };
+
+		m_DeviceContext->OMSetRenderTargetsAndUnorderedAccessViews( 3, renderTargets, NULL, 3, 1, uavList, NULL );
 	}
 
 
@@ -2081,13 +2284,29 @@ namespace Hyperion
 		HYPERION_VERIFY( m_ScreenVertexList && m_ScreenIndexList, "[DX11] Screen geometry was null!" );
 
 		ID3D11Buffer* vertexBuffers[]	= { m_ScreenVertexList.Get() };
-		UINT vertexStrides[]			= { 0 };
+		UINT vertexStrides[]			= { sizeof( WindowVertex ) };
 		UINT vertexOffsets[]			= { 0 };
 
 		m_DeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 		m_DeviceContext->IASetVertexBuffers( 0, 1, vertexBuffers, vertexStrides, vertexOffsets );
 		m_DeviceContext->IASetIndexBuffer( m_ScreenIndexList.Get(), DXGI_FORMAT_R32_UINT, 0 );
 		m_DeviceContext->DrawIndexed( 6, 0, 0 );
+	}
+
+
+	void DirectX11Graphics::RenderDebugFloor()
+	{
+		if( m_FloorVertexList && m_FloorIndexList )
+		{
+			ID3D11Buffer* vertexBuffers[]	= { m_FloorVertexList.Get() };
+			UINT vertexStrides[]			= { sizeof( Vertex3D ) };
+			UINT vertexOffsets[]			= { 0 };
+
+			m_DeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+			m_DeviceContext->IASetVertexBuffers( 0, 1, vertexBuffers, vertexStrides, vertexOffsets );
+			m_DeviceContext->IASetIndexBuffer( m_FloorIndexList.Get(), DXGI_FORMAT_R32_UINT, 0 );
+			m_DeviceContext->DrawIndexed( 6, 0, 0 );
+		}
 	}
 
 
@@ -2106,7 +2325,7 @@ namespace Hyperion
 		// TODO: Need a better/cleaner solution
 		// It would be ideal, if the shaders were able to grab the matricies they needed from us
 		// but, thats not very clean either, we will come back to this..
-		outMatrix = m_WorldMatrix.r[ 0 ].m128_f32;
+		outMatrix.AssignData( m_WorldMatrix.r[ 0 ].m128_f32 );
 	}
 
 
@@ -2131,10 +2350,10 @@ namespace Hyperion
 	}
 
 
-	void DirectX11Graphics::GetScreenMatrix( Matrix& outMatrix )
+	void DirectX11Graphics::GetScreenViewMatrix( Matrix& outMatrix )
 	{
 		// TODO
-		outMatrix.AssignData( m_ScreenMatrix.r[ 0 ].m128_f32 );
+		outMatrix.AssignData( m_ScreenViewMatrix.r[ 0 ].m128_f32 );
 	}
 
 }

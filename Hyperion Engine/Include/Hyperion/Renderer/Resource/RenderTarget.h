@@ -44,7 +44,6 @@ namespace Hyperion
 
 		virtual ~RRenderTarget()
 		{
-			m_TargetTexture.reset();
 		}
 
 		RRenderTarget() = delete;
@@ -61,7 +60,10 @@ namespace Hyperion
 		inline TextureFormat GetFormat() const { return m_Format; }
 
 		virtual bool IsValid() const = 0;
-		virtual void Shutdown() = 0;
+		virtual void Shutdown()
+		{
+			m_TargetTexture.reset();
+		}
 
 	};
 

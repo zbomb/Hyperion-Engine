@@ -1,0 +1,4 @@
+D:\Hyperion\Build\Release\shaders\gbuffer.hps
+D:\Hyperion\Build\Release\shaders\gbuffer.hvs
+D:\Hyperion\Build\Release\shaders\lighting.hps
+D:\Hyperion\Build\Release\shaders\lighting.hvs

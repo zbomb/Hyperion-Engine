@@ -111,6 +111,13 @@ namespace Hyperion
 			ThreadManager::DestroyThread( "basic_streaming_manager" );
 			m_Thread.Clear();
 		}
+
+		m_Queue.Clear();
+		m_Textures.clear();
+		m_DynamicModels.clear();
+		m_StaticModels.clear();
+
+		Reset();
 	}
 
 
@@ -138,7 +145,6 @@ namespace Hyperion
 					{
 						if( tex_it == m_Textures.end() )
 						{
-							// Create Texture
 							m_Textures.emplace( texLoad->asset->GetIdentifier(), Entry< TextureAsset >( texLoad->asset ) );
 							LoadTexture( texLoad->asset );
 						}
@@ -172,7 +178,6 @@ namespace Hyperion
 					{
 						if( smodel_it == m_StaticModels.end() )
 						{
-							// Create Static Model
 							m_StaticModels.emplace( smodelLoad->asset->GetIdentifier(), Entry< StaticModelAsset >( smodelLoad->asset ) );
 							LoadStaticModel( smodelLoad->asset );
 						}
@@ -395,7 +400,13 @@ namespace Hyperion
 
 	void BasicStreamingManager::Reset()
 	{
-		Engine::GetRenderer()->GetResourceManager()->ClearMeshes();
-		Engine::GetRenderer()->GetResourceManager()->ClearTextures();
+		auto r = Engine::GetRenderer();
+		auto res_manager = r ? r->GetResourceManager() : nullptr;
+
+		if( res_manager )
+		{
+			res_manager->ClearMeshes();
+			res_manager->ClearTextures();
+		}
 	}
 }

@@ -53,6 +53,7 @@ namespace Hyperion
 
 		newWorld->AddEntity( player );
 		newWorld->AddEntity( character );
+		character->SetPosition( Vector3D( 0.f, 5.f, 0.f ) );
 
 		m_LocalPlayer->SetPlayer( player );
 		player->PossessCharacter( character );
@@ -162,7 +163,6 @@ namespace Hyperion
 	{
 		if( DoRegisterRenderComponent( inComp ) )
 		{
-			Console::WriteLine( "[DEBUG] GameInstance: Registered primitive component!" );
 			return true;
 		}
 
@@ -173,7 +173,6 @@ namespace Hyperion
 	{
 		if( DoRegisterRenderComponent( inComp ) )
 		{
-			Console::WriteLine( "[DEBUG] GameInstance: Registered light component" );
 			return true;
 		}
 
@@ -214,9 +213,6 @@ namespace Hyperion
 
 		// Add render command to actually remove this component
 		Engine::GetRenderer()->AddCommand( std::make_unique< RemovePrimitiveProxyCommand >( inComp->GetIdentifier() ) );
-		
-		// DEBUG
-		Console::WriteLine( "[DEBUG] GameInstance: Removed primitive component from list/renderer" );
 		return true;
 	}
 
@@ -230,9 +226,6 @@ namespace Hyperion
 
 		// Add render command to actually remove this component
 		Engine::GetRenderer()->AddCommand( std::make_unique< RemoveLightProxyCommand >( inComp->GetIdentifier() ) );
-
-		// DEBUG
-		Console::WriteLine( "[DEBUG] GameInstance: Removed light component from list/renderer" );
 		return true;
 	}
 

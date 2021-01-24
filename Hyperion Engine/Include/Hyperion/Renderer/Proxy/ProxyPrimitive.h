@@ -30,6 +30,8 @@ namespace Hyperion
 			: ProxyBase( inIdentifier )
 		{}
 
+		virtual ~ProxyPrimitive() {}
+
 		virtual Transform GetWorldTransform() const = 0;
 		virtual uint8 GetActiveLOD() const = 0;
 		virtual uint8 GetLODCount() const = 0;

@@ -1,0 +1,33 @@
+
+Light intensity calculation
+
+
+I = Energy * ( Radius^2 / ( Radius^2 + Mult * Dist^2 ) )
+
+Energy [0,1]
+Distance [0,inf)
+Mult: (0,1]
+
+
+We could add a linear component though...
+
+I = Energy * ( Radius / ( Radius + LinearMult * Dist ) ) *
+	( Radius^2 / (Radius^2 + QuadMult * Dist^2) )
+	
+	
+Now.. Is it worth this more epensive calculation for having a linear component?
+Not right now.
+
+
+Overall though... we should allow mixing between linear and quadratic lights
+But for now, were going to use a more simple... quadratic light falloff
+
+
+What factors are there?
+
+Well.. were going to use QuadMult of 1, so that only leaves us with 
+Energy and Radius
+
+
+This will map to brightness, and radius
+

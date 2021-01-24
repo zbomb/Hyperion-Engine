@@ -7,7 +7,9 @@
 #include "Hyperion/Framework/NoClipMovementComponent.h"
 #include "Hyperion/Framework/Entity.h"
 #include "Hyperion/Library/Geometry.h"
-
+#include "Hyperion/Framework/Character.h"
+#include "Hyperion/Framework/CameraComponent.h"
+#include "Hyperion/Library/Math.h"
 
 
 namespace Hyperion
@@ -15,142 +17,89 @@ namespace Hyperion
 
 	NoClipMovementComponent::NoClipMovementComponent()
 	{
-		bRequiresTick = true;
-		m_bFwd = false;
-		m_bLeft = false;
-		m_bRight = false;
-		m_bBwd = false;
+
 	}
 
 
 	// New Input System
-	void NoClipMovementComponent::MoveForward( float inScalar )
-	{
-
-	}
-
-
-	void NoClipMovementComponent::MoveRight( float inScalar )
-	{
-
-	}
-
-
-	void NoClipMovementComponent::LookUp( float inScalar )
-	{
-
-	}
-
-
-	void NoClipMovementComponent::LookRight( float inScalar )
-	{
-
-	}
-
-
-	// Old Input System
-	bool NoClipMovementComponent::HandleKeyBinding( const String& inCommand )
-	{
-		if( inCommand == "+forward" )
-		{
-			m_bFwd = true;
-		}
-		else if( inCommand == "-forward" )
-		{
-			m_bFwd = false;
-		}
-		else if( inCommand == "+left" )
-		{
-			m_bLeft = true;
-		}
-		else if( inCommand == "-left" )
-		{
-			m_bLeft = false;
-		}
-		else if( inCommand == "+right" )
-		{
-			m_bRight = true;
-		}
-		else if( inCommand == "-right" )
-		{
-			m_bRight = false;
-		}
-		else if( inCommand == "+back" )
-		{
-			m_bBwd = true;
-		}
-		else if( inCommand == "-back" )
-		{
-			m_bBwd = false;
-		}
-		else
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-
-	bool NoClipMovementComponent::HandleAxisBinding( const String& inCommand, float inValue )
+	void NoClipMovementComponent::Move( const Vector3D& inVec )
 	{
 		auto owner = GetOwner();
-
 		if( owner && owner->IsSpawned() )
 		{
-			if( inCommand == "view_x" )
+			auto charPtr = CastObject< Character >( owner );
+			if( charPtr )
 			{
-				auto currentRotation = owner->GetRotation();
-				owner->SetRotation( Angle3D( currentRotation.Pitch, currentRotation.Yaw + inValue, 0.f ) );
-			}
-			else if( inCommand == "view_y" )
-			{
-				auto currentRotation = owner->GetRotation();
-				owner->SetRotation( Angle3D( currentRotation.Pitch + inValue, currentRotation.Yaw, 0.f ) );
-			}
-			else return false;
-		}
-		else return false;
+				// We want to build a plane from the eye direction vector, and calculate a perpendicular unit vector
+				// that will point to the right, the plane will be perpendicular to the X,Z plane itself
+				auto eyeDir		= charPtr->GetEyeDirection().GetDirectionVector();
+				auto rightDir	= -( eyeDir ^ Vector3D::GetWorldUp() ).GetNormalized();
+				auto upDir		= Vector3D::GetWorldUp();
 
-		return true;
+				owner->Translate( ( eyeDir * inVec.X  + rightDir * inVec.Y + upDir * inVec.Z ) * 0.25f );
+
+			}
+			else
+			{
+				// Fall back on using the rotation of the entity itself...
+				auto ownerEuler		= owner->GetQuaternion().GetEulerAngles();
+				auto ownerFwd		= ownerEuler.GetDirectionVector();
+				auto ownerRight		= Angle3D( 0.f, ownerEuler.Yaw + 90.f, 0.f ).GetDirectionVector();
+				auto upDir			= Vector3D::GetWorldUp();
+
+				owner->Translate( ( ownerFwd * inVec.X + ownerRight * inVec.Y + upDir * inVec.Z ) * 0.25f );
+			}
+		}
 	}
 
-
-	void NoClipMovementComponent::Tick( double delta )
+	
+	void NoClipMovementComponent::Look( const Vector2D& inVec )
 	{
-		float movementX = 0.f;
-		float movementZ = 0.f;
-
-		if( m_bRight )
+		auto owner = GetOwner();
+		if( owner && owner->IsSpawned() )
 		{
-			movementX += 1.f;
-		}
+			auto characterPtr = CastObject< Character >( owner );
+			if( characterPtr )
+			{
+				// A character may (probably) have special handling for look direction
+				auto eyeDirection = characterPtr->GetEyeDirection();
+				bool bClampDown = eyeDirection.Pitch > 85.f;
+				eyeDirection.Pitch	+= inVec.X;
+				eyeDirection.Yaw	+= inVec.Y;
 
-		if( m_bLeft )
-		{
-			movementX -= 1.f;
-		}
+				// There is a slight issue.. angles get pulled into the range of [0,360) 
+				// So, we cant use a normal clamp function to constrain camrea pitch to the desired range
+				if( bClampDown )
+				{
+					// If were looking down, the min pitch would be -85, or.. 360 - 85 => 275 degrees
+					if( eyeDirection.Pitch < 275.f ) { eyeDirection.Pitch = 275.f; }
+				}
+				else
+				{
+					// If were looking up, the max pitch is 85
+					if( eyeDirection.Pitch > 85.f ) { eyeDirection.Pitch = 85.f; }
+				}
 
-		if( m_bFwd )
-		{
-			movementZ += 1.f;
-		}
+				characterPtr->SetEyeDirection( eyeDirection.Pitch, eyeDirection.Yaw );
+			}
+			else
+			{
+				auto ownerRotation = owner->GetRotation();
+				bool bClampDown = ownerRotation.Pitch > 85.f;
+				ownerRotation.Pitch += inVec.X;
+				ownerRotation.Yaw += inVec.Y;
 
-		if( m_bBwd )
-		{
-			movementZ -= 1.f;
-		}
+				if( bClampDown )
+				{
+					if( ownerRotation.Pitch < 275.f ) { ownerRotation.Pitch = 275.f; }
+				}
+				else
+				{
+					if( ownerRotation.Pitch > 85.f ) { ownerRotation.Pitch = 85.f; }
+				}
 
-		// We need to get a uint vector aimed in the direction were currently facing
-		auto owner			= GetOwner();
-
-		if( owner && owner->IsSpawned() && ( movementX != 0.f || movementZ != 0.f ) )
-		{
-			auto ownerEuler = owner->GetQuaternion().GetEulerAngles();
-			auto ownerFwd		= ownerEuler.GetDirectionVector();
-			auto ownerRight = Angle3D( 0.f, ownerEuler.Yaw + 90.f, 0.f ).GetDirectionVector();
-
-			owner->Translate( ( ownerFwd * movementZ + ownerRight * movementX ) * 0.25f );
+				owner->SetRotation( Angle3D( ownerRotation.Pitch, ownerRotation.Yaw, 0.f ) );
+			}
 		}
 	}
 

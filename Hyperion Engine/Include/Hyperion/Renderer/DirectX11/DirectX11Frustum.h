@@ -211,7 +211,7 @@ namespace Hyperion
 			DirectX::XMVECTOR topBackRight			= DirectX::XMLoadFloat3( &inMax );
 
 			// Rotate Verticies
-			auto rotMatrix = DirectX::XMMatrixRotationQuaternion( inQuaternion );
+			auto rotMatrix		= DirectX::XMMatrixRotationQuaternion( inQuaternion );
 			bottomFrontLeft		= DirectX::XMVector3TransformCoord( bottomFrontLeft, rotMatrix );
 			bottomFrontRight	= DirectX::XMVector3TransformCoord( bottomFrontRight, rotMatrix );
 			bottomBackLeft		= DirectX::XMVector3TransformCoord( bottomBackLeft, rotMatrix );
@@ -236,9 +236,13 @@ namespace Hyperion
 				topBackRight		= DirectX::XMVectorAdd( topBackRight, offset );
 			}
 
-			// Check if any of the corners intersect the view frustum planes
+			// We want to determine if any of the points are within the view frustum
+			// For this, we loop through each plane, and check if all points are on the 'wrong' side of the plane
+			// If any point is on the 'correct' side, we can skip to the next iteration
+			// If we get to the end of the loop, and we didnt find any plane with all points on the 'wrong' side, then we passed
 			for( int i = 0; i < 6; i++ )
 			{
+				
 				if( DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ i ], topFrontRight ) ) >= 0.f ||
 					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ i ], topFrontLeft ) ) >= 0.f ||
 					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ i ], topBackRight ) ) >= 0.f ||
@@ -251,10 +255,10 @@ namespace Hyperion
 					continue;
 				}
 
-				return true;
+				return false;
 			}
 
-			return false;
+			return true;
 		}
 
 	};

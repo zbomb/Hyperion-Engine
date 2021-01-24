@@ -27,6 +27,8 @@ namespace Hyperion
 		void OnSpawn( const HypPtr< World >& inWorld ) override;
 		void OnDespawn( const HypPtr< World >& inWorld ) override;
 
+		void Tick( double delta ) override;
+
 	};
 
 }

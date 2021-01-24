@@ -45,6 +45,16 @@ namespace Hyperion
 
 		inline RenderComponentState GetRenderState() const { return m_RenderState; }
 
+		virtual void SetPosition( const Vector3D& inPosition ) override;
+		virtual void SetRotation( const Angle3D& inRotation ) override;
+		virtual void SetQuaternion( const Quaternion& inQuat ) override;
+		virtual void SetScale( const Vector3D& inScale ) override;
+		virtual void SetTransform( const Transform& inTransform ) override;
+
+		virtual void Translate( const Vector3D& inPos ) override;
+		virtual void Rotate( const Quaternion& inQuat ) override;
+		virtual void Rotate( const Angle3D& inEuler ) override;
+
 		friend class GameInstance; // So it can reach in and mark this component as clean
 	};
 

@@ -13,6 +13,23 @@
 namespace Hyperion
 {
 
+	ResourceManager::ResourceManager()
+	{
+
+	}
+
+
+	ResourceManager::~ResourceManager()
+	{
+		Shutdown();
+	}
+
+
+	void ResourceManager::Shutdown()
+	{
+		m_Geometry.clear();
+		m_Textures.clear();
+	}
 
 
 	std::shared_ptr<RMaterial> ResourceManager::CreateMaterial( const std::shared_ptr<MaterialAsset>& inAsset )

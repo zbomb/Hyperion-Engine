@@ -40,19 +40,10 @@ namespace Hyperion
 		}
 
 
-		void Shutdown()
+		void Shutdown() final
 		{
-			if( m_View )
-			{
-				//m_View->Release();
-				m_View.Reset();
-			}
-
-			if( m_Texture )
-			{
-				//m_Texture->Release();
-				m_Texture.Reset();
-			}
+			m_View.Reset();
+			m_Texture.Reset();
 
 			m_Width		= 0;
 			m_Height	= 0;

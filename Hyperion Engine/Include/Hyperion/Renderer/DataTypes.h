@@ -50,6 +50,15 @@ namespace Hyperion
 	};
 
 
+	struct ViewportInfo
+	{
+		float Width;
+		float Height;
+		float Near;
+		float Far;
+	};
+
+
 	constexpr uint32 RENDERER_COMMAND_FLAG_NONE				= 0b00000000;
 	constexpr uint32 RENDERER_COMMAND_FLAG_UPDATE			= 0b00000001;
 	constexpr uint32 RENDERER_COMMAND_FLAG_END_OF_FRAME		= 0b00000010;
@@ -82,6 +91,9 @@ namespace Hyperion
 		RenderCommandBase()
 			: Flags( 0 )
 		{}
+
+		virtual ~RenderCommandBase()
+		{}
 	};
 
 	struct RenderCommand : public RenderCommandBase
@@ -93,6 +105,11 @@ namespace Hyperion
 			: Func( inFunc )
 		{
 			Flags = inFlags;
+		}
+
+		~RenderCommand()
+		{
+			Func = nullptr;
 		}
 
 		void Execute( Renderer& inRenderer )

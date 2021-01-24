@@ -27,7 +27,7 @@ namespace Hyperion
 
 
 	Renderer::Renderer( GraphicsAPI inAPI, void* inWindow, const ScreenResolution& inRes, bool bVSync )
-		: m_APIType( inAPI ), m_pWindow( inWindow ), m_Resolution( inRes ), m_bVSync( bVSync ), m_Scene( std::make_shared< ProxyScene >() )
+		: m_APIType( inAPI ), m_pWindow( inWindow ), m_Resolution( inRes ), m_bVSync( bVSync ), m_Scene( std::make_shared< ProxyScene >() ), m_AllowCommands( true )
 	{
 		// We store a copy of the resolution info in an atomic variable
 		// This way we can get this info from other threads without a data race
@@ -65,7 +65,6 @@ namespace Hyperion
 
 	Renderer::~Renderer()
 	{
-		Shutdown();
 	}
 
 
@@ -76,8 +75,7 @@ namespace Hyperion
 		// Initialize the graphics api
 		if( !m_API->Initialize( m_pWindow ) )
 		{
-			Console::WriteLine( "[ERROR] Renderer: Failed to initialize! Graphics API init failed!" );
-			HYPERION_VERIFY( true, "[Renderer] GraphicsAPI failed to initialize" );
+			// The api would have printed an error message giving info on why init failed
 			return false;
 		}
 
@@ -87,7 +85,6 @@ namespace Hyperion
 
 		// Iniitalize the scene
 		m_Scene->Initialize();
-		OnInitialize();
 
 		return true;
 	}
@@ -152,8 +149,25 @@ namespace Hyperion
 
 	void Renderer::Shutdown()
 	{
+		// Kill the command queue
+		// TODO: Add a 'locking' feature to ConcurrentQueue, where we can stop new entries from being added
+		m_AllowCommands = false;
+		std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
+
+		m_Commands.Clear();
+		m_ImmediateCommands.Clear();
+
+		//if( m_ResourceManager ) { m_ResourceManager->Shutdown(); }
+		m_ResourceManager.reset();
+
+		//if( m_StreamingManager ) { DestroyObject( m_StreamingManager ); }
+		if( m_StreamingManager ) { DestroyObject( m_StreamingManager ); }
 		m_StreamingManager.Clear();
+
+		//if( m_Scene ) { m_Scene->Shutdown(); }
 		m_Scene.reset();
+
+		//if( m_API ) { m_API->Shutdown(); }
 		m_API.reset();
 	}
 
@@ -220,11 +234,23 @@ namespace Hyperion
 
 	void Renderer::AddImmediateCommand( std::unique_ptr< RenderCommandBase >&& inCommand )
 	{
+		if( !m_AllowCommands ) 
+		{ 
+			Console::WriteLine( "[Warning] Renderer: Failed to push immediate command, the queue was closed" ); 
+			return; 
+		}
+
 		m_ImmediateCommands.Push( std::move( inCommand ) );
 	}
 
 	void Renderer::AddCommand( std::unique_ptr< RenderCommandBase >&& inCommand )
 	{
+		if( !m_AllowCommands )
+		{
+			Console::WriteLine( "[Warning] Renderer: Failed to push command, the queue was closed" );
+			return;
+		}
+
 		m_Commands.Push( std::move( inCommand ) );
 	}
 

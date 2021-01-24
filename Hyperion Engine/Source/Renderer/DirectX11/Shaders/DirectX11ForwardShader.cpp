@@ -20,6 +20,7 @@ namespace Hyperion
 
 	DirectX11ForwardShader::~DirectX11ForwardShader()
 	{
+		Shutdown();
 	}
 
 	void DirectX11ForwardShader::Shutdown()

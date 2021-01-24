@@ -38,6 +38,9 @@ PixelOutput main( VertexInput inVertex )
 	output.Position = mul( inVertex.Position, viewMatrix );
 	output.Position = mul( inVertex.Position, projectionMatrix );
 
+	// Depth should always be zero
+	output.Position.z = 0.f;
+
 	// Pass through the texture coords
 	output.TexCoord = inVertex.TexCoord;
 

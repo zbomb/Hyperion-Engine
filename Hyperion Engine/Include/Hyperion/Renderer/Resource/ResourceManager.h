@@ -38,6 +38,11 @@ namespace Hyperion
 			TextureEntry( TextureType inT, const std::shared_ptr< RTextureBase >& inP )
 				: type( inT ), ptr( inP )
 			{}
+
+			~TextureEntry()
+			{
+				ptr.reset();
+			}
 		};
 
 
@@ -48,6 +53,11 @@ namespace Hyperion
 		std::shared_ptr< RMeshData > GetMeshData( uint32 inIdentifier );
 
 	public:
+
+		ResourceManager();
+		~ResourceManager();
+
+		void Shutdown();
 
 		/*
 		*	RMaterial Creation

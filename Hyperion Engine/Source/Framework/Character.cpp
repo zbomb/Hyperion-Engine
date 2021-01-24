@@ -80,80 +80,60 @@ namespace Hyperion
 	{
 		return m_Movement;
 	}
-
-
-	bool Character::ProcessKeyBinding( const String& inBind )
+	
+	
+	void Character::SetMovementInput( const Vector3D& inVec )
 	{
-		// First, check if dervied classes can handle this
-		if( HandleKeyBinding( inBind ) ) { return true; }
-
 		if( m_Movement && m_Movement->IsValid() )
 		{
-			return m_Movement->HandleKeyBinding( inBind );
+			m_Movement->Move( inVec );
 		}
-
-		return false;
 	}
 
 
-	bool Character::ProcessAxisBinding( const String& inBind, float inValue )
+	void Character::SetLookInput( const Vector2D& inVec )
 	{
-		if( HandleAxisBinding( inBind, inValue ) ) { return true; }
-
 		if( m_Movement && m_Movement->IsValid() )
 		{
-			return m_Movement->HandleAxisBinding( inBind, inValue );
+			m_Movement->Look( inVec );
 		}
-
-		return false;
 	}
 
 
-	void Character::MoveForward( float inScalar )
+	void Character::SetEyeDirection( float inPitch, float inYaw )
 	{
-		if( m_Movement && m_Movement->IsValid() )
+		// Pitch gets applied to the camera, yaw to the entire entity
+		if( m_Camera && m_Camera->IsValid() )
 		{
+			m_Camera->SetRotation( Angle3D( inPitch, 0.f, 0.f ) );
 			
 		}
+
+		// Yaw gets applied to entire entity
+		SetRotation( Angle3D( 0.f, inYaw, 0.f ) );
 	}
 
 
-	void Character::MoveRight( float inScalar )
+	Angle3D Character::GetEyeDirection() const
 	{
-		if( m_Movement && m_Movement->IsValid() )
+		// Yaw from the eneity, pitch from the camera
+		Angle3D dir{};
+		auto thisRot = GetRotation();
+
+		if( m_Camera && m_Camera->IsValid() )
 		{
-
+			dir.Pitch = m_Camera->GetRotation().Pitch;
 		}
-	}
-
-
-	void Character::LookUp( float inScalar )
-	{
-		if( m_Movement && m_Movement->IsValid() )
+		else
 		{
-
+			dir.Pitch = thisRot.Pitch;
 		}
-	}
 
+		dir.Yaw		= thisRot.Yaw;
+		dir.Roll	= 0.f;
 
-	void Character::LookRight( float inScalar )
-	{
-		if( m_Movement && m_Movement->IsValid() )
-		{
-
-		}
-	}
-
-
-	bool Character::HandleKeyBinding( const String& inBind )
-	{
-		return false;
-	}
-
-
-	bool Character::HandleAxisBinding( const String& inAxis, float inValue )
-	{
-		return false;
+		dir.ClampContents();
+		return dir;
 	}
 
 }

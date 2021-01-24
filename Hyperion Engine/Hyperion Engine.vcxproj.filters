@@ -470,6 +470,18 @@
     <ClInclude Include="Include\Hyperion\InputTypes.h">
       <Filter>Root</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Hyperion\Framework\PointLight.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DirectX11Compute.h">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\ViewClusters.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11ViewClusters.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Framework\Entity.cpp">
@@ -700,6 +712,12 @@
     <ClCompile Include="Source\Library\Geometry.cpp">
       <Filter>Library</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Framework\PointLight.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DirectX11Compute.cpp">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="String.natvis">
@@ -730,6 +748,12 @@
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\gbuffer_pixel.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\build_clusters.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\compress_clusters.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

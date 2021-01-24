@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>D:\Hyperion\Build\Release\HyperionRelease.exe</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles>
+    <ContentFile>
+      <FullPath>D:\Hyperion\Build\Release\shaders\gbuffer.hps</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\Hyperion\Build\Release\shaders\gbuffer.hvs</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\Hyperion\Build\Release\shaders\lighting.hps</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\Hyperion\Build\Release\shaders\lighting.hvs</FullPath>
+    </ContentFile>
+  </ContentFiles>
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>

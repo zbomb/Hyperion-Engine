@@ -237,11 +237,11 @@ namespace Hyperion
 	{
 		if( m_Parent )
 		{
-			return( m_Parent->GetWorldQuaternion() * m_Transform.Rotation );
+			return( m_Transform.Rotation * m_Parent->GetWorldQuaternion() );
 		}
 		else if( m_Owner )
 		{
-			return( m_Owner->GetWorldQuaternion() * m_Transform.Rotation );
+			return( m_Transform.Rotation * m_Owner->GetWorldQuaternion() );
 		}
 		else
 		{
@@ -278,11 +278,13 @@ namespace Hyperion
 
 		if( m_Parent )
 		{
-			Output = m_Parent->GetWorldTransform() + m_Transform;
+			// The order of additives matters when combining transforms!
+			// This is because, the quaternions are being multiplied, and its not a communitive operation
+			Output = m_Transform + m_Parent->GetWorldTransform();
 		}
 		else if( m_Owner )
 		{
-			Output = m_Owner->GetWorldTransform() + m_Transform;
+			Output = m_Transform + m_Owner->GetWorldTransform();
 		}
 		else
 		{

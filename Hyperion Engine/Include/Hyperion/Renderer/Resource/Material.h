@@ -35,6 +35,27 @@ namespace Hyperion
 			: m_Values( valBegin, valEnd ), m_Identifier( inId )
 		{}
 
+		~RMaterial()
+		{
+			Shutdown();
+		}
+
+		void Shutdown()
+		{
+			/*
+			for( auto it = m_Textures.begin(); it != m_Textures.end(); it++ )
+			{
+				if( it->second )
+				{
+					it->second->Shutdown();
+				}
+			}
+			*/
+
+			m_Textures.clear();
+			m_Values.clear();
+		}
+
 		inline uint32 GetIdentifier() const { return m_Identifier; }
 
 		void AddTexture( const String& inKey, const std::shared_ptr< RTexture2D >& inTex )

@@ -358,35 +358,6 @@ namespace Hyperion
 		}
 
 		/*
-			HypPtr Casting
-			- We declare it here using 'friend', but its not actually a class member function
-			- Its contained directly in the Hyperion namespace
-			- We do this because of how tricky template friend functions inside template classes are
-		*/
-
-		/*
-		template< typename _To, typename _From >
-		friend HypPtr< _To > CastPtr( const HypPtr< _From >& inPtr )
-		{
-			// First, check if the source pointer is invalid
-			if( !inPtr._VerifyContents_Const() )
-			{
-				return nullptr;
-			}
-
-			// Attempt to cast the pointer (dynamically) to the desired type
-			_To* casted = dynamic_cast< _To* >( inPtr.ptr );
-			if( !casted )
-			{
-				return nullptr;
-			}
-
-			// This construction will incremement the ref count properly
-			return HypPtr< _To >( casted, inPtr.state );
-		}
-		*/
-
-		/*
 		*	Friend Functions
 		*/
 		template< typename _To, typename _From >

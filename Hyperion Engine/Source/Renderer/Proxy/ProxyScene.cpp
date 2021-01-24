@@ -43,8 +43,6 @@ namespace Hyperion
 	*/
 	void ProxyScene::Shutdown()
 	{
-		Console::WriteLine( "[DEBUG] ProxyScene: Shutdown..." );
-
 		// Shutdown all of our resources sync
 		for( auto It = m_Primitives.begin(); It != m_Primitives.end(); It++ )
 		{

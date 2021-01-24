@@ -14,6 +14,7 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <shellapi.h>
+#include <WinUser.h>
 
 // C RunTime Header Files
 #include <stdlib.h>

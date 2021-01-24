@@ -16,11 +16,6 @@ namespace Hyperion
 	class Player : public CharacterController
 	{
 
-	private:
-
-		bool ProcessKeyBinding( const String& inBind );
-		bool ProcessAxisBinding( const String& inBind, float inValue );
-
 	protected:
 
 		uint32 m_PlayerIdentifier;
@@ -33,13 +28,16 @@ namespace Hyperion
 		Player( uint32 inIdentifier );
 		virtual ~Player();
 
-		virtual bool HandleKeyBinding( const String& inBinding );
-		virtual bool HandleAxisBinding( const String& inBinding, float inValue );
-
 		/*
 			Getters
 		*/
 		inline uint32 GetPlayerIdentifier() const { return m_PlayerIdentifier; }
+		inline bool IsLocalPlayer() const { return m_PlayerIdentifier == PLAYER_LOCAL; }
+
+
+	protected:
+
+		virtual void UpdateInput( InputManager& im, double delta ) override;
 
 
 		friend class LocalPlayer;

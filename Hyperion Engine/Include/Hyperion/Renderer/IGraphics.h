@@ -108,24 +108,28 @@ namespace Hyperion
 		virtual std::shared_ptr< RGBufferShader > CreateGBufferShader( const String& inPixelShader = SHADER_PATH_GBUFFER_PIXEL, const String& inVertexShader = SHADER_PATH_GBUFFER_VERTEX ) = 0;
 		virtual std::shared_ptr< RLightingShader > CreateLightingShader( const String& inPixelShader = SHADER_PATH_LIGHTING_PIXEL, const String& inVertexShader = SHADER_PATH_LIGHTING_VERTEX ) = 0;
 		virtual std::shared_ptr< RForwardShader > CreateForwardShader( const String& inPixelShader = SHADER_PATH_FORWARD_PIXEL, const String& inVertexShader = SHADER_PATH_FORWARD_VERTEX ) = 0;
-		virtual std::shared_ptr< RComputeShader > CreateComputeShader( const String& inShader ) = 0;
+		virtual std::shared_ptr< RBuildClusterShader > CreateBuildClusterShader( const String& inShader = SHADER_PATH_COMPUTE_BUILD_CLUSTERS ) = 0;
+		virtual std::shared_ptr< RCompressClustersShader > CreateCompressClustersShader( const String& inShader = SHADER_PATH_COMPUTE_COMPRESS_CLUSTERS ) = 0;
+		virtual std::shared_ptr< RViewClusters > CreateViewClusters() = 0;
 
 		// Rendering
 		virtual void SetShader( const std::shared_ptr< RShader >& inShader ) = 0;
 
 		virtual void SetRenderOutputToScreen() = 0;
 		virtual void SetRenderOutputToTarget( const std::shared_ptr< RRenderTarget >& inRenderTarget, const std::shared_ptr< RDepthStencil >& inDepthStencil ) = 0;
-		virtual void SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inGBuffer ) = 0;
+		virtual void SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inGBuffer, const std::shared_ptr< RViewClusters >& inClusters ) = 0;
+		virtual void DetachGBuffer() = 0;
 		
 		virtual void RenderMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 indexCount ) = 0;
 		virtual void RenderScreenMesh() = 0;
+		virtual void RenderDebugFloor() = 0;
 
 		virtual void GetWorldMatrix( const Transform& inObjPosition, Matrix& outMatrix ) = 0;
 		virtual void GetWorldMatrix( Matrix& outMatrix ) = 0;
 		virtual void GetViewMatrix( Matrix& outMatrix ) = 0;
 		virtual void GetProjectionMatrix( Matrix& outMatrix ) = 0;
 		virtual void GetOrthoMatrix( Matrix& outMatrix ) = 0;
-		virtual void GetScreenMatrix( Matrix& outMatrix ) = 0;
+		virtual void GetScreenViewMatrix( Matrix& outMatrix ) = 0;
 
 		friend class TextureCache;
 	};

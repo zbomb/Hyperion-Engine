@@ -11,39 +11,15 @@
 namespace Hyperion
 {
 
-	void MovementComponent::MoveForward( float inScalar )
+	void MovementComponent::Move( const Vector3D& inVec )
 	{
 
 	}
 
 
-	void MovementComponent::MoveRight( float inScalar )
+	void MovementComponent::Look( const Vector2D& inVec )
 	{
 
-	}
-
-
-	void MovementComponent::LookUp( float inScalar )
-	{
-
-	}
-
-
-	void MovementComponent::LookRight( float inScalar )
-	{
-
-	}
-
-
-	bool MovementComponent::HandleKeyBinding( const String& inBind )
-	{
-		return false;
-	}
-
-
-	bool MovementComponent::HandleAxisBinding( const String& inBind, float inValue )
-	{
-		return false;
 	}
 
 }

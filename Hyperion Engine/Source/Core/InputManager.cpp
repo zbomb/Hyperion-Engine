@@ -189,6 +189,13 @@ namespace Hyperion
 			AddStateBinding( Keys::S, INPUT_STATE_MOVE_BACKWARD );
 			AddStateBinding( Keys::A, INPUT_STATE_MOVE_LEFT );
 			AddStateBinding( Keys::D, INPUT_STATE_MOVE_RIGHT );
+			AddStateBinding( Keys::UP, INPUT_STATE_LOOK_UP );
+			AddStateBinding( Keys::DOWN, INPUT_STATE_LOOK_DOWN );
+			AddStateBinding( Keys::RIGHT, INPUT_STATE_LOOK_RIGHT );
+			AddStateBinding( Keys::LEFT, INPUT_STATE_LOOK_LEFT );
+			AddStateBinding( Keys::LSHIFT, INPUT_STATE_SPRINT );
+			AddStateBinding( Keys::SPACE, INPUT_STATE_MOVE_UP );
+			AddStateBinding( Keys::LCTRL, INPUT_STATE_MOVE_DOWN );
 
 			AddScalarBinding( InputAxis::MouseX, INPUT_AXIS_LOOK_YAW, true, false, 1.f );
 			AddScalarBinding( InputAxis::MouseY, INPUT_AXIS_LOOK_PITCH, true, false, 1.f );
@@ -206,7 +213,13 @@ namespace Hyperion
 		// First, clear out some info about the button state
 		for( auto it = m_ActionStates.begin(); it != m_ActionStates.end(); it++ )
 		{
-			it->second.bActionState = false;
+			it->second.iActionCount = 0;
+		}
+
+		// Clear our previous axis inputs
+		for( auto it = m_AxisStates.begin(); it != m_AxisStates.end(); it++ )
+		{
+			it->second = 0.f;
 		}
 
 		// Now, lets process button updates
@@ -219,7 +232,7 @@ namespace Hyperion
 				auto& entry = m_ActionStates[ button_update.second.first ];
 				if( !entry.bState && button_update.second.second.bState )
 				{
-					entry.bActionState = true;
+					entry.iActionCount++;
 				}
 
 				// Update the press state
@@ -239,7 +252,7 @@ namespace Hyperion
 		auto axis_update = m_AxisUpdates.PopValue();
 		while( axis_update.first )
 		{
-			m_AxisStates[ axis_update.second.first ] = axis_update.second.second;
+			m_AxisStates[ axis_update.second.first ] += axis_update.second.second;
 
 			// Pop the next update
 			axis_update = m_AxisUpdates.PopValue();
@@ -302,14 +315,14 @@ namespace Hyperion
 	}
 
 
-	bool InputManager::PollAction( uint32 inIdentifier )
+	uint32 InputManager::PollAction( uint32 inIdentifier )
 	{
-		if( inIdentifier == INPUT_NONE ) { return false; }
+		if( inIdentifier == INPUT_NONE ) { return 0; }
 
 		auto entry = m_ActionStates.find( inIdentifier );
-		if( entry == m_ActionStates.end() ) { return false; }
+		if( entry == m_ActionStates.end() ) { return 0; }
 
-		return entry->second.bActionState;
+		return entry->second.iActionCount;
 	}
 
 

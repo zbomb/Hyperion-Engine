@@ -31,13 +31,10 @@ namespace Hyperion
 	void GBuffer::Shutdown()
 	{
 		m_DepthStencil.reset();
-
 		m_DiffuseRoughnessTarget.reset();
 		m_DiffuseRoughnessTexture.reset();
-
 		m_NormalDepthTarget.reset();
 		m_NormalDepthTexture.reset();
-
 		m_SpecularTarget.reset();
 		m_SpecularTexture.reset();
 

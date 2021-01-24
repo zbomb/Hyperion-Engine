@@ -62,7 +62,7 @@ namespace Hyperion
 		m_bRunning = false;
 
 		// Shut down all active threads
-		Console::Write( "[STATUS] ThreadSystem: Shutting down engine threads...\n" );
+		Console::Write( "ThreadSystem: Shutting down engine threads...\n" );
 
 		for( auto& th : m_CustomThreads )
 		{
@@ -78,7 +78,7 @@ namespace Hyperion
 
 		m_TickedThreads.clear();
 
-		Console::Write( "[STATUS] ThreadSystem: Shutting down task pool threads...\n" );
+		Console::Write( "ThreadSystem: Shutting down task pool threads...\n" );
 
 		for( auto& th : m_TaskPoolThreads )
 		{
@@ -87,7 +87,7 @@ namespace Hyperion
 
 		m_TaskPoolThreads.clear();
 
-		Console::Write( "[STATUS] ThreadSystem: Shutdown successful!\n" );
+		Console::Write( "ThreadSystem: Shutdown successful!\n" );
 
 		return true;
 	}

@@ -96,9 +96,9 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList = new Vertex[ 36 ];
 			model.LODList[ 0 ].SubObjects[ 0 ].IndexList = new uint[ 36 ]
 			{
-				0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-				12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-				24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35
+				2, 1, 0, 5, 4, 3, 8, 7, 6, 11, 10, 9,
+				14, 13, 12, 17, 16, 15, 20, 19, 18, 23, 22, 21,
+				26, 25, 24, 29, 28, 27, 32, 31, 30, 35, 34, 33
 			};
 			model.LODList[ 0 ].SubObjects[ 0 ].MaterialSlot = 0;
 
@@ -109,8 +109,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 0 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 0 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 0 ].nz = -1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 0 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 0 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 0 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 0 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 1 ].x = 5.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 1 ].y = 0.0f;
@@ -118,17 +118,17 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 1 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 1 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 1 ].nz = -1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 1 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 1 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 1 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 1 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 2 ].x = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 2 ].y = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 2 ].z = 5.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 2 ].y = 5.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 2 ].z = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 2 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 2 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 2 ].nz = -1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 2 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 2 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 2 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 2 ].v = 0.0f;
 
 			// Front Face, Top Triangle
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 3 ].x = 0.0f;
@@ -137,8 +137,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 3 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 3 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 3 ].nz = -1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 3 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 3 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 3 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 3 ].v = 0.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 4 ].x = 5.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 4 ].y = 0.0f;
@@ -146,8 +146,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 4 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 4 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 4 ].nz = -1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 4 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 4 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 4 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 4 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 5 ].x = 5.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 5 ].y = 5.0f;
@@ -155,8 +155,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 5 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 5 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 5 ].nz = -1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 5 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 5 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 5 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 5 ].v = 0.0f;
 
 			// Right face, bottom triangle
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 6 ].x = 5.0f;
@@ -165,8 +165,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 6 ].nx = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 6 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 6 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 6 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 6 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 6 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 6 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 7 ].x = 5.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 7 ].y = 0.0f;
@@ -174,8 +174,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 7 ].nx = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 7 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 7 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 7 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 7 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 7 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 7 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 8 ].x = 5.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 8 ].y = 5.0f;
@@ -183,8 +183,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 8 ].nx = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 8 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 8 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 8 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 8 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 8 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 8 ].v = 0.0f;
 
 			// Right face, top triangle
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 9 ].x = 5.0f;
@@ -194,7 +194,7 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 9 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 9 ].nz = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 9 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 9 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 9 ].v = 0.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 10 ].x = 5.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 10 ].y = 0.0f;
@@ -202,8 +202,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 10 ].nx = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 10 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 10 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 10 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 10 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 10 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 10 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 11 ].x = 5.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 11 ].y = 5.0f;
@@ -211,8 +211,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 11 ].nx = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 11 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 11 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 11 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 11 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 11 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 11 ].v = 0.0f;
 
 			// Left face, bottom triangle
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 12 ].x = 0.0f;
@@ -221,8 +221,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 12 ].nx = -1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 12 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 12 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 12 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 12 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 12 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 12 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 13 ].x = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 13 ].y = 0.0f;
@@ -230,8 +230,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 13 ].nx = -1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 13 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 13 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 13 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 13 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 13 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 13 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 14 ].x = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 14 ].y = 5.0f;
@@ -239,8 +239,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 14 ].nx = -1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 14 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 14 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 14 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 14 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 14 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 14 ].v = 0.0f;
 
 			// Left face, top triangle
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 15 ].x = 0.0f;
@@ -250,7 +250,7 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 15 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 15 ].nz = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 15 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 15 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 15 ].v = 0.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 16 ].x = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 16 ].y = 0.0f;
@@ -259,7 +259,7 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 16 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 16 ].nz = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 16 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 16 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 16 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 17 ].x = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 17 ].y = 5.0f;
@@ -268,7 +268,7 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 17 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 17 ].nz = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 17 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 17 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 17 ].v = 0.0f;
 
 			// Top face, back triangle
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 18 ].x = 0.0f;
@@ -277,8 +277,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 18 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 18 ].ny = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 18 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 18 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 18 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 18 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 18 ].v = 0.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 19 ].x = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 19 ].y = 5.0f;
@@ -286,8 +286,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 19 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 19 ].ny = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 19 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 19 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 19 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 19 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 19 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 20 ].x = 5.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 20 ].y = 5.0f;
@@ -295,8 +295,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 20 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 20 ].ny = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 20 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 20 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 20 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 20 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 20 ].v = 0.0f;
 
 			// Top face, front triangle
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 21 ].x = 0.0f;
@@ -305,8 +305,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 21 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 21 ].ny = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 21 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 21 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 21 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 21 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 21 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 22 ].x = 5.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 22 ].y = 5.0f;
@@ -314,8 +314,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 22 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 22 ].ny = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 22 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 22 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 22 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 22 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 22 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 23 ].x = 5.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 23 ].y = 5.0f;
@@ -323,8 +323,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 23 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 23 ].ny = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 23 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 23 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 23 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 23 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 23 ].v = 0.0f;
 
 			// Bottom face, back triangle
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 24 ].x = 0.0f;
@@ -333,7 +333,7 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 24 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 24 ].ny = -1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 24 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 24 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 24 ].u = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 24 ].v = 0.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 25 ].x = 0.0f;
@@ -342,7 +342,7 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 25 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 25 ].ny = -1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 25 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 25 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 25 ].u = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 25 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 26 ].x = 5.0f;
@@ -351,7 +351,7 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 26 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 26 ].ny = -1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 26 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 26 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 26 ].u = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 26 ].v = 1.0f;
 
 			// Bottom face, front triangle
@@ -361,7 +361,7 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 27 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 27 ].ny = -1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 27 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 27 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 27 ].u = 1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 27 ].v = 0.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 28 ].x = 5.0f;
@@ -370,7 +370,7 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 28 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 28 ].ny = -1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 28 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 28 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 28 ].u = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 28 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 29 ].x = 5.0f;
@@ -379,7 +379,7 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 29 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 29 ].ny = -1.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 29 ].nz = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 29 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 29 ].u = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 29 ].v = 0.0f;
 
 			// Back face, bottom triangle
@@ -389,8 +389,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 30 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 30 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 30 ].nz = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 30 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 30 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 30 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 30 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 31 ].x = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 31 ].y = 0.0f;
@@ -398,8 +398,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 31 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 31 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 31 ].nz = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 31 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 31 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 31 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 31 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 32 ].x = 5.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 32 ].y = 5.0f;
@@ -407,8 +407,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 32 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 32 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 32 ].nz = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 32 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 32 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 32 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 32 ].v = 0.0f;
 
 			// Back face, top triangle
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 33 ].x = 5.0f;
@@ -417,8 +417,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 33 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 33 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 33 ].nz = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 33 ].u = 0.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 33 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 33 ].u = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 33 ].v = 0.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 34 ].x = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 34 ].y = 0.0f;
@@ -426,8 +426,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 34 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 34 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 34 ].nz = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 34 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 34 ].v = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 34 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 34 ].v = 1.0f;
 
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 35 ].x = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 35 ].y = 5.0f;
@@ -435,8 +435,8 @@ namespace Hyperion
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 35 ].nx = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 35 ].ny = 0.0f;
 			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 35 ].nz = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 35 ].u = 1.0f;
-			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 35 ].v = 1.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 35 ].u = 0.0f;
+			model.LODList[ 0 ].SubObjects[ 0 ].VertexList[ 35 ].v = 0.0f;
 
 			Write( model );
 		}

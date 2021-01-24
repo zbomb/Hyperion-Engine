@@ -18,17 +18,16 @@ namespace Hyperion
 
 	}
 
+	ProxyStaticModel::~ProxyStaticModel()
+	{
+		HYPERION_VERIFY( !m_Model && !m_ModelAsset, "[Proxy] StaticModel wasnt cleaned up before being destroyed! (model instance/asset)" );
+		HYPERION_VERIFY( m_Materials.empty() && m_MaterialAssets.empty(), "[Proxy] StaticModel wasnt cleaned up before being destroyed! (material instances/assets)" );
+	}
+
 
 	void ProxyStaticModel::GameInit()
 	{
-		if( IsGameThread() )
-		{
-			Console::WriteLine( "[DEBUG] ProxyStaticModel: Init on game thread as expected!" );
-		}
-		else
-		{
-			Console::WriteLine( "[DEBUG] ProxyStaticModel: Game init called on wrong thread!" );
-		}
+		HYPERION_VERIFY( IsGameThread(), "[Proxy] GameInit wasnt on game thread?" );
 	}
 
 
@@ -75,20 +74,15 @@ namespace Hyperion
 		HYPERION_VERIFY( IsRenderThread(), "[Proxy] RenderShutdown wasnt on the render thread" );
 
 		m_Model.reset();
+		m_ModelAsset.reset();
 		m_Materials.clear();
+		m_MaterialAssets.clear();
 	}
 
 
 	void ProxyStaticModel::Shutdown()
 	{
-		if( IsWorkerThread() )
-		{
-			Console::WriteLine( "[DEBUG] ProxyStaticModel: Shutdown on worker thread as expected" );
-		}
-		else
-		{
-			Console::WriteLine( "[DEBUG] ProxyStaticModel: Shutdown called on wrong thread!" );
-		}
+
 	}
 
 

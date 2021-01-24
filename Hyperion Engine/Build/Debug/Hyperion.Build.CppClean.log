@@ -5,11 +5,11 @@ d:\hyperion\hyperion engine\build\debug\ifileservices.obj
 d:\hyperion\hyperion engine\build\debug\filesystem.obj
 d:\hyperion\hyperion engine\build\debug\filepath.obj
 d:\hyperion\hyperion engine\build\debug\point.obj
-d:\hyperion\hyperion engine\build\debug\rtti.obj
-d:\hyperion\hyperion engine\build\debug\threadmanager.obj
 d:\hyperion\hyperion engine\build\debug\threading.obj
+d:\hyperion\hyperion engine\build\debug\threadmanager.obj
 d:\hyperion\hyperion engine\build\debug\string.obj
 d:\hyperion\hyperion engine\build\debug\stream.obj
+d:\hyperion\hyperion engine\build\debug\rtti.obj
 d:\hyperion\hyperion engine\build\debug\object.obj
 d:\hyperion\hyperion engine\build\debug\inputmanager.obj
 d:\hyperion\hyperion engine\build\debug\gameinstance.obj
@@ -20,17 +20,15 @@ d:\hyperion\hyperion engine\build\debug\console.obj
 d:\hyperion\hyperion engine\build\debug\textureasset.obj
 d:\hyperion\hyperion engine\build\debug\staticmodelasset.obj
 d:\hyperion\hyperion engine\build\debug\materialasset.obj
-d:\hyperion\hyperion engine\build\debug\datatypes.obj
-d:\hyperion\hyperion engine\build\debug\materialinstance.obj
 d:\hyperion\hyperion engine\build\debug\serialization.obj
 d:\hyperion\hyperion engine\build\debug\mathcore.obj
 d:\hyperion\hyperion engine\build\debug\geometry.obj
 d:\hyperion\hyperion engine\build\debug\crypto.obj
+d:\hyperion\hyperion engine\build\debug\color.obj
 d:\hyperion\hyperion engine\build\debug\binary.obj
 d:\hyperion\hyperion engine\build\debug\hyperion.obj
 d:\hyperion\hyperion engine\build\debug\world.obj
 d:\hyperion\hyperion engine\build\debug\testentity.obj
-d:\hyperion\hyperion engine\build\debug\testcomponent.obj
 d:\hyperion\hyperion engine\build\debug\staticmodelcomponent.obj
 d:\hyperion\hyperion engine\build\debug\rendercomponent.obj
 d:\hyperion\hyperion engine\build\debug\primitivecomponent.obj
@@ -40,26 +38,25 @@ d:\hyperion\hyperion engine\build\debug\lightcomponent.obj
 d:\hyperion\hyperion engine\build\debug\entity.obj
 d:\hyperion\hyperion engine\build\debug\dynamicmodelcomponent.obj
 d:\hyperion\hyperion engine\build\debug\component.obj
-d:\hyperion\hyperion engine\build\debug\hsmreader.obj
-d:\hyperion\hyperion engine\build\debug\hmatwriter.obj
-d:\hyperion\hyperion engine\build\debug\hmatreader.obj
-d:\hyperion\hyperion engine\build\debug\hhtwriter.obj
-d:\hyperion\hyperion engine\build\debug\hhtreader.obj
 d:\hyperion\hyperion engine\build\debug\deflate.obj
 d:\hyperion\hyperion engine\build\debug\basicstreamingmanager.obj
 d:\hyperion\hyperion engine\build\debug\adaptivetexture.obj
 d:\hyperion\hyperion engine\build\debug\adaptivestaticmodel.obj
 d:\hyperion\hyperion engine\build\debug\adaptivedynamicmodel.obj
 d:\hyperion\hyperion engine\build\debug\adaptiveassetmanager.obj
-d:\hyperion\hyperion engine\build\debug\texturecache.obj
+d:\hyperion\hyperion engine\build\debug\resourcemanager.obj
 d:\hyperion\hyperion engine\build\debug\renderer.obj
-d:\hyperion\hyperion engine\build\debug\proxytest.obj
 d:\hyperion\hyperion engine\build\debug\proxystaticmodel.obj
 d:\hyperion\hyperion engine\build\debug\proxyscene.obj
 d:\hyperion\hyperion engine\build\debug\proxybase.obj
-d:\hyperion\hyperion engine\build\debug\geometrycache.obj
+d:\hyperion\hyperion engine\build\debug\gbuffer.obj
+d:\hyperion\hyperion engine\build\debug\directx11lightingshader.obj
+d:\hyperion\hyperion engine\build\debug\directx11gbuffershader.obj
+d:\hyperion\hyperion engine\build\debug\directx11forwardshader.obj
 d:\hyperion\hyperion engine\build\debug\directx11graphics.obj
 d:\hyperion\hyperion engine\build\debug\deferredrenderer.obj
+d:\hyperion\hyperion engine\build\debug\datatypes.obj
+d:\hyperion\hyperion engine\build\debug\materialinstance.obj
 d:\hyperion\hyperion engine\build\debug\win32platform.obj
 d:\hyperion\hyperion engine\build\debug\win32main.obj
 d:\hyperion\hyperion engine\build\debug\win32filesystem.obj
@@ -68,11 +65,22 @@ d:\hyperion\hyperion engine\build\debug\imageloader.obj
 d:\hyperion\hyperion engine\build\debug\hvbreader.obj
 d:\hyperion\hyperion engine\build\debug\htxwriter.obj
 d:\hyperion\hyperion engine\build\debug\htxreader.obj
-d:\hyperion\hyperion engine\build\debug\resourcemanager.obj
-d:\hyperion\build\debug\%gbuffer.hps
-d:\hyperion\build\debug\%gbuffer.hvs
-d:\hyperion\build\debug\%lighting.hps
-d:\hyperion\build\debug\%lighting.hvs
+d:\hyperion\hyperion engine\build\debug\hsmreader.obj
+d:\hyperion\hyperion engine\build\debug\hmatwriter.obj
+d:\hyperion\hyperion engine\build\debug\hmatreader.obj
+d:\hyperion\hyperion engine\build\debug\hhtwriter.obj
+d:\hyperion\hyperion engine\build\debug\hhtreader.obj
+d:\hyperion\hyperion engine\build\debug\directx11texture.obj
+d:\hyperion\hyperion engine\build\debug\ai.obj
+d:\hyperion\hyperion engine\build\debug\noclipmovementcomponent.obj
+d:\hyperion\hyperion engine\build\debug\movementcomponent.obj
+d:\hyperion\hyperion engine\build\debug\charactercontroller.obj
+d:\hyperion\hyperion engine\build\debug\character.obj
+d:\hyperion\hyperion engine\build\debug\math.obj
+d:\hyperion\build\debug\shaders\gbuffer.hps
+d:\hyperion\build\debug\shaders\gbuffer.hvs
+d:\hyperion\build\debug\shaders\lighting.hps
+d:\hyperion\build\debug\shaders\lighting.hvs
 d:\hyperion\build\debug\hyperion.exe
 d:\hyperion\build\debug\hyperion.ilk
 d:\hyperion\build\debug\hyperion.pdb
@@ -85,6 +93,7 @@ d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\dxc.read.1.tlog
 d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\dxc.write.1.tlog
 d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\fxc.command.1.tlog
 d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\fxc.read.1.tlog
+d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\fxc.write.1.tlog
 d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link.command.1.tlog
 d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link.read.1.tlog
 d:\hyperion\hyperion engine\build\debug\hyperion engine.tlog\link.write.1.tlog

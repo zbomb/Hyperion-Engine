@@ -35,7 +35,6 @@ namespace Hyperion
 		HypPtr< Thread > m_RenderThread;
 
 		bool m_bServicesRunning;
-		String m_ErrorMessage;
 
 		std::chrono::time_point< std::chrono::high_resolution_clock > m_LastGameTick;
 		std::chrono::time_point< std::chrono::high_resolution_clock > m_LastRenderTick;
@@ -51,7 +50,8 @@ namespace Hyperion
 		std::condition_variable m_GameWaitCondition;
 		std::condition_variable m_RenderWaitCondition;
 
-		inline void SetErrorMessage( const String& inErr ) { m_ErrorMessage = inErr; }
+		static std::function< void( const String& ) > s_FatalErrorCallback;
+		static std::atomic< bool > s_bFatalError;
 
 		// Renderer Init Helpers
 		void DoRenderThreadInit( void* pWindow, ScreenResolution inResolution, uint32 inFlags );
@@ -75,11 +75,13 @@ namespace Hyperion
 		inline HypPtr< GameInstance > GetGameInstancePtr() const { return m_Game; }
 		inline std::shared_ptr< Renderer > GetRendererPtr() const { return m_Renderer; }
 		inline HypPtr< InputManager > GetInputManagerPtr() const { return m_Input; }
-		inline String GetErrorMessage() { String copy = m_ErrorMessage; m_ErrorMessage.Clear(); return copy; }
 
 		bool InitializeServices( uint32 inFlags = FLAG_NONE );
 		bool InitializeRenderer( void* pWindow, ScreenResolution inResolution, uint32 inFlags = FLAG_NONE );
 		bool InitializeGame( uint32 inFlags = FLAG_NONE );
+
+		static void FatalError( const String& inDescription );
+		static void SetFatalErrorCallback( std::function< void( const String& ) > inCallback ) { s_FatalErrorCallback = inCallback; }
 
 		void Stop();
 

@@ -41,6 +41,9 @@ namespace Hyperion
 		0, 0, 1, [] ( uint32 ) { Engine::Get()->OnVSyncUpdated(); }, THREAD_RENDERER
 		);
 
+	std::function< void( const String& ) > Engine::s_FatalErrorCallback( nullptr );
+	std::atomic< bool > Engine::s_bFatalError( false );
+
 
 	HypPtr< Engine > Engine::Get()
 	{
@@ -71,21 +74,21 @@ namespace Hyperion
 		// Next, lets initialize console
 		if( !Console::Start( inFlags ) )
 		{
-			SetErrorMessage( "Failed to initialize console" );
+			FatalError( "Failed to initialize console" );
 			return false;
 		}
 
 		// Initialize file system, and have it run asset discovery
 		if( !FileSystem::Initialize( true ) )
 		{
-			SetErrorMessage( "Failed to initialize file system" );
+			FatalError( "Failed to initialize file system" );
 			return false;
 		}
 
 		// Finally, initialize thread manager
 		if( !ThreadManager::Start( inFlags ) )
 		{
-			SetErrorMessage( "Failed to initialize thread manager" );
+			FatalError( "Failed to initialize thread manager" );
 			return false;
 		}
 
@@ -241,9 +244,14 @@ namespace Hyperion
 
 		// Now we should have all the info needed to create the renderer
 		auto rendererInstance = std::make_shared< Hyperion::DeferredRenderer >( selectedAPI, pWindow, inResolution, bVSync );
-		rendererInstance->Initialize();
-
 		m_Renderer = rendererInstance;
+		
+		if( !rendererInstance->Initialize() )
+		{
+			// Renderer failed to initialize! We need to stop the render thread from running, and output an error through the OS layer
+			FatalError( "Failed to initialize renderer!" );
+			return;
+		}
 
 		m_LastRenderTick = std::chrono::high_resolution_clock::now();
 
@@ -266,7 +274,9 @@ namespace Hyperion
 
 	void Engine::DoRenderThreadTick()
 	{
+		if( !m_bRenderInit ) { return; }
 		HYPERION_VERIFY( m_Renderer, "[Engine] Renderer was null!" );
+
 		m_Renderer->Frame();
 	}
 
@@ -303,7 +313,7 @@ namespace Hyperion
 
 		if( pWindow == nullptr )
 		{
-			SetErrorMessage( "Invalid window handle" );
+			FatalError( "Invalid window handle" );
 			return false;
 		}
 
@@ -332,7 +342,7 @@ namespace Hyperion
 		m_RenderThread = ThreadManager::CreateThread( params );
 		if( !m_RenderThread )
 		{
-			SetErrorMessage( "Failed to create render thread" );
+			FatalError( "Failed to create render thread" );
 			return false;
 		}
 
@@ -451,6 +461,7 @@ namespace Hyperion
 
 	void Engine::DoGameThreadTick()
 	{
+		if( !m_bGameInit ) { return; }
 		HYPERION_VERIFY( m_Game && m_Input, "[Engine] Game instance (or input manager) was null during tick!" );
 
 		// If the render thread isnt running, or is behind on processing frames, we will skip this tick
@@ -537,6 +548,18 @@ namespace Hyperion
 	}
 
 
+	void Engine::FatalError( const String& inDescription )
+	{
+		// Push the erorr message up into the OS layer, so it can be dipslayed to the user
+		if( s_FatalErrorCallback ) { s_FatalErrorCallback( inDescription ); }
+		Console::WriteLine( "[FATAL] There was a fatal error! ", inDescription );
+
+		// If the OS is waiting for the renderer or game thread to init, we need to stop blocking the OS thread 
+		// so it can process the fatal error were pushing to it
+		s_bFatalError.store( true );
+	}
+
+
 	void Engine::Stop()
 	{
 		ShutdownGame();
@@ -555,12 +578,13 @@ namespace Hyperion
 	{
 		{
 			std::unique_lock< std::mutex > lock( m_GameWaitMutex );
-			while( !m_bGameInit ) { m_GameWaitCondition.wait( lock ); }
+			while( !m_bGameInit && !s_bFatalError ) { m_GameWaitCondition.wait_for( lock, std::chrono::milliseconds( 10 ) ); }
+			
 		}
 
 		{
 			std::unique_lock< std::mutex > lock( m_RenderWaitMutex );
-			while( !m_bRenderInit ) { m_RenderWaitCondition.wait( lock ); }
+			while( !m_bRenderInit && !s_bFatalError ) { m_RenderWaitCondition.wait_for( lock, std::chrono::milliseconds( 10 ) ); }
 		}
 	}
 

@@ -23,11 +23,6 @@ namespace Hyperion
 	class Character : public Entity
 	{
 
-	private:
-
-		bool ProcessKeyBinding( const String& inKey );
-		bool ProcessAxisBinding( const String& inKey, float inValue );
-
 	protected:
 
 		HypPtr< CharacterController > m_Controller;
@@ -42,14 +37,8 @@ namespace Hyperion
 		virtual void OnCreate() override;
 		virtual void OnDestroy() override;
 
-		virtual void MoveForward( float inScalar );
-		virtual void MoveRight( float inScalar );
-		virtual void LookUp( float inScalar );
-		virtual void LookRight( float inScalar );
-
-		// Old input system
-		virtual bool HandleKeyBinding( const String& inKey );
-		virtual bool HandleAxisBinding( const String& inAxis, float inValue );
+		virtual void SetMovementInput( const Vector3D& inVec );
+		virtual void SetLookInput( const Vector2D& inVec );
 
 	public:
 
@@ -58,6 +47,9 @@ namespace Hyperion
 
 		HypPtr< CameraComponent > GetCamera() const;
 		HypPtr< MovementComponent > GetMovement() const;
+
+		virtual void SetEyeDirection( float inPitch, float inYaw );
+		virtual Angle3D GetEyeDirection() const;
 
 		friend class CharacterController;
 		friend class Player;
