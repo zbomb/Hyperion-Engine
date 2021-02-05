@@ -1,0 +1,19 @@
+
+------------------------------------------- Future Improvments ------------------------------------------
+
+* After 'FindActiveClusters' compute shader runs, possibly copy the active cluster buffer (or even just a variable 'activeBufferCount') back to CPU memory
+* Then, when we dispatch 'Cull Lights' compute shader, we can dispatch one group for each active cluster, so we can skip on dispatching a large number of thread groups
+	that we dont actually need, to speed up execution
+* Find a method to increase the number of dynamic lights possible in a scene
+
+* Move 'FindActiveClusters' step, into the g-buffer pass pixel shader again (although it seems to break shader debugging)
+	- We could use a different graphics debugging tool to debug shaders
+	- We could try a different resource type to write results into
+	
+- Re-write a lot of the renderer (in order of priority)
+	* Shader system
+	* Render loop
+	* Seperate compute system?
+	* Overall, cleanup
+
+- Go from using 'NULL' to 'nullptr'

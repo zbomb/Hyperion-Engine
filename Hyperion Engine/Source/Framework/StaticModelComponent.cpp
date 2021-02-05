@@ -9,7 +9,7 @@
 #include "Hyperion/Renderer/Renderer.h"
 #include "Hyperion/Core/Engine.h"
 #include "Hyperion/Streaming/BasicStreamingManager.h"
-#include "Hyperion/Renderer/Resource/ResourceManager.h"
+#include "Hyperion/Renderer/ResourceManager.h"
 #include "Hyperion/Renderer/Proxy/ProxyStaticModel.h"
 #include "Hyperion/Assets/MaterialAsset.h"
 #include "Hyperion/Assets/StaticModelAsset.h"

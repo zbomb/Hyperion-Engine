@@ -45,10 +45,10 @@ namespace Hyperion
 	std::atomic< bool > Engine::s_bFatalError( false );
 
 
-	HypPtr< Engine > Engine::Get()
+	std::shared_ptr< Engine > Engine::Get()
 	{
-		static HypPtr< Engine > engineInst = CreateObject< Engine >();
-		return engineInst;
+		static auto inst = std::make_shared< Engine >();
+		return inst;
 	}
 
 
@@ -57,6 +57,12 @@ namespace Hyperion
 		m_bGameInit( false ), m_bRenderInit( false )
 	{
 
+	}
+
+
+	Engine::~Engine()
+	{
+		Shutdown();
 	}
 
 
@@ -589,5 +595,3 @@ namespace Hyperion
 	}
 
 }
-
-HYPERION_REGISTER_OBJECT_TYPE( Engine, Object );

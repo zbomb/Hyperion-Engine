@@ -95,12 +95,6 @@ namespace Hyperion
 	}
 
 
-	Transform ProxyStaticModel::GetWorldTransform() const
-	{
-		return m_Transform;
-	}
-
-
 	uint8 ProxyStaticModel::GetActiveLOD() const
 	{
 		return m_ActiveLOD;
@@ -119,25 +113,49 @@ namespace Hyperion
 	}
 
 
-	bool ProxyStaticModel::GetLODResources( uint8 inLOD, std::vector<std::tuple<std::shared_ptr<RBuffer>, std::shared_ptr<RBuffer>, std::shared_ptr<RMaterial>>>& outData )
+	void ProxyStaticModel::CollectBatches( BatchCollector& inCollector )
 	{
-		// First, we need to grab the model data instance
+		uint32 flags = inCollector.GetFlags();
+
+		// Get model data
 		auto data = m_Model ? m_Model->GetData() : nullptr;
-		if( !data ) { return false; }
+		if( !data ) { return; }
 
-		auto lod = data->GetLOD( inLOD );
-		if( !lod || !lod->bCached ) { return false; }
+		// Get the active LOD
+		auto lod = data->GetLOD( m_ActiveLOD );
+		if( !lod || !lod->bCached ) { return; }
 
-		for( auto it = lod->subObjects.begin(); it != lod->subObjects.end(); it++ )
+		for( auto it = lod->batchList.begin(); it != lod->batchList.end(); it++ )
 		{
-			outData.emplace_back( std::make_tuple(
-				it->vertexBuffer,
-				it->indexBuffer,
-				GetMaterial( it->materialSlot )
-			) );
+			// Get material for this batch, ensure its loaded
+			auto material = GetMaterial( it->materialSlot );
+			if( !material || !material->AreTexturesLoaded() ) 
+			{ 
+				continue; 
+			}
+
+			// Ensure everything is valid before uploading it...
+			if( !it->indexBuffer || !it->indexBuffer->IsValid() ||
+				!it->vertexBuffer || !it->vertexBuffer->IsValid() )
+			{
+				continue;
+			}
+
+			// Check if were rendering a translucent or opaque batch, and check against flags
+			bool bIsTranslucent = material->IsTranslucent();
+			if( bIsTranslucent )
+			{
+				if( !HYPERION_HAS_FLAG( flags, RENDERER_GEOMETRY_COLLECTION_FLAG_TRANSLUCENT ) ) { continue; }
+			}
+			else
+			{
+				if( !HYPERION_HAS_FLAG( flags, RENDERER_GEOMETRY_COLLECTION_FLAG_OPAQUE ) ) { continue; }
+			}
+
+			// Upload batch...
+			inCollector.CollectBatch( m_WorldMatrix, it->indexBuffer, it->vertexBuffer, material );
 		}
 
-		return true;
 	}
 
 }

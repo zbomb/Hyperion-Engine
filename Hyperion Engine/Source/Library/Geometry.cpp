@@ -1370,6 +1370,25 @@ namespace Hyperion
 		return output;
 	}
 
+	Matrix Matrix::GetIdentity()
+	{
+		/*
+		*	1 0 0 0
+		*	0 1 0 0
+		*	0 0 1 0
+		*	0 0 0 1
+		*/
+
+		static float identityData[ 16 ] = {
+			1.f, 0.f, 0.f, 0.f,
+			0.f, 1.f, 0.f, 0.f,
+			0.f, 0.f, 1.f, 0.f,
+			0.f, 0.f, 0.f, 1.f
+		};
+
+		return Matrix( identityData );
+	}
+
 	/*----------------------------------------------------------------------------------------
 		Library Function Definitions
 	----------------------------------------------------------------------------------------*/

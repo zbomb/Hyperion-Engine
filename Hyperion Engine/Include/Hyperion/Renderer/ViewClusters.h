@@ -17,9 +17,6 @@ namespace Hyperion
 
 	public:
 
-		float ClusterSizeX = 0.f;
-		float ClusterSizeY = 0.f;
-
 		virtual ~RViewClusters() {}
 		virtual void Shutdown() = 0;
 		virtual bool IsValid() const = 0;

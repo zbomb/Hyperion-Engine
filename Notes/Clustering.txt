@@ -1,183 +1,19 @@
 ================================================ HYPERION ===============================================
 -> Clustering 
 
+Next problem....
 
-What are we going to do to implement clustering, for light selection?
 
-The basic process during a frame would be..
-1. Build clustering structure
-2. Render GBuffer
-3. Select visible clusters
-4. Simplify cluster list
-5. Perform light culling, and light assignment
-6. Lighting pass using our cluster list
-7. Forward pass using our cluster list
 
 
 
-We want to use a deferred renderer to perform the majority of the scene rendering, but for the objects
-that arent able to be rendered in a deferred manner, we will render them with a forward pass at the end.
 
-Mainly things with transparency, and possibly objects that require a custom pixel shader.
 
 
-Also, we will attempt to make the best use of compute shaders possible. In DirectX, we might have to look 
-into this, DirectCompute I believe, and might require a bit of work to get compute shaders working.
 
-==============================================================
--> Building Clusters
 
-Building the cluster is done in view-space
-We need a formula to calculate our slices, and because of how non-linear view-space depth is, due to the way 
-projections work, we cant simply split the available depth linearly.
 
-The equation set we can use:
 
-Z = nearZ( farZ / nearZ ) ^ (slice/numSlice)
-
-slice = log(Z) * ( numSlices / log( farZ / nearZ ) ) - ( ( numSlices - log( nearZ ) ) / log( farZ / nearZ ) )
-
-
-
-With the second equation, we can pre-calculate the two fractions, since nearZ and farZ are constant values
-during engine runtime. Then to calculate the slice at a particular depth, we can just do...
-
-slice = log(z) * f1 - f2
-
-
-To calculate the cluster size, we will base it on the resolution, so we end up with a constant number
-of clusters in the X and Y axis.
-
-sliceWidth = screenWidth / 15
-sliceHeight = screenHeight / 10
-
-And for depth slices, we will have 24.
-
-Each cluster is a slice of a frustum (which ends up being the shape of a frustum itself), but to more 
-easily represent it, and more quickly perform culling, we will convert each to an AABB, where the box
-is aligned with the local view-space axis, and not the world space axis.
-
-
-
-So, to actually do the work of computing the clusters, we will offload this work onto the GPU using compute.
-The compute shader will have one thread for each cluster, and each thread will calculate the AABB of each
-cluster in viewspace. Another idea, is to compute these AABBs in world space, since we find each pixels position
-in worldspace anyway during lighting calulations. We could just instead calculate pixel positions in viewspace, and 
-also each lights position in viewspace. 
-
-
-Max Point: ( threadX + 1, threadY + 1 ) * tileSizePx
-
-But what is tileSizePx?
-We need to get our X,Y pos 
-
-
-How to structure this next pass...
-Light culling!
-
-
-
-Well.. we need some structure of lights to upload from the CPU.
-
-struct LightInfo
-{
-	float3 WorldPosition;
-	float Radius;
-	uint32 Identifier;
-}
-
-At some point, extending this to work with spot lights is possible...
-Anyway...
-
-
-For this shaders input...
-
-StructuredBuffer< LightInfo > worldLightList;
-StructuredBuffer< ClusterInfo > clusterAABBList;
-StructuredBuffer< uint > activeClusterList;
-
-
-And for the output....
-
-RWStructuredBuffer< UINT > lightIndexBuffer;
-uint lightIndexBufferOffset = 0;
-RWStructuredBuffer< ULONG > lightGrid;
-uint lightGridOffset = 0;
-
-
-So....
-
-worldLightList is a list of lights in the active scene
-clusterAABBList is the AABB of each cluster, build in an earlier shader
-activeClusterList is the list of clusters indexes containing a pixel
-
-lightIndexBuffer is a list of proxy light identifiers, during processing each cluster, we come up with a list
-of lights that infleunce it, and that list of lights have their identifiers added to the end of this list
-And then, we store an offset and length in the light grid
-
-
-The light grid has the same number of elements as the view clusters, even though not all will be used.
-
-
-
-
-Now, we have to figure out to how structure this shader....
-We could......
-
-
-A) Process light by light, where each thread gets a light, and loops through the active clusters.
-B) Process indivisual cluster on a thread/group, looping through the lights.
-
-
-Now, it might be ideal to assign a single cluster to a thread group, and then each thread group has a 
-certain number of threads, where each thread is assigned a light...
-
-
-... in compute shader...
-
-groupshared uint groupResult[];
-groupshared uint groupOffset = 0;
-
-uint groupClusterIndex = ...;
-uint myLightIndex = ...;
-
-if( checkLight( lightList[ myLightIndex ], clusterAABBList[ groupClusterIndex ] ) )
-{
-	uint nextOffset;
-	InterlockedAdd( groupOffset, 1, nextOffset );
-	groupResult[ nextOffset ] = lightList[ myLightIndex ].Index;
-}
-
-WaitForThreads()....
-
-if( myLightIndex == 0 )
-{
-	... store result....
-}
-
-
-
-
-Now, some of these operations are complex.. and might have threading issues.
-Using some interlocked functions might help...
-
-
-But, if we assigned a single cluster to a group, and each thread processes a single (or group) of lights
-at once, we then accumulate the result in some type of AppendBuffer or something...
-
-Then, once were done, have one of the threads push the result into the shader output lists...
-
-
-
-
-
-Another problem...
-The graphics debugger stopped working when we started using RWStructuredBuffer...
-Maybe were doing something wrong... but I am not sure what...
-
-Because, it was working when we were just outputting to a single RWStructuredBuffer from a compute shader
-The issue is, binding a UAV to a pixel shader......
-We could instead, create a seperate compute shader, to loop through the GBUffer, and mark the active clusters
 
 
 

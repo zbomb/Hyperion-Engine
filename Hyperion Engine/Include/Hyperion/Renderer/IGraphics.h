@@ -8,12 +8,13 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Renderer/DataTypes.h"
-#include "Hyperion/Renderer/Resource/Texture.h"
-#include "Hyperion/Renderer/Resource/Buffer.h"
-#include "Hyperion/Renderer/Resource/Shader.h"
-#include "Hyperion/Renderer/Resource/Mesh.h"
-#include "Hyperion/Renderer/Resource/DepthStencil.h"
+#include "Hyperion/Renderer/Resources/RTexture.h"
+#include "Hyperion/Renderer/Resources/RBuffer.h"
+#include "Hyperion/Renderer/Resources/RShader.h"
+#include "Hyperion/Renderer/Resources/RMesh.h"
+#include "Hyperion/Renderer/Resources/RDepthStencil.h" // TODO: Remove this?
 #include "Hyperion/Library/Color.h"
+#include "Hyperion/Renderer/LightBuffer.h"
 
 
 namespace Hyperion
@@ -23,7 +24,6 @@ namespace Hyperion
 	*/
 	class IBuffer;
 	struct BufferParameters;
-
 	class RRenderTarget;
 	struct AABB;
 
@@ -64,8 +64,6 @@ namespace Hyperion
 
 		virtual std::vector< ScreenResolution > GetAvailableResolutions() = 0;
 
-		virtual bool AllowAsyncTextureCreation() const = 0;
-
 		// Buffer Creation
 		virtual std::shared_ptr< RBuffer > CreateBuffer( const BufferParameters& ) = 0;
 		virtual std::shared_ptr< RBuffer > CreateBuffer( BufferType ty = BufferType::Vertex ) = 0;
@@ -77,6 +75,8 @@ namespace Hyperion
 		virtual std::shared_ptr< RTexture1D > CreateTexture1D() = 0;
 		virtual std::shared_ptr< RTexture2D > CreateTexture2D() = 0;
 		virtual std::shared_ptr< RTexture3D > CreateTexture3D() = 0;
+		virtual bool AllowAsyncTextureCreation() const = 0;
+
 
 		// Texture Copying
 		virtual bool CopyTexture1D( std::shared_ptr< RTexture1D >& inSource, std::shared_ptr< RTexture1D >& inDest ) = 0;
@@ -104,32 +104,33 @@ namespace Hyperion
 		virtual bool ResizeDepthStencil( const std::shared_ptr< RDepthStencil >& inStencil, uint32 inWidth, uint32 inHeight ) = 0;
 		virtual void ClearDepthStencil( const std::shared_ptr< RDepthStencil >& inStenci, const Color4F& inColor ) = 0;
 
-		// Shaders
-		virtual std::shared_ptr< RGBufferShader > CreateGBufferShader( const String& inPixelShader = SHADER_PATH_GBUFFER_PIXEL, const String& inVertexShader = SHADER_PATH_GBUFFER_VERTEX ) = 0;
-		virtual std::shared_ptr< RLightingShader > CreateLightingShader( const String& inPixelShader = SHADER_PATH_LIGHTING_PIXEL, const String& inVertexShader = SHADER_PATH_LIGHTING_VERTEX ) = 0;
-		virtual std::shared_ptr< RForwardShader > CreateForwardShader( const String& inPixelShader = SHADER_PATH_FORWARD_PIXEL, const String& inVertexShader = SHADER_PATH_FORWARD_VERTEX ) = 0;
-		virtual std::shared_ptr< RBuildClusterShader > CreateBuildClusterShader( const String& inShader = SHADER_PATH_COMPUTE_BUILD_CLUSTERS ) = 0;
-		virtual std::shared_ptr< RCompressClustersShader > CreateCompressClustersShader( const String& inShader = SHADER_PATH_COMPUTE_COMPRESS_CLUSTERS ) = 0;
 		virtual std::shared_ptr< RViewClusters > CreateViewClusters() = 0;
-
-		// Rendering
-		virtual void SetShader( const std::shared_ptr< RShader >& inShader ) = 0;
-
-		virtual void SetRenderOutputToScreen() = 0;
-		virtual void SetRenderOutputToTarget( const std::shared_ptr< RRenderTarget >& inRenderTarget, const std::shared_ptr< RDepthStencil >& inDepthStencil ) = 0;
-		virtual void SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inGBuffer, const std::shared_ptr< RViewClusters >& inClusters ) = 0;
-		virtual void DetachGBuffer() = 0;
+		virtual std::shared_ptr< RLightBuffer > CreateLightBuffer() = 0;
 		
-		virtual void RenderMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 indexCount ) = 0;
-		virtual void RenderScreenMesh() = 0;
-		virtual void RenderDebugFloor() = 0;
+		// Rendering
+		virtual void SetNoRenderTargetAndClusterWriteAccess( const std::shared_ptr< RViewClusters >& inClusters ) = 0;
+		virtual void ClearClusterWriteAccess() = 0;
+		virtual void SetGBufferRenderTarget( const std::shared_ptr< GBuffer >& inGBuffer, const std::shared_ptr< RDepthStencil >& inStencil ) = 0;
 
-		virtual void GetWorldMatrix( const Transform& inObjPosition, Matrix& outMatrix ) = 0;
-		virtual void GetWorldMatrix( Matrix& outMatrix ) = 0;
-		virtual void GetViewMatrix( Matrix& outMatrix ) = 0;
-		virtual void GetProjectionMatrix( Matrix& outMatrix ) = 0;
-		virtual void GetOrthoMatrix( Matrix& outMatrix ) = 0;
-		virtual void GetScreenViewMatrix( Matrix& outMatrix ) = 0;
+		virtual void SetRenderTarget( const std::shared_ptr< RRenderTarget >& inTarget, const std::shared_ptr< RDepthStencil >& inStencil ) = 0;
+		virtual void DetachRenderTarget() = 0;
+
+		virtual void RenderBatch( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount ) = 0;
+		virtual void RenderScreenQuad() = 0;
+		virtual void GetDebugFloorQuad( std::shared_ptr< RBuffer >& outVertexBuffer, std::shared_ptr< RBuffer >& outIndexBuffer ) = 0;
+
+		// Matricies
+		virtual void CalculateViewMatrix( const ViewState& inView, Matrix& outViewMatrix ) = 0;
+		virtual void CalculateProjectionMatrix( const ScreenResolution& inResolution, float inFOV, Matrix& outProjMatrix ) = 0;
+		virtual void CalculateWorldMatrix( const Transform& inTransform, Matrix& outWorldMatrix ) = 0;
+		virtual void CalculateOrthoMatrix( const ScreenResolution& inResolution, Matrix& outOrthoMatrix ) = 0;
+		virtual void CalculateScreenViewMatrix( Matrix& outMatrix ) = 0;
+
+		// Shader Creation
+		virtual std::shared_ptr< RVertexShader > CreateVertexShader( VertexShaderType inType ) = 0;
+		virtual std::shared_ptr< RGeometryShader > CreateGeometryShader( GeometryShaderType inType ) = 0;
+		virtual std::shared_ptr< RPixelShader > CreatePixelShader( PixelShaderType inType ) = 0;
+		virtual std::shared_ptr< RComputeShader > CreateComputeShader( ComputeShaderType inType ) = 0;
 
 		friend class TextureCache;
 	};

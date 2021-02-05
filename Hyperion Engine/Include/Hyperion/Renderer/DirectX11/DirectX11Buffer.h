@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Hyperion/Renderer/Resource/Buffer.h"
+#include "Hyperion/Renderer/Resources/RBuffer.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
 
 

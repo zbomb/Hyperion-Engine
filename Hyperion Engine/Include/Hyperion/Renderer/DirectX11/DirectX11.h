@@ -28,6 +28,10 @@
 namespace Hyperion
 {
 
+	constexpr uint32 DX11_LIGHT_TYPE_POINT			= 0;
+	constexpr uint32 DX11_LIGHT_TYPE_SPOT			= 1;
+	constexpr uint32 DX11_LIGHT_TYPE_DIRECTIONAL	= 2;
+
 	/*
 	*	Structures
 	*/
@@ -44,5 +48,19 @@ namespace Hyperion
 		DirectX::XMFLOAT3 Position;
 		float _RSVD_;
 	};
+
+	#pragma pack( push, 1 )
+	struct LightInfo
+	{
+		DirectX::XMFLOAT3 WorldPosition;
+		float AttnRadius;
+		DirectX::XMFLOAT3 Color;
+		float Brightness;
+		uint32 Type;
+		DirectX::XMFLOAT3 Direction;
+		float SpotFOV;
+		DirectX::XMFLOAT3 _pad;
+	};
+	#pragma pack( pop )
 
 }

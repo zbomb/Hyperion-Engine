@@ -9,7 +9,7 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
-#include "Hyperion/Renderer/Resource/RenderTarget.h"
+#include "Hyperion/Renderer/Resources/RRenderTarget.h"
 
 
 namespace Hyperion

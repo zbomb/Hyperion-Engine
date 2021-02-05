@@ -8,9 +8,10 @@
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Renderer/Proxy/ProxyPrimitive.h"
-#include "Hyperion/Renderer/Resource/Material.h"
+#include "Hyperion/Renderer/Resources/RMaterial.h"
 #include "Hyperion/Library/Geometry.h"
-#include "Hyperion/Renderer/Resource/Mesh.h"
+#include "Hyperion/Renderer/Resources/RMesh.h"
+#include "Hyperion/Renderer/BatchCollector.h"
 
 
 namespace Hyperion
@@ -47,14 +48,12 @@ namespace Hyperion
 		inline std::shared_ptr< RMesh > GetModel() const { return m_Model; }
 		std::shared_ptr< RMaterial > GetMaterial( uint8 inSlot );
 
-		Transform GetWorldTransform() const override;
 		uint8 GetActiveLOD() const override;
 		AABB GetAABB() const override;
 		BoundingSphere GetBoundingSphere() const override;
 		inline uint8 GetLODCount() const override { return m_LODCount; }
-		inline std::map< uint8, std::shared_ptr< RMaterial > > GetMaterials() const override { return m_Materials; }
 
-		bool GetLODResources( uint8 inLOD, std::vector< std::tuple< std::shared_ptr< RBuffer >, std::shared_ptr< RBuffer >, std::shared_ptr< RMaterial > > >& outData ) override;
+		void CollectBatches( BatchCollector& inBatch ) override;
 
 		friend class StaticModelComponent;
 

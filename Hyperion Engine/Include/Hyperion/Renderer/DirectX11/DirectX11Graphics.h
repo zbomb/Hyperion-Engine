@@ -13,7 +13,7 @@
 #include "Hyperion/Renderer/IGraphics.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
 #include "Hyperion/Core/String.h"
-#include "Hyperion/Renderer/Resource/Mesh.h"
+#include "Hyperion/Renderer/Resources/RMesh.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11Frustum.h"
 
 
@@ -71,8 +71,8 @@ namespace Hyperion
 
 		// DEBUG 
 		// Floor, just so we have something to cast lights and shadows against
-		ComPtr< ID3D11Buffer > m_FloorVertexList;
-		ComPtr< ID3D11Buffer > m_FloorIndexList;
+		std::shared_ptr< RBuffer > m_FloorVertexBuffer;
+		std::shared_ptr< RBuffer > m_FloorIndexBuffer;
 
 		/*
 			Matricies
@@ -165,33 +165,33 @@ namespace Hyperion
 		bool ResizeDepthStencil( const std::shared_ptr< RDepthStencil >& inStencil, uint32 inWidth, uint32 inHeight ) final;
 		void ClearDepthStencil( const std::shared_ptr< RDepthStencil >& inStencil, const Color4F& inColor ) final;
 
-		// Shaders
-		std::shared_ptr< RGBufferShader > CreateGBufferShader( const String& inPixelShader = SHADER_PATH_GBUFFER_PIXEL, const String& inVertexShader = SHADER_PATH_GBUFFER_VERTEX ) final;
-		std::shared_ptr< RLightingShader > CreateLightingShader( const String& inPixelShader = SHADER_PATH_LIGHTING_PIXEL, const String& inVertexShader = SHADER_PATH_LIGHTING_VERTEX ) final;
-		std::shared_ptr< RForwardShader > CreateForwardShader( const String& inPixelShader = SHADER_PATH_FORWARD_PIXEL, const String& inVertexShader = SHADER_PATH_FORWARD_VERTEX ) final;
-		std::shared_ptr< RBuildClusterShader > CreateBuildClusterShader( const String& inShader = SHADER_PATH_COMPUTE_BUILD_CLUSTERS ) final;
-		std::shared_ptr< RCompressClustersShader > CreateCompressClustersShader( const String& inShader = SHADER_PATH_COMPUTE_COMPRESS_CLUSTERS ) final;
-
 		std::shared_ptr< RViewClusters > CreateViewClusters() final;
+		std::shared_ptr< RLightBuffer > CreateLightBuffer() final;
 
 		// Rendering
-		void SetShader( const std::shared_ptr< RShader >& inShader ) final;
+		void SetNoRenderTargetAndClusterWriteAccess( const std::shared_ptr< RViewClusters >& inClusters ) final;
+		void ClearClusterWriteAccess() final;
+		void SetGBufferRenderTarget( const std::shared_ptr< GBuffer >& inGBuffer, const std::shared_ptr< RDepthStencil >& inStencil ) final;
+		void DetachRenderTarget() final;
 
-		void SetRenderOutputToScreen() final;
-		void SetRenderOutputToTarget( const std::shared_ptr< RRenderTarget >& inTarget, const std::shared_ptr< RDepthStencil >& inStencil ) final;
-		void SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inGBuffer, const std::shared_ptr< RViewClusters >& inClusters ) final;
-		void DetachGBuffer() final;
+		void SetRenderTarget( const std::shared_ptr< RRenderTarget >& inTarget, const std::shared_ptr< RDepthStencil >& inStencil ) final;
 
-		void RenderMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount ) final;
-		void RenderScreenMesh() final;
-		void RenderDebugFloor() final;
+		void RenderBatch( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount ) final;
+		void RenderScreenQuad() final;
+		void GetDebugFloorQuad( std::shared_ptr< RBuffer >& outVertexBuffer, std::shared_ptr< RBuffer >& outIndexBuffer ) final;
 
-		void GetWorldMatrix( const Transform& inObj, Matrix& outMatrix ) final;
-		void GetWorldMatrix( Matrix& outMatrix ) final;
-		void GetViewMatrix( Matrix& outMatrix ) final;
-		void GetProjectionMatrix( Matrix& outMatrix ) final;
-		void GetOrthoMatrix( Matrix& outMatrix ) final;
-		void GetScreenViewMatrix( Matrix& outMatrix ) final;
+		// Matricies
+		void CalculateViewMatrix( const ViewState& inView, Matrix& outViewMatrix ) final;
+		void CalculateProjectionMatrix( const ScreenResolution& inResolution, float inFOV, Matrix& outProjMatrix ) final;
+		void CalculateWorldMatrix( const Transform& inTransform, Matrix& outWorldMatrix ) final;
+		void CalculateOrthoMatrix( const ScreenResolution& inResolution, Matrix& outOrthoMatrix ) final;
+		void CalculateScreenViewMatrix( Matrix& outMatrix ) final;
+
+		// Shader Creation
+		std::shared_ptr< RVertexShader > CreateVertexShader( VertexShaderType inType ) final;
+		std::shared_ptr< RGeometryShader > CreateGeometryShader( GeometryShaderType inType ) final;
+		std::shared_ptr< RPixelShader > CreatePixelShader( PixelShaderType inType ) final;
+		std::shared_ptr< RComputeShader > CreateComputeShader( ComputeShaderType inType ) final;
 
 	};
 

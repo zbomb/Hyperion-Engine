@@ -8,13 +8,24 @@
 #include "Hyperion/Renderer/DirectX11/DirectX11Buffer.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11Texture.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11RenderTarget.h"
-#include "Hyperion/Renderer/DirectX11/Shaders/DirectX11GBufferShader.h"
-#include "Hyperion/Renderer/DirectX11/Shaders/DirectX11ForwardShader.h"
-#include "Hyperion/Renderer/DirectX11/Shaders/DirectX11LightingShader.h"
 #include "Hyperion/Library/Geometry.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11DepthStencil.h"
 #include "Hyperion/Renderer/GBuffer.h"
-#include "Hyperion/Renderer/DirectX11/Shaders/DirectX11Compute.h"
+#include "Hyperion/Renderer/DirectX11/DirectX11LightBuffer.h"
+#include "Hyperion/Renderer/DirectX11/DirectX11ViewClusters.h"
+
+/*
+*	Shaders
+*/
+#include "Hyperion/Renderer/DirectX11/Shaders/DX11CullLightsShader.h"
+#include "Hyperion/Renderer/DirectX11/Shaders/DX11FindClustersShader.h"
+#include "Hyperion/Renderer/DirectX11/Shaders/DX11BuildClustersShader.h"
+#include "Hyperion/Renderer/DirectX11/Shaders/DX11GBufferPixelShader.h"
+#include "Hyperion/Renderer/DirectX11/Shaders/DX11LightingPixelShader.h"
+#include "Hyperion/Renderer/DirectX11/Shaders/DX11SceneVertexShader.h"
+#include "Hyperion/Renderer/DirectX11/Shaders/DX11ScreenVertexShader.h"
+#include "Hyperion/Renderer/DirectX11/Shaders/DX11ForwardPreZShader.h"
+#include "Hyperion/Renderer/DirectX11/Shaders/DX11ForwardPixelShader.h"
 
 
 namespace Hyperion
@@ -675,7 +686,7 @@ namespace Hyperion
 			ZeroMemory( &blendDesc, sizeof( blendDesc ) );
 
 			blendDesc.RenderTarget[ 0 ].BlendEnable				= TRUE;
-			blendDesc.RenderTarget[ 0 ].SrcBlend				= D3D11_BLEND_ONE;
+			blendDesc.RenderTarget[ 0 ].SrcBlend				= D3D11_BLEND_SRC_ALPHA;
 			blendDesc.RenderTarget[ 0 ].DestBlend				= D3D11_BLEND_INV_SRC_ALPHA;
 			blendDesc.RenderTarget[ 0 ].BlendOp					= D3D11_BLEND_OP_ADD;
 			blendDesc.RenderTarget[ 0 ].SrcBlendAlpha			= D3D11_BLEND_ONE;
@@ -690,7 +701,14 @@ namespace Hyperion
 				throw std::exception();
 			}
 
-			blendDesc.RenderTarget[ 0 ].BlendEnable = FALSE;
+			blendDesc.RenderTarget[ 0 ].BlendEnable				= FALSE;
+			blendDesc.RenderTarget[ 0 ].SrcBlend				= D3D11_BLEND_ONE;
+			blendDesc.RenderTarget[ 0 ].DestBlend				= D3D11_BLEND_INV_SRC_ALPHA;
+			blendDesc.RenderTarget[ 0 ].BlendOp					= D3D11_BLEND_OP_ADD;
+			blendDesc.RenderTarget[ 0 ].SrcBlendAlpha			= D3D11_BLEND_ONE;
+			blendDesc.RenderTarget[ 0 ].DestBlendAlpha			= D3D11_BLEND_ZERO;
+			blendDesc.RenderTarget[ 0 ].BlendOpAlpha			= D3D11_BLEND_OP_ADD;
+			blendDesc.RenderTarget[ 0 ].RenderTargetWriteMask	= 0x0f;
 
 			res = m_Device->CreateBlendState( &blendDesc, m_BlendDisabledState.GetAddressOf() );
 			if( FAILED( res ) )
@@ -747,8 +765,8 @@ namespace Hyperion
 	{
 		if( m_ScreenVertexList )	{ m_ScreenVertexList.Reset(); }
 		if( m_ScreenIndexList )		{ m_ScreenIndexList.Reset(); }
-		if( m_FloorVertexList )		{ m_FloorVertexList.Reset(); }
-		if( m_FloorIndexList )		{ m_FloorIndexList.Reset(); }
+		if( m_FloorVertexBuffer )	{ m_FloorVertexBuffer.reset(); }
+		if( m_FloorIndexBuffer )	{ m_FloorIndexBuffer.reset(); }
 		//if( m_CommonStates )		{ m_CommonStates.reset(); }
 		if( m_BackBuffer )			{ m_BackBuffer.reset(); }
 		//if( m_EffectFactory )		{ m_EffectFactory->ReleaseCache(); m_EffectFactory.reset(); }
@@ -984,6 +1002,9 @@ namespace Hyperion
 
 		uint32 indexList[] = { 0, 3, 2, 0, 1, 3 };
 
+		auto vertBuffer		= std::shared_ptr< DirectX11Buffer >( new DirectX11Buffer( BufferType::Vertex ) );
+		auto indexBuffer	= std::shared_ptr< DirectX11Buffer >( new DirectX11Buffer( BufferType::Index ) );
+
 		D3D11_BUFFER_DESC vertDesc;
 		ZeroMemory( &vertDesc, sizeof( vertDesc ) );
 
@@ -1001,11 +1022,14 @@ namespace Hyperion
 		vertexData.SysMemPitch			= 0;
 		vertexData.SysMemSlicePitch		= 0;
 
-		if( FAILED( m_Device->CreateBuffer( &vertDesc, &vertexData, m_FloorVertexList.GetAddressOf() ) ) || !m_FloorVertexList )
+		if( FAILED( m_Device->CreateBuffer( &vertDesc, &vertexData, vertBuffer->GetAddress() ) ) )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to create floor vertex list!" );
 			return;
 		}
+
+		vertBuffer->m_Count		= 4;
+		vertBuffer->m_Size		= sizeof( Vertex3D ) * 4;
 
 		D3D11_BUFFER_DESC indexDesc;
 		ZeroMemory( &indexDesc, sizeof( indexDesc ) );
@@ -1024,12 +1048,17 @@ namespace Hyperion
 		indexData.SysMemPitch		= 0;
 		indexData.SysMemSlicePitch	= 0;
 
-		if( FAILED( m_Device->CreateBuffer( &indexDesc, &indexData, m_FloorIndexList.GetAddressOf() ) ) || !m_FloorIndexList )
+		if( FAILED( m_Device->CreateBuffer( &indexDesc, &indexData, indexBuffer->GetAddress() ) ) )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to create floor index list!" );
 			return;
 		}
 
+		indexBuffer->m_Count	= 6;
+		indexBuffer->m_Size		= sizeof( uint32 ) * 6;
+
+		m_FloorVertexBuffer		= vertBuffer;
+		m_FloorIndexBuffer		= indexBuffer;
 	}
 
 
@@ -1340,7 +1369,7 @@ namespace Hyperion
 		}
 
 		// Create shader resource view if were setting the bind target to shader
-		if( HYPERION_HAS_FLAG( inParams.BindTargets, TextureBindTarget::Shader ) )
+		if( HYPERION_HAS_FLAG( inParams.BindTargets, RENDERER_TEXTURE_BIND_FLAG_SHADER ) )
 		{
 			D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc;
 			ZeroMemory( &viewDesc, sizeof( viewDesc ) );
@@ -1434,7 +1463,7 @@ namespace Hyperion
 		}
 
 		// Create shader resource view if were setting the bind target to shader
-		if( HYPERION_HAS_FLAG( inParams.BindTargets, TextureBindTarget::Shader ) )
+		if( HYPERION_HAS_FLAG( inParams.BindTargets, RENDERER_TEXTURE_BIND_FLAG_SHADER ) )
 		{
 			D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc;
 			ZeroMemory( &viewDesc, sizeof( viewDesc ) );
@@ -1525,7 +1554,7 @@ namespace Hyperion
 		}
 
 		// Create shader resource view if were setting the bind target to shader
-		if( HYPERION_HAS_FLAG( inParams.BindTargets, TextureBindTarget::Shader ) )
+		if( HYPERION_HAS_FLAG( inParams.BindTargets, RENDERER_TEXTURE_BIND_FLAG_SHADER ) )
 		{
 			D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc;
 			ZeroMemory( &viewDesc, sizeof( viewDesc ) );
@@ -1944,112 +1973,23 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr<RGBufferShader> DirectX11Graphics::CreateGBufferShader( const String& inPixelShader, const String& inVertexShader )
-	{
-		// Validate parameters
-		if( inPixelShader.IsWhitespaceOrEmpty() || inVertexShader.IsWhitespaceOrEmpty() )
-		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create GBuffer shader! The target path(s) were invalid" );
-			return nullptr;
-		}
-
-		// Create shader instance
-		auto newShader = std::make_shared< DirectX11GBufferShader >( inPixelShader, inVertexShader );
-		if( !newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) )
-		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create GBuffer shader! Couldnt initialize shader" );
-			return nullptr;
-		}
-		
-		return newShader;
-	}
-
-
-	std::shared_ptr<RLightingShader> DirectX11Graphics::CreateLightingShader( const String& inPixelShader, const String& inVertexShader )
-	{
-		// Validate parameters
-		if( inPixelShader.IsWhitespaceOrEmpty() || inVertexShader.IsWhitespaceOrEmpty() )
-		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create GBuffer shader! The target path(s) were invalid" );
-			return nullptr;
-		}
-
-		// Create shader instance
-		auto newShader = std::make_shared< DirectX11LightingShader >( inPixelShader, inVertexShader );
-		if( !newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) )
-		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create Lighting shader! Couldnt initialize shader" );
-			return nullptr;
-		}
-
-		return newShader;
-	}
-
-
-	std::shared_ptr<RForwardShader> DirectX11Graphics::CreateForwardShader( const String& inPixelShader, const String& inVertexShader )
-	{
-		// Validate parameters
-		if( inPixelShader.IsWhitespaceOrEmpty() || inVertexShader.IsWhitespaceOrEmpty() )
-		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create Forward shader! The target path(s) were invalid" );
-			return nullptr;
-		}
-
-		auto newShader = std::make_shared< DirectX11ForwardShader >( inPixelShader, inVertexShader );
-		if( !newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) )
-		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create Forward shader! Couldnt initialize shader" );
-			return nullptr;
-		}
-
-		return newShader;
-	}
-
-
-	std::shared_ptr< RBuildClusterShader > DirectX11Graphics::CreateBuildClusterShader( const String& inPath )
-	{
-		if( inPath.IsWhitespaceOrEmpty() )
-		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create build clusters compute shader, the path was invalid" );
-			return nullptr;
-		}
-
-		auto newShader = std::make_shared< DirectX11BuildClusterShader >( inPath );
-		if( !newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) )
-		{
-			Console::WriteLine( "[ERROR] DX11: failed to create 'BuildClusters' compute shader! Couldnt initialize!" );
-			return nullptr;
-		}
-
-		return newShader;
-	}
-
-
-	std::shared_ptr< RCompressClustersShader > DirectX11Graphics::CreateCompressClustersShader( const String& inPath )
-	{
-		if( inPath.IsWhitespaceOrEmpty() )
-		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create compress clusters compute shader, the path was invalid" );
-			return nullptr;
-		}
-
-		auto newShader = std::make_shared< DirectX11CompressClustersShader >( inPath );
-		if( !newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) )
-		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create 'Compress Clusters' compute shader! Couldnt initialize" );
-			return nullptr;
-		}
-
-		return newShader;
-	}
-
-
 	std::shared_ptr< RViewClusters > DirectX11Graphics::CreateViewClusters()
 	{
 		auto output = std::make_shared< DirectX11ViewClusters >();
 		if( !output->Initialize( m_Device.Get() ) )
 		{
-			Console::WriteLine( "[ERROR] DX11: Failed to create view clusters!" );
+			return nullptr;
+		}
+
+		return output;
+	}
+
+
+	std::shared_ptr< RLightBuffer > DirectX11Graphics::CreateLightBuffer()
+	{
+		auto output = std::make_shared< DirectX11LightBuffer >( RENDERER_MAX_DYNAMIC_LIGHTS );
+		if( !output->Initialize( m_Device.Get(), m_DeviceContext.Get() ) )
+		{
 			return nullptr;
 		}
 
@@ -2060,300 +2000,309 @@ namespace Hyperion
 	/*
 	*	Rendering
 	*/
-	void DirectX11Graphics::SetShader( const std::shared_ptr< RShader >& inShader )
-	{
-		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device Context was null!" );
-
-		// Validate the shader
-		if( !inShader || !inShader->IsValid() )
-		{
-			Console::WriteLine( "[ERROR] DX11: Failed to set shader pipeline! The parameter was null" );
-			return;
-		}
-
-		ID3D11VertexShader* vertexShader	= nullptr;
-		ID3D11PixelShader* pixelShader		= nullptr;
-		ID3D11InputLayout* inputLayout		= nullptr;
-
-		switch( inShader->GetType() )
-		{
-		case ShaderType::Forward:
-		{
-			auto shaderPtr = dynamic_cast<DirectX11ForwardShader*>( inShader.get() );
-			HYPERION_VERIFY( shaderPtr != nullptr, "[DX11] Failed to cast shader to correct type" );
-
-			vertexShader	= shaderPtr->GetVertexShader();
-			pixelShader		= shaderPtr->GetPixelShader();
-			inputLayout		= shaderPtr->GetInputLayout();
-
-			break;
-		}
-		case ShaderType::GBuffer:
-		{
-			auto gshaderPtr = dynamic_cast<DirectX11GBufferShader*>( inShader.get() );
-			HYPERION_VERIFY( gshaderPtr != nullptr, "[DX11] Failed to cast shader to correct type" );
-
-			vertexShader	= gshaderPtr->GetVertexShader();
-			pixelShader		= gshaderPtr->GetPixelShader();
-			inputLayout		= gshaderPtr->GetInputLayout();
-
-			break;
-		}
-		case ShaderType::Lighting:
-		{
-			auto lshaderPtr = dynamic_cast<DirectX11LightingShader*>( inShader.get() );
-			HYPERION_VERIFY( lshaderPtr != nullptr, "[DX11] Failed to cast shader to correct type" );
-
-			vertexShader	= lshaderPtr->GetVertexShader();
-			pixelShader		= lshaderPtr->GetPixelShader();
-			inputLayout		= lshaderPtr->GetInputLayout();
-
-			break;
-		}
-		case ShaderType::Compute:
-		{
-			HYPERION_VERIFY( true, "[DX11] Attempt to use a compute shader in render pipeline" );
-			break;
-		}
-		default:
-
-			HYPERION_VERIFY( true, "[DX11] Attempt to render primitive with an invalid shader type" );
-			break;
-		}
-
-		if( !vertexShader || !pixelShader || !inputLayout )
-		{
-			Console::WriteLine( "[ERROR] DX11: Failed to set shader pipeline! The shader was invalid" );
-			return;
-		}
-
-		// Set the shaders
-		m_DeviceContext->IASetInputLayout( inputLayout );
-		m_DeviceContext->VSSetShader( vertexShader, NULL, 0 );
-		m_DeviceContext->PSSetShader( pixelShader, NULL, 0 );
-	}
-
-
-	void DirectX11Graphics::SetRenderOutputToScreen()
-	{
-		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device context was null" );
-		HYPERION_VERIFY( m_RenderTarget && m_RenderTarget->IsValid(), "[DX11] Back buffer render target was null/invalid" );
-
-		ID3D11RenderTargetView* views[] = { m_RenderTarget->Get() };
-		m_DeviceContext->OMSetRenderTargets( 1, views, m_DepthStencil->GetStencilView() );
-
-		D3D11_VIEWPORT viewport{};
-
-		viewport.Width		= (FLOAT)m_Resolution.Width;
-		viewport.Height		= (FLOAT)m_Resolution.Height;
-		viewport.MinDepth	= 0.f;
-		viewport.MaxDepth	= 1.f;
-		viewport.TopLeftX	= 0.f;
-		viewport.TopLeftY	= 1.f;
-		
-		m_DeviceContext->RSSetViewports( 1, &viewport );
-	}
-
-
-	void DirectX11Graphics::SetRenderOutputToTarget( const std::shared_ptr< RRenderTarget >& inTarget, const std::shared_ptr< RDepthStencil >& inStencil )
+	void DirectX11Graphics::SetNoRenderTargetAndClusterWriteAccess( const std::shared_ptr< RViewClusters >& inClusters )
 	{
 		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device context was null" );
 
-		// Ensure the parameters are valid
-		if( !inTarget || !inStencil || !inTarget->IsValid() || !inStencil->IsValid() )
+		auto* dx11Clusters = dynamic_cast<DirectX11ViewClusters*>( inClusters.get() );
+		auto* clusterUAV = dx11Clusters ? dx11Clusters->GetClusterInfoUAV() : nullptr;
+
+		if( clusterUAV == nullptr )
 		{
-			Console::WriteLine( "[Warning] DX11: Failed to set render output to target, the render target or depth stencil was invalid" );
+			Console::WriteLine( "[ERROR] DX11: Failed to set render target and cluster write access, the cluster info UAV was null!" );
 			return;
 		}
 
-		auto targetTexture = inTarget->GetTargetTexture();
-		HYPERION_VERIFY( targetTexture, "[DX11] Failed to get target texture from render target even though IsValid returned true" );
+		ID3D11UnorderedAccessView* uavList[]		= { clusterUAV };
+		ID3D11RenderTargetView* renderTargets[]		= { NULL };
 
-		auto* targetPtr		= dynamic_cast< DirectX11RenderTarget* >( inTarget.get() );
-		auto* stencilPtr	= dynamic_cast< DirectX11DepthStencil* >( inStencil.get() );
-		HYPERION_VERIFY( targetPtr && stencilPtr, "[DX11] Failed to cast render target and depth stencil to api type" );
-
-		ID3D11RenderTargetView* views[] = { targetPtr->Get() };
-		m_DeviceContext->OMSetRenderTargets( 1, views, stencilPtr->GetStencilView() );
-
-		D3D11_VIEWPORT viewport{};
-
-		viewport.Width		= (FLOAT)targetTexture->GetWidth();
-		viewport.Height		= (FLOAT)targetTexture->GetHeight();
-		viewport.MinDepth	= 0.f;
-		viewport.MaxDepth	= 1.f;
-		viewport.TopLeftX	= 0.f;
-		viewport.TopLeftY	= 1.f;
-
-		HYPERION_VERIFY( viewport.Width > 0 && viewport.Height > 0, "[DX11] Render output to texture with invalid width/height" );
-
-		m_DeviceContext->RSSetViewports( 1, &viewport );
+		m_DeviceContext->OMSetRenderTargetsAndUnorderedAccessViews( 0, renderTargets, NULL, 0, 1, uavList, NULL );
 	}
 
 
-	void DirectX11Graphics::SetRenderOutputToGBuffer( const std::shared_ptr< GBuffer >& inBuffer, const std::shared_ptr< RViewClusters >& inClusters )
+	void DirectX11Graphics::ClearClusterWriteAccess()
 	{
 		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device context was null" );
 
-		if( !inBuffer || !inBuffer->IsValid() )
-		{
-			Console::WriteLine( "[Warning] DX11: Failed to set render output to the gbuffer, the gbuffer was invalid" );
-			return;
-		}
-		else if( !inClusters || !inClusters->IsValid() )
-		{
-			Console::WriteLine( "[Warning] DX11: Failed to set render output to gbuffer, the cluster list was invalid" );
-			return;
-		}
-
-		// Set the OM output to the textures in the g-buffer
-		auto* diffPtr		= dynamic_cast< DirectX11RenderTarget* >( inBuffer->GetDiffuseRoughnessTarget().get() );
-		auto* normPtr		= dynamic_cast< DirectX11RenderTarget* >( inBuffer->GetNormalDepthTarget().get() );
-		auto* specPtr		= dynamic_cast< DirectX11RenderTarget* >( inBuffer->GetSpecularTarget().get() );
-		auto* depthStencil	= dynamic_cast< DirectX11DepthStencil* >( inBuffer->GetDepthStencil().get() );
-		auto* clusters		= dynamic_cast< DirectX11ViewClusters* >( inClusters.get() );
-
-		// These shouldnt fail, since IsValid() returned true
-		HYPERION_VERIFY( diffPtr && normPtr && specPtr, "[DX11] Render targets couldnt be casted to the api type?" );
-		HYPERION_VERIFY( depthStencil, "[DX11] Depth stencil couldnt be casted to api type?" );
-		HYPERION_VERIFY( clusters, "[DX11] View clusters couldnt be casted to api type?" );
-
-		ID3D11RenderTargetView* renderTargets[] = { diffPtr->Get(), normPtr->Get(), specPtr->Get() };
-		ID3D11UnorderedAccessView* uavList[] = { clusters->GetClusterInfoUAV() };
-		//UINT initCounts[] = { RENDERER_CLUSTER_COUNT_X * RENDERER_CLUSTER_COUNT_Y * RENDERER_CLUSTER_COUNT_Z };
-
-		// Unfortunatley, we have to set the render targets and UAVs in one call, I would prefer to move the UAV upload to
-		// GBufferShader::UploadClusterInfo, because it makes much more sense
-		m_DeviceContext->OMSetRenderTargetsAndUnorderedAccessViews( 3, renderTargets, depthStencil->GetStencilView(), 3, 1, uavList, NULL );
-		//m_DeviceContext->OMSetRenderTargets( 3, renderTargets, depthStencil->GetStencilView() );
-	
-		D3D11_VIEWPORT viewport{};
-
-		viewport.Width		= (FLOAT)inBuffer->GetWidth();
-		viewport.Height		= (FLOAT)inBuffer->GetHeight();
-		viewport.MinDepth	= 0.f;
-		viewport.MaxDepth	= 1.f;
-		viewport.TopLeftX	= 0.f;
-		viewport.TopLeftY	= 1.f;
-
-		HYPERION_VERIFY( viewport.Width > 0 && viewport.Height > 0, "[DX11] GBuffer has invalid dimensions?" );
-
-		m_DeviceContext->RSSetViewports( 1, &viewport );
-	}
-
-
-	void DirectX11Graphics::DetachGBuffer()
-	{
-		HYPERION_VERIFY( m_DeviceContext, "[DX11] Context was null!" );
-		
-		ID3D11RenderTargetView* renderTargets[] = { NULL, NULL, NULL };
 		ID3D11UnorderedAccessView* uavList[] = { NULL };
+		ID3D11RenderTargetView* targetList[] = { NULL };
 
-		m_DeviceContext->OMSetRenderTargetsAndUnorderedAccessViews( 3, renderTargets, NULL, 3, 1, uavList, NULL );
+		m_DeviceContext->OMSetRenderTargetsAndUnorderedAccessViews( 0, targetList, NULL, 0, 1, uavList, NULL );
 	}
 
 
-	void DirectX11Graphics::RenderMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount )
+	void DirectX11Graphics::SetGBufferRenderTarget( const std::shared_ptr< GBuffer >& inGBuffer, const std::shared_ptr< RDepthStencil >& inStencil )
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device context was null" );
+
+		if( !inGBuffer || !inGBuffer->IsValid() || !inStencil || !inStencil->IsValid() )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to set render output to GBuffer, it was null/invalid" );
+			return;
+		}
+
+		// Cast each texture to the DX11 version...
+		auto* diffPtr		= dynamic_cast< DirectX11RenderTarget* >( inGBuffer->GetDiffuseRoughnessTarget().get() );
+		auto* normPtr		= dynamic_cast< DirectX11RenderTarget* >( inGBuffer->GetNormalDepthTarget().get() );
+		auto* specPtr		= dynamic_cast< DirectX11RenderTarget* >( inGBuffer->GetSpecularTarget().get() );
+		auto* stencilPtr	= dynamic_cast< DirectX11DepthStencil* >( inStencil.get() );
+
+		HYPERION_VERIFY( diffPtr && normPtr && specPtr && stencilPtr, "[DX11] G-Buffer render targets were null" );
+
+		// Set render targets with output manager
+		ID3D11RenderTargetView* targetList[] = { diffPtr->Get(), normPtr->Get(), specPtr->Get() };
+		m_DeviceContext->OMSetRenderTargets( 3, targetList, stencilPtr->GetStencilView() );
+
+		// Set viewport
+		D3D11_VIEWPORT viewport {};
+
+		viewport.Width		= (float) m_Resolution.Width;
+		viewport.Height		= (float) m_Resolution.Height;
+		viewport.MinDepth	= 0.f;
+		viewport.MaxDepth	= 1.f;
+		viewport.TopLeftX	= 0.f;
+		viewport.TopLeftY	= 1.f;
+
+		HYPERION_VERIFY( viewport.Width > 0 && viewport.Height > 0, "[DX11] Invalid resolution" );
+
+		m_DeviceContext->RSSetViewports( 1, &viewport );
+	}
+
+
+	void DirectX11Graphics::DetachRenderTarget()
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device context was null" );
+
+		ID3D11RenderTargetView* targetList[] = { NULL, NULL, NULL };
+		m_DeviceContext->OMSetRenderTargets( 3, targetList, NULL );
+	}
+
+	void DirectX11Graphics::SetRenderTarget( const std::shared_ptr<RRenderTarget>& inTarget, const std::shared_ptr<RDepthStencil>& inStencil )
+	{
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device context was null" );
+
+		// We need to cast to the proper types
+		if( !inTarget || !inTarget->IsValid() )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to set render target, it was null" );
+			return;
+		}
+
+		auto* dx11Target	= dynamic_cast< DirectX11RenderTarget* >( inTarget.get() );
+		auto* dx11Stencil	= dynamic_cast< DirectX11DepthStencil* >( inStencil.get() );
+
+		ID3D11RenderTargetView* targetList[] = { dx11Target->Get() };
+		m_DeviceContext->OMSetRenderTargets( 1, targetList, dx11Stencil ? dx11Stencil->GetStencilView() : NULL );
+
+		// Set viewport
+		D3D11_VIEWPORT viewport {};
+
+		viewport.Width = (float) m_Resolution.Width;
+		viewport.Height = (float) m_Resolution.Height;
+		viewport.MinDepth = 0.f;
+		viewport.MaxDepth = 1.f;
+		viewport.TopLeftX = 0.f;
+		viewport.TopLeftY = 1.f;
+
+		HYPERION_VERIFY( viewport.Width > 0 && viewport.Height > 0, "[DX11] Invalid resolution" );
+
+		m_DeviceContext->RSSetViewports( 1, &viewport );
+	}
+
+
+	void DirectX11Graphics::RenderBatch( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount )
 	{
 		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device context was null" );
 
 		if( inIndexCount < 3 ) { return; }
 
-		auto* vertexBuffer	= inVertexBuffer ?	dynamic_cast<DirectX11Buffer*>( inVertexBuffer.get() ) :	nullptr;
-		auto* indexBuffer	= inIndexBuffer ?	dynamic_cast<DirectX11Buffer*>( inIndexBuffer.get() ) :		nullptr;
+		auto* vertexBuffer	= dynamic_cast< DirectX11Buffer* >( inVertexBuffer.get() );
+		auto* indexBuffer	= dynamic_cast< DirectX11Buffer* >( inIndexBuffer.get() );
 
-		// Validate the buffers
-		if( !vertexBuffer || !indexBuffer || !vertexBuffer->IsValid() || !indexBuffer->IsValid() ) { return; }
-		if( vertexBuffer->GetSize() == 0 || indexBuffer->GetSize() < 3 ) { return; }
+		if( !vertexBuffer || !indexBuffer ) { return; }
 
-		ID3D11Buffer* vertexBuffers[]	= { vertexBuffer->GetBuffer() };
-		UINT vertexStrides[]			= { sizeof( Vertex3D ) };
-		UINT vertexOffsets[]			= { 0 };
+		ID3D11Buffer* bufferList[]	= { vertexBuffer->GetBuffer() };
+		UINT vertexStrides[]		= { sizeof( Vertex3D ) };
+		UINT vertexOffsets[]		= { 0 };
 
-		m_DeviceContext->IASetVertexBuffers( 0, 1, vertexBuffers, vertexStrides, vertexOffsets );
-		m_DeviceContext->IASetIndexBuffer( indexBuffer->GetBuffer(), DXGI_FORMAT_R32_UINT, 0 );
 		m_DeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+		m_DeviceContext->IASetVertexBuffers( 0, 1, bufferList, vertexStrides, vertexOffsets );
+		m_DeviceContext->IASetIndexBuffer( indexBuffer->GetBuffer(), DXGI_FORMAT_R32_UINT, 0 );
 
 		m_DeviceContext->DrawIndexed( inIndexCount, 0, 0 );
 	}
 
 
-	void DirectX11Graphics::RenderScreenMesh()
+	void DirectX11Graphics::RenderScreenQuad()
 	{
-		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device context was null!" );
-		HYPERION_VERIFY( m_ScreenVertexList && m_ScreenIndexList, "[DX11] Screen geometry was null!" );
+		HYPERION_VERIFY( m_DeviceContext, "[DX11] Device context was null" );
 
-		ID3D11Buffer* vertexBuffers[]	= { m_ScreenVertexList.Get() };
-		UINT vertexStrides[]			= { sizeof( WindowVertex ) };
-		UINT vertexOffsets[]			= { 0 };
+		ID3D11Buffer* bufferList[]	= { m_ScreenVertexList.Get() };
+		UINT vertexStrides[]		= { sizeof( WindowVertex ) };
+		UINT vertexOffsets[]		= { 0 };
 
 		m_DeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
-		m_DeviceContext->IASetVertexBuffers( 0, 1, vertexBuffers, vertexStrides, vertexOffsets );
+		m_DeviceContext->IASetVertexBuffers( 0, 1, bufferList, vertexStrides, vertexOffsets );
 		m_DeviceContext->IASetIndexBuffer( m_ScreenIndexList.Get(), DXGI_FORMAT_R32_UINT, 0 );
+		
 		m_DeviceContext->DrawIndexed( 6, 0, 0 );
 	}
 
 
-	void DirectX11Graphics::RenderDebugFloor()
+	void DirectX11Graphics::GetDebugFloorQuad( std::shared_ptr< RBuffer >& outVertexBuffer, std::shared_ptr< RBuffer >& outIndexBuffer )
 	{
-		if( m_FloorVertexList && m_FloorIndexList )
-		{
-			ID3D11Buffer* vertexBuffers[]	= { m_FloorVertexList.Get() };
-			UINT vertexStrides[]			= { sizeof( Vertex3D ) };
-			UINT vertexOffsets[]			= { 0 };
+		// Just outputs the buffers..
+		// TODO: This is dirty
+		outVertexBuffer		= m_FloorVertexBuffer;
+		outIndexBuffer		= m_FloorIndexBuffer;
+	}
 
-			m_DeviceContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
-			m_DeviceContext->IASetVertexBuffers( 0, 1, vertexBuffers, vertexStrides, vertexOffsets );
-			m_DeviceContext->IASetIndexBuffer( m_FloorIndexList.Get(), DXGI_FORMAT_R32_UINT, 0 );
-			m_DeviceContext->DrawIndexed( 6, 0, 0 );
+
+	void DirectX11Graphics::CalculateViewMatrix( const ViewState& inView, Matrix& outViewMatrix )
+	{
+		// Create rotation quaternion
+		auto rotation = DirectX::XMMatrixRotationQuaternion( DirectX::XMVectorSet( -inView.Rotation.X, -inView.Rotation.Y, -inView.Rotation.Z, inView.Rotation.W ) );
+
+		// Create needed vectors
+		auto upVec		= DirectX::XMVectorSet( 0.f, 1.f, 0.f, 1.f );
+		auto dirVec		= DirectX::XMVectorSet( 0.f, 0.f, 1.f, 1.f );
+		auto camPos		= DirectX::XMVectorSet( inView.Position.X, inView.Position.Y, inView.Position.Z, 0.f );
+
+		// Transform our vectors based on camera transform
+		dirVec	= DirectX::XMVector3TransformCoord( dirVec, rotation );
+		dirVec	= DirectX::XMVectorAdd( dirVec, camPos );
+		upVec	= DirectX::XMVector3TransformCoord( upVec, rotation );
+
+		// Build and return matrix
+		auto output = DirectX::XMMatrixLookAtLH( camPos, dirVec, upVec );
+		outViewMatrix.AssignData( output.r[ 0 ].m128_f32 );
+	}
+
+
+	void DirectX11Graphics::CalculateProjectionMatrix( const ScreenResolution& inResolution, float inFOV, Matrix& outProjMatrix )
+	{
+		float aspectRatio	= (float) inResolution.Width / (float) inResolution.Height;
+		auto output			= DirectX::XMMatrixPerspectiveFovLH( inFOV, aspectRatio, SCREEN_NEAR, SCREEN_FAR );
+
+		outProjMatrix.AssignData( output.r[ 0 ].m128_f32 );
+	}
+
+
+	void DirectX11Graphics::CalculateWorldMatrix( const Transform& inTransform, Matrix& outWorldMatrix )
+	{
+		auto output		= DirectX::XMMatrixIdentity();
+		output			*= DirectX::XMMatrixRotationQuaternion( DirectX::XMVectorSet( -inTransform.Rotation.X, -inTransform.Rotation.Y, -inTransform.Rotation.Z, -inTransform.Rotation.W ) );
+		output			*= DirectX::XMMatrixTranslation( inTransform.Position.X, inTransform.Position.Y, inTransform.Position.Z );
+
+		outWorldMatrix.AssignData( output.r[ 0 ].m128_f32 );
+	}
+
+
+	void DirectX11Graphics::CalculateOrthoMatrix( const ScreenResolution& inResolution, Matrix& outOrthoMatrix )
+	{
+		auto output = DirectX::XMMatrixOrthographicLH( (float) inResolution.Width, (float) inResolution.Height, SCREEN_NEAR, SCREEN_FAR );
+		outOrthoMatrix.AssignData( output.r[ 0 ].m128_f32 );
+	}
+
+
+	void DirectX11Graphics::CalculateScreenViewMatrix( Matrix& outMatrix )
+	{
+		auto upVec = DirectX::XMVectorSet( 0.f, 1.f, 0.f, 1.f );
+		auto dirVec = DirectX::XMVectorSet( 0.f, 0.f, 1.f, 1.f );
+		auto posVec = DirectX::XMVectorSet( 0.f, 0.f, 0.f, 1.f );
+
+		auto output = DirectX::XMMatrixLookAtLH( posVec, dirVec, upVec );
+		outMatrix.AssignData( output.r[ 0 ].m128_f32 );
+	}
+
+
+	std::shared_ptr< RVertexShader > DirectX11Graphics::CreateVertexShader( VertexShaderType inType )
+	{
+		switch( inType )
+		{
+		case VertexShaderType::Scene:
+		{
+			auto newShader = std::make_shared< DX11SceneVertexShader >();
+			return newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) ? newShader : nullptr;
+			break;
+		}
+		case VertexShaderType::Screen:
+		{
+			auto newShader = std::make_shared< DX11ScreenVertexShader >();
+			return newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) ? newShader : nullptr;
+			break;
+		}
+		default:
+			return nullptr;
 		}
 	}
 
 
-	void DirectX11Graphics::GetWorldMatrix( const Transform& inObj, Matrix& outMatrix )
+	std::shared_ptr< RGeometryShader > DirectX11Graphics::CreateGeometryShader( GeometryShaderType inType )
 	{
-		auto out = m_WorldMatrix;
-		out *= DirectX::XMMatrixRotationQuaternion( DirectX::XMVectorSet( inObj.Rotation.X, inObj.Rotation.Y, inObj.Rotation.Z, inObj.Rotation.W ) );
-		out *= DirectX::XMMatrixTranslation( inObj.Position.X, inObj.Position.Y, inObj.Position.Z );
-
-		outMatrix.AssignData( out.r[ 0 ].m128_f32 );
+		return nullptr;
 	}
 
 
-	void DirectX11Graphics::GetWorldMatrix( Matrix& outMatrix )
+	std::shared_ptr< RPixelShader > DirectX11Graphics::CreatePixelShader( PixelShaderType inType )
 	{
-		// TODO: Need a better/cleaner solution
-		// It would be ideal, if the shaders were able to grab the matricies they needed from us
-		// but, thats not very clean either, we will come back to this..
-		outMatrix.AssignData( m_WorldMatrix.r[ 0 ].m128_f32 );
+		switch( inType )
+		{
+		case PixelShaderType::GBuffer:
+		{
+			auto newShader = std::make_shared< DX11GBufferPixelShader >();
+			return newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) ? newShader : nullptr;
+			break;
+		}
+		case PixelShaderType::Lighting:
+		{
+			auto newShader = std::make_shared< DX11LightingPixelShader >();
+			return newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) ? newShader : nullptr;
+			break;
+		}
+		case PixelShaderType::ForwardPreZ:
+		{
+			auto newShader = std::make_shared< DX11ForwardPreZShader >();
+			return newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) ? newShader : nullptr;
+			break;
+		}
+		case PixelShaderType::Forward:
+		{
+			auto newShader = std::make_shared< DX11ForwardPixelShader >();
+			return newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) ? newShader : nullptr;
+			break;
+		}
+		default:
+			return nullptr;
+		}
 	}
 
 
-	void DirectX11Graphics::GetViewMatrix( Matrix& outMatrix )
+	std::shared_ptr< RComputeShader > DirectX11Graphics::CreateComputeShader( ComputeShaderType inType )
 	{
-		// TODO: This is dirty
-		outMatrix.AssignData( m_ViewMatrix.r[ 0 ].m128_f32 );
-	}
-
-
-	void DirectX11Graphics::GetProjectionMatrix( Matrix& outMatrix )
-	{
-		// TODO
-		outMatrix.AssignData( m_ProjectionMatrix.r[ 0 ].m128_f32 );
-	}
-
-
-	void DirectX11Graphics::GetOrthoMatrix( Matrix& outMatrix )
-	{
-		// TODO
-		outMatrix.AssignData( m_OrthoMatrix.r[ 0 ].m128_f32 );
-	}
-
-
-	void DirectX11Graphics::GetScreenViewMatrix( Matrix& outMatrix )
-	{
-		// TODO
-		outMatrix.AssignData( m_ScreenViewMatrix.r[ 0 ].m128_f32 );
+		switch( inType )
+		{
+		case ComputeShaderType::BuildClusters:
+		{
+			auto newShader = std::make_shared< DX11BuildClustersShader >();
+			return newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) ? newShader : nullptr;
+			break;
+		}
+		case ComputeShaderType::FindClusters:
+		{
+			auto newShader = std::make_shared< DX11FindClustersShader >();
+			return newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) ? newShader : nullptr;
+			break;
+		}
+		case ComputeShaderType::CullLights:
+		{
+			auto newShader = std::make_shared< DX11CullLightsShader >();
+			return newShader->Initialize( m_Device.Get(), m_DeviceContext.Get() ) ? newShader : nullptr;
+			break;
+		}
+		default:
+			return nullptr;
+		}
 	}
 
 }

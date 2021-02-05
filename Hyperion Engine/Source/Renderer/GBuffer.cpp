@@ -6,9 +6,9 @@
 
 #include "Hyperion/Renderer/GBuffer.h"
 #include "Hyperion/Renderer/IGraphics.h"
-#include "Hyperion/Renderer/Resource/Texture.h"
-#include "Hyperion/Renderer/Resource/RenderTarget.h"
-#include "Hyperion/Renderer/Resource/DepthStencil.h"
+#include "Hyperion/Renderer/Resources/RTexture.h"
+#include "Hyperion/Renderer/Resources/RRenderTarget.h"
+#include "Hyperion/Renderer/Resources/RDepthStencil.h"
 
 
 
@@ -50,14 +50,20 @@ namespace Hyperion
 	}
 
 
-	void GBuffer::Clear( const std::shared_ptr< IGraphics >& inAPI, const Color4F& inColor )
+	void GBuffer::ClearRenderTargets( const std::shared_ptr< IGraphics >& inAPI, const Color4F& inColor )
 	{
 		HYPERION_VERIFY( inAPI, "[GBuffer] API was null!" );
 
-		if( m_DepthStencil )			{ inAPI->ClearDepthStencil( m_DepthStencil, inColor ); }
 		if( m_DiffuseRoughnessTarget )	{ inAPI->ClearRenderTarget( m_DiffuseRoughnessTarget, inColor ); }
 		if( m_NormalDepthTarget )		{ inAPI->ClearRenderTarget( m_NormalDepthTarget, inColor ); }
 		if( m_SpecularTarget )			{ inAPI->ClearRenderTarget( m_SpecularTarget, inColor ); }
+	}
+
+	void GBuffer::ClearDepthBuffer( const std::shared_ptr< IGraphics >& inAPI, const Color4F& inColor )
+	{
+		HYPERION_VERIFY( inAPI, "[GBuffer] API was null" );
+
+		if( m_DepthStencil ) { inAPI->ClearDepthStencil( m_DepthStencil, inColor ); }
 	}
 
 
@@ -87,7 +93,7 @@ namespace Hyperion
 		params.Width			= inWidth;
 		params.Height			= inHeight;
 		params.bDynamic			= false;
-		params.BindTargets		= (uint32) TextureBindTarget::Shader | (uint32) TextureBindTarget::Render;
+		params.BindTargets		= RENDERER_TEXTURE_BIND_FLAG_SHADER | RENDERER_TEXTURE_BIND_FLAG_RENDER;
 		params.bCPURead			= false;
 		params.Depth			= 1;
 		params.bAutogenMips		= false;

@@ -424,6 +424,8 @@ namespace Hyperion
 		Matrix operator*( const Matrix& other ) const;
 		Matrix operator+( const Matrix& other ) const;
 		Matrix operator-( const Matrix& other ) const;
+
+		static Matrix GetIdentity();
 	};
 
 

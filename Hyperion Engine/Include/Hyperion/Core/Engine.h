@@ -21,7 +21,7 @@ namespace Hyperion
 	class Thread;
 
 
-	class Engine : public Object
+	class Engine
 	{
 
 	private:
@@ -69,6 +69,7 @@ namespace Hyperion
 	public:
 
 		Engine();
+		~Engine();
 
 		inline HypPtr< Thread > GetGameThread() const { return m_GameThread; }
 		inline HypPtr< Thread > GetRenderThread() const { return m_RenderThread; }
@@ -92,11 +93,11 @@ namespace Hyperion
 		ScreenResolution GetResolution() const;
 		bool IsVSyncOn() const;
 
-		void Shutdown() final;
+		void Shutdown();
 
 		void WaitForInitComplete();
 
-		static HypPtr< Engine > Get();
+		static std::shared_ptr< Engine > Get();
 		inline static std::shared_ptr< Renderer > GetRenderer() { return Get()->GetRendererPtr(); }
 		inline static HypPtr< GameInstance > GetGame() { return Get()->GetGameInstancePtr(); }
 		inline static HypPtr< InputManager > GetInputManager() { return Get()->GetInputManagerPtr(); }

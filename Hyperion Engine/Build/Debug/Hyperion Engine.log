@@ -1,2 +1,4 @@
-﻿  DeferredRenderer.cpp
+﻿  Win32Main.cpp
+D:\Hyperion\Hyperion Engine\Source\Win32\Win32Main.cpp(292,24): warning C4244: '=': conversion from 'WPARAM' to 'int', possible loss of data
+D:\Hyperion\Hyperion Engine\Source\Win32\Win32Main.cpp(596,20): warning C4244: 'argument': conversion from 'WPARAM' to 'int', possible loss of data
   Hyperion Engine.vcxproj -> D:\Hyperion\Build\Debug\Hyperion.exe

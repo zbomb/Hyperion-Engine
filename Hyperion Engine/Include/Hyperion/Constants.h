@@ -67,9 +67,13 @@ namespace Hyperion
 	constexpr auto THREAD_RENDERER	= "renderer";
 	constexpr auto THREAD_POOL		= "pool";
 
-	constexpr uint32 RENDERER_CLUSTER_COUNT_X = 15;
-	constexpr uint32 RENDERER_CLUSTER_COUNT_Y = 10;
-	constexpr uint32 RENDERER_CLUSTER_COUNT_Z = 24;
+	constexpr uint32 RENDERER_CLUSTER_COUNT_X		= 15;
+	constexpr uint32 RENDERER_CLUSTER_COUNT_Y		= 10;
+	constexpr uint32 RENDERER_CLUSTER_COUNT_Z		= 24;
+	constexpr uint32 RENDERER_CLUSTER_MAX_LIGHTS	= 128;
+	constexpr uint32 RENDERER_MAX_DYNAMIC_LIGHTS	= 262144;	// This limit is due to the compute function that assigns lights to view clusters
+																// The lights are processed by 512 threads per cluster, with a maximum of 512 lights per thread, giving us this value
+
 
 	// Flags 
 	constexpr uint32 FLAG_NONE				= 0U;
@@ -99,23 +103,70 @@ namespace Hyperion
 	constexpr uint32 DEFAULT_API_WIN32			= FLAG_RENDERER_DX11;
 	constexpr uint32 DEFAULT_API_OSX			= FLAG_RENDERER_OGL;
 
-	constexpr auto SHADER_PATH_GBUFFER_PIXEL			= "shaders/gbuffer.hps";
-	constexpr auto SHADER_PATH_GBUFFER_VERTEX			= "shaders/gbuffer.hvs";
-	constexpr auto SHADER_PATH_LIGHTING_PIXEL			= "shaders/lighting.hps";
-	constexpr auto SHADER_PATH_LIGHTING_VERTEX			= "shaders/lighting.hvs";
-	constexpr auto SHADER_PATH_FORWARD_PIXEL			= "shaders/forward.hps";
-	constexpr auto SHADER_PATH_FORWARD_VERTEX			= "shaders/forward.hvs";
-	constexpr auto SHADER_PATH_COMPUTE_BUILD_CLUSTERS	= "shaders/build_clusters.hcs";
-	constexpr auto SHADER_PATH_COMPUTE_COMPRESS_CLUSTERS = "shaders/compress_clusters.hcs";
-	
-	enum class ShaderType
+	constexpr auto SHADER_PATH_DX11_VERTEX_SCENE			= "shaders/dx11/scene.hvs";
+	constexpr auto SHADER_PATH_DX11_VERTEX_SCREEN			= "shaders/dx11/screen.hvs";
+	constexpr auto SHADER_PATH_DX11_PIXEL_GBUFFER			= "shaders/dx11/gbuffer.hps";
+	constexpr auto SHADER_PATH_DX11_PIXEL_LIGHTING			= "shaders/dx11/lighting.hps";
+	constexpr auto SHADER_PATH_DX11_COMPUTE_BUILD_CLUSTERS	= "shaders/dx11/build_clusters.hcs";
+	constexpr auto SHADER_PATH_DX11_COMPUTE_FIND_CLUSTERS	= "shaders/dx11/find_clusters.hcs";
+	constexpr auto SHADER_PATH_DX11_COMPUTE_CULL_LIGHTS		= "shaders/dx11/cull_lights.hcs";
+	constexpr auto SHADER_PATH_DX11_PIXEL_FORWARD_PRE_Z		= "shaders/dx11/forward_pre_z.hps";
+	constexpr auto SHADER_PATH_DX11_PIXEL_FORWARD			= "shaders/dx11/forward.hps";
+
+	constexpr uint32 BUILD_CLUSTERS_MODE_REBUILD	= 0;
+	constexpr uint32 BUILD_CLUSTERS_MODE_CLEAR		= 1;
+
+	// Enums
+	enum class GeometryCollectionSource
 	{
-		None		= 0,
+		Scene = 0,
+		ScreenQuad = 1
+	};
+
+	enum class PipelineRenderTarget
+	{
+		Screen = 0,
+		GBuffer = 1,
+		ViewClusters = 2
+	};
+
+	enum class PipelineDepthStencilTarget
+	{
+		Screen		= 0,
 		GBuffer		= 1,
-		Lighting	= 2,
-		Forward		= 3,
-		Compute		= 4,
-		Custom		= 5
+		None		= 3
+	};
+
+	// Flags
+	constexpr uint32 RENDERER_GEOMETRY_COLLECTION_FLAG_NONE			= 0;
+	constexpr uint32 RENDERER_GEOMETRY_COLLECTION_FLAG_OPAQUE		= 1;
+	constexpr uint32 RENDERER_GEOMETRY_COLLECTION_FLAG_TRANSLUCENT	= 2;
+
+	// Shader Types
+	enum class VertexShaderType
+	{
+		Scene	= 0,
+		Screen	= 1
+	};
+
+	enum class PixelShaderType
+	{
+		GBuffer			= 0,
+		Lighting		= 1,
+		ForwardPreZ		= 2,
+		Forward			= 3
+	};
+
+	enum class GeometryShaderType
+	{
+
+	};
+
+	enum class ComputeShaderType
+	{
+		BuildClusters	= 0,
+		FindClusters	= 1,
+		CullLights		= 2
 	};
 
 	/*

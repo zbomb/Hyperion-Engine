@@ -12,6 +12,7 @@
 #include "Hyperion/Framework/TestEntity.h"
 #include "Hyperion/Core/GameInstance.h"
 #include "Hyperion/Framework/PointLight.h"
+#include "Hyperion/Framework/TransparencyTestEntity.h"
 
 
 namespace Hyperion
@@ -26,52 +27,78 @@ namespace Tests
 	{
 		Console::WriteLine( "\n---------------------------------------------------------------------------------------------\n[TEST] Running rederer test..." );
 
-		// Lets create some type of entity, thats renderable
-		auto newEnt = CreateObject< TestEntity >();
 		auto world = Engine::GetGame()->GetWorld();
 
-		world->AddEntity( newEnt );
-		newEnt->SetPosition( Vector3D( 0.f, 0.f, 30.f ) );
+		// Time for a intense render test...
+		uint32 objRowCount = 0;
+		uint32 objColCount = 0;
 
-		auto ent2 = CreateObject< TestEntity >();
-		world->AddEntity( ent2 );
-		ent2->SetPosition( Vector3D( 15.f, 0.f, 30.f ) );
-		ent2->SetRotation( Angle3D( 0.f, 45.f, 0.f ) );
+		uint32 lightRowCount = 10;
+		uint32 lightColCount = 10;
 
-		auto ent3 = CreateObject< TestEntity >();
-		world->AddEntity( ent3 );
-		ent3->SetPosition( Vector3D( -5.f, 0.f, 40.f ) );
-		ent3->SetRotation( Angle3D( 0.f, 60.f, 0.f ) );
+		float rowSize = 1000.f;
+		float colSize = 1000.f;
 
-		auto light = CreateObject< PointLight >();
-		light->SetColor( Color3F( 1.f, 0.f, 0.f ) );
-		light->SetBrightness( 0.8f );;
-		light->SetRadius( 200.f );
+		float objRowSpacing = rowSize / (float) objRowCount;
+		float objColSpacing = colSize / (float) objColCount;
+		float lightRowSpacing = rowSize / (float) lightRowCount;
+		float lightColSpacing = colSize / (float) lightColCount;
 
-		world->AddEntity( light );
-		light->SetPosition( Vector3D( 0.f, 20.f, 0.f ) );
-		
-		auto olight = CreateObject< PointLight >();
-		olight->SetColor( Color3F( 0.f, 0.f, 1.f ) );
-		olight->SetBrightness( 0.8f );
-		olight->SetRadius( 200.f );
+		float yaw = 0.f;
 
-		world->AddEntity( olight );
-		olight->SetPosition( Vector3D( 0.f, 10.f, 50.f ) );
+		for( uint32 c = 0; c < objColCount; c++ )
+		{
+			for( uint32 r = 0; r < objRowCount; r++ )
+			{
+				yaw += 10.f;
 
-		Console::WriteLine( "\n----> Quaternion tests" );
-		Console::WriteLine( "---------> Creating Quaternion with a roll of 45, yaw of 45" );
+				float x = -( colSize / 2.f ) + (float) c * objColSpacing;
+				float z = 25.f + (float) r * objRowSpacing;
 
-		Quaternion q( Angle3D( 0.f, 45.f, 45.f ) );
-		Vector3D p( 1.f, 0.f, 0.f );
+				auto ent = CreateObject< TestEntity >();
+				world->AddEntity( ent );
 
-		Console::WriteLine( "--------> Transforming point at {1,0,0}" );
+				ent->SetPosition( Vector3D( x, 0.f, z ) );
+				ent->SetRotation( Angle3D( 0.f, yaw, 0.f ) );
+			}
+		}
 
-		auto p_prime = q.RotateVector( p );
-		Console::WriteLine( "-------------> Result: ", p_prime.ToString() );
+		int k = 0;
 
-		auto eu = q.GetEulerAngles();
-		Console::WriteLine( "------------> Euler Angles: ", eu.ToString() );
+		for( uint32 c = 0; c < lightColCount; c++ )
+		{
+			for( uint32 r = 0; r < lightRowCount; r++ )
+			{
+				float x = -( colSize / 2.f ) + (float) c * lightColSpacing;
+				float z = 25.f + (float) r * lightRowSpacing;
+
+				auto light = CreateObject< PointLight >();
+				light->SetBrightness( 0.8f );
+				light->SetRadius( 200.f );
+				
+				switch( k )
+				{
+				case 0:
+					light->SetColor( Color3F( 1.f, 0.f, 0.f ) );
+					break;
+				case 1:
+					light->SetColor( Color3F( 0.f, 1.f, 0.f ) );
+					break;
+				case 2:
+					light->SetColor( Color3F( 0.f, 0.f, 1.f ) );
+					break;
+				case 3:
+					light->SetColor( Color3F( 1.f, 1.f, 1.f ) );
+					break;
+				}
+
+				k++;
+				if( k > 3 ) { k = 0; }
+
+				world->AddEntity( light );
+				light->SetPosition( Vector3D( x, 20.f, z ) );
+			}
+		}
 
 		Console::WriteLine( "\n----> Rederer Test Complete!" );
 		Console::WriteLine( "---------------------------------------------------------------------------------------------" );

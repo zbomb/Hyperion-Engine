@@ -7,7 +7,7 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Renderer/Resource/DepthStencil.h"
+#include "Hyperion/Renderer/Resources/RDepthStencil.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11Texture.h"
 

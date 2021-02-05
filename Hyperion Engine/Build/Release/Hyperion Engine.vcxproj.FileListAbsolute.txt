@@ -1,4 +1,9 @@
-D:\Hyperion\Build\Release\shaders\gbuffer.hps
-D:\Hyperion\Build\Release\shaders\gbuffer.hvs
-D:\Hyperion\Build\Release\shaders\lighting.hps
-D:\Hyperion\Build\Release\shaders\lighting.hvs
+D:\Hyperion\Build\Release\shaders\dx11\build_clusters.hcs
+D:\Hyperion\Build\Release\shaders\dx11\cull_lights.hcs
+D:\Hyperion\Build\Release\shaders\dx11\find_clusters.hcs
+D:\Hyperion\Build\Release\shaders\dx11\forward.hps
+D:\Hyperion\Build\Release\shaders\dx11\forward_pre_z.hps
+D:\Hyperion\Build\Release\shaders\dx11\gbuffer.hps
+D:\Hyperion\Build\Release\shaders\dx11\lighting.hps
+D:\Hyperion\Build\Release\shaders\dx11\screen.hvs
+D:\Hyperion\Build\Release\shaders\dx11\scene.hvs

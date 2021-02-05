@@ -180,7 +180,7 @@ int Impl_Main( HINSTANCE inInstance, LPWSTR inCmdLine, int inCmdShow )
 
 	// Get engine instance
 	auto eng = Hyperion::Engine::Get();
-	if( !eng.IsValid() )
+	if( !eng )
 	{
 		MessageBox( hWindow, L"Failed to start engine. Couldnt get engine instance!", L"Hyperion Error!", MB_OK );
 		return -1;

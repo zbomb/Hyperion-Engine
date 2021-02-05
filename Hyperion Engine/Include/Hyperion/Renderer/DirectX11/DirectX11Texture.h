@@ -8,7 +8,7 @@
 
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Renderer/Resource/Texture.h"
+#include "Hyperion/Renderer/Resources/RTexture.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
 
 
@@ -56,7 +56,7 @@ namespace Hyperion
 			if( !m_ResourceView )
 			{
 				// Check if this is a shader binded texture
-				return !HYPERION_HAS_FLAG( GetBindTargets(), TextureBindTarget::Shader );
+				return !HYPERION_HAS_FLAG( GetBindTargets(), RENDERER_TEXTURE_BIND_FLAG_SHADER );
 			}
 
 			return true;
@@ -124,7 +124,7 @@ namespace Hyperion
 
 		uint32 GetBindTargets() const final
 		{
-			if( !m_Texture ) { return (uint32) TextureBindTarget::None; }
+			if( !m_Texture ) { return RENDERER_TEXTURE_BIND_FLAG_NONE; }
 
 			D3D11_TEXTURE1D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -194,7 +194,7 @@ namespace Hyperion
 			if( !m_ResourceView )
 			{
 				// Check if this is a shader binded texture
-				return !HYPERION_HAS_FLAG( GetBindTargets(), TextureBindTarget::Shader );
+				return !HYPERION_HAS_FLAG( GetBindTargets(), RENDERER_TEXTURE_BIND_FLAG_SHADER );
 			}
 
 			return true;
@@ -272,7 +272,7 @@ namespace Hyperion
 
 		uint32 GetBindTargets() const final
 		{
-			if( !m_Texture ) { return (uint32)TextureBindTarget::None; }
+			if( !m_Texture ) { return RENDERER_TEXTURE_BIND_FLAG_NONE; }
 
 			D3D11_TEXTURE2D_DESC desc;
 			m_Texture->GetDesc( &desc );
@@ -344,7 +344,7 @@ namespace Hyperion
 			if( !m_ResourceView )
 			{
 				// Check if this is a shader binded texture
-				return !HYPERION_HAS_FLAG( GetBindTargets(), TextureBindTarget::Shader );
+				return !HYPERION_HAS_FLAG( GetBindTargets(), RENDERER_TEXTURE_BIND_FLAG_SHADER );
 			}
 
 			return true;
@@ -432,7 +432,7 @@ namespace Hyperion
 
 		uint32 GetBindTargets() const final
 		{
-			if( !m_Texture ) { return (uint32)TextureBindTarget::None; }
+			if( !m_Texture ) { return RENDERER_TEXTURE_BIND_FLAG_NONE; }
 
 			D3D11_TEXTURE3D_DESC desc;
 			m_Texture->GetDesc( &desc );

@@ -1,0 +1,175 @@
+========================================= HYPERION ENGINE ===================================================
+======> New Sampler System
+
+
+* The basic idea, is to simplify and streamline the integration of shader code with the engine.
+* Currently, we have to write a interface, and then an implementation within each engine, for each shader.
+* Most of the code required, is nearly identical, its a bunch of boiler plate code.
+
+* We could go in one of two directions...
+	1. Keep the system the way it is, in a sense, where each shader gets a full custom class, with full implementation by the developer of the shader
+	2. Make the engine load the shaders itself, where we actually create a full asset type for each. The parameters and things needed to support the shader are 
+		somehow dynamically loaded....
+		
+		i.e.
+		
+		auto theShader = Engine::GetShaderManager()->GetShader( "shaders/my_shader_type.hcs" );
+		theShader->UploadParameter( paramGroup0, param1, 1.f );
+		
+		m_API->AttachShader( theShader );
+		m_API->ExecuteShader();
+		m_API->DetachShader();
+		
+Really though, the solution will probably be somewhere in-between
+I dont mind defining each shader in C++ code explicitly, maybe in a virtual function Renderer::RegisterShaderTypes
+
+
+Then.. we have IShader, which is an interface to work with shader types from various APIs, actually RShader is probably a better bet.
+
+Also, we have to decide how to structure things... currently, we have a 'shader' class, that actually represents the whole graphics pipeline shaders...
+
+
+We could create a class.....
+RShaderPipeline
+
+Where it represents the the pipeline, we can create a pipeline for the GBuffer pass, and create a pipeline for the lighting pass
+
+
+RShaderPipeline->SetPixelShader( myPixelShader );
+RShaderPipeline->SetVertexShader( myVertexShader );
+RShaderPipeline->SetGeometryShader( myGeometryShader );
+RShaderPipeline->SetMeshTopology( MeshTopology::TriangleList );
+
+
+We can then create derived versions...
+
+RGBufferShaderPipeline, which has functions like ->GetGBuffer();
+
+Then.. the render loop can be greatly simplified, since a lot of work is done within shader pipeline.
+In the render loop....
+
+
+
+m_MyAPI->AttachPipeline( myGBufferPipeline );
+
+Now.. the 'render' functions could either be through the api, or through the pipeline....
+
+
+either...
+
+myGBufferPipeline->RenderMesh( myVertexBuffer, myIndexBuffer, myMaterial );
+
+.... or .....
+
+myAPI->RenderMesh( myVertexBuffer, myIndexBuffer myMaterial );
+
+
+
+
+We also need to move some other data into the pipeline.. so the pipeline will need to have custom functions to upload this data...
+
+i.e.
+
+
+
+myLightingPipeline->UploadGBuffer( myGBufferPipeline->GetGBuffer() );
+myLightingPipeline->UploadMatricies( myMatrix1, myMatrix2 );
+myLightingPipeline->Render();
+
+
+We cant really distill some common render function from the lot.
+The GBuffer pipeline would require things like.. vertex buffers, index buffers, materials, world matrix, view matrix, projection matrix to actually draw something.
+
+
+
+m_API->AttachPipeline( myGBufferPipeline );
+myGBufferPipeline->SetViewProjection( myProjectionMatrix, myViewMatrix );
+
+for( ... )
+{
+	if( IsWithinViewFrustum( myPrimitive ) )
+	{	
+		auto lodResources = primitive->GetActiveResources();
+		if( lodResources.size() > 0 )
+		{
+			auto worldMatrix = m_API->GetViewMatrix( myPrimitive->GetTransform() );
+			myGBufferPipeline->SetWorldMatrix( worldMatrix );
+			
+			for( ... )
+			{
+				myGBufferPipeline->RenderMesh( it->Verticies, it->Indicies, it->Material );
+			}
+		}
+	}
+}
+
+m_API->DetachPipeline( myGBufferPipeline );
+
+
+
+------------ OR -------------------
+
+
+m_API->AttachPipeline( myGBufferPipeline );
+m_API->PerformCulledPrimitivePass();
+m_API->DetachPipeline();
+
+
+.. We end up with such a messy solution for the lighting shader though ..
+
+
+
+So.. possibly the first solution is better?
+We can also move to a system where we queue up commands, and then at the end of the frame execute them.
+
+
+This is fairly simple though, at the end just call some function...
+
+m_API->BeginFrame();
+m_API->ExecuteFrame();
+
+We could also allow each primitive to push its needed commands into the queue themselves
+
+
+
+Primitive::CollectGeometry( const RGeometryPipeline& pipeline )
+{
+	auto resources = GetActiveResources();
+	if( resources.size() > 0 )
+	{
+		for( auto it = resources.begin(); ... )
+		{
+			pipeline->AddPrimitive( m_Transform, it.Verticies, it.Indicies, it.Material );
+		}
+	}
+}
+
+
+In the render pass.....
+
+
+
+m_API->SetPipeline( myGeometryPipeline );
+for( auto it = primitives.begin(); ... )
+{
+	if( it && it->IsValid() )
+	{
+		if( IsInViewFrustum( it->GetTransform(), it->GetAABB() ) )
+		{
+			it->CollectGeometry( myGeometryPipeline );
+		}
+	}
+}
+
+m_API->ExecutePipeline();
+m_API->DetachPipeline();
+
+m_API->AttachPipeline( myLightingPipeline );
+for( auto it = lights.begin(); ... )
+{
+	it->CollectLightingInfo( myLightingPipeline );
+}
+
+m_API->ExecutePipeline();
+m_API->DetachPipeline();
+

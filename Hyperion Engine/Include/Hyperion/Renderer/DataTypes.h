@@ -37,7 +37,7 @@ namespace Hyperion
 
 
 	constexpr float SCREEN_NEAR		= 0.1f;
-	constexpr float SCREEN_FAR		= 1000.f;
+	constexpr float SCREEN_FAR		= 10000.f;
 
 
 	struct ScreenResolution

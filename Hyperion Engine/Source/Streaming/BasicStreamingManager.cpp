@@ -8,7 +8,7 @@
 #include "Hyperion/Core/Engine.h"
 #include "Hyperion/File/FileSystem.h"
 #include "Hyperion/Renderer/Renderer.h"
-#include "Hyperion/Renderer/Resource/ResourceManager.h"
+#include "Hyperion/Renderer/ResourceManager.h"
 
 #include <chrono>
 
