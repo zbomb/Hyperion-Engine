@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -38,6 +38,7 @@
     <ClInclude Include="Include\Hyperion\Core\Object.h" />
     <ClInclude Include="Include\Hyperion\Core\Platform.h" />
     <ClInclude Include="Include\Hyperion\Core\PlatformImpl.h" />
+    <ClInclude Include="Include\Hyperion\Core\Profiling.h" />
     <ClInclude Include="Include\Hyperion\Core\Stream.h" />
     <ClInclude Include="Include\Hyperion\Core\String.h" />
     <ClInclude Include="Include\Hyperion\Core\Threading.h" />
@@ -89,30 +90,37 @@
     <ClInclude Include="Include\Hyperion\Library\UTF8.hpp" />
     <ClInclude Include="Include\Hyperion\Macros.h" />
     <ClInclude Include="Include\Hyperion\Material\MaterialInstance.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\BatchCollector.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DataTypes.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DeferredRenderer.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Buffer.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Buffer.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11DepthStencil.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Frustum.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Graphics.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Graphics.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11LightBuffer.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11RenderTarget.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Texture.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Math.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11RenderTarget.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Texture.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11ViewClusters.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11BuildClustersShader.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11CullLightsShader.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11FindClustersShader.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ForwardPixelShader.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ForwardPreZShader.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11FXAAShader.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11GBufferPixelShader.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11LightingPixelShader.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11SceneVertexShader.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ScreenVertexShader.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ShadowPixelShader.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ShadowVertexShader.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DynamicShadowState.h" />
     <ClInclude Include="Include\Hyperion\Renderer\GBuffer.h" />
     <ClInclude Include="Include\Hyperion\Renderer\IGraphics.h" />
     <ClInclude Include="Include\Hyperion\Renderer\LightBuffer.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\BatchCollector.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\MaterialBuffer.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\PostProcessFX.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyBase.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyLight.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyPrimitive.h" />
@@ -128,6 +136,7 @@
     <ClInclude Include="Include\Hyperion\Renderer\Resources\RRenderTarget.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Resources\RShader.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Resources\RTexture.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\RMath.h" />
     <ClInclude Include="Include\Hyperion\Renderer\ViewClusters.h" />
     <ClInclude Include="Include\Hyperion\Streaming\AdaptiveAssetManager.h" />
     <ClInclude Include="Include\Hyperion\Streaming\AdaptiveBase.h" />
@@ -153,6 +162,7 @@
     <ClInclude Include="Include\Hyperion\Win32\Win32Headers.h" />
     <ClInclude Include="Include\Hyperion\Win32\Win32Platform.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Shaders\incl\FXAA.h" />
     <ClInclude Include="Tests\AssetTests.hpp" />
     <ClInclude Include="Tests\BufferTests.hpp" />
     <ClInclude Include="Tests\EncodingTests.hpp" />
@@ -216,17 +226,20 @@
     <ClCompile Include="Source\Material\MaterialInstance.cpp" />
     <ClCompile Include="Source\Renderer\DataTypes.cpp" />
     <ClCompile Include="Source\Renderer\DeferredRenderer.cpp" />
-    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Graphics.cpp" />
-    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Texture.cpp" />
+    <ClCompile Include="Source\Renderer\DirectX11\DX11Graphics.cpp" />
+    <ClCompile Include="Source\Renderer\DirectX11\DX11Texture.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11BuildClustersShader.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11CullLightsShader.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11FindClustersShader.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ForwardPixelShader.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ForwardPreZShader.cpp" />
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11FXAAShader.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11GBufferPixelShader.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11LightingPixelShader.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11SceneVertexShader.cpp" />
     <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ScreenVertexShader.cpp" />
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ShadowPixelShader.cpp" />
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ShadowVertexShader.cpp" />
     <ClCompile Include="Source\Renderer\GBuffer.cpp" />
     <ClCompile Include="Source\Renderer\Proxy\ProxyBase.cpp" />
     <ClCompile Include="Source\Renderer\Proxy\ProxyScene.cpp" />
@@ -305,6 +318,14 @@
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/shaders/dx11/forward_pre_z.hps</ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)/shaders/dx11/forward_pre_z.hps</ObjectFileOutput>
     </FxCompile>
+    <FxCompile Include="Shaders\dx11\fxaa.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/shaders/dx11/fxaa.hpps</ObjectFileOutput>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)/shaders/dx11/fxaa.hpps</ObjectFileOutput>
+    </FxCompile>
     <FxCompile Include="Shaders\dx11\gbuffer_pixel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
@@ -328,6 +349,22 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)/shaders/dx11/screen.hvs</ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Shaders\dx11\shadow_pixel.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/shaders/dx11/shadow.hps</ObjectFileOutput>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)/shaders/dx11/shadow.hps</ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Shaders\dx11\shadow_vertex.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(OutDir)/shaders/dx11/shadow.hvs</ObjectFileOutput>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/shaders/dx11/shadow.hvs</ObjectFileOutput>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

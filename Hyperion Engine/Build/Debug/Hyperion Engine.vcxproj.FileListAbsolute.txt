@@ -7,3 +7,6 @@ D:\Hyperion\Build\Debug\shaders\dx11\screen.hvs
 D:\Hyperion\Build\Debug\shaders\dx11\scene.hvs
 D:\Hyperion\Build\Debug\shaders\dx11\forward_pre_z.hps
 D:\Hyperion\Build\Debug\shaders\dx11\forward.hps
+D:\Hyperion\Build\Debug\shaders\dx11\fxaa.hpps
+D:\Hyperion\Build\Debug\shaders\dx11\shadow.hps
+D:\Hyperion\Build\Debug\shaders\dx11\shadow.hvs

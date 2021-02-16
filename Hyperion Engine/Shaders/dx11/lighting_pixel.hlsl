@@ -9,6 +9,7 @@
 ///////////////////////////
 
 #define LIGHT_MIN_INTENSITY 0.0039f
+#define SPECULARITY_INTENSITY 0.05f
 
 ///////////////////////////
 //	Constant Buffers
@@ -97,6 +98,7 @@ StructuredBuffer< LightInfo > lightInfoList			: register( t6 );
 //////////////////////////////
 
 uint3 getClusterIndicies( float2 inPixelPosition, float inDepth );
+float getPixelLuminance( float3 inColor );
 
 ///////////////////////////
 //	Entry Point
@@ -121,7 +123,7 @@ float4 main( PixelInput input ) : SV_Target
 		viewSpaceDepth,
 		1.f
 	);
-
+	
 	// Reconstruct world space position
 	float4 worldPos = mul( viewPos, InverseViewMatrix );
 	worldPos /= worldPos.w;
@@ -129,14 +131,22 @@ float4 main( PixelInput input ) : SV_Target
 	// Calculate the direction were viewing this pixel from
 	float3 viewDir = normalize( CameraPosition - worldPos.xyz );
 
-	// Calculate which cluster this pixel is within
-	uint3 clusterIndex		= getClusterIndicies( input.Position.xy, viewSpaceDepth );
-	uint flatClusterIndex	= clusterIndex.x + ( clusterIndex.y * 15 ) + ( clusterIndex.z * 150 );
+	// We need to get the light list to factor in for this pixel
+	uint lightOffset	= 0;
+	uint lightCount		= 0;
 
-	// Get lighting info for this cluster
-	uint2 lightAssignmentInfo	= clusterLightIndicies[ clusterIndex ];
-	uint lightOffset			= lightAssignmentInfo.x;
-	uint lightCount				= lightAssignmentInfo.y;
+	// If the pixel is past the far plane, dont lookup light list...
+	if( viewSpaceDepth <= ScreenFar )
+	{
+		// Calculate which cluster this pixel is within
+		uint3 clusterIndex		= getClusterIndicies( input.Position.xy, viewSpaceDepth );
+		uint flatClusterIndex	= clusterIndex.x + ( clusterIndex.y * 15 ) + ( clusterIndex.z * 150 );
+
+		// Get lighting info for this cluster
+		uint2 lightAssignmentInfo	= clusterLightIndicies[ clusterIndex ];
+		lightOffset					= lightAssignmentInfo.x;
+		lightCount					= lightAssignmentInfo.y;
+	}
 
 	// Calculate lighting contribution from each active light
 	float4 lightComponent = float4( 0.f, 0.f, 0.f, 0.f );
@@ -170,16 +180,22 @@ float4 main( PixelInput input ) : SV_Target
 			lightComponent += diffuseContribution;
 
 			// TODO: Calculate specular component
-			//float3 specR = normalize( 2.f * diffI * normal + lightDir );
-			//float specI = pow( saturate( dot( specR, viewDir ) ), specular.w );
-			//lightComponent += ( specI * float4( specular.xyz, 1.f ) * intensity );
+			float3 specR	= normalize( 2.f * diffuseIntensity * surfaceNormal + lightDir );
+			float specI		= pow( saturate( dot( specR, viewDir ) ), specularSample.w );
+			lightComponent	+= ( specI * float4( light.Color, 1.f ) * lightIntensity * SPECULARITY_INTENSITY );
 		}
 	}
 
 	// Add in the ambient light term
 	lightComponent += ( float4( AmbientColor, 1.f ) * AmbientIntensity );
 
-	return saturate( diffuseColor * lightComponent );
+	float4 finalPixel = saturate( diffuseColor * lightComponent );
+
+	// We want to calculate the luminance of the pixel, and store in the alpha channel
+	// We use this during the post process pass
+	finalPixel.a = getPixelLuminance( finalPixel.rgb );
+	return finalPixel;
+
 }
 
 
@@ -190,15 +206,23 @@ float4 main( PixelInput input ) : SV_Target
 uint3 getClusterIndicies( float2 inPixelPosition, float inDepth )
 {
 	// Calculate the cluster width and height
-	uint clusterSizeX = uint( ScreenWidth / 15.f );
-	uint clusterSizeY = uint( ScreenHeight / 10.f );
+	float clusterSizeX = ScreenWidth / 15.f;
+	float clusterSizeY = ScreenHeight / 10.f;
 
 	// Calculate the cluster X and Y
-	uint clusterX = uint( floor( inPixelPosition.x ) ) / clusterSizeX;
-	uint clusterY = uint( floor( inPixelPosition.y ) ) / clusterSizeY;
+	uint clusterX = uint( floor( inPixelPosition.x / clusterSizeX ) );
+	uint clusterY = uint( floor( inPixelPosition.y / clusterSizeY ) );
 
 	// Calculate the cluster depth slice (Z)
 	uint clusterZ = uint( floor( log( inDepth ) * DepthSliceTermA - DepthSliceTermB ) );
 
-	return uint3( clusterX, clusterY, clusterZ );
+	return uint3( min( clusterX, 14 ), min( clusterY, 9 ), min( clusterZ, 23 ) );
+}
+
+
+float getPixelLuminance( float3 inColor )
+{
+	// Calculate luminance in linear color space
+	float linearValue = inColor.r * 0.2126 + inColor.g * 0.7152 + inColor.b * 0.0722;
+	return linearValue;
 }

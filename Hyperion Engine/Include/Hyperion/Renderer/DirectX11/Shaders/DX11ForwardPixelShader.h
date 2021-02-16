@@ -60,8 +60,9 @@ namespace Hyperion
 		bool UploadStaticParameters( Renderer& inRenderer, uint32 inFlags ) final;
 		bool UploadLightBuffer( RLightBuffer& inBuffer ) final;
 		bool UploadViewClusters( RViewClusters& inClusters ) final;
-		bool UploadPrimitiveParameters( const Matrix& inWorldMatrix, const RMaterial& inMaterial ) final;
+		bool UploadBatchMaterial( const RMaterial& inMaterial ) final;
 
+		inline bool UploadBatchTransforms( const std::vector< Matrix >& inMatricies ) final { return true; }
 		inline bool UploadGBuffer( GBuffer& inBuffer ) final { return true; }
 
 		bool Attach() final;

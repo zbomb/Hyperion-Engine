@@ -28,15 +28,13 @@ namespace Hyperion
 	class ProxyScene
 	{
 
-	private:
+	public:
 
 		std::map< ProxyID, std::shared_ptr< ProxyPrimitive > > m_Primitives;
 		std::map< ProxyID, std::shared_ptr< ProxyLight > > m_Lights;
 
 		ViewState m_ViewState;
 		bool m_bViewStateDirty;
-
-	public:
 
 		ProxyScene();
 		~ProxyScene();

@@ -51,6 +51,8 @@ namespace Hyperion
 			}
 		}
 
+		mat->CacheTextures();
+
 		return mat;
 	}
 
@@ -148,6 +150,7 @@ namespace Hyperion
 			vparams.Type		= BufferType::Vertex;
 			vparams.Data		= inVertexData[ i ].data();
 			vparams.Count		= vparams.Size / 32;
+			vparams.SourceAsset = id;
 
 			targetLOD->batchList[ i ].vertexBuffer = Engine::GetRenderer()->GetAPI()->CreateBuffer( vparams );
 
@@ -159,6 +162,7 @@ namespace Hyperion
 			iparams.Type		= BufferType::Index;
 			iparams.Data		= inIndexData[ i ].data();
 			iparams.Count		= iparams.Size / 4;
+			iparams.SourceAsset = id;
 
 			targetLOD->batchList[ i ].indexBuffer = Engine::GetRenderer()->GetAPI()->CreateBuffer( iparams );
 
@@ -284,6 +288,7 @@ namespace Hyperion
 				vparams.Size		= (uint32) vertexDataList[ j ].size();
 				vparams.Count		= vparams.Size / 32;
 				vparams.Data		= vertexDataList[ j ].data();
+				vparams.SourceAsset = id;
 
 				lodPtr->batchList[ j ].vertexBuffer = api->CreateBuffer( vparams );
 
@@ -295,6 +300,7 @@ namespace Hyperion
 				iparams.Size		= (uint32)indexDataList[ j ].size();
 				iparams.Count		= iparams.Size / 4;
 				iparams.Data		= indexDataList[ j ].data();
+				iparams.SourceAsset = id;
 
 				lodPtr->batchList[ j ].indexBuffer = api->CreateBuffer( iparams );
 
@@ -511,6 +517,7 @@ namespace Hyperion
 		params.Height		= maxLOD.Height;
 		params.bAutogenMips	= false;
 		params.BindTargets	= RENDERER_TEXTURE_BIND_FLAG_SHADER;
+		params.AssetIdentifier = inAsset->GetIdentifier();
 
 		for( uint8 i = 0; i < newLODCount; i++ )
 		{
@@ -645,6 +652,7 @@ namespace Hyperion
 		params.Width		= maxLOD.Width;
 		params.Height		= maxLOD.Height;
 		params.BindTargets	= RENDERER_TEXTURE_BIND_FLAG_SHADER;
+		params.AssetIdentifier = inAsset->GetIdentifier();
 
 		if( IsRenderThread() )
 		{

@@ -28,6 +28,7 @@ namespace Hyperion
 		std::shared_ptr< RenderPipeline > m_LightingPipeline;
 		std::shared_ptr< RenderPipeline > m_ForwardPreZPipeline;
 		std::shared_ptr< RenderPipeline > m_ForwardPipeline;
+		std::shared_ptr< PostProcessFX > m_FXAA;
 
 		// DEBUG
 		std::shared_ptr< MaterialAsset > m_FloorAsset;
@@ -44,6 +45,7 @@ namespace Hyperion
 	protected:
 
 		void RenderScene() final;
+		void RenderPostProcessFX() final;
 		void OnResolutionChanged( const ScreenResolution& inRes ) final;
 
 	};

@@ -35,7 +35,8 @@ namespace Hyperion
 		}
 
 		// Ensure transform is set
-		newProxy->m_Transform = GetWorldTransform();
+		newProxy->m_Transform		= GetWorldTransform();
+		newProxy->m_bMatrixDirty	= true;
 
 		// Initialize primitive
 		newProxy->GameInit();
@@ -49,17 +50,15 @@ namespace Hyperion
 
 	bool PrimitiveComponent::PerformProxyUpdate()
 	{
-		auto ptr = m_Proxy.lock();
-		if( ptr )
+		// Test.. this really should be ran on the renderer.. im not sure why its not currently
+		auto p = m_Proxy.lock();
+		if( p )
 		{
-			ptr->m_Transform = GetWorldTransform();
-			
-			return UpdateProxy( ptr );
+			return UpdateProxy( p );
 		}
 		else
 		{
-			Console::WriteLine( "[Warning] PrimitiveComponent: Failed to update render proxy! The stored pointer was invalid" );
-			return true;
+			return false;
 		}
 	}
 

@@ -167,9 +167,6 @@ namespace Hyperion
 
 		m_Context->Unmap( m_RenderInfoBuffer.Get(), 0 );
 
-		ID3D11Buffer* bufferList[] = { m_RenderInfoBuffer.Get() };
-		m_Context->PSSetConstantBuffers( 0, 1, bufferList );
-
 		return true;
 	}
 
@@ -200,12 +197,13 @@ namespace Hyperion
 	}
 
 
-	bool DX11ForwardPixelShader::UploadPrimitiveParameters( const Matrix& inWorldMatrix, const RMaterial& inMaterial )
+	bool DX11ForwardPixelShader::UploadBatchMaterial( const RMaterial& inMaterial )
 	{
 		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
 
 		// Get the shader resource view for the base map texture
-		auto dx11Texture = std::dynamic_pointer_cast<DirectX11Texture2D>( inMaterial.GetTexture( "base_map" ) );
+		auto baseMap = inMaterial.GetBaseMap();
+		auto dx11Texture = std::dynamic_pointer_cast<DirectX11Texture2D>( baseMap );
 		if( !dx11Texture || !dx11Texture->IsValid() )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to upload primitive material, the material didnt have a base_map!" );
@@ -231,6 +229,9 @@ namespace Hyperion
 
 		ID3D11SamplerState* samplerList[] = { m_Sampler.Get() };
 		m_Context->PSSetSamplers( 0, 1, samplerList );
+
+		ID3D11Buffer* bufferList[] = { m_RenderInfoBuffer.Get() };
+		m_Context->PSSetConstantBuffers( 0, 1, bufferList );
 
 		return true;
 	}

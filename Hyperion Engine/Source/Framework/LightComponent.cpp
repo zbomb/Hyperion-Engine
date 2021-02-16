@@ -86,21 +86,23 @@ namespace Hyperion
 
 	bool LightComponent::PerformProxyUpdate()
 	{
-		auto ptr = m_Proxy.lock();
-		if( ptr )
-		{
-			ptr->m_Transform = GetWorldTransform();
-			ptr->SetColor( m_Color );
-			ptr->SetBrightness( m_Brightness );
-			ptr->SetRadius( m_Radius );
 
-			return true;
-		}
-		else
-		{
-			Console::WriteLine( "[Warning] LightComponent: Failed to update light proxy, the pointer wasnt set" );
-			return true;
-		}
+		auto ptr = m_Proxy.lock();
+		if( !ptr ) { return false; }
+
+		auto t = GetWorldTransform();
+
+		HYPERION_RENDER_COMMAND(
+			[=] ( Renderer& r )
+			{
+				ptr->m_Transform = t;
+				ptr->SetColor( m_Color );
+				ptr->SetBrightness( m_Brightness );
+				ptr->SetRadius( m_Radius );
+			}
+		);
+
+		return true;
 	}
 
 }

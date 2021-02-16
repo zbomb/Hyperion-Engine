@@ -53,6 +53,7 @@ namespace Hyperion
 		BoundingSphere GetBoundingSphere() const override;
 		inline uint8 GetLODCount() const override { return m_LODCount; }
 
+		void CacheMeshes() override;
 		void CollectBatches( BatchCollector& inBatch ) override;
 
 		friend class StaticModelComponent;

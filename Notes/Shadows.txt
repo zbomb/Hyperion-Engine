@@ -1,49 +1,398 @@
 --------------------------------- HYPERION NOTES -----------------------------------------
 -> Shadowing
 
+* Rendering shadows is the most expensive part of a render pass, because of this, the number of fully dynamic shadow maps we can render is limited
+* There are 3 types of shadows...
+	1. Point light shadows (6 shadow maps, each shadow map is culled indivisually)
+	2. Spot light shadows (1 shadow map)
+	3. Directional Shadow Maps (Cascaded, one per level)
+	
+* For a directional shadow map though, we should render the shadow map, from a point above the player, since the actual light source
+	is at an infinite distance, with an ortho projection
+	
+* For point lights, we need to cull indivisual view frustums of the shadow cube map, also, we want to ensure a frustum is actually going to
+	cast a shadow before we decide to render it, and there are a couple different methods we will get to later
+	
+* For spot lights, its the most simple form of shadowing, we simply render a single shadow map from the lights point of view
 
-Now, we need to start investigating methods to apply shadows in the game engine.
-We have a few different types of shadows to render...
+* Shadow map format:
+	
+	- We want to use variance shadow maps, to allow us to make clean umbras, and possibly implement proper soft shadows
+	- We want to use some form of filtering to get somewhat soft shadow edges, especially on closer shadows
+	- Variance shadow maps use twice the memory, but in reality, memory isnt going to be the biggest factor, render performance will be
+	- We can use variance shadow maps on the most 'X' important shadows, normal shadow mapping on the next 'X' important shadows, and 
+		then revert to static shadow maps for the rest of the visible shadows
+
+* Memory Managment:
+
+	- This will most likely end up being the most difficult part of shadowing, most shadow maps have a VERY shallow frustum, meaning there
+		a whole lot of geometry that will be renndered into it, most will be culled. Therefore, the maps are sparse. This leaves us with one
+		solution that could end up being invaluable, tiled resources
+	- Another solution, is to allocate a massive shadow-map up front, then we render the various shadow maps into this massive texture using
+		custom viewports, this way we can have a hard memory limit, and our algorithm figures out the size we need for each shadow map
+
+==========================================================================================================================================
+
+	* Virtual Shadow Map System 
+	
+- What we will do, is first render the GBuffer, and check for active clusters, then render the transparent geometry, and mark those clusters active
+- Then, we will loop through the shadow casting lights in the scene, and check the shadow maps view frustum against the list of active clusters
+- We can project each cluster onto the shadow-map viewport, and determine which parts of the viewport would be considered active
+- During this, we can also calculate a maximum needed resolution for each shadow map
+
+- This can be done easily in a compute shader, but the problem is we need to get this data back onto the CPU, and transfering memory from
+	the GPU to the CPU is not ideal.
+	
+- Once we have this data though, we can take the total number of cluster-shadowmap collisions, and then divide each shadow maps cluster count
+	by this value, giving us a scalar between 0 and 1, which we can then sort the list by. 
+	
+- We then loop through our shadow lights, and determine the max amount of resolution we would be willing to give to this map
+	i.e.  maxTiles = scale * maxAvailableTiles;
+	
+- We also could perform our geometry culling here, building a list of geometry to render for each light, and if there is no geometry
+	then we skip this light and do not render a shadow map for it
+	
+- We then have to determine the max number of tiles we would need for a perfect shadows, by using the maxResolutionNeeded, and the number of
+	screen divisions actually are affected by a cluster. We keep iterating through the shadow lights until we run out of memory
+
+- Now that we have a number of tiles for each shadow casting light, we would need to go through each light and update the tile mappings	
+	so we have the memory assigned to each that we need
+	
+- We can then loop through, and render our shadow maps, and build a ShadowBuffer, and ShadowLightLookupBuffer
+
+- This would give us everything that we need but overall the data transfer needed from the GPU to CPU in the middle makes it a diffuclt option
 
 
-1. Static shadows
-Shadows caused by static lights, casted by static geometry
-We can optimize here by building scene light info, this will be developed later on once a 'level' system is in place
+============================================================================================================================================
+
+	* Virtual shadow map system 2
+	
+- Like before, we will start the shadow system after finding active clusters, and performing the forward pass for translucent objects
+
+- Each shadow map can be a virtual texture, with a resolution of 4096x4096, and multiple mips down to.. 256x256
+- If parts of the shadow map require a higher resolution, we can actually map in those tiles, and map out those tiles on the fly
+- We dont even have to do this during the main render loop, instead we just update a couple shadow maps per frame, that way we
+	dont run into bottle necks, and things can keep running smoothly. Also, when we update a tile mapping to request a higher 
+	level of detail for a particular section of the shadow map, we can still render the shadow just fine using lower LODs until the
+	higher resolution area is actually loaded in.
+	
+- The issue with this though, is determine which parts of the screen require which level of quality, we will have at least a single resident
+	mip for all shadow maps that are currently marked as active.
+	
+- How to actually do this though? Determining which parts of a shadow map need to be loaded in is not a simple task, we need to probably
+	do cluster projection onto the near plane, calculate a bounding rectangle, determine the resolution needed for this cluster, and
+	determine which parts of the screen this intersects. 
+	
+- We could also have a pooling system, where we pool a list of shadow maps, the issue ends up being though, updating the tile mappings
+	will probably be very slow. 1/3 ms
+	
+	
+- Say we update tile mappings for.. 20 shadow maps, it will take around... 20/3 6+ ms, which is way too long... we dont want to spend more than
+	a 5ms for the entire shadow map generation pipeline, maybe we can somehow batch together update calls?
+	
+	
+- What if we combine the idea of a shadow atlas, with a sparse shadow map?
+	* One huge texture, multi-mip texture containing all of the shadow maps for the whole entire level to render into
+	* How many shadow maps should we fit into the big one? We could have 6x6 shadow maps, or 5x5, and we could also increase the highest
+		available shadow map resolution, those two things should be parameters anyway, but ideally, we have a memory budget which solely
+		controls the quality.
+	* Lets say the max resolution is 4096x4096, and we can store a maximum of 36 shadow maps.
+	* The total size of the resident mip layer (256) 18MB
+	* The total virtual size would be... 6GB which is insane, but we wont use it all, only the portions we actually need.
+	
+- So we would create the texture on startup...
 
 
-2. Dynamic shadows
-Shadows caused by dynamic lights (or static lights), casted by dynamic (or static) geometry.
-If one of the two are dynamic (i.e. movable) then we need real-time shadowing, thats calculated on the fly.
+
+===================================================================================================================
+	UPDATE
+	
+Even with virtual textures, the max texture size is still 16k, so we will have to create a virtual texture pool,
+that get assigned to a light on the fly, instead of a single mega texture.
+
+We will support 16 shadow maps, each up to 16K, with a minimum resolution of, 128x128, and max of 16k
+We have to decide on using 64bpp, or 32bpp for our shadow maps, we want to use variance shadow maps for better
+looking shadows, better filtering and what not. But, the issue is memory footprint, using a normal depth map that
+contains 32bpp for a single depth channel will half our memory usage
+
+For now though, were going to have..
+
+Texture Format: float2, 64bpp
+Tile Layout: 128x64 [65536 bytes]
+
+This gives us a layout for each texture of....
+
+128x128 		1x2 tiles		2 tiles 		0.125MB
+256x256 		2x4 tiles		8 tiles 		0.5MB
+512x512 		4x8 tiles		32 tiles 		2MB
+1024x1024 		8x16 tiles		128 tiles 		8MB
+2048x2048 		16x32 tiles		512 tiles 		32MB
+4096x4096 		32x64 tiles		2048 tiles 		128MB
+8192x8192 		64x128 tiles	8192 tiles 		512MB
+16384x16384 	128x256 tiles	32768 tiles		2048MB
+
+What we have to do, is select a resolution for each shadow map, determine which tiles to actually back with memory, and then we can
+render the shadow map using the semi-resident render target view.
+
+Now, the issue becomes, we need to ensure all of the tiles are mapped, in the case of teir 1 supported hardware
+So, the solution is to create an extra blank tile, and every time we need to have non-resident tiles, we instead assign them all
+to the same dummy tile. This allows this algorithm to still work with teir 1 supported hardware.
+
+Turns out.. the API is throwing out incorrect warnings, but with some further testing, we got the basic system of rendering to partially
+resident shadow maps.
 
 
-3. Soft shadows (& contact shadows)
-The concept of blurring edges of shadows, to better mimic real life..
+The next thing is, to comment out the whole tiled resource test, so we can properly debug the program.. and attempt to look at performance
+of actually selecting which lights to use a shadow map for, the quality, and then we need to do the hard work of projecting an AABB onto 
+the shadow map viewport, and calculating which parts of the view need to be resident in memory. Luckily, we can only do this AFTER shadow map
+selection. Unfortunatley, this is something we probably have to perform on the CPU, because transfering this data back to the CPU from a compute
+shader would probably be a slow operation.
 
 
 
 
 
 
+Lets actually look into an algorithm to determine which lights should recieve a shadow map...
+We will obviously require a light traversal, during this light traversal, we should check if this light is casting shadows.
+Also eventually, we will have a clear distinction between static and dynamic lights, most likeley a seperate container where we store the
+static lights, since operations on them are so different them a dynamic light.
 
 
-===========================================================================================
--> Static shadow ideas
+So, lets iterate through the lights, and chcek if the shadow frustum intersects any active clusters. There is a problem with this though, 
+because we dont have access to the list of active clusters on the CPU, unless we pull this info from the GPU.
 
-===========================================================================================
--> Dynamic shadow ideas
+During this iteration, we can also calculate the resolution needed for each light by calculating the resolution per cluster and storing the
+max value after iterating through the cluster list. Anyway, say we are able to do this, and we get a list of shadow casting lights that could 
+actually cast a shadow onto the active portion of the frustum. We also have to split point lights out into 6 seperate view 
+frustums, that can be culled and a resolution calculated for each indivisually, so no per light we have..
+	- Max Resolution Needed
+	- # Of Affected Clusters
+	
+Now, we have a limited number of shadow maps available for use, so what we need to do is loop through the list of possible shadow maps to
+render, and sort them based on some priority scalar.
 
-The best idea so far, is a mixture of virtual shadow mapping, and cascaded shadow maps to generate 
-real time dynamic shadowing, with minimal memory and computational overhead.
 
-Virtual Shadow Maps Paper:
-http://www.cse.chalmers.se/~uffe/ClusteredWithShadows.pdf
+Then, we can start the culling process, we loop through the shadow maps one by one, and get a list of geometry thats within the view frustum
+of the light (using our view frustum culling function, we could store a value to speed up culling across multiple passes)
 
-It works with the basic clustered system we plan to put into place.
+Anyway, if there is no geometry in the lights shadow frustum, we discard this shadow map, and once we cull geometry for 'X' number of the most
+important possible shadow maps successfully (Where X = max shadow maps), we stop.
+
+Now, we need to loop through each mesh were rendering into each shadow map, project its bounds onto the shadow map viewport area, get a bounding
+rect in this viewspace. Then, we would store the two points that make up this rect in some type of map.
+
+Now here comes the hard part, since were using sparse maps, we dont have to allocate the entire surface of the shadow map, but were also working
+with a finite amount of memory, so its difficult to select an overall resolution to use in a shadow map.
+
+The only other option I can think of is to come up with a subdivision that would fit evenly into the tiles regardless of the resolution...
+For example....
 
 
-============================================================================================
--> Soft shadow ideas
 
-One method we can investigate further is, 'Soft Shadow Volumes'
-It seems to be able to be calculated in real time, with varying light 'shapes', and produces high quality output
+Mip Level 7: 1x2
+Mip Level 6: 2x4
+Mip Level 5: 4x8
+Mip Level 4: 8x16
+Mip Level 3: 16x32
+Mip Level 2: 32x64
+Mip Level 1: 64x128
+Mip Level 0: 128x256
 
+
+If we divide the surface into... an even 256x256, determine which of these blocks need memory, this way we have a 'set mapping'
+Then.. we can check how much memory this mapping would take for each LOD
+
+
+CustomShadowMapTileMapping mapping = ...;
+uint32 mappingMemory = GetShadowMapMemoryRequiredForMapping( mapping, inLOD );
+
+Then, we can use this to determine which mip level to use for each shadow map, to get max quality within our allocated memory.
+Or, instead of working in 'memory', we can work with max virtual tiles instead...
+
+
+uint32 maxTiles = GetAllocatedShadowMapTileCount();
+uint32 requestedTiles = GetRequestedTiles();
+
+Then, we can write an algorithm (that needs to run fast), to drop mips from shadow maps until we get within our tile budget.
+We would have to basically think of a method to determine which shadow maps loose quality to get us within budget.
+
+We can do this by.. distance to the player
+Lowest resolution dropped first
+Highest resolution dropped first
+
+The basic algorithm would look like...
+
+while( tileRequest > tileAvailable )
+{
+	DropTilesFromLeastImportantMap();
+	tileRequest = UpdateTileRequestCount();
+}
+
+
+We could potentially say.. drop tiles from any shadow maps that are a higher resolution than the screen resolution?
+Or have a shadow map resolution limit, per light, and also a second limit based on graphics settings.
+
+
+uint32 maxShadowMapQuality = min( inLight.MaxShadowQuality, g_Settings.MaxShadowQuality );
+uint32 requestedQuality = min( inLight.RequestedQuality, maxShadowMapQuality );
+
+This would allow some customization of this sytem through graphics settings. We can create a console command for this.
+Shadow map qualities use the following nomenclature:
+
+0 [Highest Quality, Up to 16K Resolution]
+1 [Up to 8K]
+2 [Up to 4K]
+3 [Up to 2K]
+4 [Up to 1024]
+5 [Up to 512]
+6 [Up to 256]
+7 [Up to 128]
+
+In graphics settings, we can set a limit, from 0 to 4 (because anything below that is ridiculous...)
+Now, were still limited by the max available shadow map resolution, but this gives us another way to control how expensive dynamic
+shadows will be to render, this is because, even if we have memory, rendering at 16k resolution really pushes the GPU core
+
+r_DynamicShadowQuality 1
+
+Our second quality control on dynamic shadows, is going to be the max shadow map memory pool size
+Its probably ideal to measure this in bytes in the console setting
+
+This limit will be able to range from 1MB, up to 10GB
+The console command will be measured in MB.. i.e.
+
+r_DynamicShadowMemoryPoolSize 128
+
+Would give us 128MB of shadow map cache.
+
+And the final quality setting will be the number of shadow maps to render into the scene. This is a limit in the end, but it can range from
+0, all the way up to 128 for now (although this is ridiculous, but whatever)
+
+r_DynamicShadowLimit 16
+
+
+This gives us a huge amount of flexibility in how much time we spend, and how much memory we spend on rendering shadows.
+We still have a hardware limit to ensure the users are running 11.2, with teir 1 virtual mapping available.
+
+
+Our next problem, is implementing sparse shadow maps, if we skip out on the idea of having sparse maps, it simplifies the problem a lot.
+But for now, lets implement non-sparse maps, and then we will think about sparse maps.
+
+
+
+Steps to render non-sparse shadow maps...
+
+Loop through dynamic lights in the scene...
+	* Check if light bounds intersects the view frustum  ======> Take all lights that pass this, and build the light buffer 
+	* If point light:
+		- Break out into 6 seperate shadow view frustums, cull each indivisually
+	* Determine the resolution needed for this shadow map for ideal quality
+	* Determine how much this shadow map affects the scene
+		- Ideally, this would be done by checking how many ative clusters the frustum intersects, but this data is on the GPU
+
+Build 'Potential Shadow Map' list from the results
+Iterate through entire scene geometry...
+	* Check if this mesh is within any of the light bounds we selected
+	* Build a cluster-mesh index list, to use when rendering
+	
+Discard any shadow maps that dont contain any geometry, and then select the most important 'X' number of maps (sort)
+Determine how much resolution to allocate towards each shadow map while staying under our memory budget
+Perform tile mappings
+Loop through each selected shadow casting light...
+	* Iterate through batches found to affect the shadow map, render
+
+Upload a simple light->shadow-map lookup table to the GPU to be used in our lighting pass
+
+---------------------------------------------------------------------------
+
+One other thing to think about, is how to actually upload shadow maps to the GPU
+Since, the number of shadow maps is somewhat dynamic (within a range), and they vary in resolution, we need to have an entire 
+shit ton of slots to bind shadow maps to, which is unfortunate, but not the end of the world.
+
+Eventually, we also want to have a large number of texture bind slots to upload the materials for multiple batches, because in a shipping
+game, the number of 'repeated geometry' is going to probably be less than repeated materials.
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+In an absolutley ideal world.. performing shadow map culling would happen on the GPU, during the light culling step.
+We already loop through the list of clusters and cull lights against indivisual clusters, we could extend this to check for
+if a light casts shadows, and check its frustum(s) and build one additioal buffer based on this.
+
+In an even more ideal world, we could also perform culling of scene geometry for each active shadow casting light on the GPU, but
+we already are thinking about moving memory from GPU to CPU each frame (which is NOT ideal)
+
+
+One possible solution, to this issue is, we could read back the data async, so we get the data without causing the pipeline to flush.
+But, by the time we get the data needed to render shadows, its old, and that could cause some ugliness without very good code to hide
+this latency.
+
+
+Another solution, is doing a lot of this work on the GPU itself, but that still involves a readback, so we can update our tile mappings.
+No matter what, we either attempt to leave all of this work CPU side, and perform NO gpu->cpu data transfer, or accept some amount of latency
+where we update which lights are using shadows, and at what quality, a few frames behind the main scene rendering.
+
+Really though, is there a way to make this work while being a couple frames behind?
+We would be able to perform culling, and active cluster checking.. so we would be able to implement sparse shadow maps more
+efficiently, cull faster, and get more accurate decisions on which maps to back with memory.
+
+
+This latency would be determental to sparse maps though, because geometry could move into an area without memory backing, which would cause
+visible, and probably severe artifacting.
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+In the end, we either need to do ALL of the work on the GPU, or none of the work on the GPU, there really is no compromize here.
+So, the issue becomes...
+
+How to determine the number of active clusters a light actually casts against? There isnt unfortunatley.
+We could potentially get feedback from the light cull shader, we could read back the active light buffer a few frames late.
+This could allow us to potentially discard lights from casting shadows, but since it is a few frames late, its could tell us that
+it is inactive when its actually active.
+
+But, this might cause less visible artifacting, and would give us a more accurate measure of how 'important' a shadow map will be.
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+Now, to make this work without reading GPU data for the first version, we need a seperate system to determine if a shadow map is important
+or if it doesnt need to be rendered. The way were going to do this is... by determining how much the frustum intersects the view frustum.
+
+We measure this by projecting the view frustum intersection area onto the 2d viewport and calculating its area. This gives us a quick way
+to determine how important each light is.
+
+
+Now, should we update tile mappings for each and every light, each and every frame? It might not be the fastest thing to do, but at the same
+time, we want to avoid artifacting at all costs. If we can get away with only updating a couple tile mappings per frame, without a noticable
+change in the quality of the rendered scene, we will do that.
+
+
+Lets reiterate the algorithm...
+
+
+1. Determine active dynamic lights in the scene, build 'Potential Shadow Map' List
+	a. Use this list to build the light buffer, instead of uploading all lights in the scene
+	b. For point lights: Break them out into 6 seperate shadow casting frustums
+	c. Determing how much this light affects the view frustum
+	d. Determine max needed resolution for perfect quality, this gives us an upper bound for resolution
+	
+2. Select which shadow maps we actually want to use when rendering this frame, up to max number allowed by settings
+
+3. Build an AABB, surrounding all of the light volumes for the selected lights, chances are they are fairly close together
+
+4. Loop through scene geometry
+	a. Perform intersection check against the big AABB we made
+		- If we intersect, then loop through each shadow frustum and do a bounds check, add to that shadow maps geometry list (by index)
+		
+5. Calculate how many tiles we can allocate towards each shadow map, based on a few factors..
+	1. Projected view frustum intersection area
+	2. Geometry count (also, each geometry can have a ShadowQuality setting)
+	3. What the 'perfect' resolution would be
+	
+6. Loop through each shadow casting light
+	a. Assign virtual shadow map from the shadow map pool
+	b. Map the tiles we need to render the shadow map (eventually, we will have sparse shadow maps, for now, the whole texture is mapped)
+	c. Loop through the assignment geometry, and render to the shadow map
+	
+7. Create a light to shadow-map lookup value, and put this in our 'light buffer'
+
+8. Continue normal render pass....

@@ -31,6 +31,10 @@ namespace Hyperion
 
 	void Player::UpdateInput( InputManager& im, double delta )
 	{
+		// We need to scale the amount of movement by the frequency of the game thread
+		// This way, movement inputs dont affect the player more when the FPS is higher
+		float movementScale = delta / 0.01667f;
+
 		if( m_PossessedCharacter && m_PossessedCharacter->IsSpawned() )
 		{
 			// First, lets poll for inputs that are relevant
@@ -60,6 +64,9 @@ namespace Hyperion
 				fPitch + ( bLookDown ? 1.f : 0.f ) - ( bLookUp ? 1.f : 0.f ),
 				fYaw + ( bLookRight ? 1.f : 0.f ) - ( bLookLeft ? 1.f : 0.f )
 			);
+
+			movementVec		= movementVec * movementScale;
+			lookVec			= lookVec * movementScale;
 
 			// Determine if we should apply a look input, or a movement input
 			if( movementVec.X != 0.f || movementVec.Y != 0.f || movementVec.Z != 0.f )

@@ -135,6 +135,9 @@ namespace Hyperion
 		m_Context->VSSetShader( m_VertexShader.Get(), NULL, 0 );
 		m_Context->IASetInputLayout( m_InputLayout.Get() );
 
+		ID3D11Buffer* bufferList[] = { m_MatrixBuffer.Get() };
+		m_Context->VSSetConstantBuffers( 0, 1, bufferList );
+
 		return true;
 	}
 
@@ -172,9 +175,6 @@ namespace Hyperion
 		bufferPtr->worldViewProjMatrix	= viewProjMatrix;
 
 		m_Context->Unmap( m_MatrixBuffer.Get(), 0 );
-		
-		ID3D11Buffer* bufferList[] = { m_MatrixBuffer.Get() };
-		m_Context->VSSetConstantBuffers( 0, 1, bufferList );
 
 		return true;
 	}

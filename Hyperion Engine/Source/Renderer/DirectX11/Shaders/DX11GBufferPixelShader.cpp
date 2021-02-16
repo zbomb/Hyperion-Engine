@@ -15,6 +15,7 @@ namespace Hyperion
 {
 
 	DX11GBufferPixelShader::DX11GBufferPixelShader()
+		: m_AttachedBaseMap( ASSET_INVALID )
 	{
 
 	}
@@ -103,24 +104,28 @@ namespace Hyperion
 	}
 
 
-	bool DX11GBufferPixelShader::UploadPrimitiveParameters( const Matrix& inWorldMatrix, const RMaterial& inMaterial )
+	bool DX11GBufferPixelShader::UploadBatchMaterial( const RMaterial& inMaterial )
 	{
-		HYPERION_VERIFY( m_Context, "[DX11] Device context was null!" );
+		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
 
-		// Get the shader resource view for the base map texture
-		auto dx11Texture = std::dynamic_pointer_cast< DirectX11Texture2D >( inMaterial.GetTexture( "base_map" ) );
-		if( !dx11Texture || !dx11Texture->IsValid() )
+		auto baseMap = inMaterial.GetBaseMap();
+		if( baseMap == nullptr || !baseMap->IsValid() )
 		{
-			Console::WriteLine( "[ERROR] DX11: Failed to upload primitive material, the material didnt have a base_map!" );
+			Console::WriteLine( "[ERROR] DX11: Failed to upload batch material, the material didnt have a valid base map" );
 			return false;
 		}
 
-		ID3D11ShaderResourceView* textureView = dx11Texture->GetView();
-		HYPERION_VERIFY( textureView != nullptr, "[DX11] Texture is valid, but resource view was null?" );
+		auto baseMapIdentifier = baseMap->GetAssetIdentifier();
+		if( m_AttachedBaseMap == ASSET_INVALID || m_AttachedBaseMap != baseMapIdentifier )
+		{
+			auto dx11Texture = std::dynamic_pointer_cast< DirectX11Texture2D >( baseMap );
+			HYPERION_VERIFY( dx11Texture != nullptr, "[DX11] API type mismatch?" );
 
-		// Set texture resource in shader to our base map texture
-		ID3D11ShaderResourceView* viewList[] = { textureView };
-		m_Context->PSSetShaderResources( 0, 1, viewList );
+			ID3D11ShaderResourceView* viewList[] = { dx11Texture->GetView() };
+			m_Context->PSSetShaderResources( 0, 1, viewList );
+
+			m_AttachedBaseMap = baseMapIdentifier;
+		}
 
 		return true;
 	}
@@ -149,6 +154,8 @@ namespace Hyperion
 		m_Context->PSSetShaderResources( 0, 1, views );
 		m_Context->PSSetSamplers( 0, 1, samplers );
 		m_Context->PSSetShader( NULL, NULL, 0 );
+
+		m_AttachedBaseMap = ASSET_INVALID;
 	}
 
 }

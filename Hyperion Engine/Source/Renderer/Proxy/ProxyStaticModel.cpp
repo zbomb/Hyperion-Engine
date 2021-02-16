@@ -113,49 +113,63 @@ namespace Hyperion
 	}
 
 
+	void ProxyStaticModel::CacheMeshes()
+	{
+		m_CachedMeshes.clear();
+
+		auto data		= m_Model ? m_Model->GetData() : nullptr;
+		auto lod		= data ? data->GetLOD( m_ActiveLOD ) : nullptr;
+		bool bSuccess	= true;
+
+		if( lod->bCached )
+		{
+			for( auto it = lod->batchList.begin(); it != lod->batchList.end(); it++ )
+			{
+				auto mat = GetMaterial( it->materialSlot );
+				if( mat && mat->AreTexturesLoaded() )
+				{
+					auto vert = it->vertexBuffer && it->vertexBuffer->IsValid() ? it->vertexBuffer : nullptr;
+					auto indx = it->indexBuffer && it->indexBuffer->IsValid() ? it->indexBuffer : nullptr;
+
+					if( vert && indx )
+					{
+						m_CachedMeshes.emplace_back( mat->IsTranslucent(), indx, vert, mat );
+					}
+					else
+					{
+						bSuccess = false;
+					}
+				}
+				else
+				{
+					bSuccess = false;
+				}
+			}
+		}
+		else
+		{
+			bSuccess = false;
+		}
+
+		// Mark as clean, if we managed to fully cache the LOD
+		m_bCacheDirty = !bSuccess;
+	}
+
+
 	void ProxyStaticModel::CollectBatches( BatchCollector& inCollector )
 	{
-		uint32 flags = inCollector.GetFlags();
-
-		// Get model data
-		auto data = m_Model ? m_Model->GetData() : nullptr;
-		if( !data ) { return; }
-
-		// Get the active LOD
-		auto lod = data->GetLOD( m_ActiveLOD );
-		if( !lod || !lod->bCached ) { return; }
-
-		for( auto it = lod->batchList.begin(); it != lod->batchList.end(); it++ )
+		for( int i = 0; i < m_CachedMeshes.size(); i++ )
 		{
-			// Get material for this batch, ensure its loaded
-			auto material = GetMaterial( it->materialSlot );
-			if( !material || !material->AreTexturesLoaded() ) 
-			{ 
-				continue; 
-			}
-
-			// Ensure everything is valid before uploading it...
-			if( !it->indexBuffer || !it->indexBuffer->IsValid() ||
-				!it->vertexBuffer || !it->vertexBuffer->IsValid() )
+			auto& batch = m_CachedMeshes[ i ];
+			if( batch.Translucent )
 			{
-				continue;
-			}
-
-			// Check if were rendering a translucent or opaque batch, and check against flags
-			bool bIsTranslucent = material->IsTranslucent();
-			if( bIsTranslucent )
-			{
-				if( !HYPERION_HAS_FLAG( flags, RENDERER_GEOMETRY_COLLECTION_FLAG_TRANSLUCENT ) ) { continue; }
+				inCollector.CollectOpaque( m_WorldMatrix, batch.Material, batch.IndexBuffer, batch.VertexBuffer );
 			}
 			else
 			{
-				if( !HYPERION_HAS_FLAG( flags, RENDERER_GEOMETRY_COLLECTION_FLAG_OPAQUE ) ) { continue; }
+				inCollector.CollectOpaque( m_WorldMatrix, batch.Material, batch.IndexBuffer, batch.VertexBuffer );
 			}
-
-			// Upload batch...
-			inCollector.CollectBatch( m_WorldMatrix, it->indexBuffer, it->vertexBuffer, material );
 		}
-
 	}
 
 }

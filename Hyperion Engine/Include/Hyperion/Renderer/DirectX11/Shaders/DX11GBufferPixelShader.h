@@ -22,6 +22,7 @@ namespace Hyperion
 		Microsoft::WRL::ComPtr< ID3D11PixelShader > m_PixelShader;
 		Microsoft::WRL::ComPtr< ID3D11SamplerState > m_WrapSampler;
 		Microsoft::WRL::ComPtr< ID3D11DeviceContext > m_Context;
+		uint32 m_AttachedBaseMap;
 
 	public:
 
@@ -33,12 +34,13 @@ namespace Hyperion
 		void Shutdown() final;
 		bool IsValid() const final;
 
-		bool UploadPrimitiveParameters( const Matrix& inWorldMatrix, const RMaterial& inMaterial ) final;
+		bool UploadBatchMaterial( const RMaterial& inMaterial ) final;
 
-		inline bool UploadStaticParameters( Renderer& inRenderer, uint32 inFlags ) final	{ return true; }
-		inline bool UploadLightBuffer( RLightBuffer& inBuffer ) final		{ return true; }
-		inline bool UploadViewClusters( RViewClusters& inClusters ) final	{ return true; }
-		inline bool UploadGBuffer( GBuffer& inBuffer ) final				{ return true; } // The G-Buffer is the render output, not an input
+		inline bool UploadBatchTransforms( const std::vector< Matrix >& inMatricies ) final		{ return true; }
+		inline bool UploadStaticParameters( Renderer& inRenderer, uint32 inFlags ) final		{ return true; }
+		inline bool UploadLightBuffer( RLightBuffer& inBuffer ) final							{ return true; }
+		inline bool UploadViewClusters( RViewClusters& inClusters ) final						{ return true; }
+		inline bool UploadGBuffer( GBuffer& inBuffer ) final									{ return true; }
 
 		bool Attach() final;
 		void Detach() final;

@@ -70,7 +70,7 @@ namespace Hyperion
 
 		void Begin();
 		bool Next();
-		Result ReadEntry( String& outKey, std::any& outValue );
+		Result ReadEntry( std::string& outKey, std::any& outValue );
 	};
 
 }

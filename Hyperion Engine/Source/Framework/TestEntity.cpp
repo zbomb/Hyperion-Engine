@@ -20,7 +20,7 @@ namespace Hyperion
 		m_Comp = CreateObject< StaticModelComponent >();
 
 		// Set the material'
-		auto mat = AssetManager::Get< MaterialAsset >( "materials/test_material.hmat" );
+		auto mat = AssetManager::Get< MaterialAsset >( "materials/mip_test.hmat" );
 		auto mdl = AssetManager::Get< StaticModelAsset >( "models/test_model.hsm" );
 
 		m_Comp->SetMaterial( mat, 0 );
@@ -52,7 +52,7 @@ namespace Hyperion
 
 	void TestEntity::Tick( double inDelta )
 	{
-		//m_Comp->Rotate( Angle3D( 0.f, 1.f, 0.f ) );
+		m_Comp->Rotate( Angle3D( 0.f, inDelta * 60.0, 0.f ) );
 	}
 
 }

@@ -50,13 +50,13 @@ namespace Hyperion
 	}
 
 
-	void GBuffer::ClearRenderTargets( const std::shared_ptr< IGraphics >& inAPI, const Color4F& inColor )
+	void GBuffer::ClearRenderTargets( const std::shared_ptr< IGraphics >& inAPI )
 	{
 		HYPERION_VERIFY( inAPI, "[GBuffer] API was null!" );
 
-		if( m_DiffuseRoughnessTarget )	{ inAPI->ClearRenderTarget( m_DiffuseRoughnessTarget, inColor ); }
-		if( m_NormalDepthTarget )		{ inAPI->ClearRenderTarget( m_NormalDepthTarget, inColor ); }
-		if( m_SpecularTarget )			{ inAPI->ClearRenderTarget( m_SpecularTarget, inColor ); }
+		if( m_DiffuseRoughnessTarget )	{ inAPI->ClearRenderTarget( m_DiffuseRoughnessTarget ); }
+		if( m_NormalDepthTarget )		{ inAPI->ClearRenderTarget( m_NormalDepthTarget, 0.f, 0.f, 0.f, SCREEN_FAR + 1.f ); }
+		if( m_SpecularTarget )			{ inAPI->ClearRenderTarget( m_SpecularTarget ); }
 	}
 
 	void GBuffer::ClearDepthBuffer( const std::shared_ptr< IGraphics >& inAPI, const Color4F& inColor )

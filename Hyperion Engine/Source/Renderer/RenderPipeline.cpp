@@ -13,7 +13,7 @@ namespace Hyperion
 
 	RenderPipeline::RenderPipeline()
 		: m_CollectionFlags( RENDERER_GEOMETRY_COLLECTION_FLAG_NONE ), m_CollectionSource( GeometryCollectionSource::Scene ), m_bUseZBuffer( true ),
-		m_RenderTarget( PipelineRenderTarget::Screen ), m_bUseGBuffer( false ), m_bUseLightBuffer( false ), m_bUseViewClusters( false ),
+		m_RenderTarget( PipelineRenderTarget::PostProcessBuffer ), m_bUseGBuffer( false ), m_bUseLightBuffer( false ), m_bUseViewClusters( false ),
 		m_bClearRenderTargets( true ), m_bClearDepthBuffers( true ), m_StencilTarget( PipelineDepthStencilTarget::Screen ), m_bAlphaBlending( false )
 	{
 

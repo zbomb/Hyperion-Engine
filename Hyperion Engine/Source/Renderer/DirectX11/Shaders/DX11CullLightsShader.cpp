@@ -141,9 +141,6 @@ namespace Hyperion
 
 		m_Context->Unmap( m_ConstantBuffer.Get(), 0 );
 
-		ID3D11Buffer* buffers[] = { m_ConstantBuffer.Get() };
-		m_Context->CSSetConstantBuffers( 0, 1, buffers );
-
 		return true;
 	}
 
@@ -180,6 +177,10 @@ namespace Hyperion
 		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
 
 		m_Context->CSSetShader( m_Shader.Get(), NULL, 0 );
+
+		ID3D11Buffer* bufferList[] = { m_ConstantBuffer.Get() };
+		m_Context->CSSetConstantBuffers( 0, 1, bufferList );
+
 		m_bAttached = true;
 
 		return true;

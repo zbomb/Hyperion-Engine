@@ -4,6 +4,7 @@
 //		© 2021, Zachary Berry
 ////////////////////////////////////////////////////
 
+#define MAX_INSTANCE_COUNT 512
 
 ///////////////////////////
 //	Constant Buffers
@@ -18,7 +19,7 @@ cbuffer StaticMatrixBuffer : register( b0 )
 
 cbuffer ObjectMatrixBuffer : register( b1 )
 {
-	matrix WorldMatrix;
+	matrix WorldMatrix[ MAX_INSTANCE_COUNT ];
 }
 
 
@@ -31,6 +32,7 @@ struct SceneVertex
 	float4 Position		: POSITION;
 	float3 Normal		: NORMAL;
 	float2 TexCoords	: TEXCOORD;
+	uint BatchInstance	: SV_InstanceID;
 };
 
 
@@ -38,7 +40,7 @@ struct PixelOutput
 {
 	float4 Position		: SV_POSITION;
 	float3 Normal		: NORMAL;
-	float3 VSPosition	: POSITIONT;
+	float3 VSPosition	: POSITIONt;
 	float2 TexCoords	: TEXCOORD;
 };
 
@@ -54,7 +56,7 @@ PixelOutput main( SceneVertex input )
 	input.Position.w = 1.f;
 
 	// Transform input vertex to world space, then view space
-	output.Position = mul( input.Position, WorldMatrix );
+	output.Position = mul( input.Position, WorldMatrix[ input.BatchInstance ] );
 	output.Position = mul( output.Position, ViewMatrix );
 
 	output.VSPosition = output.Position.xyz;
@@ -63,10 +65,10 @@ PixelOutput main( SceneVertex input )
 	output.Position = mul( output.Position, ProjectionMatrix );
 
 	// Calculate normal direction in world space
-	output.Normal = normalize( mul( input.Normal, (float3x3) WorldMatrix ) );
+	output.Normal = normalize( mul( input.Normal, (float3x3) WorldMatrix[ input.BatchInstance ] ) );
 
-	// Pass through texture coordinates, to be interpolated
 	output.TexCoords = input.TexCoords;
+	//output.BatchId = input.BatchId;
 
 	return output;
 }

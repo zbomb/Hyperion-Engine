@@ -73,7 +73,7 @@ RWBuffer< uint > lightIndexList				: register( u1 );
 ///////////////////////////
 
 groupshared uint activeLights[ 100 ];
-groupshared uint activeLightCount = 0;
+groupshared uint activeLightCount;
 
 //////////////////////////////
 //	Function Declarations
@@ -101,6 +101,13 @@ void main( uint3 localThreadID : SV_GroupThreadID, uint3 groupID : SV_GroupID )
 	uint lightsPerThread	= clamp( ( ( totalLightCount - 1 ) / 512 ) + 1, 1, 512 );
 	uint lightBegin			= lightBatch * lightsPerThread;
 	uint lightEnd			= lightBegin + lightsPerThread;
+
+	if( lightBatch == 0 )
+	{
+		activeLightCount = 0;
+	}
+
+	GroupMemoryBarrierWithGroupSync();
 
 
 	if( lightBegin < totalLightCount && cluster.bActive )
@@ -151,15 +158,15 @@ void main( uint3 localThreadID : SV_GroupThreadID, uint3 groupID : SV_GroupID )
 				InterlockedAdd( activeLightCount, 1, lastIndex );
 				if( lastIndex >= MAX_LIGHTS_PER_CLUSTER ) { break; }
 
-				activeLights[ lastIndex ] = index;
+				//activeLights[ lastIndex ] = index;
+				int bullShit;
+				InterlockedExchange( activeLights[ lastIndex ], index, bullShit );
 			}
 		}
 	}
 
 	// Wait for all threads to reach this point
-	DeviceMemoryBarrierWithGroupSync();
-	//GroupMemoryBarrierWithGroupSync();
-	//AllMemoryBarrierWithGroupSync();
+	GroupMemoryBarrierWithGroupSync();
 
 	uint lightListOffset = clusterFlatIndex * MAX_LIGHTS_PER_CLUSTER;
 
@@ -174,6 +181,7 @@ void main( uint3 localThreadID : SV_GroupThreadID, uint3 groupID : SV_GroupID )
 	{
 		lightIndexList[ lightListOffset + lightBatch ] = activeLights[ lightBatch ];
 	}
+	
 
 }
 

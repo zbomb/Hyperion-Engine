@@ -47,10 +47,11 @@ namespace Hyperion
 		TextureFormat Format;
 		bool bAutogenMips;
 		std::vector< TextureMipData > Data;
+		uint32 AssetIdentifier;
 
 		TextureParameters()
 			: Width( 0 ), Height( 0 ), Depth( 0 ), bDynamic( false ), bCPURead( false ), BindTargets( RENDERER_TEXTURE_BIND_FLAG_NONE ),
-			Format( TextureFormat::NONE ), bAutogenMips( false )
+			Format( TextureFormat::NONE ), bAutogenMips( false ), AssetIdentifier( ASSET_INVALID )
 		{}
 	};
 
@@ -73,6 +74,7 @@ namespace Hyperion
 		virtual bool CanCPURead() const = 0;
 		virtual uint32 GetBindTargets() const = 0;
 		virtual TextureFormat GetFormat() const = 0;
+		virtual uint32 GetAssetIdentifier() const = 0;
 
 		virtual bool IsValid() const = 0;
 		virtual void Shutdown() = 0;

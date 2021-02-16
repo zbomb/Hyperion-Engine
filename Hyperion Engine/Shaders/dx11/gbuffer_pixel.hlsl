@@ -13,8 +13,9 @@ struct PixelInput
 {
 	float4 Position		: SV_POSITION;
 	float3 Normal		: NORMAL;
-	float3 VSPosition	: POSITIONT;
+	float3 VSPosition	: POSITIONt;
 	float2 TexCoords	: TEXCOORD;
+	//uint BatchId		: SV_InstanceID;
 };
 
 

@@ -10,6 +10,8 @@
 #include "Hyperion/Core/InputManager.h"
 #include "../Tests/RenderTests.hpp"
 #include "Hyperion/Core/ThreadManager.h"
+#include "Hyperion/Renderer/Renderer.h"
+#include "Hyperion/Constants.h"
 
 #include <io.h>
 #include <fcntl.h>
@@ -38,6 +40,10 @@ bool bUsingOSConsole;
 bool bFatalError = false;
 Hyperion::String sErrorMessage;
 std::thread::id tiWinThreadId;
+bool bIsMinimized = false;
+bool bInMoveResize = false;
+UINT iLastWidth = 640;
+UINT iLastHeight = 480;
 
 
 
@@ -197,6 +203,9 @@ int Impl_Main( HINSTANCE inInstance, LPWSTR inCmdLine, int inCmdShow )
 	auto res = eng->GetStartupScreenResolution();
 	if( bForceFullscreen ) { res.FullScreen = true; }
 	else if( bForceWindowed ) { res.FullScreen = false; }
+
+	iLastWidth		= res.Width;
+	iLastHeight		= res.Height;
 
 	// Get strings setup for app init
 	auto wstrAppTitle = Hyperion::String::GetSTLWString( HYPERION_APP_NAME );
@@ -557,6 +566,9 @@ BOOL InitInstance( HINSTANCE inInstance, int inCmdShow, UINT32 inWidth, UINT32 i
 
 LRESULT CALLBACK WndProc( HWND inWindow, UINT inMessage, WPARAM inWParam, LPARAM inLParam )
 {
+	static bool bMinimized = false;
+
+
 	switch( inMessage )
 	{
 		case WM_PAINT:
@@ -589,12 +601,114 @@ LRESULT CALLBACK WndProc( HWND inWindow, UINT inMessage, WPARAM inWParam, LPARAM
 			break;
 		}
 
-	case WM_DESTROY:
+		case WM_DESTROY:
+		{
+			PostQuitMessage( inWParam );
+			break;
+		}
 
-		Hyperion::Console::WriteLine( "---------------------> WM_DESTROY" );
+		case WM_SIZE:
+		{
+			if( inWParam == SIZE_MINIMIZED )
+			{
+				if( !bMinimized )
+				{
+					bMinimized = true;
+					Hyperion::Engine::Suspend();
+				}
+			}
+			else if( bMinimized )
+			{
+				bMinimized = false;
+				Hyperion::Engine::Resume();
+			}
+			else if( !bInMoveResize )
+			{
+				if( inWParam == SIZE_MAXIMIZED )
+				{
+					Hyperion::Console::WriteLine( "Engine: Entering fullscreen..." );
 
-		PostQuitMessage( inWParam );
-		break;
+					// Add renderer command to go fullscreen
+					Hyperion::Engine::GetRenderer()->AddImmediateCommand(
+						std::make_unique< Hyperion::RenderCommand >(
+							[] ( Hyperion::Renderer& r )
+							{
+								Hyperion::ScreenResolution newRes {};
+
+								newRes.Width		= 0;
+								newRes.Height		= 0;
+								newRes.FullScreen	= true;
+
+								r.ChangeResolution( newRes );
+							} )
+					);
+				}
+				else if( inWParam == SIZE_RESTORED )
+				{
+					Hyperion::Console::WriteLine( "Engine: Restoring window..." );
+
+					Hyperion::Engine::GetRenderer()->AddImmediateCommand(
+						std::make_unique< Hyperion::RenderCommand >(
+							[] ( Hyperion::Renderer& r )
+							{
+								Hyperion::ScreenResolution newRes {};
+
+								newRes.Width		= Hyperion::Math::Max( iLastWidth, Hyperion::RENDERER_MIN_RESOLUTION_WIDTH );
+								newRes.Height		= Hyperion::Math::Max( iLastHeight, Hyperion::RENDERER_MIN_RESOLUTION_HEIGHT );
+								newRes.FullScreen	= false;
+
+								r.ChangeResolution( newRes );
+							} )
+					);
+				}
+			}
+
+			break;
+		}
+
+		case WM_ENTERSIZEMOVE:
+		{
+			bInMoveResize = true;
+			break;
+		}
+
+		case WM_EXITSIZEMOVE:
+		{
+			bInMoveResize = false;
+			RECT newRect {};
+
+			if( inWParam == SC_SIZE &&
+				GetWindowRect( hWindow, &newRect ) )
+			{
+				Hyperion::Console::WriteLine( "Engine: Resizing to ", newRect.right, "x", newRect.bottom );
+
+				Hyperion::Engine::GetRenderer()->AddImmediateCommand(
+					std::make_unique< Hyperion::RenderCommand >(
+						[ newRect ] ( Hyperion::Renderer& r )
+						{
+							Hyperion::ScreenResolution newRes {};
+
+							newRes.Width		= Hyperion::Math::Max( (Hyperion::uint32) newRect.right, Hyperion::RENDERER_MIN_RESOLUTION_WIDTH );
+							newRes.Height		= Hyperion::Math::Max( (Hyperion::uint32) newRect.bottom, Hyperion::RENDERER_MIN_RESOLUTION_HEIGHT );
+							newRes.FullScreen	= false;
+
+							r.ChangeResolution( newRes );
+						} )
+				);
+			}
+
+			break;
+		}
+
+		case WM_GETMINMAXINFO:
+		{
+
+			auto output = reinterpret_cast< MINMAXINFO* >( inLParam );
+			output->ptMinTrackSize.x = Hyperion::RENDERER_MIN_RESOLUTION_WIDTH;
+			output->ptMinTrackSize.y = Hyperion::RENDERER_MIN_RESOLUTION_HEIGHT;
+
+			break;
+		}
 
 	default:
 		

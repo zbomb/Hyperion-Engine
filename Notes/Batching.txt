@@ -1,0 +1,62 @@
+--------------------------------- HYPERION NOTES -----------------------------------------
+-> Batching
+
+
+* We need to organize the sceen during geomtry collection, its going to add a bit of processing time most likely, but I have an idea for improvments
+to speed of the system already
+
+* We dont need to store the scene as a flat list, instead, we can store it as a list of groups. When we add a new primitive, we perform a sorted
+	insert, the main sorting parameter, is the geometry identifier (StaticModelAsset Identifier, DynamicMOdelAsset Identifier)
+	
+* Then, within these groups of geometry, we can then sort by materials. The thing is, each primitive in the renderer is made up of multiple
+	meshes, each mesh has its own material slot. So, we can store the scene based on the Model, but when we collect the various peices of geometry
+	we can split each peice into the proper material slot.
+	
+* Most likely, this is going to increase scene traversal quite a lot, so the 'CollectBatches' step will not be fast, but hopefully with larger
+	scenes, its going to be way more efficient.
+	
+* We already have a class called 'MeshBatch', and unfortunatley, we need to think of new names....
+	We can have mesh, and then mesh batch, a mesh batch is...
+	
+	std::shared_ptr< RBuffer > m_VertexBuffer;
+	std::shared_ptr< RBuffer > m_IndexBuffer;
+	std::shared_ptr< RMaterial > m_Material;
+	std::vector< Matrix > m_InstanceTransforms;
+	
+* Next problem is the world matrix, we cant upload them one at a time anymore, we are using an instanced draw method to draw our scene now,
+	so how can we pass the world matrix into the instanced draw call, and have everything work properly?
+	
+* We can do an instanced draw whenever we have a group of geometry that shares a material
+* When we have geometry that doesnt have the same material, we will have to do seperate draw calls, because we need to upload 
+	textures and parameters in between.
+	
+* We dont really need per-instance data, we just really need an instance ID, which should be available through the existing hlsl semantics.
+* Lets just upload a list of matricies, but were going to need a maximum number of batches per instanced call, so if there is 1000s of 
+	the same instance, we can break it out into multiple chunks, and make an API call for each.
+	
+* The problem is, how to dynamically break out batches, to ensure the batch size isnt too big....
+* This is going to have to happen in the renderer
+
+* The max number of vectors per constant buffer is 4096, so if we say each matrix is 4 vectors, we get 1024 matricies,
+	but for testing sake, lets make this value a constant in the code, and we can change it at some other point.
+	but anyway, were going to test a group size of 512 instances per call.
+	
+	
+* Lets also split up our debug floor to be split into 100 sections, each 500x500
+* This should allow better texture fill rate, and what not
+
+	But how to do this? We would need to return multiple matricies, one for each division
+	So if we have 500x500 sections, in a 20x20 grid...
+	Position( -5000 + x * 500, -5000 + y * 500 )
+	
+* Now that a basic batching system is implemented, we need to think about what is next...
+
+* Shadows?
+* What should we do for shadows though.. because there are a few methods, all complex, and all very hard on performance.
+* In the end, we will probably have a hard time implementing shadows, and it might be worth it to do a once-over of the code	
+	to get everything neat, organized, and clean before throwing more at it...
+	
+* But, I dont really want to spend the time at this moment cleaning up code, I would prefer to just throw shadow processing in there, and 
+	worry about cleaning up the code after. Add Shadows -> Optimize -> Clean
+
+	

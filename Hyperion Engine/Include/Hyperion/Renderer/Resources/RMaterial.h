@@ -12,6 +12,14 @@
 
 #include <any>
 
+/*
+*	TODO:
+*	* We need to rethink how we store materials on the render thread
+*	* The old system of using a map with Hyperion::String took around 0.2ms to lookup a texture from the material
+*	* This is WAYYY too slow, when it comes to many thousands of primitives per frame
+*	* We need quick access to the values we need from a material.. almost like a 'render material' 
+*/
+
 
 namespace Hyperion
 {
@@ -26,14 +34,17 @@ namespace Hyperion
 
 		uint32 m_Identifier;
 
-		std::map< String, std::any > m_Values;
-		std::map< String, std::shared_ptr< RTexture2D > > m_Textures;
+		std::map< std::string, std::any > m_Values;
+		std::map< std::string, std::shared_ptr< RTexture2D > > m_Textures;
+
+		std::shared_ptr< RTexture2D > m_BaseMap;
+		bool m_bTransparent;
 
 	public:
 
 		// Some types we want shorthand for..
-		using valIter = std::map< String, std::any >::const_iterator;
-		using texIter = std::map< String, std::shared_ptr< RTexture2D > >::const_iterator;
+		using valIter = std::map< std::string, std::any >::const_iterator;
+		using texIter = std::map< std::string, std::shared_ptr< RTexture2D > >::const_iterator;
 
 		/*
 		*	Constructors/Destructors
@@ -61,6 +72,13 @@ namespace Hyperion
 		*	Getters
 		*/
 		inline uint32 GetIdentifier() const { return m_Identifier; }
+		inline std::shared_ptr< RTexture2D > GetBaseMap() const { return m_BaseMap; }
+
+		void CacheTextures()
+		{
+			m_BaseMap		= GetTexture( "base_map" );
+			m_bTransparent	= GetBool( "enable_alpha", false );
+		}
 
 		/*
 		*	Shutdown Function
@@ -74,117 +92,100 @@ namespace Hyperion
 		/*
 		*	Texture Functions
 		*/
-		void AddTexture( const String& inKey, const std::shared_ptr< RTexture2D >& inTexture )
+		void AddTexture( const std::string& inKey, const std::shared_ptr< RTexture2D >& inTexture )
 		{
-			if( inKey.IsWhitespaceOrEmpty() ) { return; }
-			m_Textures.emplace( inKey.ToLower(), inTexture );
+			m_Textures.emplace( inKey, inTexture );
 		}
 
-		void RemoveTexture( const String& inKey )
+		void RemoveTexture( const std::string& inKey )
 		{
-			if( inKey.IsWhitespaceOrEmpty() ) { return; }
-			m_Textures.erase( inKey.ToLower() );
+			m_Textures.erase( inKey );
 		}
 
-		bool TextureExists( const String& inKey ) const
+		bool TextureExists( const std::string& inKey ) const
 		{
-			if( inKey.IsWhitespaceOrEmpty() ) { return false; }
-			auto it = m_Textures.find( inKey.ToLower() );
+			auto it = m_Textures.find( inKey );
 			return it != m_Textures.end() && it->second;
 		}
 
-		std::shared_ptr< RTexture2D > GetTexture( const String& inKey ) const
+		std::shared_ptr< RTexture2D > GetTexture( const std::string& inKey ) const
 		{
-			if( inKey.IsWhitespaceOrEmpty() ) { return nullptr; }
-			auto it = m_Textures.find( inKey.ToLower() );
+			auto it = m_Textures.find( inKey );
 			return it != m_Textures.end() ? it->second : nullptr;
 		}
 
 		bool AreTexturesLoaded() const
 		{
-			for( auto it = m_Textures.begin(); it != m_Textures.end(); it++ )
-			{
-				if( !it->second || !it->second->IsValid() )
-				{
-					return false;
-				}
-			}
-
-			return true;
+			return m_BaseMap ? m_BaseMap->IsValid() : false;
 		}
 
 		bool IsTranslucent() const
 		{
-			return GetBool( "enable_alpha", false );
+			return m_bTransparent;
 		}
 
 		/*
 		*	Value Functions
 		*/
-		void SetValue( const String& inKey, const std::any& inValue )
+		void SetValue( const std::string& inKey, const std::any& inValue )
 		{
-			if( inKey.IsWhitespaceOrEmpty() ) { return; }
-
-			auto entry = m_Values.find( inKey.ToLower() );
+			auto entry = m_Values.find( inKey );
 			if( entry == m_Values.end() ) { return; }
 
 			entry->second = inValue;
 		}
 
-		std::any GetValue( const String& inKey ) const
+		std::any GetValue( const std::string& inKey ) const
 		{
-			if( inKey.IsWhitespaceOrEmpty() ) { return std::any(); }
-
-			auto entry = m_Values.find( inKey.ToLower() );
+			auto entry = m_Values.find( inKey );
 			if( entry == m_Values.end() ) { return std::any(); }
 
 			return entry->second;
 		}
 
-		bool GetBool( const String& inKey, bool bDefault = false ) const
+		bool GetBool( const std::string& inKey, bool bDefault = false ) const
 		{
 			auto any = GetValue( inKey );
 			bool* val = std::any_cast<bool>( &any );
 			return val ? *val : bDefault;
 		}
 
-		int32 GetInt( const String& inKey, int32 iDefault = 0 ) const
+		int32 GetInt( const std::string& inKey, int32 iDefault = 0 ) const
 		{
 			auto any = GetValue( inKey );
 			int32* val = std::any_cast<int32>( &any );
 			return val ? *val : iDefault;
 		}
 
-		uint32 GetUInt( const String& inKey, uint32 iDefault = 0 ) const
+		uint32 GetUInt( const std::string& inKey, uint32 iDefault = 0 ) const
 		{
 			auto any = GetValue( inKey );
 			uint32* val = std::any_cast<uint32>( &any );
 			return val ? *val : iDefault;
 		}
 
-		String GetString( const String& inKey, const String& sDefault = String() )
+		std::string GetString( const std::string& inKey, const std::string& sDefault = std::string ( ) )
 		{
 			auto any = GetValue( inKey );
-			String* val = std::any_cast<String>( &any );
+			std::string* val = std::any_cast<std::string>( &any );
 			return val ? *val : sDefault;
 		}
 
-		float GetFloat( const String& inKey, float fDefault = 0.f ) const
+		float GetFloat( const std::string& inKey, float fDefault = 0.f ) const
 		{
 			auto any = GetValue( inKey );
 			float* val = std::any_cast<float>( &any );
 			return val ? *val : fDefault;
 		}
 
-		bool ValueExists( const String& inKey ) const
+		bool ValueExists( const std::string& inKey ) const
 		{
 			return GetValue( inKey ).has_value();
 		}
 
-		void ClearValue( const String& inKey )
+		void ClearValue( const std::string& inKey )
 		{
-			if( inKey.IsWhitespaceOrEmpty() ) { return; }
-			m_Values.erase( inKey.ToLower() );
+			m_Values.erase( inKey );
 		}
 
 	};

@@ -28,4 +28,12 @@ namespace Hyperion
 	{
 		return ThreadManager::IsWorkerThread( std::this_thread::get_id() );
 	}
+
+	AntiAliasingType StrToAAType( const String& inStr )
+	{
+		auto s = inStr.ToLower();
+		if( s == "fxaa" ) { return AntiAliasingType::FXAA; }
+
+		return AntiAliasingType::None;
+	}
 }

@@ -96,11 +96,15 @@ namespace Hyperion
 
 	bool StaticModelComponent::UpdateProxy( const std::shared_ptr< ProxyPrimitive >& inPrimitive )
 	{
-		auto ptr = std::dynamic_pointer_cast< ProxyStaticModel >( inPrimitive );
-		if( ptr )
-		{
+		auto t = GetWorldTransform();
 
-		}
+		HYPERION_RENDER_COMMAND(
+			[=] ( Renderer& r )
+			{
+				inPrimitive->m_Transform		= t;
+				inPrimitive->m_bMatrixDirty		= true;
+			}
+		);
 
 		return true;
 	}

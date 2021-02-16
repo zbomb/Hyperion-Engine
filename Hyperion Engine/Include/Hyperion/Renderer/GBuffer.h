@@ -46,7 +46,7 @@ namespace Hyperion
 		void Shutdown();
 		bool IsValid() const;
 
-		void ClearRenderTargets( const std::shared_ptr< IGraphics >& inAPI, const Color4F& inColor );
+		void ClearRenderTargets( const std::shared_ptr< IGraphics >& inAPI );
 		void ClearDepthBuffer( const std::shared_ptr< IGraphics >& inAPI, const Color4F& inColor );
 
 		inline std::shared_ptr< RTexture2D > GetDiffuseRoughnessTexture() const { return m_DiffuseRoughnessTexture; }

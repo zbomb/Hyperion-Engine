@@ -27,7 +27,7 @@ namespace Hyperion
 	/*----------------------------------------------------------------------------------------------------------
 		MaterialAsset Class
 	------------------------------------------------------------------------------------------------------------*/
-	MaterialAsset::MaterialAsset( std::map< String, std::any >&& inData, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength )
+	MaterialAsset::MaterialAsset( std::map< std::string, std::any >&& inData, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength )
 		: AssetBase( inIdentifier, inPath, inOffset, inLength ), m_Values( std::move( inData ) )
 	{
 		// We want to find all of the textures, and get them from the asset manager, so they get cached in as well
@@ -64,9 +64,9 @@ namespace Hyperion
 	}
 
 
-	std::any MaterialAsset::GetValue( const String& inKey )
+	std::any MaterialAsset::GetValue( const std::string& inKey )
 	{
-		auto entry = m_Values.find( inKey.ToLower() );
+		auto entry = m_Values.find( inKey );
 		if( entry != m_Values.end() )
 		{
 			return entry->second;
@@ -76,9 +76,9 @@ namespace Hyperion
 	}
 
 
-	std::shared_ptr< TextureAsset > MaterialAsset::GetTexture( const String& inKey )
+	std::shared_ptr< TextureAsset > MaterialAsset::GetTexture( const std::string& inKey )
 	{
-		auto entry = m_Textures.find( inKey.ToLower() );
+		auto entry = m_Textures.find( inKey );
 		if( entry != m_Textures.end() )
 		{
 			return entry->second;
@@ -88,7 +88,7 @@ namespace Hyperion
 	}
 
 
-	bool MaterialAsset::GetBool( const String& inKey, bool inDefault /* = false */ )
+	bool MaterialAsset::GetBool( const std::string& inKey, bool inDefault /* = false */ )
 	{
 		auto val = GetValue( inKey );
 		bool* casted = std::any_cast< bool >( &val );
@@ -96,7 +96,7 @@ namespace Hyperion
 	}
 
 
-	int32 MaterialAsset::GetInt( const String& inKey, int32 inDefault /* = 0 */ )
+	int32 MaterialAsset::GetInt( const std::string& inKey, int32 inDefault /* = 0 */ )
 	{
 		auto val = GetValue( inKey );
 		int32* casted = std::any_cast< int32 >( &val );
@@ -104,7 +104,7 @@ namespace Hyperion
 	}
 
 
-	uint32 MaterialAsset::GetUInt( const String& inKey, uint32 inDefault /* = 0 */ )
+	uint32 MaterialAsset::GetUInt( const std::string& inKey, uint32 inDefault /* = 0 */ )
 	{
 		auto val = GetValue( inKey );
 		uint32* casted = std::any_cast< uint32 >( &val );
@@ -112,17 +112,17 @@ namespace Hyperion
 	}
 
 
-	float MaterialAsset::GetFloat( const String& inKey, float inDefault /* = 0.f */ )
+	float MaterialAsset::GetFloat( const std::string& inKey, float inDefault /* = 0.f */ )
 	{
 		auto val = GetValue( inKey );
 		float* casted = std::any_cast< float >( &val );
 		return casted ? *casted : inDefault;
 	}
 
-	String MaterialAsset::GetString( const String& inKey, const String& inDefault /* = "" */ )
+	std::string MaterialAsset::GetString( const std::string& inKey, const std::string& inDefault /* = "" */ )
 	{
 		auto val = GetValue( inKey );
-		String* casted = std::any_cast< String >( &val );
+		std::string* casted = std::any_cast< std::string >( &val );
 		return casted ? *casted : inDefault;
 	}
 
@@ -154,10 +154,10 @@ namespace Hyperion
 			HMATReader reader( inReader, inOffset, inLength );
 			reader.Begin();
 
-			std::map< String, std::any > materialData;
+			std::map< std::string, std::any > materialData;
 			while( reader.Next() )
 			{
-				String key;
+				std::string key;
 				std::any val;
 
 				// Read next entry, check if valid

@@ -17,6 +17,9 @@ namespace Hyperion
 	class RLightBuffer;
 	class RViewClusters;
 	class GBuffer;
+	class RTexture2D;
+	struct MeshBatch;
+
 
 	class RShaderBase
 	{
@@ -33,6 +36,22 @@ namespace Hyperion
 		virtual bool UploadGBuffer( GBuffer& inGBuffer ) = 0;
 
 		virtual bool Attach() = 0;
+		virtual void Detach() = 0;
+
+	};
+
+
+	class RPostProcessShader
+	{
+
+	public:
+
+		virtual ~RPostProcessShader() {}
+		virtual void Shutdown() = 0;
+		virtual bool IsValid() const = 0;
+
+		virtual bool UploadStaticParameters( Renderer& inRenderer, uint32 inFlags ) = 0;
+		virtual bool Attach( const std::shared_ptr< RTexture2D >& inSource ) = 0;
 		virtual void Detach() = 0;
 
 	};
@@ -57,7 +76,8 @@ namespace Hyperion
 	public:
 
 		virtual ~RPixelShader() {}
-		virtual bool UploadPrimitiveParameters( const Matrix& inWorldMatrix, const RMaterial& inMaterial ) = 0;
+		virtual bool UploadBatchTransforms( const std::vector< Matrix >& inMatricies ) = 0;
+		virtual bool UploadBatchMaterial( const RMaterial& inMaterial ) = 0;
 
 	};
 
@@ -68,7 +88,8 @@ namespace Hyperion
 	public:
 
 		virtual ~RVertexShader() {}
-		virtual bool UploadPrimitiveParameters( const Matrix& inWorldMatrix, const RMaterial& inMaterial ) = 0;
+		virtual bool UploadBatchTransforms( const std::vector< Matrix >& inMatricies ) = 0;
+		virtual bool UploadBatchMaterial( const RMaterial& inMaterial ) = 0;
 
 	};
 
@@ -79,7 +100,8 @@ namespace Hyperion
 	public:
 
 		virtual ~RGeometryShader() {}
-		virtual bool UploadPrimitiveParameters( const Matrix& inWorldMatrix, const RMaterial& inMaterial ) = 0;
+		virtual bool UploadBatchTransforms( const std::vector< Matrix >& inMatricies ) = 0;
+		virtual bool UploadBatchMaterial( const RMaterial& inMaterial ) = 0;
 
 	};
 

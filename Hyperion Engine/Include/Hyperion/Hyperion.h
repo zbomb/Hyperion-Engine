@@ -116,4 +116,7 @@ namespace Hyperion
 		uint32 Height;
 		std::vector< byte > Data;
 	};
+
+	AntiAliasingType StrToAAType( const String& inStr );
+
 }

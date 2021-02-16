@@ -74,6 +74,9 @@ namespace Hyperion
 	constexpr uint32 RENDERER_MAX_DYNAMIC_LIGHTS	= 262144;	// This limit is due to the compute function that assigns lights to view clusters
 																// The lights are processed by 512 threads per cluster, with a maximum of 512 lights per thread, giving us this value
 
+	constexpr uint32 RENDERER_MIN_RESOLUTION_WIDTH	= 480;
+	constexpr uint32 RENDERER_MIN_RESOLUTION_HEIGHT = 360;
+
 
 	// Flags 
 	constexpr uint32 FLAG_NONE				= 0U;
@@ -91,6 +94,14 @@ namespace Hyperion
 
 	constexpr uint32 MIN_RESOLUTION_WIDTH	= 480;
 	constexpr uint32 MIN_RESOLUTION_HEIGHT	= 360;
+
+	constexpr uint32 RENDERER_MAX_INSTANCES_PER_BATCH = 512;
+
+	enum class AntiAliasingType
+	{
+		None	= 0,
+		FXAA	= 1
+	};
 
 	/*
 	*	Static Settings
@@ -112,6 +123,7 @@ namespace Hyperion
 	constexpr auto SHADER_PATH_DX11_COMPUTE_CULL_LIGHTS		= "shaders/dx11/cull_lights.hcs";
 	constexpr auto SHADER_PATH_DX11_PIXEL_FORWARD_PRE_Z		= "shaders/dx11/forward_pre_z.hps";
 	constexpr auto SHADER_PATH_DX11_PIXEL_FORWARD			= "shaders/dx11/forward.hps";
+	constexpr auto SHADER_PATH_DX11_FX_FXAA					= "shaders/dx11/fxaa.hpps";
 
 	constexpr uint32 BUILD_CLUSTERS_MODE_REBUILD	= 0;
 	constexpr uint32 BUILD_CLUSTERS_MODE_CLEAR		= 1;
@@ -125,9 +137,10 @@ namespace Hyperion
 
 	enum class PipelineRenderTarget
 	{
-		Screen = 0,
+		BackBuffer = 0,
 		GBuffer = 1,
-		ViewClusters = 2
+		ViewClusters = 2,
+		PostProcessBuffer = 3
 	};
 
 	enum class PipelineDepthStencilTarget
@@ -167,6 +180,17 @@ namespace Hyperion
 		BuildClusters	= 0,
 		FindClusters	= 1,
 		CullLights		= 2
+	};
+
+	enum class PostProcessShaderType
+	{
+		FXAA = 0
+	};
+
+	enum class PostProcessRenderTarget
+	{
+		Intermediate = 0,
+		BackBuffer = 1
 	};
 
 	/*

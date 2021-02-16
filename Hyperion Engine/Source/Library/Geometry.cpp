@@ -283,6 +283,10 @@ namespace Hyperion
 	{
 	}
 
+	Vector3D::Vector3D( const float* inData )
+		: X( inData[ 0 ] ), Y( inData[ 1 ] ), Z( inData[ 2 ] )
+	{}
+
 	Vector3D::Vector3D( const Vector3D& inOther )
 		: X( inOther.X ), Y( inOther.Y ), Z( inOther.Z )
 	{

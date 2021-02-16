@@ -22,6 +22,9 @@
       <FullPath>D:\Hyperion\Build\Release\shaders\dx11\forward_pre_z.hps</FullPath>
     </ContentFile>
     <ContentFile>
+      <FullPath>D:\Hyperion\Build\Release\shaders\dx11\fxaa.hpps</FullPath>
+    </ContentFile>
+    <ContentFile>
       <FullPath>D:\Hyperion\Build\Release\shaders\dx11\gbuffer.hps</FullPath>
     </ContentFile>
     <ContentFile>
@@ -29,6 +32,12 @@
     </ContentFile>
     <ContentFile>
       <FullPath>D:\Hyperion\Build\Release\shaders\dx11\screen.hvs</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\Hyperion\Build\Release\shaders\dx11\shadow.hps</FullPath>
+    </ContentFile>
+    <ContentFile>
+      <FullPath>D:\Hyperion\Build\Release\shaders\dx11\shadow.hvs</FullPath>
     </ContentFile>
     <ContentFile>
       <FullPath>D:\Hyperion\Build\Release\shaders\dx11\scene.hvs</FullPath>

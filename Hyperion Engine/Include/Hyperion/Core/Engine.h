@@ -53,6 +53,8 @@ namespace Hyperion
 		static std::function< void( const String& ) > s_FatalErrorCallback;
 		static std::atomic< bool > s_bFatalError;
 
+		static std::atomic< bool > s_bSuspended;
+
 		// Renderer Init Helpers
 		void DoRenderThreadInit( void* pWindow, ScreenResolution inResolution, uint32 inFlags );
 		void DoRenderThreadShutdown();
@@ -94,6 +96,8 @@ namespace Hyperion
 		bool IsVSyncOn() const;
 
 		void Shutdown();
+		static void Suspend();
+		static void Resume();
 
 		void WaitForInitComplete();
 

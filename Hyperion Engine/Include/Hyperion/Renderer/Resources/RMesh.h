@@ -16,13 +16,13 @@ namespace Hyperion
 	/*
 	*	RMeshBatch Structure
 	*/
-	struct RMeshBatch
+	struct RSubMesh
 	{
 		uint8 materialSlot;
 		std::shared_ptr< RBuffer > vertexBuffer;
 		std::shared_ptr< RBuffer > indexBuffer;
 
-		RMeshBatch( uint8 inMaterial, const std::shared_ptr< RBuffer >& inVertBuffer = nullptr, const std::shared_ptr< RBuffer >& inIndexBuffer = nullptr )
+		RSubMesh( uint8 inMaterial, const std::shared_ptr< RBuffer >& inVertBuffer = nullptr, const std::shared_ptr< RBuffer >& inIndexBuffer = nullptr )
 			: materialSlot( inMaterial ), vertexBuffer( inVertBuffer ), indexBuffer( inIndexBuffer )
 		{}
 	};
@@ -33,7 +33,7 @@ namespace Hyperion
 	struct RMeshLOD
 	{
 		bool bCached;
-		std::vector< RMeshBatch > batchList;
+		std::vector< RSubMesh > batchList;
 	};
 
 	/*
@@ -59,7 +59,7 @@ namespace Hyperion
 				auto newLOD = std::make_shared< RMeshLOD >();
 				for( auto ot = it->SubObjects.begin(); ot != it->SubObjects.end(); ot++ )
 				{
-					newLOD->batchList.emplace_back( RMeshBatch( ot->MaterialIndex ) );
+					newLOD->batchList.emplace_back( RSubMesh( ot->MaterialIndex ) );
 				}
 
 				newLOD->bCached = false;

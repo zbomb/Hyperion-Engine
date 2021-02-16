@@ -150,9 +150,6 @@ namespace Hyperion
 		bufferPtr->ScreenFar		= SCREEN_FAR;
 
 		m_Context->Unmap( m_ConstantBuffer.Get(), 0 );
-		
-		ID3D11Buffer* bufferList[] = { m_ConstantBuffer.Get() };
-		m_Context->CSSetConstantBuffers( 0, 1, bufferList );
 
 		m_ScreenWidth	= screenRes.Width;
 		m_ScreenHeight	= screenRes.Height;
@@ -203,6 +200,9 @@ namespace Hyperion
 		
 		ID3D11SamplerState* samplers[] = { m_Sampler.Get() };
 		m_Context->CSSetSamplers( 0, 1, samplers );
+
+		ID3D11Buffer* bufferList[] = { m_ConstantBuffer.Get() };
+		m_Context->CSSetConstantBuffers( 0, 1, bufferList );
 
 		m_bAttached = true;
 

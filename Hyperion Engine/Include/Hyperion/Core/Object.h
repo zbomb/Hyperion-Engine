@@ -374,30 +374,15 @@ namespace Hyperion
 	private:
 
 		uint32 m_Identifier;
-		std::chrono::time_point< std::chrono::high_resolution_clock > m_LastTick;
 		bool m_IsValid;
 		std::shared_ptr< _ObjectState > m_ThisState;
 
-		void PerformTick()
+		void PerformTick( double inDelta )
 		{
 			if( bRequiresTick )
 			{
-				// Check if this is the first tick, if so, then delta will be 0
-				double Delta = 0.0;
-				auto Now = std::chrono::high_resolution_clock::now();
-
-				// Calculate the delta since last tick
-				if( m_LastTick != std::chrono::time_point< std::chrono::high_resolution_clock >::min() )
-				{
-					std::chrono::duration< double > duration = Now - m_LastTick;
-					Delta = duration.count();
-				}
-
 				// Call Tick
-				Tick( Delta );
-
-				// Update last tick
-				m_LastTick = Now;
+				Tick( inDelta );
 			}
 		}
 
@@ -415,7 +400,6 @@ namespace Hyperion
 			HYPERION_VERIFY( m_Identifier != 0 && m_ThisState && m_IsValid, "Attempt to initialize object with invalid state" );
 
 			m_IsValid	= true;
-			m_LastTick	= std::chrono::high_resolution_clock::now();
 
 			Initialize();
 		}
@@ -453,7 +437,7 @@ namespace Hyperion
 		bool bRequiresInput;
 
 		Object()
-			: bRequiresTick( false ), m_IsValid( true ), m_LastTick( std::chrono::high_resolution_clock::now() ), m_Identifier( 0 ), bRequiresInput( false )
+			: bRequiresTick( false ), m_IsValid( true ), m_Identifier( 0 ), bRequiresInput( false )
 		{}
 
 		virtual ~Object()
@@ -463,7 +447,6 @@ namespace Hyperion
 		}
 
 		inline uint32 GetIdentifier() const		{ return m_Identifier; }
-		inline auto GetLastTick() const			{ return m_LastTick; }
 		inline bool IsValid() const				{ return m_IsValid; }
 		inline bool RequiresTick() const		{ return bRequiresTick; }
 
@@ -493,7 +476,7 @@ namespace Hyperion
 		template< typename _TTy >
 		friend void DestroyObject( HypPtr< _TTy >& inPtr );
 
-		friend void TickObjects();
+		friend void TickObjects( double );
 		friend void TickObjectsInput( InputManager&, double );
 	};
 
@@ -590,8 +573,8 @@ namespace Hyperion
 		}
 	}
 
-	void TickObjects();
-	void TickObjectsInput( InputManager& );
+	void TickObjects( double );
+	void TickObjectsInput( InputManager&, double );
 
 
 	/*

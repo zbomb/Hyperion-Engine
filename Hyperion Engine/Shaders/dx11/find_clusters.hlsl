@@ -48,21 +48,26 @@ SamplerState depthSampler						: register( s0 );
 [numthreads( 1, 1, 1 )]
 void main( uint3 groupID : SV_GroupID, uint3 groupThreadID : SV_GroupThreadID )
 {
-	uint pixelX = groupID.x;
-	uint pixelY = groupID.y;
+	float pixelX = float( groupID.x );
+	float pixelY = float( groupID.y );
 
-	uint clusterSizeX = uint( ScreenWidth / 15.f );
-	uint clusterSizeY = uint( ScreenHeight / 10.f );
+	float clusterSizeX = ScreenWidth / 15.f;
+	float clusterSizeY = ScreenHeight / 10.f;
 
-	uint clusterX = pixelX / clusterSizeX;
-	uint clusterY = pixelY / clusterSizeY;
+	uint clusterX = min( uint( floor( pixelX / clusterSizeX ) ), 14 );
+	uint clusterY = min( uint( floor( pixelY / clusterSizeY ) ), 9 );
 
 	float texelX = float( pixelX + 0.5f ) / ScreenWidth;
-	float texelY = float( pixelY - 0.5f ) / ScreenHeight;
+	float texelY = float( pixelY + 0.5f ) / ScreenHeight;
 
 	float pixelDepth	= depthBuffer.SampleLevel( depthSampler, float2( texelX, texelY ), 0.f ).w;
-	uint clusterZ		= floor( log( pixelDepth ) * DepthSliceA - DepthSliceB );
-	uint flatIndex		= clusterX + ( clusterY * 15 ) + ( clusterZ * 150 );
 
-	InterlockedOr( clusterList[ flatIndex ].bActive, true );
+	// If the depth is past the far plane, then we wont mark the cluster as active
+	if( pixelDepth <= ScreenFar )
+	{
+		uint clusterZ = min( uint( floor( log( pixelDepth ) * DepthSliceA - DepthSliceB ) ), 23 );
+		uint flatIndex = clusterX + ( clusterY * 15 ) + ( clusterZ * 150 );
+
+		InterlockedOr( clusterList[ flatIndex ].bActive, true );
+	}
 }

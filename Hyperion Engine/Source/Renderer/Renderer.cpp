@@ -15,6 +15,9 @@
 #include "Hyperion/Renderer/RenderPipeline.h"
 #include "Hyperion/Renderer/GBuffer.h"
 #include "Hyperion/Renderer/ViewClusters.h"
+#include "Hyperion/Core/Engine.h"
+#include "Hyperion/Renderer/PostProcessFX.h"
+#include "Hyperion/Renderer/Resources/RRenderTarget.h"
 
 
 // Include active graphics API's, so we can instantitae the current one
@@ -27,11 +30,48 @@ namespace Hyperion
 {
 
 	/*
+	*	Console Variables
+	*/
+	ConsoleVar< String > g_CVar_AntiAliasing = ConsoleVar< String >(
+		"r_anti_aliasing", "The type of anti-aliasing to use", "none",
+		[] ( const String& inNewSetting )
+		{
+			auto renderer = Engine::GetRenderer();
+			if( renderer ) { renderer->OnAntiAliasSettingChanged( StrToAAType( inNewSetting ) ); }
+		}, THREAD_RENDERER );
+
+	ConsoleVar< uint32 > g_CVar_DynamicShadowMaxQuality = ConsoleVar< uint32 >(
+		"r_dynamic_shadow_max_quality", "The maximum level of quality to use when rendering dynamic shadows, 0 is highest [8k], 7 is lowest",
+		1, 0, 7, [] ( uint32 inNewSetting )
+		{
+			auto renderer = Engine::GetRenderer();
+			if( renderer ) { renderer->OnShadowQualityChanged( inNewSetting ); }
+		}, THREAD_RENDERER );
+
+	ConsoleVar< uint32 > g_CVar_DynamicShadowMemoryPoolSize = ConsoleVar< uint32 >(
+		"r_dynamic_shadow_memory_pool_size", "The amount of memory (in MB) to use for the shadow map memory pool",
+		128, 8, 32768, [] ( uint32 inNewSetting )
+		{
+			auto renderer = Engine::GetRenderer();
+			if( renderer ) { renderer->OnShadowMemoryPoolSizeChanged( inNewSetting ); }
+		}, THREAD_RENDERER );
+
+	ConsoleVar< uint32 > g_CVar_DynamicShadowLimit = ConsoleVar< uint32 >(
+		"r_dynamic_shadow_limit", "The most number of dynamic shadows that can be rendered in a frame (exluding directional light shadow)",
+		16, 0, 128, [] ( uint32 inNewSetting )
+		{
+			auto renderer = Engine::GetRenderer();
+			if( renderer ) { renderer->OnDynamicShadowLimitChanged( inNewSetting ); }
+		}, THREAD_RENDERER );
+
+
+	/*
 	*	Constructor
 	*/
 	Renderer::Renderer( GraphicsAPI inAPI, void* inWindow, const ScreenResolution& inRes, bool bVSync )
 		: m_APIType( inAPI ), m_pWindow( inWindow ), m_Resolution( inRes ), m_bVSync( bVSync ), m_Scene( std::make_shared< ProxyScene >() ), m_AllowCommands( true ),
-		m_AmbientLightColor( 1.f, 1.f, 1.f ), m_AmbientLightIntensity( 0.2f )
+		m_AmbientLightColor( 1.f, 1.f, 1.f ), m_AmbientLightIntensity( 0.2f ), m_AAType( AntiAliasingType::None ), m_LastFramePresent( std::chrono::high_resolution_clock::now() ),
+		m_AverageFramesPerSecond( 0.f )
 	{
 		// We store a copy of the resolution info in an atomic variable
 		// This way we can get this info from other threads without a data race
@@ -39,6 +79,9 @@ namespace Hyperion
 		m_bCachedVSync.store( bVSync );
 
 		Console::WriteLine( "[Renderer] Starting renderer at a resolution of ", inRes.Width, "x", inRes.Height, " and in ", inRes.FullScreen ? "fullscreen" : "windowed", " mode" );
+
+		// Determine which type of AA to use
+		m_AAType = StrToAAType( g_CVar_AntiAliasing.GetValue() );
 
 		// Create the adaptive asset manaer
 		m_StreamingManager	= CreateObject< BasicStreamingManager >();
@@ -70,6 +113,23 @@ namespace Hyperion
 	*	Destructor
 	*/
 	Renderer::~Renderer()
+	{
+	}
+
+	void Renderer::OnAntiAliasSettingChanged( AntiAliasingType inSetting )
+	{
+
+	}
+
+	void Renderer::OnShadowQualityChanged( uint32 inSetting )
+	{
+	}
+
+	void Renderer::OnShadowMemoryPoolSizeChanged( uint32 inSetting )
+	{
+	}
+
+	void Renderer::OnDynamicShadowLimitChanged( uint32 inSetting )
 	{
 	}
 
@@ -119,6 +179,38 @@ namespace Hyperion
 		// Ensure view clusters get built on the first frame
 		m_ViewClusters->MarkDirty();
 
+		// Create resources needed for post-processing system
+		TextureParameters params {};
+
+		params.AssetIdentifier	= ASSET_INVALID;
+		params.bAutogenMips		= false;
+		params.bCPURead			= false;
+		params.bDynamic			= false;
+		params.BindTargets		= RENDERER_TEXTURE_BIND_FLAG_SHADER | RENDERER_TEXTURE_BIND_FLAG_RENDER;
+		params.Format			= TextureFormat::RGBA_8BIT_UNORM_SRGB;
+		params.Width			= m_Resolution.Width;
+		params.Height			= m_Resolution.Height;
+		params.Depth			= 1;
+		
+		m_PostProcessBackBuffer		= m_API->CreateTexture2D( params );
+		m_PostProcessFrontBuffer	= m_API->CreateTexture2D( params );
+		m_PostProcessBackTarget		= m_API->CreateRenderTarget( m_PostProcessBackBuffer );
+		m_PostProcessFrontTarget	= m_API->CreateRenderTarget( m_PostProcessFrontBuffer );
+
+		if( !m_PostProcessBackBuffer || !m_PostProcessFrontBuffer || !m_PostProcessBackBuffer->IsValid() || !m_PostProcessFrontBuffer->IsValid() ||
+			!m_PostProcessBackTarget || !m_PostProcessFrontTarget || !m_PostProcessBackTarget->IsValid() || !m_PostProcessFrontTarget->IsValid() )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to initialize renderer, couldnt create post-process resources" );
+			return false;
+		}
+
+		m_PostProcessVertexShader = m_API->CreateVertexShader( VertexShaderType::Screen );
+		if( !m_PostProcessVertexShader || !m_PostProcessVertexShader->IsValid() )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to initialize renderer, couldnt create post-process vertex shader" );
+			return false;
+		}
+
 		return true;
 	}
 
@@ -134,6 +226,13 @@ namespace Hyperion
 
 		m_Commands.Clear();
 		m_ImmediateCommands.Clear();
+
+		m_PostProcessFrontBuffer.reset();
+		m_PostProcessBackBuffer.reset();
+		m_PostProcessFrontTarget.reset();
+		m_PostProcessBackTarget.reset();
+
+		m_PostProcessVertexShader.reset();
 
 		m_BuildClustersShader.reset();
 		m_FindClustersShader.reset();
@@ -206,6 +305,35 @@ namespace Hyperion
 				// Mark View Clusters Dirty
 				if( r.m_ViewClusters ) { r.m_ViewClusters->MarkDirty(); }
 
+				// Update post-processing resources
+				r.m_PostProcessFrontBuffer.reset();
+				r.m_PostProcessBackBuffer.reset();
+				r.m_PostProcessFrontTarget.reset();
+				r.m_PostProcessBackTarget.reset();
+
+				TextureParameters params {};
+
+				params.AssetIdentifier	= ASSET_INVALID;
+				params.bAutogenMips		= false;
+				params.bCPURead			= false;
+				params.bDynamic			= false;
+				params.BindTargets		= RENDERER_TEXTURE_BIND_FLAG_SHADER | RENDERER_TEXTURE_BIND_FLAG_RENDER;
+				params.Format			= TextureFormat::RGBA_8BIT_UNORM_SRGB;
+				params.Width			= inRes.Width;
+				params.Height			= inRes.Height;
+				params.Depth			= 1;
+				
+				r.m_PostProcessFrontBuffer	= r.m_API->CreateTexture2D( params );
+				r.m_PostProcessBackBuffer	= r.m_API->CreateTexture2D( params );
+				r.m_PostProcessFrontTarget	= r.m_API->CreateRenderTarget( r.m_PostProcessFrontBuffer );
+				r.m_PostProcessBackTarget	= r.m_API->CreateRenderTarget( r.m_PostProcessBackBuffer );
+
+				if( !r.m_PostProcessFrontBuffer || !r.m_PostProcessBackBuffer || !r.m_PostProcessFrontTarget || !r.m_PostProcessBackTarget ||
+					!r.m_PostProcessFrontBuffer->IsValid() || !r.m_PostProcessBackBuffer->IsValid() || !r.m_PostProcessFrontTarget->IsValid() || !r.m_PostProcessBackTarget->IsValid() )
+				{
+					Console::WriteLine( "[ERROR] Renderer: Failed to update post-processing resources for resolution update!" );
+				}
+
 				// Call OnResolutionUpdated
 				r.OnResolutionChanged( inRes );
 
@@ -222,7 +350,16 @@ namespace Hyperion
 	void Renderer::Frame()
 	{
 		// Update our 'proxy' scene, and store the current view state
-		UpdateScene();
+		//auto frameBegin = std::chrono::high_resolution_clock::now();
+		if( !UpdateScene() )
+		{
+			// If we couldnt consume an entire frame of updates, we end the frame early before drawing
+			// This might cause some uneven frame rates though, when the renderer and game thread are running at different frequencies
+			return;
+		}
+
+		//auto updateEnd = std::chrono::high_resolution_clock::now();
+
 		GetViewState( m_ViewState );
 
 		// Update our matricies
@@ -231,20 +368,65 @@ namespace Hyperion
 		m_API->CalculateOrthoMatrix( m_Resolution, m_OrthoMatrix );
 
 		m_API->SetCameraInfo( m_ViewState ); // TODO: DEPRECATE THIS
+		//auto matrixEnd = std::chrono::high_resolution_clock::now();
 
 		// Next, we need to prepare the API for the frame
 		m_API->BeginFrame();
+		//auto beginEnd = std::chrono::high_resolution_clock::now();
 
 		// Call derived class to render the current scene
 		RenderScene();
+		//auto renderEnd = std::chrono::high_resolution_clock::now();
 
+		// Then, we need to render post-process FX, like FXAA, etc..
+		RenderPostProcessFX();
+		//auto postEnd = std::chrono::high_resolution_clock::now();
+
+		// Calculate the average FPS over the last 60 frames
+		auto prePresentTime = std::chrono::high_resolution_clock::now();
+		std::chrono::duration< float, std::milli > frameTimeDur = prePresentTime - m_LastFramePresent;
+		float frameTime = frameTimeDur.count();
+
+		// Calculate average frame time, over the last 60 frames
+		auto frameCount		= m_PreviousFrameTimes.size();
+		float avgFrameTime	= 0.f;
+
+		for( int i = 0; i < frameCount; i++ )
+		{
+			avgFrameTime += m_PreviousFrameTimes[ i ];
+		}
+
+		avgFrameTime /= static_cast<float>( frameCount );
+		m_AverageFramesPerSecond.store( 1000.f / avgFrameTime );
+
+		m_PreviousFrameTimes.push_back( frameTime );
+		
+		if( frameCount > 60 )
+		{
+			m_PreviousFrameTimes.pop_front();
+		}
+
+		m_LastFramePresent = prePresentTime;
 		m_API->EndFrame();
+
+		//auto endEnd = std::chrono::high_resolution_clock::now();
+
+		//std::chrono::duration< double, std::micro > updateTime = updateEnd - frameBegin;
+		//std::chrono::duration< double, std::micro > matrixTime = matrixEnd - updateEnd;
+		//std::chrono::duration< double, std::micro > beginTime = beginEnd - matrixEnd;
+		//std::chrono::duration< double, std::micro > renderTime = renderEnd - matrixEnd;
+		//std::chrono::duration< double, std::micro > postTime = postEnd - renderEnd;
+		//std::chrono::duration< double, std::micro > endTime = endEnd - postEnd;
+		//std::chrono::duration< double, std::micro > frameTime = endEnd - frameBegin;
+
+		//Console::WriteLine( "----------------------------------------------------------------------------------- \nScene Update: ", updateTime.count(), "us \nMatrix Calculation: ", matrixTime.count(), "us \nFrame Begin: ", beginTime.count(),
+		//					"us \nRender: ", renderTime.count(), "us \nPost Process: ", postTime.count(), "us \nFrame End: ", endTime.count(), "us\nTotal: ", frameTime.count(), "us" );
 	}
 
 	/*
 	*	Renderer::UpdateScene
 	*/
-	void Renderer::UpdateScene()
+	bool Renderer::UpdateScene()
 	{
 		// Execute all immediate commands
 		// Were going to run them until the list is empty
@@ -262,7 +444,8 @@ namespace Hyperion
 		}
 
 		// For now, were just going to run the next frame of commands
-		auto nextCommand = m_Commands.PopValue();
+		auto nextCommand	= m_Commands.PopValue();
+
 		while( nextCommand.first )
 		{
 			// Execute this command
@@ -274,22 +457,16 @@ namespace Hyperion
 			// Check if this is the end of the frame, by the EOF flag
 			if( nextCommand.second->HasFlag( RENDERER_COMMAND_FLAG_END_OF_FRAME ) )
 			{
-				break;
+				return true;
 			}
 
 			// Pop the next command in the list
 			nextCommand = m_Commands.PopValue();
 		}
 
-		// And finally, were going to loop through the primitives, and update their 'world matricies' if theyre dirty
-		for( auto it = m_Scene->PrimitivesBegin(); it != m_Scene->PrimitivesEnd(); it++ )
-		{
-			if( it->second && it->second->m_bMatrixDirty )
-			{
-				m_API->CalculateWorldMatrix( it->second->GetTransform(), it->second->m_WorldMatrix );
-				it->second->m_bMatrixDirty = false;
-			}
-		}
+		// Were going to break out of the tick function, and let it execute again
+		std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
+		return false;
 	}
 
 	/*
@@ -597,6 +774,8 @@ namespace Hyperion
 			return 0;
 		}
 
+		//auto uploadBegin = std::chrono::high_resolution_clock::now();
+
 		// Upload static parameters
 		if( !vertexShader->UploadStaticParameters( *this, inFlags ) ||
 			!pixelShader->UploadStaticParameters( *this, inFlags ) ||
@@ -605,6 +784,9 @@ namespace Hyperion
 			Console::WriteLine( "[ERROR] Renderer: Failed to dispatch pipeline, static parameter upload failed" );
 			return 0;
 		}
+
+		//auto uploadEnd = std::chrono::high_resolution_clock::now();
+		//std::chrono::duration< double, std::nano > uploadTime = uploadEnd - uploadBegin;
 
 		// Upload g-buffer
 		if( bUseGBuffer )
@@ -618,6 +800,9 @@ namespace Hyperion
 			}
 		}
 
+		//auto gbufferEnd = std::chrono::high_resolution_clock::now();
+		//std::chrono::duration< double, std::nano > gbufferTime = gbufferEnd - uploadEnd;
+
 		// Upload view clusters
 		if( bUseClusters )
 		{
@@ -630,6 +815,9 @@ namespace Hyperion
 			}
 		}
 
+		//auto clusterEnd = std::chrono::high_resolution_clock::now();
+		//std::chrono::duration< double, std::nano > clusterTime = clusterEnd - gbufferEnd;
+
 		// Upload light buffer, light buffer is updated in the pre-pass phase
 		if( bUseLighting )
 		{
@@ -641,6 +829,9 @@ namespace Hyperion
 				return 0;
 			}
 		}
+
+		//auto lightingEnd = std::chrono::high_resolution_clock::now();
+		//std::chrono::duration< double, std::nano > lightingTime = lightingEnd - clusterEnd;
 
 		// Get the target depth stencil
 		std::shared_ptr< RDepthStencil > depthStencil {};
@@ -664,7 +855,7 @@ namespace Hyperion
 		// Attach and clear render target
 		switch( m_AttachedPipeline->GetRenderTarget() )
 		{
-		case PipelineRenderTarget::Screen:
+		case PipelineRenderTarget::BackBuffer:
 			// Clear the render target if needed
 			if( m_AttachedPipeline->IsRenderTargetClearingEnabled() )
 			{
@@ -679,7 +870,7 @@ namespace Hyperion
 			// Clear render targets if needed
 			if( m_AttachedPipeline->IsRenderTargetClearingEnabled() )
 			{
-				m_GBuffer->ClearRenderTargets( m_API, Color4F( 0.f, 0.f, 0.f, 1.f ) );
+				m_GBuffer->ClearRenderTargets( m_API );
 			}
 
 			m_API->SetGBufferRenderTarget( m_GBuffer, depthStencil );
@@ -689,7 +880,23 @@ namespace Hyperion
 
 			m_API->SetNoRenderTargetAndClusterWriteAccess( m_ViewClusters );
 			break;
+
+		case PipelineRenderTarget::PostProcessBuffer:
+		{
+			auto target = m_bPostProcessFrontTarget ? m_PostProcessBackTarget : m_PostProcessFrontTarget;
+
+			if( m_AttachedPipeline->IsRenderTargetClearingEnabled() )
+			{
+				m_API->ClearRenderTarget( target, Color4F( 0.f, 0.f, 0.f, 0.f ) );
+			}
+
+			m_API->SetRenderTarget( target, depthStencil );
+			break;
 		}
+		}
+
+		//auto targetEnd = std::chrono::high_resolution_clock::now();
+		//std::chrono::duration< double, std::nano > targetTime = targetEnd - lightingEnd;
 
 		// Disable Z-Buffer if need be
 		if( m_AttachedPipeline->IsZBufferEnabled() )
@@ -710,27 +917,129 @@ namespace Hyperion
 			m_API->DisableAlphaBlending();
 		}
 
-		// Render geometry based on the collection source suppliedZZ
+		// Render geometry based on the collection source supplied
 		uint32 batchCount = 0;
+
+		//auto zbEnd = std::chrono::high_resolution_clock::now();
+		//std::chrono::duration< double, std::nano > zbTime = zbEnd - targetEnd;
 
 		if( collectionSource == GeometryCollectionSource::Scene )
 		{
-			// Go through each batch, and render
-			for( auto it = inBatches.Begin(); it != inBatches.End(); it++ )
+
+			if( HYPERION_HAS_FLAG( collectionFlags, RENDERER_GEOMETRY_COLLECTION_FLAG_OPAQUE ) )
 			{
-				const auto& material = it->m_Material;
-
-				if( !vertexShader->UploadPrimitiveParameters( it->m_WorldMatrix, *material ) ||
-					!pixelShader->UploadPrimitiveParameters( it->m_WorldMatrix, *material ) ||
-					( geometryShader && !geometryShader->UploadPrimitiveParameters( it->m_WorldMatrix, *material ) ) )
+				for( auto it = inBatches.m_OpaqueGroups.begin(); it != inBatches.m_OpaqueGroups.end(); it++ )
 				{
-					Console::WriteLine( "[ERROR] Renderer: Failed to dispatch pipeline, couldnt upload primitive parameters" );
-					continue;
-				}
+					// If there are no batches in this group, then skip (shouldnt happen)
+					if( it->second.Batches.size() == 0 || it->second.IndexBuffer == nullptr || it->second.VertexBuffer == nullptr ) { continue; }
 
-				m_API->RenderBatch( it->m_VertexBuffer, it->m_IndexBuffer, it->m_IndexBuffer->GetCount() );
-				batchCount++;
+					// Upload this geometry to the graphics API
+					m_API->UploadGeometry( it->second.IndexBuffer, it->second.VertexBuffer );
+
+					// Iterate through the groups of different materials
+					for( auto mit = it->second.Batches.begin(); mit != it->second.Batches.end(); mit++ )
+					{
+						if( mit->second.Material == nullptr ) { continue; }
+
+						// Upload the material to the shaders
+						if( !vertexShader->UploadBatchMaterial( *mit->second.Material ) ||
+							!pixelShader->UploadBatchMaterial( *mit->second.Material ) ||
+							( geometryShader && !geometryShader->UploadBatchMaterial( *mit->second.Material ) ) )
+						{
+							continue;
+						}
+
+						// Now we need to render the instances in groups of 512
+						uint32 instanceCount = (uint32)mit->second.InstanceTransforms.size();
+						uint32 groupCount = ( ( instanceCount - 1 ) / RENDERER_MAX_INSTANCES_PER_BATCH ) + 1;
+
+						for( uint32 i = 0; i < groupCount; i++ )
+						{
+							uint32 groupBegin = i * RENDERER_MAX_INSTANCES_PER_BATCH;
+							uint32 groupEnd = Math::Min( groupBegin + RENDERER_MAX_INSTANCES_PER_BATCH, (uint32) instanceCount );
+							uint32 groupSize = groupEnd - groupBegin;
+
+							// Now we know how many instances are in this group, and the range in the list to look for the transforms
+							// So, we need to upload a transform list to the shaders if they need it
+							std::vector< Matrix > matrixList;
+							for( uint32 j = groupBegin; j < groupEnd; j++ )
+							{
+								matrixList.push_back( mit->second.InstanceTransforms[ j ] );
+							}
+
+							if( !vertexShader->UploadBatchTransforms( matrixList ) ||
+								!pixelShader->UploadBatchTransforms( matrixList ) ||
+								( geometryShader && !geometryShader->UploadBatchTransforms( matrixList ) ) )
+							{
+								continue;
+							}
+
+							batchCount += groupSize;
+
+							// Render the batch
+							m_API->RenderBatch( groupSize, it->second.IndexBuffer->GetCount() );
+						}
+					}
+				}
 			}
+
+			if( HYPERION_HAS_FLAG( collectionFlags, RENDERER_GEOMETRY_COLLECTION_FLAG_TRANSLUCENT ) )
+			{
+				for( auto it = inBatches.m_TranslucentGroups.begin(); it != inBatches.m_TranslucentGroups.end(); it++ )
+				{
+					// If there are no batches in this group, then skip (shouldnt happen)
+					if( it->second.Batches.size() == 0 || it->second.IndexBuffer == nullptr || it->second.VertexBuffer == nullptr ) { continue; }
+
+					// Upload this geometry to the graphics API
+					m_API->UploadGeometry( it->second.IndexBuffer, it->second.VertexBuffer );
+
+					// Iterate through the groups of different materials
+					for( auto mit = it->second.Batches.begin(); mit != it->second.Batches.end(); mit++ )
+					{
+						if( mit->second.Material == nullptr ) { continue; }
+
+						// Upload the material to the shaders
+						if( !vertexShader->UploadBatchMaterial( *mit->second.Material ) ||
+							!pixelShader->UploadBatchMaterial( *mit->second.Material ) ||
+							( geometryShader && !geometryShader->UploadBatchMaterial( *mit->second.Material ) ) )
+						{
+							continue;
+						}
+
+						// Now we need to render the instances in groups of 512
+						uint32 instanceCount = (uint32)mit->second.InstanceTransforms.size();
+						uint32 groupCount = ( ( instanceCount - 1 ) / RENDERER_MAX_INSTANCES_PER_BATCH ) + 1;
+
+						for( uint32 i = 0; i < groupCount; i++ )
+						{
+							uint32 groupBegin = i * RENDERER_MAX_INSTANCES_PER_BATCH;
+							uint32 groupEnd = Math::Min( groupBegin + RENDERER_MAX_INSTANCES_PER_BATCH, (uint32) instanceCount );
+							uint32 groupSize = groupEnd - groupBegin;
+
+							// Now we know how many instances are in this group, and the range in the list to look for the transforms
+							// So, we need to upload a transform list to the shaders if they need it
+							std::vector< Matrix > matrixList;
+							for( uint32 j = groupBegin; j < groupEnd; j++ )
+							{
+								matrixList.push_back( mit->second.InstanceTransforms[ j ] );
+							}
+
+							if( !vertexShader->UploadBatchTransforms( matrixList ) ||
+								!pixelShader->UploadBatchTransforms( matrixList ) ||
+								( geometryShader && !geometryShader->UploadBatchTransforms( matrixList ) ) )
+							{
+								continue;
+							}
+
+							batchCount += groupSize;
+
+							// Render the batch
+							m_API->RenderBatch( groupSize, it->second.IndexBuffer->GetCount() );
+						}
+					}
+				}
+			}
+
 		}
 		else
 		{
@@ -739,31 +1048,120 @@ namespace Hyperion
 			batchCount = 1;
 		}
 
+		//auto primEnd = std::chrono::high_resolution_clock::now();
+		//std::chrono::duration< double, std::nano > primTime = primEnd - zbEnd;
+
 		// Set everything back to the original state
 		m_API->DisableAlphaBlending();
 		m_API->EnableZBuffer();
 		m_API->DetachRenderTarget();
 
+		//auto passEnd = std::chrono::high_resolution_clock::now();
+		//std::chrono::duration< double, std::nano > detachTime = primEnd - passEnd;
+
+		//Console::WriteLine( "=====> Static Upload: ", uploadTime.count(), "ns \t GBuffer Upload: ", gbufferTime.count(), "ns \t Cluster Upload: ", clusterTime.count(), "ns \t ",
+		//					"Lighting Upload: ", lightingTime.count(), "ns \t Target Setting: ", targetTime.count(), "ns \t Blending/Depth Settings: ", zbTime.count(), "ns \t ",
+		//					"Main Primitive Pass: ", primTime.count(), "ns \t Detach: ", detachTime.count(), "ns" );
+
 		return batchCount;
 	}
 
 
-	void Renderer::CollectBatches( BatchCollector& outBatches, uint32 inFlags )
+	void Renderer::CollectBatches( BatchCollector& outBatches )
 	{
 		outBatches.Clear();
-		outBatches.SetFlags( inFlags );
 
-		for( auto it = m_Scene->PrimitivesBegin(); it != m_Scene->PrimitivesEnd(); it++ )
+		const uint32 iterMax = (uint32)m_Scene->m_Primitives.size();
+		for( uint32 i = 0; i < iterMax; i++ )
 		{
-			if( it->second )
+			auto prim_ptr = m_Scene->m_Primitives[ i ];
+			if( prim_ptr )
 			{
-				// Check view culling
-				if( m_API->CheckViewCull( it->second->m_Transform, it->second->GetAABB() ) )
+				auto& prim_ref = *prim_ptr;
+
+				// Check if we have to update this primitives world matrix
+				if( prim_ref.m_bMatrixDirty )
 				{
-					it->second->CollectBatches( outBatches );
+					m_API->CalculateWorldMatrix( prim_ref.m_Transform, prim_ref.m_WorldMatrix );
+					m_API->TransformAABB( prim_ref.m_Transform, prim_ref.GetAABB(), prim_ref.m_OrientedBounds );
+					prim_ref.m_bMatrixDirty = false;
+				}
+
+				if( prim_ref.m_bCacheDirty )
+				{
+					prim_ref.CacheMeshes();
+
+				}
+
+				if( m_API->CheckViewCull( prim_ref ) )
+				{
+					// Check if we need to update the world matrix
+					prim_ref.CollectBatches( outBatches );
 				}
 			}
 		}
+		
+	}
+
+	bool Renderer::ApplyPostProcessEffect( const std::shared_ptr<PostProcessFX>& inFX, uint32 inFlags )
+	{
+		HYPERION_VERIFY( m_Scene, "[Renderer] Scene was null!" );
+
+		if( !inFX || !inFX->IsValid() )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to apply post-process effect, the effect was null/invalid" );
+			return false;
+		}
+
+		// We need to get the correct input texture, and the correct output texture
+		std::shared_ptr< RRenderTarget > target		= nullptr;
+		std::shared_ptr< RTexture2D > source		= nullptr;
+
+		switch( inFX->GetRenderTarget() )
+		{
+		case PostProcessRenderTarget::BackBuffer:
+			// If were targetting the back buffer, thats going to be the target
+			target = m_API->GetRenderTarget();
+			source = m_bPostProcessFrontTarget ? m_PostProcessBackBuffer : m_PostProcessFrontBuffer;
+			break;
+		case PostProcessRenderTarget::Intermediate:
+			source = m_bPostProcessFrontTarget ? m_PostProcessFrontBuffer : m_PostProcessBackBuffer;
+			target = m_bPostProcessFrontTarget ? m_PostProcessBackTarget : m_PostProcessFrontTarget;
+			break;
+		}
+
+		if( !target || !target->IsValid() || !source || !source->IsValid() )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to apply post-process effect, render target/source is null/invalid" );
+			return false;
+		}
+
+		// Now, we need to attach the shader and upload parameters
+		auto shader = inFX->GetShader();
+		
+		if( !shader || !shader->Attach( source ) || !m_PostProcessVertexShader || !m_PostProcessVertexShader->Attach() )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to apply post-process effect, the shaders couldnt be attached" );
+			return false;
+		}
+
+		if( !shader->UploadStaticParameters( *this, inFlags ) || !m_PostProcessVertexShader->UploadStaticParameters( *this, inFlags ) )
+		{
+			Console::WriteLine( "[ERROR] Renderer: Failed to apply post-process effect, the static parameters couldnt be uploaded" );
+			return false;
+		}
+
+		// Before rendering, ensure the render target has been cleared
+		m_API->ClearRenderTarget( target, Color4F( 0.f, 0.f, 0.f, 0.f ) );
+		m_API->SetRenderTarget( target, nullptr );
+
+		m_API->RenderScreenQuad();
+		shader->Detach();
+		m_PostProcessVertexShader->Detach();
+
+		m_bPostProcessFrontTarget = !m_bPostProcessFrontTarget;
+
+		return true;
 	}
 
 
@@ -784,8 +1182,11 @@ namespace Hyperion
 		std::vector< std::shared_ptr< ProxyLight > > lightList;
 		for( auto it = m_Scene->LightsBegin(); it != m_Scene->LightsEnd(); it++ )
 		{
-			// TODO: Some type of predicate to select which lights need to be uploaded
-			lightList.push_back( it->second );
+			// We need to perform frustum culling, by using the radius of each light
+			if( m_API->CheckViewCull( *( it->second ) ) )
+			{
+				lightList.push_back( it->second );
+			}
 		}
 
 		if( !m_LightBuffer->UploadLights( lightList ) )

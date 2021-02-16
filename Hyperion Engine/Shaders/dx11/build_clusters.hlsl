@@ -4,6 +4,10 @@
 //		© 2021, Zachary Berry
 ////////////////////////////////////////////////////
 
+///////////////////////////
+//	Constants
+///////////////////////////
+#define CLUSTER_EXTRA_SIZE_PERCENT 0.01f;
 
 ///////////////////////////
 //	Structures
@@ -59,13 +63,12 @@ void main( uint3 groupID : SV_GroupID, uint3 groupThreadID : SV_GroupThreadID )
 	uint clusterY			= groupThreadID.y;
 	uint clusterZ			= groupID.x;
 	uint flatClusterIndex	= clusterX + ( clusterY * 15 ) + ( clusterZ * 150 );
-	uint clusterSizeX		= uint( ScreenWidth / 15.f );
-	uint clusterSizeY		= uint( ScreenHeight / 10.f );
+	float clusterSizeX		= ScreenWidth / 15.f;
+	float clusterSizeY		= ScreenHeight / 10.f;
 
 	if( ShaderMode == 1 )
 	{
-		// DEBUG: Were setting all clusters to 'active' so we can render translucent primitives as well
-		clusterList[ flatClusterIndex ].bActive = true;
+		clusterList[ flatClusterIndex ].bActive = false;
 	}
 	else
 	{
@@ -84,18 +87,24 @@ void main( uint3 groupID : SV_GroupID, uint3 groupThreadID : SV_GroupThreadID )
 
 		// Next, we need to project a line, from the camera through our points, and intersecting the MinDepth and MaxDepth planes
 		// This gives us the final AABB of the cluster
-		float3 clusterMaxNear = lineIntersectZPlane( clusterMaxVS, clusterNear );
-		float3 clusterMaxFar = lineIntersectZPlane( clusterMaxVS, clusterFar );
-		float3 clusterMinNear = lineIntersectZPlane( clusterMinVS, clusterNear );
-		float3 clusterMinFar = lineIntersectZPlane( clusterMinVS, clusterFar );
+		float3 minNear	= lineIntersectZPlane( clusterMinVS, clusterNear );
+		float3 minFar	= lineIntersectZPlane( clusterMinVS, clusterFar );
+		float3 maxNear	= lineIntersectZPlane( clusterMaxVS, clusterNear );
+		float3 maxFar	= lineIntersectZPlane( clusterMaxVS, clusterFar );
 
-		float3 clusterBoundsMin = min( min( clusterMaxNear, clusterMaxFar ), min( clusterMinNear, clusterMinFar ) );
-		float3 clusterBoundsMax = max( max( clusterMaxNear, clusterMaxFar ), min( clusterMinNear, clusterMinFar ) );
+		float3 minAABB	= min( min( minNear, minFar ), min( maxNear, maxFar ) );
+		float3 maxAABB	= max( max( minNear, minFar ), max( maxNear, maxFar ) );
 
-		// Finally, store our result in the cluster list
-		clusterList[ flatClusterIndex ].minAABB = clusterBoundsMin;
-		clusterList[ flatClusterIndex ].maxAABB = clusterBoundsMax;
-		clusterList[ flatClusterIndex ].bActive = true; // DEBUG
+		// Ensure the 'deepest' clusters reach all the way to SCREEN_FAR
+		if( clusterZ == 23 )
+		{
+			maxAABB.z = ScreenFar;
+		}
+
+		// Store values
+		clusterList[ flatClusterIndex ].minAABB = minAABB;
+		clusterList[ flatClusterIndex ].maxAABB = maxAABB;
+		clusterList[ flatClusterIndex ].bActive = false;
 	}
 }
 
@@ -127,8 +136,12 @@ float4 screenSpaceToViewSpace( float4 inPoint )
 
 float3 lineIntersectZPlane( float4 inPoint, float inDepthPlane )
 {
-	float3 normal = float3( 0.f, 0.f, 1.f );
+	float3 normal	= float3( 0.f, 0.f, 1.f );
+	float3 eye		= float3( 0.f, 0.f, 0.f );
 
-	float t = inDepthPlane / dot( normal, inPoint.xyz );
-	return t * inPoint.xyz;
+	float3 f = inPoint - eye;
+	float t = ( inDepthPlane - dot( normal, eye ) ) / dot( normal, f );
+
+	float3 result = eye + t * f;
+	return result;
 }

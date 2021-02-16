@@ -166,12 +166,12 @@ float4 main( PixelInput input ) : SV_TARGET
 uint3 getClusterIndicies( float2 inPixelPosition, float inDepth )
 {
 	// Calculate the cluster width and height
-	uint clusterSizeX = uint( ScreenWidth / 15.f );
-	uint clusterSizeY = uint( ScreenHeight / 10.f );
+	float clusterSizeX = ScreenWidth / 15.f;
+	float clusterSizeY = ScreenHeight / 10.f;
 
 	// Calculate the cluster X and Y
-	uint clusterX = uint( floor( inPixelPosition.x ) ) / clusterSizeX;
-	uint clusterY = uint( floor( inPixelPosition.y ) ) / clusterSizeY;
+	uint clusterX = uint( floor( inPixelPosition.x / clusterSizeX ) );
+	uint clusterY = uint( floor( inPixelPosition.y / clusterSizeY ) );
 
 	// Calculate the cluster depth slice (Z)
 	uint clusterZ = uint( floor( log( inDepth ) * DepthSliceTermA - DepthSliceTermB ) );

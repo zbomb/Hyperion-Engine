@@ -30,10 +30,10 @@ namespace Hyperion
 
 	protected:
 
-		std::map< String, std::any > m_Values;
-		std::map< String, std::shared_ptr< TextureAsset > > m_Textures;
+		std::map< std::string, std::any > m_Values;
+		std::map< std::string, std::shared_ptr< TextureAsset > > m_Textures;
 
-		MaterialAsset( std::map< String, std::any >&& inData, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength );
+		MaterialAsset( std::map< std::string, std::any >&& inData, const String& inPath, uint32 inIdentifier, uint64 inOffset, uint64 inLength );
 
 	public:
 
@@ -46,14 +46,14 @@ namespace Hyperion
 		MaterialAsset& operator=( MaterialAsset&& ) = delete;
 
 
-		bool GetBool( const String& inKey, bool inDefault = false );
-		int32 GetInt( const String& inKey, int32 inDefault = 0 );
-		uint32 GetUInt( const String& inKey, uint32 inDefault = 0 );
-		float GetFloat( const String& inKey, float inDefault = 0.f );
-		String GetString( const String& inKey, const String& inDefault = "" );
+		bool GetBool( const std::string& inKey, bool inDefault = false );
+		int32 GetInt( const std::string& inKey, int32 inDefault = 0 );
+		uint32 GetUInt( const std::string& inKey, uint32 inDefault = 0 );
+		float GetFloat( const std::string& inKey, float inDefault = 0.f );
+		std::string GetString( const std::string& inKey, const std::string& inDefault = "" );
 
-		std::shared_ptr< TextureAsset > GetTexture( const String& inKey );
-		std::any GetValue( const String& inKey );
+		std::shared_ptr< TextureAsset > GetTexture( const std::string& inKey );
+		std::any GetValue( const std::string &inKey );
 
 		inline auto ValuesBegin() const { return m_Values.begin(); }
 		inline auto ValuesEnd() const { return m_Values.end(); }

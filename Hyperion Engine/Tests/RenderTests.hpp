@@ -30,8 +30,8 @@ namespace Tests
 		auto world = Engine::GetGame()->GetWorld();
 
 		// Time for a intense render test...
-		uint32 objRowCount = 0;
-		uint32 objColCount = 0;
+		uint32 objRowCount = 100;
+		uint32 objColCount = 10;
 
 		uint32 lightRowCount = 10;
 		uint32 lightColCount = 10;
@@ -76,6 +76,7 @@ namespace Tests
 				light->SetBrightness( 0.8f );
 				light->SetRadius( 200.f );
 				
+				/*
 				switch( k )
 				{
 				case 0:
@@ -94,6 +95,9 @@ namespace Tests
 
 				k++;
 				if( k > 3 ) { k = 0; }
+				*/
+
+				light->SetColor( Color3F( 1.f, 1.f, 1.f ) );
 
 				world->AddEntity( light );
 				light->SetPosition( Vector3D( x, 20.f, z ) );

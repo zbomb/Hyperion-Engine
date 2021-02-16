@@ -91,7 +91,7 @@ namespace Hyperion
 	}
 
 
-	HMATReader::Result HMATReader::ReadEntry( String& outKey, std::any& outValue )
+	HMATReader::Result HMATReader::ReadEntry( std::string& outKey, std::any& outValue )
 	{
 		if( m_bInvalidFormat ) { return Result::InvalidFormat; }
 
@@ -137,12 +137,12 @@ namespace Hyperion
 		std::vector< byte > valueData( keyValueData.begin() + keyLen, keyValueData.end() );
 
 		std::vector< byte >().swap( keyValueData );
-
-		outKey = String( keyData, StringEncoding::UTF16 );
-		if( outKey.IsWhitespaceOrEmpty() )
-		{
-			return Result::InvalidKey;
-		}
+		
+		String tempKey( keyData, StringEncoding::UTF16 );
+		std::vector< byte > asciiData;
+		tempKey.CopyData( asciiData, StringEncoding::ASCII );
+		
+		outKey = std::string( asciiData.begin(), asciiData.end() );
 
 		switch( static_cast< ValueType >( valType ) )
 		{
@@ -187,7 +187,11 @@ namespace Hyperion
 		case ValueType::String:
 		default:
 
-			outValue = String( valueData, StringEncoding::UTF16 ).ToLower();
+			String tempData( valueData, StringEncoding::UTF16 );
+			std::vector< byte > tempVec;
+			tempData.CopyData( tempVec, StringEncoding::ASCII );
+
+			outValue = std::string( tempVec.begin(), tempVec.end() );
 			break;
 		}
 

@@ -29,8 +29,12 @@ namespace Hyperion
 	{
 		HYPERION_VERIFY( inDevice && inContext, "[DX11] Device and/or context was null!" );
 
-		// Store context pointer
-		m_Context = inContext;
+		// Query for newer version of context
+		if( FAILED( inContext->QueryInterface< ID3D11DeviceContext1 >( m_Context.GetAddressOf() ) ) )
+		{
+			Console::WriteLine( "[ERROR] DX11: Failed to load scene vertex shader, couldnt query for required level of context" );
+			return false;
+		}
 
 		auto shaderFile		= FileSystem::OpenFile( FilePath( SHADER_PATH_DX11_VERTEX_SCENE, PathRoot::Game ), FileMode::Read );
 		auto shaderSize		= shaderFile ? shaderFile->GetSize() : 0;
@@ -78,8 +82,8 @@ namespace Hyperion
 			return false;
 		}
 
-		bufferDesc.ByteWidth			= sizeof( ObjectMatrixBuffer );
-		bufferDesc.StructureByteStride	= sizeof( ObjectMatrixBuffer );
+		bufferDesc.ByteWidth			= sizeof( ObjectMatrixBuffer ) * RENDERER_MAX_INSTANCES_PER_BATCH;
+		bufferDesc.StructureByteStride	= sizeof( ObjectMatrixBuffer ) * RENDERER_MAX_INSTANCES_PER_BATCH;
 
 		if( FAILED( inDevice->CreateBuffer( &bufferDesc, NULL, m_ObjectMatrixBuffer.ReleaseAndGetAddressOf() ) ) )
 		{
@@ -121,7 +125,7 @@ namespace Hyperion
 			Shutdown();
 			return false;
 		}
-		
+
 		return true;
 	}
 
@@ -155,6 +159,9 @@ namespace Hyperion
 
 		m_Context->VSSetShader( m_VertexShader.Get(), NULL, 0 );
 		m_Context->IASetInputLayout( m_InputLayout.Get() );
+
+		ID3D11Buffer* bufferList[] = { m_StaticMatrixBuffer.Get(), m_ObjectMatrixBuffer.Get() };
+		m_Context->VSSetConstantBuffers( 0, 2, bufferList );
 
 		return true;
 	}
@@ -194,37 +201,33 @@ namespace Hyperion
 		bufferPtr->ProjectionMatrix		= DirectX::XMMatrixTranspose( dx11ProjMatrix );
 
 		m_Context->Unmap( m_StaticMatrixBuffer.Get(), 0 );
-		
-		ID3D11Buffer* bufferList[] = { m_StaticMatrixBuffer.Get() };
-		m_Context->VSSetConstantBuffers( 0, 1, bufferList );
 
 		return true;
 	}
 
 
-	bool DX11SceneVertexShader::UploadPrimitiveParameters( const Matrix& inWorldMatrix, const RMaterial& inMaterial )
+	bool DX11SceneVertexShader::UploadBatchTransforms( const std::vector< Matrix >& inMatricies )
 	{
 		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
 
-		// Convert matrix, to dx11 matrix
-		DirectX::XMMATRIX dx11WorldMatrix( inWorldMatrix.GetData() );
-
-		// Map our object matrix buffer
+		// Upload matrix list to the GPU
 		D3D11_MAPPED_SUBRESOURCE bufferData {};
 		if( FAILED( m_Context->Map( m_ObjectMatrixBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &bufferData ) ) )
 		{
-			Console::WriteLine( "[ERROR] DX11: Failed to upload primitive parameters to the scene vertex shader, the object constant buffer couldnt be mapped" );
+			Console::WriteLine( "[ERROR] DX11: Failed to upload batch transform list to vertex shader, the buffer couldnt be mapped" );
 			return false;
 		}
 
-		auto* bufferPtr			= (ObjectMatrixBuffer*) bufferData.pData;
-		bufferPtr->WorldMatrix	= DirectX::XMMatrixTranspose( dx11WorldMatrix );
+		// We want to use memcpy to actually copy the memory into the mapped buffer
+		for( uint32 i = 0; i < inMatricies.size(); i++ )
+		{
+			void* targetMemory = (void*)( (uint8*) bufferData.pData + ( i * 64 ) );
+			auto finalMatrix = DirectX::XMMatrixTranspose( DirectX::XMMATRIX( inMatricies[ i ].GetData() ) );
+
+			memcpy_s( targetMemory, 64, (void*)finalMatrix.r[ 0 ].m128_f32, 64 );
+		}
 
 		m_Context->Unmap( m_ObjectMatrixBuffer.Get(), 0 );
-
-		ID3D11Buffer* bufferList[] = { m_ObjectMatrixBuffer.Get() };
-		m_Context->VSSetConstantBuffers( 1, 1, bufferList );
-
 		return true;
 	}
 

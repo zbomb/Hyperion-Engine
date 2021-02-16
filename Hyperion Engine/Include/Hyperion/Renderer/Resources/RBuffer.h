@@ -34,6 +34,7 @@ namespace Hyperion
 		uint32 Size;
 		uint32 Count;
 		const void* Data;
+		uint32 SourceAsset;
 
 		BufferParameters()
 			: Type( BufferType::Vertex ), CanCPURead( false ), Dynamic( false ), Size( 0 ), Count( 0 ), Data( nullptr )
@@ -54,6 +55,7 @@ namespace Hyperion
 		virtual bool IsValid() const = 0;
 		virtual uint32 GetSize() const = 0;
 		virtual uint32 GetCount() const = 0;
+		virtual uint32 GetAssetIdentifier() const = 0;
 
 	};
 

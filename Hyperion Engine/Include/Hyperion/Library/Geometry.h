@@ -168,6 +168,7 @@ namespace Hyperion
 			Constructors
 		*/
 		explicit Vector3D( float inX = 0.f, float inY = 0.f, float inZ = 0.f );
+		Vector3D( const float* inData );
 		Vector3D( const Vector3D& inOther );
 		Vector3D( Vector3D&& inOther ) noexcept;
 
@@ -509,6 +510,33 @@ namespace Hyperion
 
 		Vector3D Min;
 		Vector3D Max;
+	};
+
+	/*=============================================================================================
+	*	Oriented Bounding-Box
+	=============================================================================================*/
+	struct OBB
+	{
+		Vector3D TopBackRight;
+		Vector3D TopBackLeft;
+		Vector3D TopFrontRight;
+		Vector3D TopFrontLeft;
+		Vector3D BottomBackRight;
+		Vector3D BottomBackLeft;
+		Vector3D BottomFrontRight;
+		Vector3D BottomFrontLeft;
+
+		OBB()
+			: TopBackRight(), TopBackLeft(), TopFrontRight(), TopFrontLeft(),
+			BottomBackRight(), BottomBackLeft(), BottomFrontRight(), BottomFrontLeft()
+		{}
+
+		OBB( const Vector3D& tfr, const Vector3D& tfl, const Vector3D& tbr, const Vector3D& tbl,
+			 const Vector3D& bfr, const Vector3D& bfl, const Vector3D& bbr, const Vector3D& bbl )
+			: TopBackRight( tbr ), TopBackLeft( tbl ), TopFrontRight( tfr ), TopFrontLeft( tfl ),
+			BottomFrontRight( bfr ), BottomFrontLeft( bfl ), BottomBackRight( bbr ), BottomBackLeft( bbl )
+		{}
+
 	};
 
 

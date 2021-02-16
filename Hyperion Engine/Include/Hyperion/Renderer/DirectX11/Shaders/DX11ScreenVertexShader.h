@@ -45,11 +45,12 @@ namespace Hyperion
 
 		bool UploadStaticParameters( Renderer& inRenderer, uint32 inFlags ) final;
 
-		// Parameter uploads that we dont need
-		inline bool UploadPrimitiveParameters( const Matrix& inWorldMatrix, const RMaterial& inMaterial ) final		{ return true; }
-		inline bool UploadLightBuffer( RLightBuffer& inBuffer ) final												{ return true; }
-		inline bool UploadViewClusters( RViewClusters& inClusters ) final											{ return true; }
-		inline bool UploadGBuffer( GBuffer& inGBuffer ) final														{ return true; }
+		// Parameter uploads that we dont need	
+		inline bool UploadBatchTransforms( const std::vector< Matrix >& inMatricies ) final		{ return true; }
+		inline bool UploadBatchMaterial( const RMaterial& inMaterial ) final					{ return true; }
+		inline bool UploadLightBuffer( RLightBuffer& inBuffer ) final							{ return true; }
+		inline bool UploadViewClusters( RViewClusters& inClusters ) final						{ return true; }
+		inline bool UploadGBuffer( GBuffer& inGBuffer ) final									{ return true; }
 
 		inline ID3D11VertexShader* GetDX11Shader() const { return m_VertexShader ? m_VertexShader.Get() : nullptr; }
 

@@ -43,6 +43,7 @@ namespace Hyperion
 
 	std::function< void( const String& ) > Engine::s_FatalErrorCallback( nullptr );
 	std::atomic< bool > Engine::s_bFatalError( false );
+	std::atomic< bool > Engine::s_bSuspended( false );
 
 
 	std::shared_ptr< Engine > Engine::Get()
@@ -337,7 +338,7 @@ namespace Hyperion
 		params.Identifier			= THREAD_RENDERER;
 		params.AllowTasks			= true;
 		params.Deviation			= 0.f;
-		params.Frequency			= 60.f;
+		params.Frequency			= 0.f;
 		params.MinimumTasksPerTick	= 3;
 		params.MaximumTasksPerTick	= 0;
 		params.StartAutomatically	= true;
@@ -473,20 +474,49 @@ namespace Hyperion
 		// If the render thread isnt running, or is behind on processing frames, we will skip this tick
 		// TODO: Is this the best way to do this? Probably not
 		if( !m_RenderThread || !m_RenderThread->IsRunning() || !m_Renderer ||
-			!m_FenceWatcher->WaitForCount( 1, std::chrono::milliseconds( 10 ), ComparisonType::LESS_THAN_OR_EQUAL ) )
+			!m_FenceWatcher->WaitForCount( 1, std::chrono::milliseconds( 1 ), ComparisonType::LESS_THAN_OR_EQUAL ) )
 		{
 			return;
 		}
 
+		// Pause system, causes an issue with clocks that track rick deltas
+		// If we are paused, we need to act like that time doesnt exist.
+		static bool bWasSuspended = false;
+		static std::chrono::duration< double > preSuspendedDuration;
+
+		if( s_bSuspended )
+		{
+			if( !bWasSuspended )
+			{
+				preSuspendedDuration = std::chrono::high_resolution_clock::now() - m_LastGameTick;
+				bWasSuspended = true;
+			}
+			
+			std::this_thread::sleep_for( std::chrono::milliseconds( 5 ) );
+			return;
+		}
+
+		auto now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration< double > tickDuration;
+
+		if( bWasSuspended )
+		{
+			bWasSuspended = false;
+			tickDuration = preSuspendedDuration;
+		}
+		else
+		{
+			tickDuration = now - m_LastGameTick;
+		}
+
 		// Tick Input System
 		m_Input->ProcessUpdates();
-		auto now = std::chrono::high_resolution_clock::now();
-		std::chrono::duration< double > dur = now - m_LastGameTick;
-		TickObjectsInput( *m_Input, dur.count() );
-		m_LastGameTick = now;
+		TickObjectsInput( *m_Input, tickDuration.count() );
 
 		// Tick Objects
-		TickObjects();
+		TickObjects( tickDuration.count() );
+
+		m_LastGameTick = now;
 
 		// Send updates to render thread for next frame
 		m_Game->ProcessRenderUpdates();
@@ -580,12 +610,25 @@ namespace Hyperion
 	}
 
 
+	void Engine::Suspend()
+	{
+		s_bSuspended = true;
+		Console::WriteLine( "Engine: Suspending execution..." );
+	}
+
+
+	void Engine::Resume()
+	{
+		s_bSuspended = false;
+		Console::WriteLine( "Engine: Resuming execution..." );
+	}
+
+
 	void Engine::WaitForInitComplete()
 	{
 		{
 			std::unique_lock< std::mutex > lock( m_GameWaitMutex );
 			while( !m_bGameInit && !s_bFatalError ) { m_GameWaitCondition.wait_for( lock, std::chrono::milliseconds( 10 ) ); }
-			
 		}
 
 		{

@@ -13,9 +13,6 @@
     <Filter Include="Renderer">
       <UniqueIdentifier>{c77c9b24-05c8-47d0-b1c8-917015999edb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\DirectX11">
-      <UniqueIdentifier>{ae4aecca-36f1-4629-b540-2a7f6d510445}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Renderer\Proxy">
       <UniqueIdentifier>{3eb64028-56c7-4305-a15b-0a87edbb2444}</UniqueIdentifier>
     </Filter>
@@ -62,17 +59,23 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Renderer\DirectX11\Shaders">
-      <UniqueIdentifier>{82014213-04f7-4b0e-a7b2-e89772710c7b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{e99a36ec-ce0e-4130-a843-244be6cbb71d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\Resources">
-      <UniqueIdentifier>{a8229b9f-88af-459f-b0bc-09e796f22d95}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shaders\dx11">
       <UniqueIdentifier>{61eb2b6b-164c-4f76-ab7c-bc20c90178ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders\incl">
+      <UniqueIdentifier>{842c6efa-af17-48ce-b97b-2718b5811c9b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\Resources">
+      <UniqueIdentifier>{5935ebbd-d257-4f34-9c55-b8d3d136bbd3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\DirectX11">
+      <UniqueIdentifier>{010797a2-3ac3-425e-b4ad-e97050cc7cea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\DirectX11\Shaders">
+      <UniqueIdentifier>{60f44897-9064-4b0e-b271-fc0c5eb65c9c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -90,9 +93,6 @@
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Framework\Component.h">
       <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Renderer.h">
-      <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyScene.h">
       <Filter>Renderer\Proxy</Filter>
@@ -163,9 +163,6 @@
     <ClInclude Include="Include\Hyperion\Core\Async.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11.h">
-      <Filter>Renderer\DirectX11</Filter>
-    </ClInclude>
     <ClInclude Include="Tests\RenderTests.hpp">
       <Filter>Tests</Filter>
     </ClInclude>
@@ -183,15 +180,6 @@
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Object.h">
       <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\IGraphics.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DataTypes.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Graphics.h">
-      <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Framework\RenderComponent.h">
       <Filter>Framework</Filter>
@@ -229,14 +217,8 @@
     <ClInclude Include="Include\Hyperion\Framework\TestEntity.h">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Buffer.h">
-      <Filter>Renderer\DirectX11</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Assets\TextureAsset.h">
       <Filter>Assets</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Texture.h">
-      <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Extern\zlib\zconf.h">
       <Filter>Extern\zlib</Filter>
@@ -373,12 +355,6 @@
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyStaticModel.h">
       <Filter>Renderer\Proxy</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DeferredRenderer.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11RenderTarget.h">
-      <Filter>Renderer\DirectX11</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Tools\HSMReader.h">
       <Filter>Tools</Filter>
     </ClInclude>
@@ -403,15 +379,6 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="Include\Hyperion\Streaming\BasicStreamingManager.h">
       <Filter>Streaming</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\GBuffer.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Frustum.h">
-      <Filter>Renderer\DirectX11</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11DepthStencil.h">
-      <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Library\Color.h">
       <Filter>Library</Filter>
@@ -443,25 +410,58 @@
     <ClInclude Include="Include\Hyperion\Framework\PointLight.h">
       <Filter>Framework</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\ViewClusters.h">
+    <ClInclude Include="Include\Hyperion\Framework\TransparencyTestEntity.h">
+      <Filter>Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Profiling.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\incl\FXAA.h">
+      <Filter>Shaders\incl</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\GBuffer.h">
       <Filter>Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11ViewClusters.h">
-      <Filter>Renderer\DirectX11</Filter>
+    <ClInclude Include="Include\Hyperion\Renderer\IGraphics.h">
+      <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\LightBuffer.h">
       <Filter>Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11LightBuffer.h">
-      <Filter>Renderer\DirectX11</Filter>
+    <ClInclude Include="Include\Hyperion\Renderer\PostProcessFX.h">
+      <Filter>Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Resources\RShader.h">
-      <Filter>Renderer\Resources</Filter>
+    <ClInclude Include="Include\Hyperion\Renderer\Renderer.h">
+      <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\RenderPipeline.h">
       <Filter>Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\ResourceManager.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\ViewClusters.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\BatchCollector.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DataTypes.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DeferredRenderer.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\Resources\RMaterial.h">
+      <Filter>Renderer\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resources\RMesh.h">
+      <Filter>Renderer\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resources\RRenderTarget.h">
+      <Filter>Renderer\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resources\RShader.h">
       <Filter>Renderer\Resources</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\Resources\RTexture.h">
@@ -473,47 +473,78 @@
     <ClInclude Include="Include\Hyperion\Renderer\Resources\RDepthStencil.h">
       <Filter>Renderer\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Resources\RMesh.h">
-      <Filter>Renderer\Resources</Filter>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11LightBuffer.h">
+      <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11SceneVertexShader.h">
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11ViewClusters.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11DepthStencil.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Frustum.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ForwardPreZShader.h">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\ResourceManager.h">
-      <Filter>Renderer</Filter>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11FXAAShader.h">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11GBufferPixelShader.h">
-      <Filter>Renderer\DirectX11\Shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ScreenVertexShader.h">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11LightingPixelShader.h">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\BatchCollector.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Resources\RRenderTarget.h">
-      <Filter>Renderer\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11BuildClustersShader.h">
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11SceneVertexShader.h">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11FindClustersShader.h">
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ScreenVertexShader.h">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11BuildClustersShader.h">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11CullLightsShader.h">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ForwardPreZShader.h">
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11FindClustersShader.h">
       <Filter>Renderer\DirectX11\Shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\TransparencyTestEntity.h">
-      <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ForwardPixelShader.h">
       <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\MaterialBuffer.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ShadowVertexShader.h">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ShadowPixelShader.h">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DynamicShadowState.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\RMath.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Graphics.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Math.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11RenderTarget.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Texture.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Buffer.h">
+      <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -531,9 +562,6 @@
     </ClCompile>
     <ClCompile Include="Source\Framework\Component.cpp">
       <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Renderer\Renderer.cpp">
-      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Source\Renderer\Proxy\ProxyScene.cpp">
       <Filter>Renderer\Proxy</Filter>
@@ -565,9 +593,6 @@
     <ClCompile Include="Source\Renderer\Proxy\ProxyBase.cpp">
       <Filter>Renderer\Proxy</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Graphics.cpp">
-      <Filter>Renderer\DirectX11</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Framework\RenderComponent.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
@@ -591,9 +616,6 @@
     </ClCompile>
     <ClCompile Include="Source\Framework\LightComponent.cpp">
       <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Renderer\DataTypes.cpp">
-      <Filter>Renderer</Filter>
     </ClCompile>
     <ClCompile Include="Source\Framework\TestEntity.cpp">
       <Filter>Framework</Filter>
@@ -679,9 +701,6 @@
     <ClCompile Include="Source\Renderer\Proxy\ProxyStaticModel.cpp">
       <Filter>Renderer\Proxy</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\DeferredRenderer.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Tools\HSMReader.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
@@ -703,14 +722,8 @@
     <ClCompile Include="Source\Streaming\BasicStreamingManager.cpp">
       <Filter>Streaming</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\GBuffer.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Library\Color.cpp">
       <Filter>Library</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Renderer\DirectX11\DirectX11Texture.cpp">
-      <Filter>Renderer\DirectX11</Filter>
     </ClCompile>
     <ClCompile Include="Source\Framework\MovementComponent.cpp">
       <Filter>Framework</Filter>
@@ -736,41 +749,68 @@
     <ClCompile Include="Source\Framework\PointLight.cpp">
       <Filter>Framework</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Framework\TransparencyTestEntity.cpp">
+      <Filter>Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DataTypes.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DeferredRenderer.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\GBuffer.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\Renderer.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Renderer\RenderPipeline.cpp">
       <Filter>Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11SceneVertexShader.cpp">
+    <ClCompile Include="Source\Renderer\ResourceManager.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ForwardPixelShader.cpp">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ForwardPreZShader.cpp">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11FXAAShader.cpp">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11GBufferPixelShader.cpp">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ScreenVertexShader.cpp">
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11LightingPixelShader.cpp">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11LightingPixelShader.cpp">
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11SceneVertexShader.cpp">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ScreenVertexShader.cpp">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11BuildClustersShader.cpp">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11FindClustersShader.cpp">
-      <Filter>Renderer\DirectX11\Shaders</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11CullLightsShader.cpp">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Renderer\ResourceManager.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ForwardPreZShader.cpp">
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11FindClustersShader.cpp">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Framework\TransparencyTestEntity.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ForwardPixelShader.cpp">
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ShadowPixelShader.cpp">
       <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\Shaders\DX11ShadowVertexShader.cpp">
+      <Filter>Renderer\DirectX11\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\DX11Graphics.cpp">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Renderer\DirectX11\DX11Texture.cpp">
+      <Filter>Renderer\DirectX11</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -817,6 +857,15 @@
       <Filter>Shaders\dx11</Filter>
     </FxCompile>
     <FxCompile Include="Shaders\dx11\forward_pixel.hlsl">
+      <Filter>Shaders\dx11</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\dx11\fxaa.hlsl">
+      <Filter>Shaders\dx11</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\dx11\shadow_pixel.hlsl">
+      <Filter>Shaders\dx11</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\dx11\shadow_vertex.hlsl">
       <Filter>Shaders\dx11</Filter>
     </FxCompile>
   </ItemGroup>

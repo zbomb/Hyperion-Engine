@@ -118,9 +118,6 @@ namespace Hyperion
 		bufferPtr->DepthSliceB		= bufferPtr->DepthSliceA * logf( SCREEN_NEAR );
 
 		m_Context->Unmap( m_ConstantBuffer.Get(), 0 );
-		
-		ID3D11Buffer* bufferList[] = { m_ConstantBuffer.Get() };
-		m_Context->PSSetConstantBuffers( 0, 1, bufferList );
 
 		return true;
 	}
@@ -131,6 +128,10 @@ namespace Hyperion
 		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
 
 		m_Context->PSSetShader( m_PixelShader.Get(), NULL, 0 );
+
+		ID3D11Buffer* bufferList[] = { m_ConstantBuffer.Get() };
+		m_Context->PSSetConstantBuffers( 0, 1, bufferList );
+
 		return true;
 	}
 

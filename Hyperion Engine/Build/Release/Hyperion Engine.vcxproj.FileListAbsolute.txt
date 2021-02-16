@@ -7,3 +7,6 @@ D:\Hyperion\Build\Release\shaders\dx11\gbuffer.hps
 D:\Hyperion\Build\Release\shaders\dx11\lighting.hps
 D:\Hyperion\Build\Release\shaders\dx11\screen.hvs
 D:\Hyperion\Build\Release\shaders\dx11\scene.hvs
+D:\Hyperion\Build\Release\shaders\dx11\fxaa.hpps
+D:\Hyperion\Build\Release\shaders\dx11\shadow.hps
+D:\Hyperion\Build\Release\shaders\dx11\shadow.hvs

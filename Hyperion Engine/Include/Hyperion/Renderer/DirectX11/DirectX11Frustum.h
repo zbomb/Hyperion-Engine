@@ -194,6 +194,61 @@ namespace Hyperion
 		}
 
 		/*
+		*	DirectX11Frustum::PerformOBBCoherencyCheck
+		*	- Returns the plane index that we failed the test on
+		*	- If we pass, we will get a value less than zero
+		*/
+		int PerformCoherencyOBBTest( const OBB& inBounds, int inState )
+		{
+			auto topFrontRight		= DirectX::XMVectorSet( inBounds.TopFrontRight.X, inBounds.TopFrontRight.Y, inBounds.TopFrontRight.Z, 1.f );
+			auto topFrontLeft		= DirectX::XMVectorSet( inBounds.TopFrontLeft.X, inBounds.TopFrontLeft.Y, inBounds.TopFrontLeft.Z, 1.f );
+			auto topBackRight		= DirectX::XMVectorSet( inBounds.TopBackRight.X, inBounds.TopBackRight.Y, inBounds.TopBackRight.Z, 1.f );
+			auto topBackLeft		= DirectX::XMVectorSet( inBounds.TopBackLeft.X, inBounds.TopBackLeft.Y, inBounds.TopBackLeft.Z, 1.f );
+			auto bottomFrontRight	= DirectX::XMVectorSet( inBounds.BottomFrontRight.X, inBounds.BottomFrontRight.Y, inBounds.BottomFrontRight.Z, 1.f );
+			auto bottomFrontLeft	= DirectX::XMVectorSet( inBounds.BottomFrontLeft.X, inBounds.BottomFrontLeft.Y, inBounds.BottomFrontLeft.Z, 1.f );
+			auto bottomBackRight	= DirectX::XMVectorSet( inBounds.BottomBackRight.X, inBounds.BottomBackRight.Y, inBounds.BottomBackRight.Z, 1.f );
+			auto bottomBackLeft		= DirectX::XMVectorSet( inBounds.BottomBackLeft.X, inBounds.BottomBackLeft.Y, inBounds.BottomBackLeft.Z, 1.f );
+
+			// We want to check the plane index specified first
+			if( inState >= 0 )
+			{
+				if( DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ inState ], topFrontRight ) ) < 0.f &&
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ inState ], topFrontLeft ) ) < 0.f &&
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ inState ], topBackRight ) ) < 0.f &&
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ inState ], topBackLeft ) ) < 0.f &&
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ inState ], bottomFrontRight ) ) < 0.f &&
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ inState ], bottomFrontLeft ) ) < 0.f &&
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ inState ], bottomBackRight ) ) < 0.f &&
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ inState ], bottomBackLeft ) ) < 0.f )
+				{
+					return inState;
+				}
+			}
+
+			for( int i = 0; i < 6; i++ )
+			{
+				// If we already checked a plane, dont check it again
+				if( i == inState ) { continue; }
+
+				if( DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ i ], topFrontRight ) ) >= 0.f ||
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ i ], topFrontLeft ) ) >= 0.f ||
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ i ], topBackRight ) ) >= 0.f ||
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ i ], topBackLeft ) ) >= 0.f ||
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ i ], bottomFrontRight ) ) >= 0.f ||
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ i ], bottomFrontLeft ) ) >= 0.f ||
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ i ], bottomBackRight ) ) >= 0.f ||
+					DirectX::XMVectorGetX( DirectX::XMPlaneDotCoord( m_Planes[ i ], bottomBackLeft ) ) >= 0.f )
+				{
+					continue;
+				}
+
+				return i;
+			}
+
+			return -1;
+		}
+
+		/*
 		*	DirectX11Frustum::CheckAABB
 		*	- Returns true if the given AABB intersects the frustum
 		*/

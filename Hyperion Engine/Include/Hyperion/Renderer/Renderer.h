@@ -17,6 +17,7 @@
 #include "Hyperion/Renderer/ResourceManager.h"
 #include "Hyperion/Renderer/BatchCollector.h"
 #include "Hyperion/Renderer/Resources/RShader.h"
+#include "Hyperion/Renderer/DynamicShadowState.h"
 
 #include <atomic>
 
@@ -33,6 +34,8 @@ namespace Hyperion
 	class ProxyBase;
 	class TextureAsset;
 	class RenderPipeline;
+	class PostProcessFX;
+
 
 	/*
 		Renderer Instance
@@ -71,6 +74,15 @@ namespace Hyperion
 		std::atomic< bool > m_bCanChangeResolution;
 
 		/*
+		*	Post Processing
+		*/
+		std::shared_ptr< RTexture2D > m_PostProcessFrontBuffer;
+		std::shared_ptr< RTexture2D > m_PostProcessBackBuffer;
+		std::shared_ptr< RRenderTarget > m_PostProcessFrontTarget;
+		std::shared_ptr< RRenderTarget > m_PostProcessBackTarget;
+		bool m_bPostProcessFrontTarget;
+
+		/*
 		*	Other Members
 		*/
 		bool m_bVSync;
@@ -80,16 +92,24 @@ namespace Hyperion
 		ViewState m_ViewState;
 		Color3F m_AmbientLightColor;
 		float m_AmbientLightIntensity;
+		AntiAliasingType m_AAType;
+
+		std::chrono::high_resolution_clock::time_point m_LastFramePresent;
+		std::deque< float > m_PreviousFrameTimes;
+		std::atomic< float > m_AverageFramesPerSecond;
 
 		std::shared_ptr< RenderPipeline > m_AttachedPipeline;
 		std::shared_ptr< RComputeShader > m_BuildClustersShader;
 		std::shared_ptr< RComputeShader > m_FindClustersShader;
 		std::shared_ptr< RComputeShader > m_CullLightsShader;
 
+		std::shared_ptr< RVertexShader > m_PostProcessVertexShader;
+
 		/*
 		*	Pure Virtual Functions
 		*/
 		virtual void RenderScene() = 0;
+		virtual void RenderPostProcessFX() = 0;
 		virtual void OnResolutionChanged( const ScreenResolution& inRes ) = 0;
 
 	public:
@@ -116,6 +136,14 @@ namespace Hyperion
 		Renderer& operator=( Renderer&& ) = delete;
 
 		/*
+		*	Console Var Hooks
+		*/
+		void OnAntiAliasSettingChanged( AntiAliasingType inSetting );
+		void OnShadowQualityChanged( uint32 inSetting );
+		void OnShadowMemoryPoolSizeChanged( uint32 inSetting );
+		void OnDynamicShadowLimitChanged( uint32 inSetting );
+
+		/*
 		*	Getters
 		*/
 		inline std::shared_ptr< IGraphics > GetAPI() const						{ return m_API; }
@@ -135,6 +163,8 @@ namespace Hyperion
 		inline std::shared_ptr< RLightBuffer > GetLightBuffer() const			{ return m_LightBuffer; }
 		inline std::shared_ptr< RViewClusters > GetViewClusters() const			{ return m_ViewClusters; }
 		inline std::shared_ptr< GBuffer > GetGBuffer() const					{ return m_GBuffer; }
+		inline AntiAliasingType GetAntiAliasingType() const						{ return m_AAType; }
+		inline float GetFPS() const												{ return m_AverageFramesPerSecond.load(); }
 
 		// These two functions can only be called from the render thread
 		inline bool IsVSyncOnUnsafe() const										{ return m_bVSync; }
@@ -165,7 +195,17 @@ namespace Hyperion
 		uint32 DispatchPipeline( uint32 inFlags = 0 );
 		uint32 DispatchPipeline( const BatchCollector& inBatches, uint32 inFlags = 0 );
 
-		void CollectBatches( BatchCollector& outBatches, uint32 inFlags );
+		void CollectBatches( BatchCollector& outBatches );
+
+		/*
+		*	Post-Processing
+		*/
+		bool ApplyPostProcessEffect( const std::shared_ptr< PostProcessFX >& inFX, uint32 inFlags = 0 );
+
+		/*
+		*	Dynamic Shadowing
+		*/
+
 
 		/*
 		*	Other Member Functions
@@ -174,7 +214,7 @@ namespace Hyperion
 		virtual void Shutdown();
 
 		void Frame();
-		void UpdateScene();
+		bool UpdateScene();
 
 		void GetViewState( ViewState& outState ) const;
 		bool ChangeResolution( const ScreenResolution& inRes );
