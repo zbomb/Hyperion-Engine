@@ -1,0 +1,255 @@
+
+
+* We really could use some refactoring of how we call into the graphics api, currently.. its a mess.
+* Lets start by thinking about the startup..
+* Current System:
+
+-- Renderer Constructor --
+m_API = std::make_shared< ... >();
+m_API->SetResolution( ... );
+m_API->SetVSync( ... );
+
+
+-- Renderer Init --
+m_API->Initialize( pWindow );
+
+auto res = m_API->GetAvailableResolutions();
+...
+
+* New System:
+
+-- Renderer Constructor --
+m_API = std::make_shared< ... >();
+
+
+-- Renderer Init --
+
+m_API->Initialize( pWindow, inResolution, inVSync, inDepthStencilWidth, inDepthStencilHeight, outAvailableResolutions );
+
+
+
+* Then, some other functions...
+m_API->GetDepthStencilResolution();
+m_API->SetDepthStencilResolution( width, height );  // Will be called by API::SetResolution IFF either dimension of the new resolution is greater
+														than the existing depth stencil resolution in said dimension
+m_API->SetResolution( width, height );
+m_API->SetVSYnc( ... );
+m_API->GetResolution();
+m_API->GetVSync();
+
+
+This allows us the functionality we need
+
+Matricies:
+
+In an ideal world, we could wrap the selected API's matrix  system with our own bindings, and thats how abstraction would happen.
+This would allow us to do all matrix operations OUTSIDE of the graphics API class, which makes it a little more clean, and slightly
+more efficient because we dont have to call into the API implementation everytime we need a matrix.
+
+Where would we store the matricies now instead?
+In the normal renderer
+
+
+
+
+Its unfortunate, we already wrote quite a heavy math layer already.
+Idea:
+
+
+
+
+Seperate math library for renderer, that has interoperability with the normal math library.
+
+RVector
+RMatrix
+
+Are the main two we need to implement along with the library functions
+We can create a file "Renderer/CoreMath.h"
+
+This file has a preprocessor switch, that includes Renderer/DirectX11/MathImpl.h"
+
+
+So.. MathCore or CoreMath or Math?
+IMath?
+RMath?
+
+RMath is keeping with tradition
+MathCore sounds cool
+
+CoreMath sounds good too
+IMath.. nah, not the best option.
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------
+
+Next up, should we have a function in the graphics API to attach view clusters to a pixel shader as a writable output?
+In an ideal world, we would be able to do this within the shader class instead of having to use the graphics API
+but because of the DX11 API, that function has to exist. Because we set and track the render target in the graphics API itself and 
+with pixel shaders, unordered access views have to go along with pixel shaders.
+
+Also, with shadowing, the system we thought of is all good and everything, but, its going to break debugging, totally.
+So.. the only workaround is to use a different system.. namely, one single (or multiple) shadow maps that are totally resident.
+We need them in memory at the same time mostly anyway.
+
+
+So.. a single shadow map texture shared between all would cap out at 16k, which is... 2GB for full 32-bit precision, 2 samples per pixel.
+If we want to use half precision floats, we could get this down to 1GB
+
+So if we want to have a total of 1.5GB of shadows, we could create a 16K, and an 8K, and another 8K
+
+This would be a working solution, or just creating a pool, and if we need a bigger one, we can resize them on the fly.
+Or have some type of streaming system, where we use what is available, and resize it to the desired size in the background.
+Once it gets allocated, we swap out the pointers, and start rendering to a larger shadow map.
+
+Call it shadow streaming or something...
+But, if the shadow map assignments change quickly, then its not an ideal solution, but I think at 60FPS this should work fine.
+Although it might be a little difficult to implement.
+
+We would have to go through each frame, and see what shadow maps are undersized, check memory and resize.
+The problem becomes sticking to the memory budget though, since we might need to drop other shadow map sizes to accomidate a larger
+one, so the code becomes very complex, and not as fast as we would want.
+
+Updating tile mappings should be fast enough, to remap each frame. Creating the texture memory ahead of time is the ideal solution..
+
+The only way to do this without having a virtual tile mapping system is to allocate mega textures that we render into each frame.
+Lets just start there maybe?
+
+Option 1:
+
+	Create mega shadow map ahead of time, render all shadows into this single texture
+	
+	Pros..
+		Better hardware support
+		Very little frame to frame work needed (fast)
+		Easier memory managment
+		Can debug in RenderDoc AND VS2019
+		
+	Cons..
+		Not as cool!
+		Cant extend this to sparse shadow maps
+	
+Option 2:
+
+	Use virtual textures, to create a shadow map pool, each texture has multiple mips, we select what size mip we want and map memory to it
+	each frame, this way we ALWAYS have the proper sized shadow map, without having extra memory committed
+	
+		Pros..
+			Extendible to sparse shadow maps
+			Somewhat easy memory managment
+			Medium frame to frame work (still fast)
+			
+		Cons..
+			How fast can tile mappings happen within a frame?
+			Less hardware supporter (Varied levels of support)
+			Breaks debugging in both VS2019 and RenderDoc!
+
+
+
+For now... lets go with option 1 so we can properly debug our work, since its bound to have problems.
+How to handle max memory usage though?
+
+We can say there are 'levels' of memory usage.
+Instead of writing out a number of MB for shadow map memory, we can instead have preset levels..
+
+Level 0 (4MB) [1024x1024]
+Level 1 (8MB) [2x1024x1024]
+Level 2 (16MB) [2048x2048]
+Level 3 (32MB) [2x2048x2048]
+Level 4 (64MB) [4096x4096]
+Level 5 (128MB) [2x4096x4096]
+Level 6 (256MB) [8192x8192]
+Level 7 (512MB) [2x8192x8192]
+Level 8 (1GB) [16384x16384]
+Level 9 (2GB) [2x16384x16384]
+
+This gives us some flexibility, we can either have 1 or 2 shadow maps overall, meaning we only need 2 bind slots in our shaders for 
+dynamic shadows, and a set number for cascaded shadow maps as well. This is probably ideal for now.
+
+
+
+We can get rid of the RViewClusters, and the RLightBuffer classes.
+To do this, we need to expand the Buffer system, to allow for structured buffers, and unordered access views.
+
+
+
+We need a 'standard' resource scheme
+
+We can create things like render targets like so in the API...
+
+
+auto target = std::make_shared< DX11RenderTarget >();
+
+D3D11_RENDER_TARGET_VIEW_DESC desc {};
+desc.asdf = adf;
+
+m_Context->CreateRenderTargetView( &desc, target->GetAddress() );
+
+return target;
+
+
+This means we can keep the DX11 API calls within the graphics api class, and dont have to pass in the device.
+
+
+Either way works really, but thats perfectly fine.
+
+
+Now, instead of having a seperate render target view, and shader resource view, and unordered access view...
+We could have these functions within our classes, and use an interface somehow.
+
+RTexture2D::CanWriteTo();
+RTexture2D::CanRenderTo();
+RTexture2D::CanShaderRead();
+
+This would be within RTexture1D, RTexture2D, RTexture3D, and RBuffer
+
+This removes the need to have any 'View' classes, as they can be 'built into' the resource classes themselves.
+Then in our DX11 implementation...
+
+DX11Texture2D::GetShaderView();
+DX11Texture2D::GetUnorderedAccessView();
+DX11Texture2D::GetRenderTargetView();
+
+We can keep the whole.. depth stencil stuff hidden from the rest of the engine.. so these are the only 3 types of views into 
+a resource that we would actually ever need. This is probably a good step for interoperability of other APIs as well.
+
+Lets just think of better names for the 3 functions we will put into a new interface.. 'IGraphicsResource' or 'RGraphicsResource'
+
+RGraphicsResource::IsComputeWritable();
+RGraphicsResource::IsRenderTarget();
+RGraphicsResource::IsShaderResource();
+
+Then...
+
+RDX11Resource::GetUnorderedAccessView();
+RDX11Resource::GetRenderTargetView();
+RDX11Resource::GetShaderResourceView();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

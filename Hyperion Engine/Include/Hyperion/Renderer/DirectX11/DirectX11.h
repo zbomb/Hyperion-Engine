@@ -13,7 +13,6 @@
 // Link in directx 11 libs
 #pragma comment( lib, "dxgi.lib" )
 #pragma comment( lib, "d3d11.lib" )
-//#pragma comment( lib, "DirectXTK.lib" )
 
 #include <Windows.h>
 

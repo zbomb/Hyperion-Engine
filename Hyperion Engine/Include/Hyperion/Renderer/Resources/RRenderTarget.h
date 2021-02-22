@@ -11,6 +11,9 @@
 
 namespace Hyperion
 {
+	// Forward Declarations
+	class RTexture2D;
+
 
 	class RRenderTarget
 	{

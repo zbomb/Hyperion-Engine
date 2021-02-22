@@ -33,7 +33,6 @@ namespace Hyperion
 		ComPtr< ID3D11DeviceContext2 > m_Context;
 		ComPtr< IDXGISwapChain2 > m_SwapChain;
 		ComPtr< ID3D11Debug > m_Debug;
-		ComPtr< ID3D11Texture2D > m_BackBuffer;
 		ComPtr< ID3D11RenderTargetView > m_BackBufferRenderTarget;
 		ComPtr< ID3D11DepthStencilState > m_DepthDisabledState;
 		ComPtr< ID3D11DepthStencilState > m_DepthEnabledState;
@@ -42,6 +41,17 @@ namespace Hyperion
 		ComPtr< ID3D11RasterizerState1 > m_RasterState;
 		ComPtr< ID3D11BlendState > m_BlendEnabledState;
 		ComPtr< ID3D11BlendState > m_BlendDisabledState;
+		ComPtr< ID3D11Buffer > m_ScreenQuadVertexBuffer;
+
+		/*
+		*	Generic Resources
+		*/
+		std::shared_ptr< RTexture2D > m_BackBuffer;
+		std::shared_ptr< RBuffer > m_AttachedIndexBuffer;
+		std::shared_ptr< RBuffer > m_AttachedVertexBuffer;
+		std::shared_ptr< RBuffer > m_FloorVertexBuffer;
+		std::shared_ptr< RBuffer > m_FloorIndexBuffer;
+		std::vector< Matrix > m_FloorMatricies;
 
 		/*
 		*	Other Data Members
@@ -56,11 +66,20 @@ namespace Hyperion
 		String m_GraphicsDeviceName;
 		uint32 m_DedicatedVideoMemory;
 		uint32 m_SharedVideoMemory;
+		DXGI_RATIONAL m_DisplayRefreshRate;
+		bool m_bAsyncResourceCreation;
+
+		AlphaBlendingState m_AlphaBlendState;
+		DepthStencilState m_DepthState;
+
+		std::vector< std::shared_ptr< RTexture2D > > m_AttachedRenderTargets;
 
 		/*
 		*	Helper Functions
 		*/
-		void ResizeWindow( HWND inWindow, const ScreenResolution& inResolution );
+		void ResizeWindow( HWND inWindow, uint32 inWidth, uint32 inHeight );
+		void RebuildScreenQuad( uint32 inWidth, uint32 inHeight );
+		void RebuildDebugFloorBuffers();
 
 	public:
 
@@ -82,6 +101,7 @@ namespace Hyperion
 		bool UpdateResolution( const ScreenResolution& inResolution ) final;
 		ScreenResolution GetResolution() final;
 		void GetAvailableResolutions( std::vector< ScreenResolution >& outResolutions ) final;
+		float GetDisplayRefreshRate() final;
 
 		/*
 		*	Depth Stencil Managment
@@ -107,11 +127,10 @@ namespace Hyperion
 		/*
 		*	Render Target Managment
 		*/
-		std::shared_ptr< RRenderTarget > GetBackBufferRenderTarget() final;
-		std::shared_ptr< RRenderTarget > CreateRenderTarget( const std::shared_ptr< RTexture2D >& inTexture ) final;
-		bool ClearRenderTarget( const std::shared_ptr< RRenderTarget >& inTarget, float inR = 0.f, float inG = 0.f, float inB = 0.f, float inA = 0.f ) final;
-		void AttachRenderTargets( const std::vector< std::shared_ptr< RRenderTarget > >& inTargets, bool bUseDepthStencil = true ) final;
-		void AttachRenderTarget( const std::shared_ptr< RRenderTarget >& inTarget, bool bUseDepthStencil = true ) final;
+		std::shared_ptr< RTexture2D > GetBackBuffer() final;
+		bool ClearRenderTarget( const std::shared_ptr< RTexture2D >& inTarget, float inR = 0.f, float inG = 0.f, float inB = 0.f, float inA = 0.f ) final;
+		bool AttachRenderTargets( const std::vector< std::shared_ptr< RTexture2D > >& inTargets, bool bUseDepthStencil = true ) final;
+		bool AttachRenderTarget( const std::shared_ptr< RTexture2D >& inTarget, bool bUseDepthStencil = true ) final;
 		void DetachRenderTargets() final;
 
 		/*
@@ -123,7 +142,7 @@ namespace Hyperion
 		*	Rendering API
 		*/
 		void RenderScreenQuad() final;
-		void UploadMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount ) final; // Hold ref until detached?
+		void AttachMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount ) final;
 		void Render( uint32 inInstanceCount ) final;
 
 		void DisplayFrame() final;
@@ -153,15 +172,8 @@ namespace Hyperion
 		/*
 		*	Resource Copying
 		*/
-		bool CopyResource( const std::shared_ptr< RTexture1D >& inSource, const std::shared_ptr< RTexture1D >& inTarget ) final;
-		bool CopyResource( const std::shared_ptr< RTexture2D >& inSource, const std::shared_ptr< RTexture2D >& inTarget ) final;
-		bool CopyResource( const std::shared_ptr< RTexture3D >& inSource, const std::shared_ptr< RTexture3D >& inTarget ) final;
-		bool CopyResource( const std::shared_ptr< RBuffer >& inSource, const std::shared_ptr< RBuffer >& inTarget ) final;
-
-		bool CopyResourceRange( const std::shared_ptr< RTexture1D >& inSource, const std::shared_ptr< RTexture1D >& inTarget, const ResourceRangeParameters& inParams ) final;
-		bool CopyResourceRange( const std::shared_ptr< RTexture2D >& inSource, const std::shared_ptr< RTexture2D >& inTarget, const ResourceRangeParameters& inParams ) final;
-		bool CopyResourceRange( const std::shared_ptr< RTexture3D >& inSource, const std::shared_ptr< RTexture3D >& inTarget, const ResourceRangeParameters& inParams ) final;
-		bool CopyResourceRange( const std::shared_ptr< RBuffer >& inSource, const std::shared_ptr< RBuffer >& inTarget, const ResourceRangeParameters& inParams ) final;
+		bool CopyResource( const std::shared_ptr< RGraphicsResource >& inSource, const std::shared_ptr< RGraphicsResource >& inTarget ) final;
+		bool CopyResourceRange( const std::shared_ptr< RGraphicsResource >& inSource, const std::shared_ptr< RGraphicsResource >& inTarget, const ResourceRangeParameters& inParams ) final;
 
 		/*
 		*	Shader Creation

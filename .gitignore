@@ -41,6 +41,12 @@
 
 *.rsp
 Hyperion Engine/Boost/*
+Build/*
+x64/*
+Hyperion Engine/Build/*
+Hyperion Texture Library/x64/*
+Hyperion Utilities/bin/*
+Hyperion Utilities/obj/*
 
 *.ipch
 */ipch/*

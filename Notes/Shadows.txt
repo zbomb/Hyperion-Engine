@@ -280,6 +280,22 @@ But for now, lets implement non-sparse maps, and then we will think about sparse
 
 
 
+Now that were moving to a single depth buffer, we should decide on how to actually implement this...
+Should it just stay within the API interface, and remove the whole depth stencil class?
+That would be a little simpler, and we can just basically have a boolean in the renderpipeline class...
+
+
+renderPipeline->EnableDepthStencil();
+renderPipeline->DisableDepthStencil();
+
+
+Then, during startup we can read our settings and call...
+m_API->SetDepthStencilResolution( ... );
+
+
+
+
+
 Steps to render non-sparse shadow maps...
 
 Loop through dynamic lights in the scene...
@@ -396,3 +412,124 @@ Lets reiterate the algorithm...
 7. Create a light to shadow-map lookup value, and put this in our 'light buffer'
 
 8. Continue normal render pass....
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+* Lets start by creating our shadow map pool, and then start writing indivisual functions we need to render the shadow maps.
+
+We want to split up the dynamic shadow map rendering into a couple functions within the renderer, with some type of state object to
+carry information between the calls.
+
+bool Renderer::BuildDynamicLighting( DynamicLightBuffer& outBuffer, DynamicShadowState& outShadows, bool bUseDynamicShadows = true );
+bool Renderer::RenderDynamicShadows( DynamicShadowState& inState );
+
+
+struct DynamicShadowState
+{
+	struct ShadowmapAssignment
+	{
+		uint32 ProxyIndex;
+		uint8 PointLightFrustumIndex;
+		uint8 ShadowMapIndex;
+		uint8 ShadowMapQuality;
+		
+		std::vector< uint32 > MeshList;
+	}
+	
+	std::vector< ShadowmapAssignment > Assignments;
+}
+
+This structure describes which lights to render shadowmaps for, what quality to render each at, and what geometry to include.
+This is build during the first renderer call.
+
+We can then pass this into the second function to actually render each shadow map.
+This makes the high level usage pretty simple and easy to use.
+
+So what exactly does each function do?
+
+-> BuildDynamicLighting
+
+* Overall, this function creates the structure we just described, along with creating the dynamic light buffer
+* To do this, we need to go through and cull dynamic lights against the view frustum
+* If were doing dynamic shadows, we also calculate how much each lights shadow casting frustum intersects the view frustum to give us a scalar
+* If a light doesnt cast shadows, we return 0.f for this scalar
+* During this, we want to calculate the maximum required resolution to get perfect shadow quality
+	- Problem: Without having the view clusters on the CPU, this might not be possible to calculate, have to look into this
+	- This is fairly important, because we dont want to use a higher resolution than required, its a huge resource waste
+		and could be allocated elsewhere to get better rendering quality
+* We then sort through the list of possible shadow casting lights and attempt to calculate which ones are most important to the scene
+	and create a sorted list
+* We select the top 'X' shadow maps, and build an AABB encompasing all of these frustums
+* We loop through the scene geometry and cull against this big AABB, then indivisual light frustums, and if a mesh passes we place it into that
+	lights 'MeshList'
+* Once this is done, we can discard any lights without associated geometry, so we can use the resolution elsewhere
+* We then need to decide how many tiles to use for each shadow map, based on all of the parameters we have collected so far
+* Then we build our DynamicLightBuffer from all the lights that passed the initial viewFrustum-LightBounds cull pass
+
+-> RenderDynamicShadows
+
+* We use the structure generated in the first function to actually assign and render the shadow maps
+* First, we need to assign shadow maps from the pool, to the lights
+	- Optimization: If a shadow map is already allocated at a certain quality level, attempt to assign it to a light that is requesting
+		that same quality level, so we can skip out on mapping for that light
+* We have to map tiles for each of the lights we need
+* Then, we can iterate through the shadow maps, and render each of them using the mesh indexes we have
+
+
+Then, when it comes time to do the final lighting pass, we can pass in the shadow maps were using, along with our mappings contained within
+the dynamic light buffer, so we can perform shadowing in the shader.
+
+
+
+
+We need some additional classes to hold the things were using for this system..
+In terms of API, we need only a couple main things
+
+ID3D11Buffer -> Holds the memory backing the tiles used in this system
+std::vector< ID3D11Texture2D > -> Holds the virtual textures were using in this system
+std::vector< std::vector< ID3D11RenderTargetView > > -> Holds render targets for each mip, of each shadow map texture
+
+If we actually wanted to use a 16K shadow map, we would run out of memory.. because a 16K shadow map would use...
+2GB for a single shadow map!
+
+
+So.. although we have the ability to have a 16K mip, maybe we should scale this down a bit, and clamp to 4K
+This would give us a texture size of 128MB, or maybe 64MB if we use single channel, or half precision floats
+
+The only reason I would like to do this, is to have a depth stencil when rendering.
+So, we could simply....
+
+
+Lower max down to 4K, this would mean, we could use a single depth stencil view, that itself is 4K
+Since it uses 32bpp, we would end up with 16MB depth stencil.
+
+We could create a single depth stencil for the entire engine, since we never really need multiple depth stencils anyway?
+We could do something like, figuring out the max resolution we will ever render at, and create it at that resolution.
+We can do state switching if need be, and just have this single buffer to save on memory usage.
+
+Otherwise, having a stencil for the GBuffer, the back buffer, AND the shadow map system, would triple the memory usage.
+The only issue I foresee, is possibly needing two depth buffer for proper translucent pass over top of the scene.
+
+
+The problem becomes, if we want to use higher quality shadows, for instance.. 8K, we would need a depth buffer that takes up 64MB
+Then, if we want to use a 16K shadow map, we would need a... 1GB depth buffer!!
+
+At this point, were running on the ragged limits of current graphics technology anyway, so we should probably cap it out at 8K for now.
+And for this laptop, lets limit the shadow map resolution down to 4K max, we dont really need anything greater than that for now anyway.
+
+
+Then, at startup, based on the current graphics settings, we can decide what size depth buffer we will need for everything.
+
+
+
+When we change resolution, we need to perform this check, and when we update the shadow settings (r_MaxDynamicShadowQuality) we also have
+to re-evaluate this as well. 
+
+
+

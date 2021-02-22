@@ -95,14 +95,13 @@
     <ClInclude Include="Include\Hyperion\Renderer\DeferredRenderer.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Buffer.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11DepthStencil.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Frustum.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Graphics.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11LightBuffer.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Math.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11RenderTarget.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Texture.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11ViewClusters.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\RDX11Resource.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11BuildClustersShader.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11CullLightsShader.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11FindClustersShader.h" />
@@ -130,7 +129,7 @@
     <ClInclude Include="Include\Hyperion\Renderer\RenderPipeline.h" />
     <ClInclude Include="Include\Hyperion\Renderer\ResourceManager.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Resources\RBuffer.h" />
-    <ClInclude Include="Include\Hyperion\Renderer\Resources\RDepthStencil.h" />
+    <ClInclude Include="Include\Hyperion\Renderer\Resources\RGraphicsResource.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Resources\RMaterial.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Resources\RMesh.h" />
     <ClInclude Include="Include\Hyperion\Renderer\Resources\RRenderTarget.h" />

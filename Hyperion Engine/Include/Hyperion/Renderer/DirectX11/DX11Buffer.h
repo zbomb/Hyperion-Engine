@@ -8,39 +8,34 @@
 
 #include "Hyperion/Renderer/Resources/RBuffer.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11.h"
+#include "Hyperion/Renderer/DirectX11/RDX11Resource.h"
 
 
 namespace Hyperion
 {
 
-	class DX11Buffer : public RBuffer
+	class DX11Buffer : public RBuffer, public RDX11Resource
 	{
 
 	private:
 
-		ID3D11Buffer* m_Buffer;
+		Microsoft::WRL::ComPtr< ID3D11Buffer > m_Buffer;
+		Microsoft::WRL::ComPtr< ID3D11ShaderResourceView > m_SRV;
+		Microsoft::WRL::ComPtr< ID3D11UnorderedAccessView > m_UAV;
+
 		BufferType m_Type;
-		uint32 m_Size;
-		uint32 m_Count;
+		uint32 m_TotalSize;
+		uint32 m_ElementSize;
+		uint32 m_ElementCount;
 		uint32 m_AssetIdentifier;
 
 		DX11Buffer( BufferType inType )
-			: m_Buffer( nullptr ), m_Type( inType ), m_Size( 0 ), m_AssetIdentifier( 0 ), m_Count( 0 )
+			: m_Buffer( nullptr ), m_SRV( nullptr ), m_UAV( nullptr ), m_Type( inType ), m_TotalSize( 0 ), m_ElementSize( 0 ), m_ElementCount( 0 ), m_AssetIdentifier( ASSET_INVALID )
 		{}
 
 	public:
 
 		DX11Buffer() = delete;
-
-		DX11Buffer( const DX11Buffer& inOther )
-			: m_Buffer( inOther.m_Buffer ), m_Type( inOther.m_Type ), m_Size( inOther.m_Size ), m_Count( inOther.m_Count ), m_AssetIdentifier( inOther.m_AssetIdentifier )
-		{}
-
-		DX11Buffer( DX11Buffer&& inOther ) noexcept
-			: m_Buffer( std::move( inOther.m_Buffer ) ), m_Type( std::move( inOther.m_Type ) ), m_Size( std::move( inOther.m_Size ) ), m_Count( inOther.m_Count ), m_AssetIdentifier( inOther.m_AssetIdentifier )
-		{
-			inOther.m_Buffer = nullptr;
-		}
 
 		virtual ~DX11Buffer()
 		{
@@ -49,13 +44,14 @@ namespace Hyperion
 
 		void Shutdown() final
 		{
-			if( m_Buffer ) { m_Buffer->Release(); }
-			m_Buffer = nullptr;
+			m_UAV.Reset();
+			m_SRV.Reset();
+			m_Buffer.Reset();
 		}
 
 		bool IsValid() const final
 		{
-			return m_Buffer != nullptr;
+			return m_Buffer ? true : false;
 		}
 
 		BufferType GetType() const final
@@ -65,17 +61,17 @@ namespace Hyperion
 
 		uint32 GetSize() const final
 		{
-			return m_Size;
+			return m_TotalSize;
 		}
 
-		void UpdateSize( uint32 inSize )
+		uint32 GetElementSize() const final
 		{
-			m_Size = inSize;
+			return m_ElementSize;
 		}
 
 		uint32 GetCount() const final
 		{
-			return m_Count;
+			return m_ElementCount;;
 		}
 
 		uint32 GetAssetIdentifier() const final
@@ -83,9 +79,26 @@ namespace Hyperion
 			return m_AssetIdentifier;
 		}
 
-		ID3D11Buffer* GetBuffer()		{ return m_Buffer; }
-		ID3D11Buffer** GetAddress()		{ return &m_Buffer; }
+		ID3D11Buffer* Get()		{ return m_Buffer.Get(); }
+		ID3D11Buffer** GetAddress()		{ return m_Buffer.GetAddressOf(); }
 
+		/*
+		*	RDX11Resource Implementation
+		*/
+		inline ID3D11ShaderResourceView* GetSRV() final		{ return m_SRV.Get(); }
+		inline ID3D11UnorderedAccessView* GetUAV()	final	{ return m_UAV.Get(); }
+		inline ID3D11RenderTargetView* GetRTV() final		{ return nullptr; }
+		inline ID3D11ShaderResourceView** GetSRVAddress() final { return m_SRV.GetAddressOf(); }
+		inline ID3D11UnorderedAccessView** GetUAVAddress()	final { return m_UAV.GetAddressOf(); }
+		inline ID3D11RenderTargetView** GetRTVAddress() final { return nullptr; }
+		inline ID3D11Resource* GetResource() final { return m_Buffer.Get(); }
+		
+		/*
+		*	RGraphicsResource Implementation
+		*/
+		inline bool IsComputeTarget() const final	{ return m_UAV ? true : false; }
+		inline bool IsRenderTarget() const final	{ return false; }
+		inline bool IsShaderResource() const final	{ return m_SRV ? true : false; }
 
 		friend class DX11Graphics;
 	};

@@ -7,6 +7,7 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
+#include "Hyperion/Renderer/Resources/RGraphicsResource.h"
 
 
 namespace Hyperion
@@ -16,11 +17,12 @@ namespace Hyperion
 	*/
 	enum class BufferType
 	{
-		Vertex			= 1,
-		Index			= 2,
-		Constant		= 3,
-		ShaderResource	= 4,
-		StreamOutput	= 5
+		Vertex				= 1,
+		Index				= 2,
+		Constants			= 3,
+		Structured			= 4,
+		StructuredAppend	= 5,
+		Other				= 6
 	};
 
 	/*
@@ -29,22 +31,23 @@ namespace Hyperion
 	struct BufferParameters
 	{
 		BufferType Type;
+		uint32 ResourceAccess;
 		bool CanCPURead;
 		bool Dynamic;
-		uint32 Size;
+		uint32 ElementSize;
 		uint32 Count;
 		const void* Data;
 		uint32 SourceAsset;
 
 		BufferParameters()
-			: Type( BufferType::Vertex ), CanCPURead( false ), Dynamic( false ), Size( 0 ), Count( 0 ), Data( nullptr )
+			: Type( BufferType::Vertex ), CanCPURead( false ), Dynamic( false ), Count( 0 ), Data( nullptr ), ResourceAccess( RENDERER_RESOURCE_ACCESS_NONE ), ElementSize( 0 )
 		{}
 	};
 
 	/*
 	*	Buffer Interface
 	*/
-	class RBuffer
+	class RBuffer : public RGraphicsResource
 	{
 
 	public:
@@ -55,6 +58,7 @@ namespace Hyperion
 		virtual bool IsValid() const = 0;
 		virtual uint32 GetSize() const = 0;
 		virtual uint32 GetCount() const = 0;
+		virtual uint32 GetElementSize() const = 0;
 		virtual uint32 GetAssetIdentifier() const = 0;
 
 	};

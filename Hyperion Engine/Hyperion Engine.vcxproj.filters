@@ -470,9 +470,6 @@
     <ClInclude Include="Include\Hyperion\Renderer\Resources\RBuffer.h">
       <Filter>Renderer\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\Resources\RDepthStencil.h">
-      <Filter>Renderer\Resources</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11LightBuffer.h">
       <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
@@ -480,9 +477,6 @@
       <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11.h">
-      <Filter>Renderer\DirectX11</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11DepthStencil.h">
       <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DirectX11Frustum.h">
@@ -537,13 +531,16 @@
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Math.h">
       <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11RenderTarget.h">
-      <Filter>Renderer\DirectX11</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Texture.h">
       <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\DX11Buffer.h">
+      <Filter>Renderer\DirectX11</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\Resources\RGraphicsResource.h">
+      <Filter>Renderer\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Renderer\DirectX11\RDX11Resource.h">
       <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
   </ItemGroup>

@@ -7,18 +7,11 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
+#include "Hyperion/Renderer/Resources/RGraphicsResource.h"
 
 
 namespace Hyperion
 {
-	/*
-	*	Bind Target Flags
-	*/
-	constexpr uint32 RENDERER_TEXTURE_BIND_FLAG_NONE			= 0;
-	constexpr uint32 RENDERER_TEXTURE_BIND_FLAG_SHADER			= 1;
-	constexpr uint32 RENDERER_TEXTURE_BIND_FLAG_RENDER			= 2;
-	constexpr uint32 RENDERER_TEXTURE_BIND_FLAG_DEPTH_STENCIL	= 4;
-
 	/*
 	*	Texture Mip Data Structure
 	*/
@@ -41,16 +34,17 @@ namespace Hyperion
 		uint32 Width;
 		uint32 Height;
 		uint32 Depth;
+		uint32 MipCount;
 		bool bDynamic;
 		bool bCPURead;
-		uint32 BindTargets;
+		uint32 ResourceAccess;
 		TextureFormat Format;
 		bool bAutogenMips;
 		std::vector< TextureMipData > Data;
 		uint32 AssetIdentifier;
 
 		TextureParameters()
-			: Width( 0 ), Height( 0 ), Depth( 0 ), bDynamic( false ), bCPURead( false ), BindTargets( RENDERER_TEXTURE_BIND_FLAG_NONE ),
+			: Width( 0 ), Height( 0 ), Depth( 0 ), bDynamic( false ), bCPURead( false ), ResourceAccess( RENDERER_RESOURCE_ACCESS_NONE ),
 			Format( TextureFormat::NONE ), bAutogenMips( false ), AssetIdentifier( ASSET_INVALID )
 		{}
 	};
@@ -58,7 +52,7 @@ namespace Hyperion
 	/*
 	*	Texture Base Interface
 	*/
-	class RTextureBase
+	class RTextureBase : public RGraphicsResource
 	{
 
 	public:
@@ -72,17 +66,11 @@ namespace Hyperion
 		virtual uint32 GetDepth() const = 0;
 		virtual bool IsDynamic() const = 0;
 		virtual bool CanCPURead() const = 0;
-		virtual uint32 GetBindTargets() const = 0;
 		virtual TextureFormat GetFormat() const = 0;
 		virtual uint32 GetAssetIdentifier() const = 0;
 
 		virtual bool IsValid() const = 0;
 		virtual void Shutdown() = 0;
-
-		bool HasBindTarget( uint32 inTarget )
-		{
-			return( ( GetBindTargets() & inTarget ) == inTarget );
-		}
 	};
 
 	/*

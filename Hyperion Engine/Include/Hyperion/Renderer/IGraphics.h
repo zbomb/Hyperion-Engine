@@ -12,9 +12,7 @@
 #include "Hyperion/Renderer/Resources/RBuffer.h"
 #include "Hyperion/Renderer/Resources/RShader.h"
 #include "Hyperion/Renderer/Resources/RMesh.h"
-#include "Hyperion/Renderer/Resources/RDepthStencil.h" // TODO: Remove this?
 #include "Hyperion/Library/Color.h"
-#include "Hyperion/Renderer/LightBuffer.h"
 
 
 namespace Hyperion
@@ -97,6 +95,7 @@ namespace Hyperion
 		virtual bool UpdateResolution( const ScreenResolution& inResolution ) = 0;
 		virtual ScreenResolution GetResolution() = 0;
 		virtual void GetAvailableResolutions( std::vector< ScreenResolution >& outResolutions ) = 0;
+		virtual float GetDisplayRefreshRate() = 0;
 
 		/*
 		*	Depth Stencil Managment
@@ -122,11 +121,10 @@ namespace Hyperion
 		/*
 		*	Render Target Managment
 		*/
-		virtual std::shared_ptr< RRenderTarget > GetBackBufferRenderTarget() = 0;
-		virtual std::shared_ptr< RRenderTarget > CreateRenderTarget( const std::shared_ptr< RTexture2D >& inTexture ) = 0;
-		virtual bool ClearRenderTarget( const std::shared_ptr< RRenderTarget >& inTarget, float inR = 0.f, float inG = 0.f, float inB = 0.f, float inA = 0.f ) = 0;
-		virtual void AttachRenderTargets( const std::vector< std::shared_ptr< RRenderTarget > >& inTargets, bool bUseDepthStencil = true ) = 0;
-		virtual void AttachRenderTarget( const std::shared_ptr< RRenderTarget >& inTarget, bool bUseDepthStencil = true ) = 0;
+		virtual std::shared_ptr< RTexture2D > GetBackBuffer() = 0;
+		virtual bool ClearRenderTarget( const std::shared_ptr< RTexture2D >& inTexture, float r = 0.f, float g = 0.f, float b = 0.f, float a = 0.f ) = 0;
+		virtual bool AttachRenderTarget( const std::shared_ptr< RTexture2D >& inTexture, bool bUseDepthStencil = true ) = 0;
+		virtual bool AttachRenderTargets( const std::vector< std::shared_ptr< RTexture2D > >& inTargets, bool bUseDepthStencil = true ) = 0;
 		virtual void DetachRenderTargets() = 0;
 
 		/*
@@ -138,7 +136,8 @@ namespace Hyperion
 		*	Rendering API
 		*/
 		virtual void RenderScreenQuad() = 0;
-		virtual void UploadMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount ) = 0; // Hold ref until detached?
+		virtual void AttachMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount ) = 0;
+		virtual void DetachMesh() = 0;
 		virtual void Render( uint32 inInstanceCount ) = 0;
 
 		virtual void DisplayFrame() = 0;
@@ -168,15 +167,8 @@ namespace Hyperion
 		/*
 		*	Resource Copying
 		*/
-		virtual bool CopyResource( const std::shared_ptr< RTexture1D >& inSource, const std::shared_ptr< RTexture1D >& inTarget ) = 0;
-		virtual bool CopyResource( const std::shared_ptr< RTexture2D >& inSource, const std::shared_ptr< RTexture2D >& inTarget ) = 0;
-		virtual bool CopyResource( const std::shared_ptr< RTexture3D >& inSource, const std::shared_ptr< RTexture3D >& inTarget ) = 0;
-		virtual bool CopyResource( const std::shared_ptr< RBuffer >& inSource, const std::shared_ptr< RBuffer >& inTarget ) = 0;
-
-		virtual bool CopyResourceRange( const std::shared_ptr< RTexture1D >& inSource, const std::shared_ptr< RTexture1D >& inTarget, const ResourceRangeParameters& inParams ) = 0;
-		virtual bool CopyResourceRange( const std::shared_ptr< RTexture2D >& inSource, const std::shared_ptr< RTexture2D >& inTarget, const ResourceRangeParameters& inParams ) = 0;
-		virtual bool CopyResourceRange( const std::shared_ptr< RTexture3D >& inSource, const std::shared_ptr< RTexture3D >& inTarget, const ResourceRangeParameters& inParams ) = 0;
-		virtual bool CopyResourceRange( const std::shared_ptr< RBuffer >& inSource, const std::shared_ptr< RBuffer >& inTarget, const ResourceRangeParameters& inParams ) = 0;
+		virtual bool CopyResource( const std::shared_ptr< RGraphicsResource >& inSource, const std::shared_ptr< RGraphicsResource >& inTarget ) = 0;
+		virtual bool CopyResourceRange( const std::shared_ptr< RGraphicsResource >& inSource, const std::shared_ptr< RGraphicsResource >& inTarget, const ResourceRangeParameters& inParams ) = 0;
 
 		/*
 		*	Shader Creation

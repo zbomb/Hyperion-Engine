@@ -78,6 +78,12 @@ namespace Hyperion
 	constexpr uint32 RENDERER_MIN_RESOLUTION_HEIGHT = 360;
 
 
+	constexpr uint32 RENDERER_RESOURCE_ACCESS_NONE				= 0;
+	constexpr uint32 RENDERER_RESOURCE_ACCESS_SHADER_RESOURCE	= 1;
+	constexpr uint32 RENDERER_RESOURCE_ACCESS_COMPUTE_WRITE		= 2;
+	constexpr uint32 RENDERER_RESOURCE_ACCESS_RENDER_TARGET		= 4;
+
+
 	// Flags 
 	constexpr uint32 FLAG_NONE				= 0U;
 
