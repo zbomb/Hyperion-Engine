@@ -16,8 +16,6 @@
 namespace Hyperion
 {
 
-	UINT TranslateHyperionBindFlags( uint32 inFlags );
-	uint32 TranslateDXBindFlags( UINT inDXFlags );
 	DXGI_FORMAT TextureFormatToDXGIFormat( TextureFormat In );
 	TextureFormat DXGIFormatToTextureFormat( DXGI_FORMAT In );
 
@@ -131,7 +129,7 @@ namespace Hyperion
 			m_Texture = casted->m_Texture;
 			m_SRV = casted->m_SRV;
 			m_UAV = casted->m_UAV;
-			m_RTV = casted->m_UAV;
+			m_RTV = casted->m_RTV;
 			casted->m_Texture = tmp;
 			casted->m_SRV = tmp_srv;
 			casted->m_UAV = tmp_uav;
@@ -283,7 +281,7 @@ namespace Hyperion
 			m_Texture = casted->m_Texture;
 			m_SRV = casted->m_SRV;
 			m_UAV = casted->m_UAV;
-			m_RTV = casted->m_UAV;
+			m_RTV = casted->m_RTV;
 			casted->m_Texture = tmp;
 			casted->m_SRV = tmp_srv;
 			casted->m_UAV = tmp_uav;
@@ -445,7 +443,7 @@ namespace Hyperion
 			m_Texture = casted->m_Texture;
 			m_SRV = casted->m_SRV;
 			m_UAV = casted->m_UAV;
-			m_RTV = casted->m_UAV;
+			m_RTV = casted->m_RTV;
 			casted->m_Texture = tmp;
 			casted->m_SRV = tmp_srv;
 			casted->m_UAV = tmp_uav;

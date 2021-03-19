@@ -18,7 +18,6 @@ namespace Hyperion
 	class IGraphics;
 	class RTexture2D;
 	class RRenderTarget;
-	class RDepthStencil;
 
 
 	class GBuffer
@@ -34,8 +33,6 @@ namespace Hyperion
 		std::shared_ptr< RRenderTarget > m_NormalDepthTarget;
 		std::shared_ptr< RRenderTarget > m_SpecularTarget;
 
-		std::shared_ptr< RDepthStencil > m_DepthStencil;
-		
 		uint32 m_Width, m_Height;
 
 	public:
@@ -56,8 +53,6 @@ namespace Hyperion
 		inline std::shared_ptr< RRenderTarget > GetDiffuseRoughnessTarget() const { return m_DiffuseRoughnessTarget; }
 		inline std::shared_ptr< RRenderTarget > GetNormalDepthTarget() const { return m_NormalDepthTarget; }
 		inline std::shared_ptr< RRenderTarget > GetSpecularTarget() const { return m_SpecularTarget; }
-
-		inline std::shared_ptr< RDepthStencil > GetDepthStencil() const { return m_DepthStencil; }
 
 		bool UpdateDimensions( const std::shared_ptr< IGraphics >& inAPI, uint32 inWidth, uint32 inHeight );
 

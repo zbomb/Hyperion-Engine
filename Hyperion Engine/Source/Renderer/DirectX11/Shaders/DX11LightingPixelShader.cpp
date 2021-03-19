@@ -7,7 +7,7 @@
 #include "Hyperion/Renderer/DirectX11/Shaders/DX11LightingPixelShader.h"
 #include "Hyperion/Renderer/Renderer.h"
 #include "Hyperion/Renderer/Resources/RMaterial.h"
-#include "Hyperion/Renderer/DirectX11/DirectX11Texture.h"
+#include "Hyperion/Renderer/DirectX11/DX11Texture.h"
 #include "Hyperion/File/FileSystem.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11LightBuffer.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11ViewClusters.h"
@@ -130,13 +130,13 @@ namespace Hyperion
 		HYPERION_VERIFY( m_Context, "[DX11] Device context was null!" );
 
 		// Calculate the inverse view matrix
-		DirectX::XMMATRIX invViewMatrix( inRenderer.GetViewMatrix().GetData() );
+		DirectX::XMMATRIX invViewMatrix( inRenderer.GetViewMatrix().m );
 		invViewMatrix = DirectX::XMMatrixTranspose( DirectX::XMMatrixInverse( nullptr, invViewMatrix ) );
 
 		// Get some other values..
 		ScreenResolution screenRes	= inRenderer.GetResolutionUnsafe();
 		ViewState viewState			= inRenderer.GetViewState();
-		Matrix projectionMatrix		= inRenderer.GetProjectionMatrix();
+		auto projectionMatrix		= inRenderer.GetProjectionMatrix().m;
 		Color3F ambientLightColor	= inRenderer.GetAmbientLightColor();
 
 		D3D11_MAPPED_SUBRESOURCE resource {};
@@ -151,8 +151,8 @@ namespace Hyperion
 
 		bufferPtr->CameraPosition			= DirectX::XMFLOAT3( viewState.Position.X, viewState.Position.Y, viewState.Position.Z );
 		bufferPtr->_pad_vb_1				= 0.f;
-		bufferPtr->ProjectionTermA			= projectionMatrix[ 0 ][ 0 ];
-		bufferPtr->ProjectionTermB			= projectionMatrix[ 1 ][ 1 ];
+		bufferPtr->ProjectionTermA			= projectionMatrix.r[ 0 ].m128_f32[ 0 ];
+		bufferPtr->ProjectionTermB			= projectionMatrix.r[ 1 ].m128_f32[ 1 ];
 		bufferPtr->ScreenNear				= SCREEN_NEAR;
 		bufferPtr->ScreenFar				= SCREEN_FAR;
 		bufferPtr->ScreenWidth				= (float) screenRes.Width;
@@ -173,13 +173,13 @@ namespace Hyperion
 	{
 		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
 
-		auto diffTexture	= std::dynamic_pointer_cast<DirectX11Texture2D>( inBuffer.GetDiffuseRoughnessTexture() );
-		auto normTexture	= std::dynamic_pointer_cast<DirectX11Texture2D>( inBuffer.GetNormalDepthTexture() );
-		auto specTexture	= std::dynamic_pointer_cast<DirectX11Texture2D>( inBuffer.GetSpecularTexture() );
+		auto diffTexture	= std::dynamic_pointer_cast< DX11Texture2D >( inBuffer.GetDiffuseRoughnessTexture() );
+		auto normTexture	= std::dynamic_pointer_cast< DX11Texture2D >( inBuffer.GetNormalDepthTexture() );
+		auto specTexture	= std::dynamic_pointer_cast< DX11Texture2D >( inBuffer.GetSpecularTexture() );
 
-		auto diffView	= diffTexture ? diffTexture->GetView() : nullptr;
-		auto normView	= normTexture ? normTexture->GetView() : nullptr;
-		auto specView	= specTexture ? specTexture->GetView() : nullptr;
+		auto diffView	= diffTexture ? diffTexture->GetSRV() : nullptr;
+		auto normView	= normTexture ? normTexture->GetSRV() : nullptr;
+		auto specView	= specTexture ? specTexture->GetSRV() : nullptr;
 
 		if( diffView == nullptr || normView == nullptr || specView == nullptr )
 		{

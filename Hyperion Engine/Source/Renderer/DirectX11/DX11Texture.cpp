@@ -276,49 +276,4 @@ namespace Hyperion
 			return DXGI_FORMAT_UNKNOWN;
 		}
 	}
-
-	uint32 TranslateDXBindFlags( UINT inDXFlags )
-	{
-		uint32 output = 0;
-
-		if( HYPERION_HAS_FLAG( inDXFlags, D3D11_BIND_SHADER_RESOURCE ) )
-		{
-			output |= (uint32) RENDERER_TEXTURE_BIND_FLAG_SHADER;
-		}
-
-		if( HYPERION_HAS_FLAG( inDXFlags, D3D11_BIND_DEPTH_STENCIL ) )
-		{
-			output |= (uint32) RENDERER_TEXTURE_BIND_FLAG_DEPTH_STENCIL;
-		}
-
-		if( HYPERION_HAS_FLAG( inDXFlags, D3D11_BIND_RENDER_TARGET ) )
-		{
-			output |= (uint32) RENDERER_TEXTURE_BIND_FLAG_RENDER;
-		}
-
-		return output;
-	}
-
-
-	UINT TranslateHyperionBindFlags( uint32 inFlags )
-	{
-		uint32 output = 0;
-
-		if( HYPERION_HAS_FLAG( inFlags, RENDERER_TEXTURE_BIND_FLAG_DEPTH_STENCIL ) )
-		{
-			output |= D3D11_BIND_DEPTH_STENCIL;
-		}
-
-		if( HYPERION_HAS_FLAG( inFlags, RENDERER_TEXTURE_BIND_FLAG_RENDER ) )
-		{
-			output |= D3D11_BIND_RENDER_TARGET;
-		}
-
-		if( HYPERION_HAS_FLAG( inFlags, RENDERER_TEXTURE_BIND_FLAG_SHADER ) )
-		{
-			output |= D3D11_BIND_SHADER_RESOURCE;
-		}
-
-		return output;
-	}
 }

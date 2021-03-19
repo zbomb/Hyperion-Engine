@@ -45,7 +45,7 @@ namespace Hyperion
 
 		TextureParameters()
 			: Width( 0 ), Height( 0 ), Depth( 0 ), bDynamic( false ), bCPURead( false ), ResourceAccess( RENDERER_RESOURCE_ACCESS_NONE ),
-			Format( TextureFormat::NONE ), bAutogenMips( false ), AssetIdentifier( ASSET_INVALID )
+			Format( TextureFormat::NONE ), bAutogenMips( false ), AssetIdentifier( ASSET_INVALID ), MipCount( 1 )
 		{}
 	};
 

@@ -64,8 +64,8 @@ namespace Hyperion
 		uint32 m_DepthStencilHeight;
 
 		String m_GraphicsDeviceName;
-		uint32 m_DedicatedVideoMemory;
-		uint32 m_SharedVideoMemory;
+		uint64 m_DedicatedVideoMemory;
+		uint64 m_SharedVideoMemory;
 		DXGI_RATIONAL m_DisplayRefreshRate;
 		bool m_bAsyncResourceCreation;
 
@@ -143,6 +143,7 @@ namespace Hyperion
 		*/
 		void RenderScreenQuad() final;
 		void AttachMesh( const std::shared_ptr< RBuffer >& inVertexBuffer, const std::shared_ptr< RBuffer >& inIndexBuffer, uint32 inIndexCount ) final;
+		void DetachMesh() final;
 		void Render( uint32 inInstanceCount ) final;
 
 		void DisplayFrame() final;

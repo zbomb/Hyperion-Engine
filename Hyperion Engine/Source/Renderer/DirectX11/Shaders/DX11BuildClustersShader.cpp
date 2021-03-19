@@ -101,10 +101,8 @@ namespace Hyperion
 		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
 
 		// Get the parameters we need..
-		auto screenRes = inRenderer.GetResolutionUnsafe();
-
-		DirectX::XMMATRIX projMatrix( inRenderer.GetProjectionMatrix().GetData() );
-		projMatrix = DirectX::XMMatrixInverse( nullptr, projMatrix );
+		auto screenRes	= inRenderer.GetResolutionUnsafe();
+		auto projMatrix = DirectX::XMMatrixInverse( nullptr, inRenderer.GetProjectionMatrix().m );
 
 		D3D11_MAPPED_SUBRESOURCE resource {};
 		if( FAILED( m_Context->Map( m_ConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource ) ) )

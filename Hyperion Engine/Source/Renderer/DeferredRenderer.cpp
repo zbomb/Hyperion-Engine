@@ -31,6 +31,9 @@ namespace Hyperion
 
 	bool DeferredRenderer::Initialize()
 	{
+		return true;
+		
+		/*
 		// Ensure super class method gets called first
 		if( !Renderer::Initialize() ) { return false; }
 
@@ -108,11 +111,13 @@ namespace Hyperion
 		}
 
 		return true;
+		*/
 	}
 
 
 	void DeferredRenderer::Shutdown()
 	{
+		/*
 		m_FloorMaterial.reset();
 		m_FloorAsset.reset();
 
@@ -120,6 +125,7 @@ namespace Hyperion
 		m_LightingPipeline.reset();
 
 		Renderer::Shutdown();
+		*/
 	}
 
 
@@ -132,6 +138,7 @@ namespace Hyperion
 
 	void DeferredRenderer::RenderScene()
 	{
+		/*
 		if( !m_Scene )
 		{
 			Console::WriteLine( "[ERROR] DeferredRenderer: Failed to render scene.. scene/buffers were null!" );
@@ -241,13 +248,14 @@ namespace Hyperion
 
 		//Console::WriteLine( "===> Build Clusters: ", clusterResetTime.count(), "ns \t Light Rebuild: ", lightRebuildTime.count(), "ns \t Batch Collection: ", batchCollectTime.count(), "ns \t ",
 		//					"GBuffer Pass: ", gbufferTime.count(), "ns \t Find Clusters: ", findClusterTime.count(), "ns \t Cull Lights: ", cullLightTime.count(), "ns \t Lighting: ", lightingTime.count(), "ns" );
+		*/
 
 	}
 
 
 	void DeferredRenderer::RenderPostProcessFX()
 	{
-		ApplyPostProcessEffect( m_FXAA );
+		//ApplyPostProcessEffect( m_FXAA );
 	}
 
 }

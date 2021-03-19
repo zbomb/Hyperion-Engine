@@ -63,9 +63,9 @@ namespace Hyperion
 
 		Console() = delete;
 
-		static bool Start( uint32 inFlags = FLAG_NONE );
-		static bool Stop();
-
+		static bool Initialize( uint32 inFlags );
+		static bool Shutdown();
+	
 		/*
 			Updated Write Functions
 		*/

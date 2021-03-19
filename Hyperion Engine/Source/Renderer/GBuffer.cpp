@@ -8,7 +8,6 @@
 #include "Hyperion/Renderer/IGraphics.h"
 #include "Hyperion/Renderer/Resources/RTexture.h"
 #include "Hyperion/Renderer/Resources/RRenderTarget.h"
-#include "Hyperion/Renderer/Resources/RDepthStencil.h"
 
 
 
@@ -30,7 +29,6 @@ namespace Hyperion
 
 	void GBuffer::Shutdown()
 	{
-		m_DepthStencil.reset();
 		m_DiffuseRoughnessTarget.reset();
 		m_DiffuseRoughnessTexture.reset();
 		m_NormalDepthTarget.reset();
@@ -45,7 +43,7 @@ namespace Hyperion
 
 	bool GBuffer::IsValid() const
 	{
-		return m_DepthStencil && m_DiffuseRoughnessTarget && m_DiffuseRoughnessTexture &&
+		return m_DiffuseRoughnessTarget && m_DiffuseRoughnessTexture &&
 			m_NormalDepthTarget && m_NormalDepthTexture && m_SpecularTarget && m_SpecularTexture;
 	}
 
@@ -54,21 +52,26 @@ namespace Hyperion
 	{
 		HYPERION_VERIFY( inAPI, "[GBuffer] API was null!" );
 
+		/*
 		if( m_DiffuseRoughnessTarget )	{ inAPI->ClearRenderTarget( m_DiffuseRoughnessTarget ); }
 		if( m_NormalDepthTarget )		{ inAPI->ClearRenderTarget( m_NormalDepthTarget, 0.f, 0.f, 0.f, SCREEN_FAR + 1.f ); }
 		if( m_SpecularTarget )			{ inAPI->ClearRenderTarget( m_SpecularTarget ); }
+		*/
 	}
 
 	void GBuffer::ClearDepthBuffer( const std::shared_ptr< IGraphics >& inAPI, const Color4F& inColor )
 	{
 		HYPERION_VERIFY( inAPI, "[GBuffer] API was null" );
 
-		if( m_DepthStencil ) { inAPI->ClearDepthStencil( m_DepthStencil, inColor ); }
+		//if( m_DepthStencil ) { inAPI->ClearDepthStencil( m_DepthStencil, inColor ); }
 	}
 
 
 	bool GBuffer::UpdateDimensions( const std::shared_ptr< IGraphics >& inAPI, uint32 inWidth, uint32 inHeight )
 	{
+		return true;
+
+		/*
 		if( !inAPI )
 		{
 			Console::WriteLine( "[Warning] Renderer: Failed to update G-Buffer dimensions, API was null" );
@@ -142,6 +145,7 @@ namespace Hyperion
 		m_Height	= inHeight;
 
 		return true;
+		*/
 	}
 
 

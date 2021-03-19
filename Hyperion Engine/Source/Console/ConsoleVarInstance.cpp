@@ -5,7 +5,7 @@
 ==================================================================================================*/
 
 #include "Hyperion/Console/ConsoleVarInstance.h"
-#include "Hyperion/Core/ThreadManager.h"
+#include "Hyperion/Core/TaskManager.h"
 
 
 
@@ -17,8 +17,8 @@ namespace Hyperion
 	-------------------------------------------------------------------------*/
 
 	ConsoleVarInstance< uint32 >::ConsoleVarInstance( const String& inKey, const String& inDescription, uint32 inDefault, uint32 inMin, uint32 inMax,
-													  std::function< void( uint32 ) > inCallback, const std::string& callbackThread )
-		: m_Key( inKey ), m_Description( inDescription ), m_Value( inDefault ), m_Min( inMin ), m_Max( inMax ), m_Callback( inCallback ), m_CallbackThread( callbackThread )
+													  std::function< void( uint32 ) > inCallback )
+		: m_Key( inKey ), m_Description( inDescription ), m_Value( inDefault ), m_Min( inMin ), m_Max( inMax ), m_Callback( inCallback )
 	{
 	}
 
@@ -61,7 +61,7 @@ namespace Hyperion
 		// Inject the callback onto the target thread
 		if( m_Callback && bCallback )
 		{
-			ThreadManager::CreateTask< void >( std::bind( m_Callback, inValue ), m_CallbackThread );
+			TaskManager::AddUntrackedTask( std::bind( m_Callback, inValue ) );
 		}
 
 		return true;
@@ -79,8 +79,8 @@ namespace Hyperion
 	-------------------------------------------------------------------------*/
 
 	ConsoleVarInstance< int32 >::ConsoleVarInstance( const String& inKey, const String& inDescription, int32 inDefault, int32 inMin, int32 inMax,
-													  std::function< void( int32 ) > inCallback, const std::string& callbackThread )
-		: m_Key( inKey ), m_Description( inDescription ), m_Value( inDefault ), m_Min( inMin ), m_Max( inMax ), m_Callback( inCallback ), m_CallbackThread( callbackThread )
+													  std::function< void( int32 ) > inCallback )
+		: m_Key( inKey ), m_Description( inDescription ), m_Value( inDefault ), m_Min( inMin ), m_Max( inMax ), m_Callback( inCallback )
 	{
 	}
 
@@ -123,7 +123,7 @@ namespace Hyperion
 		// Inject the callback onto the target thread
 		if( m_Callback && bCallback )
 		{
-			ThreadManager::CreateTask< void >( std::bind( m_Callback, inValue ), m_CallbackThread );
+			TaskManager::AddUntrackedTask( std::bind( m_Callback, inValue ) );
 		}
 
 		return true;
@@ -141,8 +141,8 @@ namespace Hyperion
 	-------------------------------------------------------------------------*/
 
 
-	ConsoleVarInstance< String >::ConsoleVarInstance( const String& inKey, const String& inDescription, const String& inDefault, std::function< void( const String& ) > inCallback, const std::string& inCallbackThread )
-		: m_Key( inKey ), m_Value( inDefault ), m_Callback( inCallback ), m_CallbackThread( inCallbackThread ), m_Description( inDescription )
+	ConsoleVarInstance< String >::ConsoleVarInstance( const String& inKey, const String& inDescription, const String& inDefault, std::function< void( const String& ) > inCallback )
+		: m_Key( inKey ), m_Value( inDefault ), m_Callback( inCallback ), m_Description( inDescription )
 	{
 	}
 
@@ -161,7 +161,7 @@ namespace Hyperion
 
 		if( m_Callback && bCallback )
 		{
-			ThreadManager::CreateTask< void >( std::bind( m_Callback, inStr ), m_CallbackThread );
+			TaskManager::AddUntrackedTask( std::bind( m_Callback, inStr ) );
 		}
 
 		return true;
@@ -183,8 +183,8 @@ namespace Hyperion
 	-------------------------------------------------------------------------*/
 
 	ConsoleVarInstance< float >::ConsoleVarInstance( const String& inKey, const String& inDescription, float inDefault, float inMin, float inMax,
-													  std::function< void( float ) > inCallback, const std::string& callbackThread )
-		: m_Key( inKey ), m_Description( inDescription ), m_Value( inDefault ), m_Min( inMin ), m_Max( inMax ), m_Callback( inCallback ), m_CallbackThread( callbackThread )
+													  std::function< void( float ) > inCallback )
+		: m_Key( inKey ), m_Description( inDescription ), m_Value( inDefault ), m_Min( inMin ), m_Max( inMax ), m_Callback( inCallback )
 	{
 	}
 
@@ -227,7 +227,7 @@ namespace Hyperion
 		// Inject the callback onto the target thread
 		if( m_Callback && bCallback )
 		{
-			ThreadManager::CreateTask< void >( std::bind( m_Callback, inValue ), m_CallbackThread );
+			TaskManager::AddUntrackedTask( std::bind( m_Callback, inValue ) );
 		}
 
 		return true;

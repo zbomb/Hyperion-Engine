@@ -13,8 +13,93 @@
 namespace Hyperion
 {
 	/*
-	*	Forward Declarations
+	*	Forward Decl.
 	*/
+	class GameInstance;
+	class Simulation;
+	class Renderer;
+
+
+	class Engine
+	{
+
+	public:
+
+		/*
+		*	Structures
+		*/
+		struct InitializeParameters
+		{
+			GraphicsAPI targetAPI;
+			void* ptrOutputSurface;
+			uint32 desiredResX;
+			uint32 desiredResY;
+			bool bStartFullscreen;
+			bool bVSync;
+			uint32 numTaskPoolThreads;
+			uint32 startupFlags;
+			std::string instanceType;
+		};
+
+		enum class InitializeResult
+		{
+			Success						= 0,
+			AlreadyInitialized			= 1,
+			InvalidOutputSurface		= 2,
+			InvalidResolution			= 3,
+			InvalidGraphicsAPI			= 4,
+			InvalidNumTaskPoolThreads	= 5,
+			ServicesFailed				= 6,
+			InvalidInstanceType			= 7
+		};
+
+	private:
+
+		bool m_bInitialized;
+
+		HypPtr< GameInstance > m_GameInstance;
+		const std::shared_ptr< GarbageCollector > m_GC;
+
+	public:
+
+		/*
+		*	Static Functions
+		*/
+		static Engine& Get();
+
+		/*
+		*	Constructor/Destructor
+		*/
+		Engine();
+		~Engine();
+
+		/*
+		*	Deleted Functions
+		*/
+		Engine( const Engine& ) = delete;
+		void operator=( const Engine& ) = delete;
+
+		/*
+		*	Init & Shutdown
+		*	Note: These functions should only be called from the main OS thread!
+		*/
+		InitializeResult Initialize( const InitializeParameters& inParams );
+		void Shutdown();
+
+		/*
+		*	Getters
+		*/
+		std::shared_ptr< GarbageCollector > GetGC() const	{ return m_GC; }
+		HypPtr< GameInstance > GetGameInstance() const		{ return m_GameInstance; }
+
+
+	};
+
+
+	//////////////////////////////////////////////// OLD //////////////////////////////////////////////////
+	/*
+	*	Forward Declarations
+	
 	class GameInstance;
 	class Renderer;
 	class InputManager;
@@ -107,5 +192,5 @@ namespace Hyperion
 		inline static HypPtr< InputManager > GetInputManager() { return Get()->GetInputManagerPtr(); }
 
 	};
-
+	*/
 }

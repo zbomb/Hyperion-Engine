@@ -18,11 +18,12 @@
 #include "Hyperion/Core/Engine.h"
 #include "Hyperion/Renderer/PostProcessFX.h"
 #include "Hyperion/Renderer/Resources/RRenderTarget.h"
+#include "Hyperion/Renderer/RMath.h"
 
 
 // Include active graphics API's, so we can instantitae the current one
 #if HYPERION_OS_WIN32
-#include "Hyperion/Renderer/DirectX11/DirectX11Graphics.h"
+#include "Hyperion/Renderer/DirectX11/DX11Graphics.h"
 #endif
 
 
@@ -38,7 +39,7 @@ namespace Hyperion
 		{
 			auto renderer = Engine::GetRenderer();
 			if( renderer ) { renderer->OnAntiAliasSettingChanged( StrToAAType( inNewSetting ) ); }
-		}, THREAD_RENDERER );
+		} );
 
 	ConsoleVar< uint32 > g_CVar_DynamicShadowMaxQuality = ConsoleVar< uint32 >(
 		"r_dynamic_shadow_max_quality", "The maximum level of quality to use when rendering dynamic shadows, 0 is highest [8k], 7 is lowest",
@@ -46,7 +47,7 @@ namespace Hyperion
 		{
 			auto renderer = Engine::GetRenderer();
 			if( renderer ) { renderer->OnShadowQualityChanged( inNewSetting ); }
-		}, THREAD_RENDERER );
+		} );
 
 	ConsoleVar< uint32 > g_CVar_DynamicShadowMemoryPoolSize = ConsoleVar< uint32 >(
 		"r_dynamic_shadow_memory_pool_size", "The amount of memory (in MB) to use for the shadow map memory pool",
@@ -54,7 +55,7 @@ namespace Hyperion
 		{
 			auto renderer = Engine::GetRenderer();
 			if( renderer ) { renderer->OnShadowMemoryPoolSizeChanged( inNewSetting ); }
-		}, THREAD_RENDERER );
+		} );
 
 	ConsoleVar< uint32 > g_CVar_DynamicShadowLimit = ConsoleVar< uint32 >(
 		"r_dynamic_shadow_limit", "The most number of dynamic shadows that can be rendered in a frame (exluding directional light shadow)",
@@ -62,7 +63,7 @@ namespace Hyperion
 		{
 			auto renderer = Engine::GetRenderer();
 			if( renderer ) { renderer->OnDynamicShadowLimitChanged( inNewSetting ); }
-		}, THREAD_RENDERER );
+		} );
 
 
 	/*
@@ -91,7 +92,7 @@ namespace Hyperion
 		switch( inAPI )
 		{
 		case GraphicsAPI::DX11:
-			m_API = std::make_shared< DirectX11Graphics >();
+			m_API = std::make_shared< DX11Graphics >();
 			break;
 		case GraphicsAPI::DX12:
 			HYPERION_NOT_IMPLEMENTED( "DirectX 12 not yet impelemented" );
@@ -103,10 +104,6 @@ namespace Hyperion
 			HYPERION_VERIFY( true, "[Renderer] Invalid graphics API type!" );
 			break;
 		}
-
-		// Tell the graphics api about the resolution and other settings
-		m_API->SetResolution( inRes );
-		m_API->SetVSync( bVSync );
 	}
 
 	/*
@@ -138,22 +135,34 @@ namespace Hyperion
 	*/
 	bool Renderer::Initialize()
 	{
+		return true;
+
+		/*
 		HYPERION_VERIFY( m_API, "[Renderer] API was null during call to 'Initialize'" );
 
 		// Initialize the graphics api
-		if( !m_API->Initialize( m_pWindow ) )
+		IGraphics::InitializationParameters params {};
+
+		params.bEnableVSync			= m_bVSync;
+		params.depthStencilWidth	= m_Resolution.Width; // TODO: Eventually, we will want a bigger depth stencil/buffer texture size, to match the size of the largest possible shadowmap
+		params.depthStencilHeight	= m_Resolution.Height;
+		params.startupResolution	= m_Resolution;
+		params.ptrOSWindow			= m_pWindow;
+
+		if( !m_API->Initialize( params ) )
 		{
 			// The api would have printed an error message giving info on why init failed
 			return false;
 		}
 
 		// Cache a list of available resolutions
-		m_AvailableResolutions	= m_API->GetAvailableResolutions();
+		m_API->GetAvailableResolutions( m_AvailableResolutions );
 		m_bCanChangeResolution	= true;
 
 		// Iniitalize the scene
 		m_Scene->Initialize();
-		m_API->CalculateScreenViewMatrix( m_ScreenViewMatrix );
+		
+		m_ScreenViewMatrix = RMath::GenerateDefaultLookAtMatrix();
 
 		// Create compute shaders
 		m_BuildClustersShader	= m_API->CreateComputeShader( ComputeShaderType::BuildClusters );
@@ -167,8 +176,8 @@ namespace Hyperion
 		}
 
 		// Create light buffer and view clusters
-		m_LightBuffer	= m_API->CreateLightBuffer();
-		m_ViewClusters	= m_API->CreateViewClusters();
+		//m_LightBuffer	= m_API->CreateLightBuffer();
+		//m_ViewClusters	= m_API->CreateViewClusters();
 
 		if( !m_LightBuffer || !m_ViewClusters )
 		{
@@ -212,6 +221,7 @@ namespace Hyperion
 		}
 
 		return true;
+		*/
 	}
 
 	/*
@@ -219,6 +229,7 @@ namespace Hyperion
 	*/
 	void Renderer::Shutdown()
 	{
+		/*
 		// Kill the command queue
 		// TODO: Add a 'locking' feature to ConcurrentQueue, where we can stop new entries from being added
 		m_AllowCommands = false;
@@ -248,6 +259,7 @@ namespace Hyperion
 		m_StreamingManager.Clear();
 		m_Scene.reset();
 		m_API.reset();
+		*/
 	}
 
 	/*
@@ -255,6 +267,9 @@ namespace Hyperion
 	*/
 	bool Renderer::ChangeResolution( const ScreenResolution& inRes )
 	{
+		return true;
+
+		/*
 		// Check if we have started up and cached the list of available resolutions
 		if( !m_bCanChangeResolution )
 		{
@@ -342,6 +357,7 @@ namespace Hyperion
 		);
 
 		return true;
+		*/
 	}
 
 	/*
@@ -349,6 +365,7 @@ namespace Hyperion
 	*/
 	void Renderer::Frame()
 	{
+		/*
 		// Update our 'proxy' scene, and store the current view state
 		//auto frameBegin = std::chrono::high_resolution_clock::now();
 		if( !UpdateScene() )
@@ -421,6 +438,7 @@ namespace Hyperion
 
 		//Console::WriteLine( "----------------------------------------------------------------------------------- \nScene Update: ", updateTime.count(), "us \nMatrix Calculation: ", matrixTime.count(), "us \nFrame Begin: ", beginTime.count(),
 		//					"us \nRender: ", renderTime.count(), "us \nPost Process: ", postTime.count(), "us \nFrame End: ", endTime.count(), "us\nTotal: ", frameTime.count(), "us" );
+		*/
 	}
 
 	/*
@@ -428,6 +446,9 @@ namespace Hyperion
 	*/
 	bool Renderer::UpdateScene()
 	{
+		return true;
+
+		/*
 		// Execute all immediate commands
 		// Were going to run them until the list is empty
 		auto nextImmediateCommand = m_ImmediateCommands.PopValue();
@@ -467,6 +488,7 @@ namespace Hyperion
 		// Were going to break out of the tick function, and let it execute again
 		std::this_thread::sleep_for( std::chrono::milliseconds( 1 ) );
 		return false;
+		*/
 	}
 
 	/*
@@ -474,6 +496,7 @@ namespace Hyperion
 	*/
 	void Renderer::AddImmediateCommand( std::unique_ptr< RenderCommandBase >&& inCommand )
 	{
+		/*
 		if( !m_AllowCommands ) 
 		{ 
 			Console::WriteLine( "[Warning] Renderer: Failed to push immediate command, the queue was closed" ); 
@@ -481,6 +504,7 @@ namespace Hyperion
 		}
 
 		m_ImmediateCommands.Push( std::move( inCommand ) );
+		*/
 	}
 
 	/*
@@ -488,6 +512,7 @@ namespace Hyperion
 	*/
 	void Renderer::AddCommand( std::unique_ptr< RenderCommandBase >&& inCommand )
 	{
+		/*
 		if( !m_AllowCommands )
 		{
 			Console::WriteLine( "[Warning] Renderer: Failed to push command, the queue was closed" );
@@ -495,6 +520,7 @@ namespace Hyperion
 		}
 
 		m_Commands.Push( std::move( inCommand ) );
+		*/
 	}
 
 	/*
@@ -502,6 +528,9 @@ namespace Hyperion
 	*/
 	bool Renderer::AddPrimitive( std::shared_ptr< ProxyPrimitive >& inPrimitive )
 	{
+		return true;
+
+		/*
 		if( !m_Scene )
 		{
 			Console::WriteLine( "[ERROR] Renderer: Failed to add primitive.. scene was null!" );
@@ -524,6 +553,7 @@ namespace Hyperion
 		{
 			return false;
 		}
+		*/
 	}
 
 	/*
@@ -531,6 +561,9 @@ namespace Hyperion
 	*/
 	bool Renderer::AddLight( std::shared_ptr< ProxyLight >& inLight )
 	{
+		return true;
+
+		/*
 		if( !m_Scene )
 		{
 			Console::WriteLine( "[ERROR] Renderer: Failed to add light.. scene was null!" );
@@ -552,6 +585,7 @@ namespace Hyperion
 		{
 			return false;
 		}
+		*/
 	}
 
 	/*
@@ -559,6 +593,7 @@ namespace Hyperion
 	*/
 	void Renderer::ShutdownProxy( const std::shared_ptr< ProxyBase >& inProxy )
 	{
+		/*
 		if( inProxy )
 		{
 			// Call begin shutdown directly on render thread
@@ -575,6 +610,7 @@ namespace Hyperion
 
 				} );
 		}
+		*/
 	}
 
 	/*
@@ -582,6 +618,9 @@ namespace Hyperion
 	*/
 	bool Renderer::RemovePrimitive( uint32 inIdentifier )
 	{
+		return true;
+
+		/*
 		if( !m_Scene )
 		{
 			Console::WriteLine( "[ERROR] Renderer: Failed to remove primitive.. scene was null!" );
@@ -599,6 +638,7 @@ namespace Hyperion
 			Console::WriteLine( "[ERROR] Renderer: Failed to remove primitive.. couldnt find! Id = ", inIdentifier );
 			return false;
 		}
+		*/
 	}
 
 	/*
@@ -606,6 +646,9 @@ namespace Hyperion
 	*/
 	bool Renderer::RemoveLight( uint32 inIdentifier )
 	{
+		return true;
+
+		/*
 		if( !m_Scene )
 		{
 			Console::WriteLine( "[ERROR] Renderer: Failed to remove light.. scene was null!" );
@@ -620,6 +663,7 @@ namespace Hyperion
 		}
 
 		return false;
+		*/
 	}
 
 	/*
@@ -627,6 +671,7 @@ namespace Hyperion
 	*/
 	void Renderer::GetViewState( ViewState& outState ) const
 	{
+		/*
 		if( m_Scene )
 		{
 			m_Scene->GetViewState( outState );
@@ -638,11 +683,15 @@ namespace Hyperion
 			outState.Position.Clear();
 			outState.Rotation.Clear();
 		}
+		*/
 	}
 
 
 	bool Renderer::AttachPipeline( const std::shared_ptr< RenderPipeline >& inPipeline )
 	{
+		return true;
+
+		/*
 		// Ensure the pipeline isnt null, and is valid
 		if( !inPipeline || !inPipeline->IsValid() )
 		{
@@ -691,11 +740,13 @@ namespace Hyperion
 
 		m_AttachedPipeline = inPipeline;
 		return true;
+		*/
 	}
 
 
 	void Renderer::DetachPipeline()
 	{
+		/*
 		if( m_AttachedPipeline )
 		{
 			auto vertexShader		= m_AttachedPipeline->GetVertexShader();
@@ -711,11 +762,15 @@ namespace Hyperion
 
 			m_AttachedPipeline.reset();
 		}
+		*/
 	}
 
 
 	uint32 Renderer::DispatchPipeline( uint32 inFlags /* = 0 */ )
 	{
+		return 0;
+
+		/*
 		// We can only use this function to dispatch piplines that render the screen quad
 		if( !m_AttachedPipeline || !m_AttachedPipeline->IsValid() || m_AttachedPipeline->GetCollectionSource() != GeometryCollectionSource::ScreenQuad )
 		{
@@ -725,11 +780,15 @@ namespace Hyperion
 
 		BatchCollector collector;
 		return DispatchPipeline( collector, inFlags );
+		*/
 	}
 
 
 	uint32 Renderer::DispatchPipeline( const BatchCollector& inBatches, uint32 inFlags /* = 0 */ )
 	{
+		return 0;
+
+		/*
 		HYPERION_VERIFY( m_Scene, "[Renderer] Scene was null!" );
 
 		// Ensure current pipeline is valid
@@ -1064,11 +1123,13 @@ namespace Hyperion
 		//					"Main Primitive Pass: ", primTime.count(), "ns \t Detach: ", detachTime.count(), "ns" );
 
 		return batchCount;
+		*/
 	}
 
 
 	void Renderer::CollectBatches( BatchCollector& outBatches )
 	{
+		/*
 		outBatches.Clear();
 
 		const uint32 iterMax = (uint32)m_Scene->m_Primitives.size();
@@ -1100,11 +1161,14 @@ namespace Hyperion
 				}
 			}
 		}
-		
+		*/
 	}
 
 	bool Renderer::ApplyPostProcessEffect( const std::shared_ptr<PostProcessFX>& inFX, uint32 inFlags )
 	{
+		return true;
+
+		/*
 		HYPERION_VERIFY( m_Scene, "[Renderer] Scene was null!" );
 
 		if( !inFX || !inFX->IsValid() )
@@ -1162,11 +1226,15 @@ namespace Hyperion
 		m_bPostProcessFrontTarget = !m_bPostProcessFrontTarget;
 
 		return true;
+		*/
 	}
 
 
 	bool Renderer::RebuildLightBuffer()
 	{
+		return true;
+
+		/*
 		// Ensure the buffer is valid
 		if( !m_LightBuffer || !m_LightBuffer->IsValid() )
 		{
@@ -1196,11 +1264,15 @@ namespace Hyperion
 		}
 
 		return true;
+		*/
 	}
 
 
 	bool Renderer::RebuildViewClusters()
 	{
+		return true;
+
+		/*
 		if( !m_ViewClusters || !m_ViewClusters->IsValid() )
 		{
 			Console::WriteLine( "[ERROR] Renderer: Failed to rebuild view clusters, view clusters were null/invalid" );
@@ -1209,18 +1281,26 @@ namespace Hyperion
 
 		// TODO: This shader needs to be split into two (RebuildClusters, ResetClusters)
 		return DispatchComputeShader( m_BuildClustersShader, BUILD_CLUSTERS_MODE_REBUILD );
+		*/
 	}
 
 
 	bool Renderer::AreViewClustersDirty() const
 	{
+		return true;
+
+		/*
 		if( !m_ViewClusters ) { return false; }
 		return m_ViewClusters->IsDirty();
+		*/
 	}
 
 
 	bool Renderer::ResetViewClusters()
 	{
+		return true;
+
+		/*
 		if( !m_ViewClusters || !m_ViewClusters->IsValid() )
 		{
 			Console::WriteLine( "[ERROR] Renderer: Failed to reset view clusters, the clusters were null/invalid" );
@@ -1229,11 +1309,15 @@ namespace Hyperion
 		
 		// TODO: The 'build clusters' shader should just be split into two, and get rid of the whole notion of a 'mode'
 		return DispatchComputeShader( m_BuildClustersShader, BUILD_CLUSTERS_MODE_CLEAR );
+		*/
 	}
 
 
 	bool Renderer::DispatchComputeShader( const std::shared_ptr< RComputeShader >& inShader, uint32 inFlags )
 	{
+		return true;
+		
+		/*
 		if( !inShader || !inShader->IsValid() )
 		{
 			Console::WriteLine( "[ERROR] Renderer: Failed to dispatch compute shader, it was null or invalid" );
@@ -1252,11 +1336,13 @@ namespace Hyperion
 		inShader->Detach();
 
 		return true;
+		*/
 	}
 
 
 	void Renderer::SetGBuffer( const std::shared_ptr< GBuffer >& inBuffer )
 	{
+		/*
 		// Shutdown the current G-Buffer if there is one
 		if( m_GBuffer )
 		{
@@ -1266,6 +1352,7 @@ namespace Hyperion
 
 		// Assign new GBuffer
 		m_GBuffer = inBuffer;
+		*/
 	}
 
 }

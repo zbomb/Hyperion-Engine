@@ -157,10 +157,10 @@ namespace Hyperion
 		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
 
 		// Calculate our matrix for the screen vertex buffer
-		Matrix viewMatrix = inRenderer.GetScreenViewMatrix();
-		Matrix projMatrix = inRenderer.GetOrthoMatrix();
+		RMatrix viewMatrix = inRenderer.GetScreenViewMatrix();
+		RMatrix projMatrix = inRenderer.GetOrthoMatrix();
 
-		DirectX::XMMATRIX viewProjMatrix = DirectX::XMMatrixMultiply( DirectX::XMMATRIX( viewMatrix.GetData() ), DirectX::XMMATRIX( projMatrix.GetData() ) );
+		DirectX::XMMATRIX viewProjMatrix = DirectX::XMMatrixMultiply( DirectX::XMMATRIX( viewMatrix.m ), DirectX::XMMATRIX( projMatrix.m ) );
 		viewProjMatrix = DirectX::XMMatrixTranspose( viewProjMatrix );
 
 		D3D11_MAPPED_SUBRESOURCE resource {};

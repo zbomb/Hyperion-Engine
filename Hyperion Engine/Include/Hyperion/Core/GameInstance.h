@@ -1,18 +1,47 @@
 /*==================================================================================================
 	Hyperion Engine
 	Hyperion/Include/Core/GameInstance.h
-	© 2019, Zachary Berry
+	© 2021, Zachary Berry
 ==================================================================================================*/
 
 #pragma once
 
 #include "Hyperion/Hyperion.h"
 #include "Hyperion/Core/Object.h"
-#include "Hyperion/Library/Geometry.h"
+#include "Hyperion/Core/Simulation.h" // TODO: Move this file to Hyperion/Simulation/Simulation.h
+#include "Hyperion/Renderer/Renderer.h"
 
 
 namespace Hyperion
 {
+
+	/*
+	*	Game Instance Class
+	*/
+	class GameInstance : public Object
+	{
+
+	private:
+
+		HypPtr< Thread > m_CoreThread;
+		std::atomic< bool > m_bIsGameRunning;
+
+		HypPtr< Simulation > m_Simulation;
+		HypPtr< Renderer > m_Renderer;
+
+		void CoreMain( const std::atomic< bool >& bThreadState );
+
+	public:
+
+		GameInstance();
+		~GameInstance();
+
+		Engine::InitializeResult BeginGame( const Engine::InitializeParameters& inParams );
+		void EndGame();
+
+	};
+
+	/*	-------------------------------------- OLD ------------------------------------------
 	class Entity;
 	class World;
 	class RenderComponent;
@@ -61,13 +90,13 @@ namespace Hyperion
 
 		/*
 			Hooks
-		*/
+		
 		virtual void OnStart();
 		virtual void OnStop();
 
 		/*
 			Render Components
-		*/
+		
 		bool RegisterRenderComponent( const HypPtr< PrimitiveComponent >& );
 		bool RegisterRenderComponent( const HypPtr< LightComponent >& );
 
@@ -75,8 +104,6 @@ namespace Hyperion
 		bool RemoveRenderComponent( const HypPtr< LightComponent >& );
 
 		void ProcessRenderUpdates();
-
-
-	};
+		*/
 
 }

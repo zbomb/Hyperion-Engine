@@ -20,7 +20,7 @@
 #include "Hyperion/Hyperion.h"
 
 #ifdef HYPERION_SUPPORT_DIRECTX
-#include "Hyperion/Renderer/DirectX11/DirectX11Math.h"
+#include "Hyperion/Renderer/DirectX11/DX11Math.h"
 #else
 // TODO: OpenGL math?
 #endif

@@ -51,3 +51,11 @@ Hyperion Utilities/obj/*
 *.ipch
 */ipch/*
 */v16/*
+.vs/Hyperion Engine/v16/.suo
+*.db
+*.db-shm
+.vs/Hyperion Engine/v16/Browse.VC.db
+*.pdb
+Build/Debug/Hyperion.pdb
+Build/Debug/Hyperion.pdb
+Build/Debug/Hyperion.ilk

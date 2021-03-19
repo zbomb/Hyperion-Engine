@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Framework">
-      <UniqueIdentifier>{ceeacff1-e10d-44dc-ae7b-43f0d075bd52}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Tests">
       <UniqueIdentifier>{3c1089af-1688-4565-9a50-3a2e59d6e5f5}</UniqueIdentifier>
     </Filter>
@@ -77,28 +74,31 @@
     <Filter Include="Renderer\DirectX11\Shaders">
       <UniqueIdentifier>{60f44897-9064-4b0e-b271-fc0c5eb65c9c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Simulation">
+      <UniqueIdentifier>{bda8ce22-dabb-44e4-b8be-944173a05815}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Simulation\Game">
+      <UniqueIdentifier>{f54d8dc8-e971-468a-9d5f-6deb0ab82972}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Simulation\Physics">
+      <UniqueIdentifier>{7b5b0a44-4f15-4ed1-8977-92c220bc7797}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Simulation\Game\Entities">
+      <UniqueIdentifier>{debb4e3d-0cee-497b-9aa5-e839b1947b56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Simulation\Game\Components">
+      <UniqueIdentifier>{e8400bd2-aece-47a6-8914-83df1667a090}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Hyperion\Hyperion.h">
       <Filter>Root</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\Entity.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\World.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\InputManager.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\Component.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\Proxy\ProxyScene.h">
       <Filter>Renderer\Proxy</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\ViewState.h">
-      <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Tests\SerializationTests.hpp">
       <Filter>Tests</Filter>
@@ -157,12 +157,6 @@
     <ClInclude Include="Include\Hyperion\Core\Memory.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Threading.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Core\Async.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Tests\RenderTests.hpp">
       <Filter>Tests</Filter>
     </ClInclude>
@@ -180,9 +174,6 @@
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Object.h">
       <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\RenderComponent.h">
-      <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\GameInstance.h">
       <Filter>Core</Filter>
@@ -204,18 +195,6 @@
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Macros.h">
       <Filter>Root</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\PrimitiveComponent.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\CameraComponent.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\LightComponent.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\TestEntity.h">
-      <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Assets\TextureAsset.h">
       <Filter>Assets</Filter>
@@ -249,12 +228,6 @@
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Assets\DynamicModelAsset.h">
       <Filter>Assets</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\DynamicModelComponent.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\StaticModelComponent.h">
-      <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Material\MaterialInstance.h">
       <Filter>Material</Filter>
@@ -337,12 +310,6 @@
     <ClInclude Include="Include\Hyperion\Library\Crypto.h">
       <Filter>Library</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\Player.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\LocalPlayer.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Tools\HMATReader.h">
       <Filter>Tools</Filter>
     </ClInclude>
@@ -383,21 +350,6 @@
     <ClInclude Include="Include\Hyperion\Library\Color.h">
       <Filter>Library</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\AI.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\MovementComponent.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\Character.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\CharacterController.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\NoClipMovementComponent.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Hyperion\Library\Geometry.h">
       <Filter>Library</Filter>
     </ClInclude>
@@ -406,12 +358,6 @@
     </ClInclude>
     <ClInclude Include="Include\Hyperion\InputTypes.h">
       <Filter>Root</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\PointLight.h">
-      <Filter>Framework</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Framework\TransparencyTestEntity.h">
-      <Filter>Framework</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Core\Profiling.h">
       <Filter>Core</Filter>
@@ -512,15 +458,11 @@
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ForwardPixelShader.h">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\MaterialBuffer.h" />
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ShadowVertexShader.h">
       <Filter>Renderer\DirectX11\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\Shaders\DX11ShadowPixelShader.h">
       <Filter>Renderer\DirectX11\Shaders</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\Hyperion\Renderer\DynamicShadowState.h">
-      <Filter>Renderer</Filter>
     </ClInclude>
     <ClInclude Include="Include\Hyperion\Renderer\RMath.h">
       <Filter>Renderer</Filter>
@@ -543,22 +485,85 @@
     <ClInclude Include="Include\Hyperion\Renderer\DirectX11\RDX11Resource.h">
       <Filter>Renderer\DirectX11</Filter>
     </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\TaskManager.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Tests\MultithreadTests.hpp">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\Simulation.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Entity.h">
+      <Filter>Simulation\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\ViewState.h">
+      <Filter>Simulation\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\World.h">
+      <Filter>Simulation\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Component.h">
+      <Filter>Simulation\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Entities\CharacterController.h">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Entities\Player.h">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Entities\PointLight.h">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Entities\TestEntity.h">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Entities\TransparencyTestEntity.h">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Entities\AI.h">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Entities\Character.h">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Components\MovementComponent.h">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Components\NoClipMovementComponent.h">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Components\PrimitiveComponent.h">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Components\RenderComponent.h">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Components\StaticModelComponent.h">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Components\CameraComponent.h">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Components\DynamicModelComponent.h">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\Components\LightComponent.h">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Simulation\Game\LocalPlayer.h">
+      <Filter>Simulation\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Hyperion\Core\GameObject.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Framework\Entity.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\World.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Core\Object.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Source\Core\InputManager.cpp">
       <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\Component.cpp">
-      <Filter>Framework</Filter>
     </ClCompile>
     <ClCompile Include="Source\Renderer\Proxy\ProxyScene.cpp">
       <Filter>Renderer\Proxy</Filter>
@@ -584,14 +589,8 @@
     <ClCompile Include="Source\Core\AssetManager.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Core\Threading.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Renderer\Proxy\ProxyBase.cpp">
       <Filter>Renderer\Proxy</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\RenderComponent.cpp">
-      <Filter>Framework</Filter>
     </ClCompile>
     <ClCompile Include="Source\Console\Console.cpp">
       <Filter>Console</Filter>
@@ -605,18 +604,6 @@
     <ClCompile Include="Source\Core\GameInstance.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Framework\PrimitiveComponent.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\CameraComponent.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\LightComponent.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\TestEntity.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Tools\Deflate.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
@@ -628,12 +615,6 @@
     </ClCompile>
     <ClCompile Include="Source\Tools\ImageLoader.cpp">
       <Filter>Tools</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\StaticModelComponent.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\DynamicModelComponent.cpp">
-      <Filter>Framework</Filter>
     </ClCompile>
     <ClCompile Include="Source\Material\MaterialInstance.cpp">
       <Filter>Material</Filter>
@@ -680,12 +661,6 @@
     <ClCompile Include="Source\Library\Crypto.cpp">
       <Filter>Library</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Framework\Player.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\LocalPlayer.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Tools\HMATReader.cpp">
       <Filter>Tools</Filter>
     </ClCompile>
@@ -722,32 +697,11 @@
     <ClCompile Include="Source\Library\Color.cpp">
       <Filter>Library</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Framework\MovementComponent.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\AI.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\Character.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\CharacterController.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\NoClipMovementComponent.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Library\Math.cpp">
       <Filter>Library</Filter>
     </ClCompile>
     <ClCompile Include="Source\Library\Geometry.cpp">
       <Filter>Library</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\PointLight.cpp">
-      <Filter>Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Framework\TransparencyTestEntity.cpp">
-      <Filter>Framework</Filter>
     </ClCompile>
     <ClCompile Include="Source\Renderer\DataTypes.cpp">
       <Filter>Renderer</Filter>
@@ -808,6 +762,72 @@
     </ClCompile>
     <ClCompile Include="Source\Renderer\DirectX11\DX11Texture.cpp">
       <Filter>Renderer\DirectX11</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\TaskManager.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\Simulation.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Component.cpp">
+      <Filter>Simulation\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Entity.cpp">
+      <Filter>Simulation\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\LocalPlayer.cpp">
+      <Filter>Simulation\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\World.cpp">
+      <Filter>Simulation\Game</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Components\LightComponent.cpp">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Components\MovementComponent.cpp">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Components\NoClipMovementComponent.cpp">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Components\PrimitiveComponent.cpp">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Components\RenderComponent.cpp">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Components\StaticModelComponent.cpp">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Components\CameraComponent.cpp">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Components\DynamicModelComponent.cpp">
+      <Filter>Simulation\Game\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Entities\Player.cpp">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Entities\PointLight.cpp">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Entities\TestEntity.cpp">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Entities\TransparencyTestEntity.cpp">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Entities\AI.cpp">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Entities\Character.cpp">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Simulation\Game\Entities\CharacterController.cpp">
+      <Filter>Simulation\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Core\GameObject.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

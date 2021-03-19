@@ -17,7 +17,7 @@
 #include "Hyperion/Renderer/ResourceManager.h"
 #include "Hyperion/Renderer/BatchCollector.h"
 #include "Hyperion/Renderer/Resources/RShader.h"
-#include "Hyperion/Renderer/DynamicShadowState.h"
+#include "Hyperion/Renderer/RMath.h"
 
 #include <atomic>
 
@@ -88,7 +88,7 @@ namespace Hyperion
 		bool m_bVSync;
 		void* m_pWindow;
 		GraphicsAPI m_APIType;
-		Matrix m_ViewMatrix, m_ProjectionMatrix, m_OrthoMatrix, m_ScreenViewMatrix;
+		RMatrix m_ViewMatrix, m_ProjectionMatrix, m_OrthoMatrix, m_ScreenViewMatrix;
 		ViewState m_ViewState;
 		Color3F m_AmbientLightColor;
 		float m_AmbientLightIntensity;
@@ -153,10 +153,10 @@ namespace Hyperion
 		inline HypPtr< BasicStreamingManager > GetStreamingManager() const		{ return m_StreamingManager; }
 		inline std::shared_ptr< ResourceManager > GetResourceManager() const	{ return m_ResourceManager; }
 		inline std::shared_ptr< ProxyScene > GetScene() const					{ return m_Scene; }
-		inline Matrix GetViewMatrix() const										{ return m_ViewMatrix; }
-		inline Matrix GetProjectionMatrix() const								{ return m_ProjectionMatrix; }
-		inline Matrix GetOrthoMatrix() const									{ return m_OrthoMatrix; }
-		inline Matrix GetScreenViewMatrix() const								{ return m_ScreenViewMatrix; }
+		inline RMatrix GetViewMatrix() const									{ return m_ViewMatrix; }
+		inline RMatrix GetProjectionMatrix() const								{ return m_ProjectionMatrix; }
+		inline RMatrix GetOrthoMatrix() const									{ return m_OrthoMatrix; }
+		inline RMatrix GetScreenViewMatrix() const								{ return m_ScreenViewMatrix; }
 		inline ViewState GetViewState() const									{ return m_ViewState; }
 		inline Color3F GetAmbientLightColor() const								{ return m_AmbientLightColor; }
 		inline float GetAmbientLightIntensity() const							{ return m_AmbientLightIntensity; }

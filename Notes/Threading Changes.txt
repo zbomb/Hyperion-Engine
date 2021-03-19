@@ -3,187 +3,123 @@
 	Notes - Threading Changes
 ============================================================================
 
-* This is going to be a very large change to how the engine works, and its going to take a lot of time to implement. 
-* Currently, the engine is mainly running on two threads, one thread processing game-state updates and another generating the render commands.
-* In the future, we want to lean heavily into the task pool system. All threads will run on the task pool system for the most part.
-* We will still need a dedicated thread or two (Win32, Main Scheduler)
+* Were going to be making some very big changes to the engine, by going from a primarily two-threaded design, to a full, multi-threaded design, making use of all system cores
+* The first thing we have to do, is some git-hub work, we need to make a seperate branch.
+* Created Branch: multi-threading
 
-* So lets start by creating an overview of the systems
-* And thinking about how to multi-thread the renderer, we are left with very limited options using DX11
-* DX11 doesnt support multi-threading as well as DX12, because the immediate context we use to generate render commands can only be called from a single thread at a time
-* Therefore, our solution is to still have a single thread that process render commands, and calls the present function..
+* Now, we need to working on the task pool, unfortunatley, the engine is not buildable. Maybe, we should get it to a buildable state so we can run tests.
+* With our new task pool, do we need a wait any function? Or just wait all?
+* Lets figure out how we want to use the task pool first...
 
-	- We can still have multiple threads updating our simulation, determining what to submit to the renderer, but
-	when it comes to actually calling our render commands, we either need to use expensive locks that kill renderer performance
-	or we need to find a way to serialize render commands. Example..
+----------------------------- New Task Pool System ---------------------------------
+
+* No matter what, were going to need some locking to ensure worker threads can aquire work, the only alternative is so use a busy wait.
+* Although, busy waiting would give us the desired result (low latency), it would waste CPU cycles we could use for some other task.
+* We can use a combination of both, to allow for higher performance without excessive CPU usage
+
+* Create a console variable 't_task_pool_worker_max_spin_cycles' this way on platforms with limited power budgets, we can use more efficient methods to wait
+* Use OS-Level code to perform our waits, instead of relying on C++ libraries
+* Still use the boost queue, so if we are able to pick up a task during the spin lock phase, we can get truly lock free performance 
+* Any threads that are spinning should pickup the task, before any threads blocking on a signal, so latency should be lower
+
+* How to structure the OS events though?
+* We have our task pool state...
+
+boost::lockfree::queue< std::unique_ptr< TaskInstanceBase > > m_Tasks;
+std::atomic< uint32 > m_TaskCount;
+WIN32_EVENT m_TaskEvent;
+
+* Then our worker thread state and main thread body..
+
+std::atomic< bool > m_bKill;
+
+------ Thread Body -------
+uint32 spinLockCounter = 0;
+const uint32 maxSpinLockCycles = 10000;
+const float maxSleepLength = 10.f; // in milliseconds
+
+while( m_bKill.load() == false )
+{
+	// Start popping tasks from the queue
+	// As long as the task queue isnt empty, we can keep popping without locks!
+	std::unique_ptr< TaskInstanceBase > ptr_task;
+	while( taskPool->m_Tasks.pop( ptr_task ) && ptr_task != nullptr )
+	{
+		// Decrease atmoic task counter
+		taskPool->m_TaskCount.fetch_sub( 1, std::memory_order::relaxed );
+		
+		// Execute task
+		// This function should also post the result to the shared state
+		// This way, the TaskHandle can be 'waited' on
+		// We could also use std::future to see if we get lower latency
+		ptr_task->Execute();
+		
+		// Reset spin lock counter
+		spinLockCounter = 0;
+	}
 	
-		The main functions we use from DX11 are...
-			PSSetShader, VSSetShader, CSSetShader
-			PSSetResources, PSSetConstantBuffers
-			VSSetConstantBuffers
-			IASetInputLayout, IASetVertexBuffers, IASetIndexBuffer
-			DrawIndexed, DrawIndexedInstanced
-			CSSetConstantBuffers, CSSetResources, CSSetUnorderedAccessViews
-			
-		So the list is short, we can assign each command an identifier, and pack in the parameters in some manner, we dont even need to do a strict
-		1:1 mapping, we could do a couple different things...
-		
-			1. Use pure virtual base class, create a struct type for each command, create a list of these commands, and they have a IGraphicsCommand::Execute( IGraphics& ); function
-			2. Use numeric codes/enums to represent different command types. Need some system to pass in parameters though
-			3. Perform function binding, and then the graphics api simply loops through command lists and executes each
-			
-		Any of these would work, this means we still have a single thread to process render updates, but, executing them should be pretty quick.
-		And, we would be pipeling, so once the game system has generated our render commands, it can continue onto the next tick while we execute the render commands.
-		The problem here is, we have some static commands that need to execute at a certain point each frame.
-		Also, we need to split up commands intelligently, if were going to have seperate threads for generating different types of commands, we need to attempt to balance the load.
-		The basic render thread command loop looks like..
-		
-			1. Rebuild or reset view clusters
-			2. Upload light buffer
-			3. Render G-Buffer
-			4. Find active deferred clusters
-			5. Forward Pre-Pass
-			6. Light Assignment
-			7. Commit dynamic shadowmap memory based on priority
-			8. Render dynamic shadowmaps
-			9. Render cascaded shadow map
-			10. Deferred Lighting
-			11. Forward Pass
-			12. Present Frame
-			
-			
-		We can use DX11 deferred contexts, to record command lists for various sections of the renderer, and then replay them through a single task each frame.
-		So, what steps can we combine into a single command list?
-		
-		The big steps are.. GBuffer pass, Forward pass, Dynamic Shadow map passes, Cascade shadowmap pass
-		We could dedicate a thread to each, but the load wouldnt really be balanced. The dynamic shadowmap passes are heavy because of the culling.
-		Main pass also has to perform heavy culling.
-		
-		We could, perform the culling on our simulation, when the entities are broken out into groups, each group can perform culling, as to avoid all of this work on the renderer.
-		This would probably benefit performance quite a bit really, but this means we need a way to access an accurate view frustum each frame from outside of the renderer system.
-		
-		This is difficult because the renderer isnt synced with the game thread in a way where the game thread has access to the current frames view frustum.
-		The renderer operates on the previous frames view frustum, and the only way to do the culling in the game simulation tasks is to calculate a view frustum for each view.
-		
-		To do this, we need to know each view frustum at the start of the frame.
-		Meaning, shadow map selection not only happens on the game thread, but it happens at the begining of a frame.
-		
-		So, this adds even more work to a single-thread task that needs to happen before splitting up the workload. Not ideal really.
-		If we simply relegate our culling to our render thread though, its simplifies things.
-		
-		It allows shadowmap selection to happen on the render side aswell......
-		Although, we still run into the issue of this only being able to happen on a single thread
-		BUT...
-		We could determine the 'priority' of each lights shadowmap during the game tick. Although, were back to requiring a view frustum! But, using a one thread old frustum doesnt hurt too bad.
-		
-		If we determined shadowmap priority on the game threads, when we split up rendering work, we can quickly determine which to use.
-		We still need to perform the step of memory allocation, but, that light views indivisual task can perform that for us, or at least queue commands to do that for us.
-		
-		How good of a solution is this?
-		Selecting shadow maps is going to be one of the most difficult aspects to properly fit into our new threading system...
-		
-		
-		
-* Heres the current idea, minus the shadow map selection...
-* We have two constant threads that are always running during the games execution
-
-	1. Win32 			- Responsible for responding to windows messaging, recieving input and passing it into the engine
-	2. Engine Scheduler 	- Responsible for creating tasks needed to render the frame, we could probably think of a better name, but sync points happen here, main frame loop.
+	// We ran out of work to do.. so lets spin lock for a certain number of cycles
+	if( spinLockCounter < maxSpinLockCycles )
+	{
+		spinLockCounter++;
+		_mm_pause(); [better function?]
+		continue;
+	}
 	
-* Then, we have a number of systems
+	// We spun lock for as long as was allowed, so now, were going to instead resort to an OS-level syncronization function
+#ifdef HYPERION_WIN32
+	WaitForSingleObject( taskPool->m_TaskEvent, maxSleepLength ); 
 	
-	1. Game Simulation
-	2. Renderer
-	3. Physics
-	4. Sound
-	5. Misc.
+	// Once a thread gets past the event, we reset it so we can use it again later
+	ResetEvent( taskPool->m_TaskEvent );
 	
-* Initialization sequence
-	1. Enter main function
-	2. Initialize console
-	3. Initialize thread manager
-	4. Determine startup resolution
-	5. Create main engine scheduler thread	
-		- Creates startup tasks for each subsystem
-		- Pauses to wait for initialization to complete
-	6. Enter main windows loop, start recieving messages
-	7. EngineScheduler starts ticking
-		- We need the ability to sync the scheuler ticks to VSync, and we would do this by having the task that calls present, to wait for vertical sync, and wait for the task to finish to ensure
-			that the entire engine is getting synced as well
-
-* Once startup happens, we are good to go!
-* Since our engine is now going to be totally multi-threaded, we need to make changes in other areas to ensure compatibility, namely:
-	1. HypPtr/Object system
-	2. AssetManager
-	3. Console (already supports multi-threading, but uses expensive locks)
-
-* Main Tick Loop
+#else
+	// Implement something from std:: or boost::
+	taskPool->m_TaskEvent.wait_for( ..., std::chrono::milliseconds( maxSleepLength ) );
 	
-	- Create task to render the previous frame [Waits for entity removal/addition to complete]
-	- Create task to process entity removal/addition, and then split them into groups, dispatches those threads
-	- These threads run the game simulation, namely, processing input, calling tick, and running physics
-	- Wait for all threads to complete
-	- Process data updates
-		
-* Thats really it, unless we decide to have the renderer not access the main entity list, which isnt a terrible idea, but I believe we can allow access safely
-* If the renderer waits for any additions and removals to the list of entities, it can safely iterate through
-* One problem is though, it now has a larger list of objects to look through, to find render components. We also want entities to have the ability to submit the components it wishes to actually render
-* The solution though isnt great, which is performing visibility checks in our simulation code.
-
-* To do this, we need a frustum thats accurate for the current frame, meaning we need to make a generic hyperion frustum class, and build it during the single-threaded phase before 
-	we split the simulation work. Another issue is, if we perform shadowmap culling on the simulation, we need to determine which lights to generate shadowmaps for here too. Lets just do it!
-	
-* But this means, our complicated data access scheme wont be used for the renderer, as a matter infact, were creating a totally different system!
-* Were using a cool multi-threaded data access scheme, and basically throwing it in the bin to create a pipelined system.
-* But by generating the render data for the next tick is a more lean solution, because now the renderer doesnt have to muck about with iterating the scene, waiting for entity removal, or any of that.
-* The renderer can simply plow ahead with generating render commands for each view, and running its main dispatch task to submit our commands.
+#endif
+}
 
 
+* This should give us lower latency, at the expense of some CPU cycles.
+* The final thing we need to worry about, is waiting for tasks to complete and getting results back.
+* We could also use OS constructs to do this
 
-* So, lets decide...
-	Option 1: Have the renderer loop through the scene, using our data access scheme, rendering everything. 
-	Option 2: Renderer has its own data set, static render data, and dynamic render data provided for each view by the game simulation threads
-	
---------------------------------------------------------------------------------------------------------
+struct TaskState
+{
+#if HYPERION_WIN32
+	HANDLE waitHandle;
+#else
+	std::mutex m;
+	std::condition_variable cv;
+	bool b;
+#endif
 
-	Option 1
-	
-	* Pros:
-		Consistent data access pattern between the various subsystems
-		Less memory usage
-		Less extra systems to program
-		
-	* Cons:
-		Has to wait for entities to be added/removed each frame
-		Load balancing difficult
-		
----------------------------------------------------------------------------------------------------------
+	T result;
+}
 
-	Option 2
-	
-	* Pros:
-		No worries about data races because renderer has its own data set
-		Culling doesnt have to be performed on the render thread
-		
-	* Cons:
-		More memory usage
-		Higher complexity
-		Not using the system that will take a lot of time to allow access across threads
-		
----------------------------------------------------------------------------------------------------------
 
-* To be able to split up our render processing threads, we can split the work up a couple different ways
+* So, on windows, we can simply set the result in the state, and use WaitForSingleObject to be notified of the task being completed.
+* We can also implemenent the OS wait functions for different platforms, and then, if we have to fallback on std:: methods we can
 
-	1. Group entities, each thread performs culling for each entity against the various views
-	2. One view per thread (or two threads), each view needs to iterate the scene to find entities to include
-		
-* Keeping the split based on entities seems like a good idea, the problem being, we can get imbalances based on what entities are visible, and which are not.
-	This means, the solution might be to do these groupings based on the last frames visibility. And with either approach to culling, this is possible.
-	The main difference is, where the visibility checks happen.
-	
-* If we dont opt to use pipelining to pass the state into the render threads, we can simply access the main object list though, and can really put the culling anywhere.
-	Also, our view selection still has to happen before the renderer threads run. Which is still not ideal...
-	We will sleep on it, and think about it.
-		
-		
-		
+* This really should get us as close to zero latency as physically possible, without just killing performance in the process.
+* We can tune the performance as well, by using more spin lock cycles, and lower wait durations, we can get latency down further, but costs CPU time
+* Inversely we can lower spin lock cycles (down to zero if desired), and increase the wait duration, which will increase latency at times, but drastically lower CPU usage
+
+* So, this ends up being something we can tune per-platform to get the best mix of performance and power usage from our task scheduling system.
+* Then, we can build systems on top of this, to execute a task graph, or something like that..
+
+
+
+* How to handle console command changes now?
+* Before, we had a system where we could inject callbacks for ConsoleVar changes into a target thread
+* Now, we cannot do this, so, we can still make a callback, but, its not garunteed to run on any specific thread or anything.
+* Also, console var changes can originate from weird threads, like a UI thread, windows thread, etc...
+
+* But, what we need is, the callback to run in general, but it would be nice for it to run at an expected time.
+* For instance, we could have the callback run in the pre-frame phase or something...
+* Either way, since there is no way to know what thread a certain entity or system will be on, we can only 
+
+
+
+

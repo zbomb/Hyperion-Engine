@@ -7,7 +7,7 @@
 #include "Hyperion/Renderer/DirectX11/Shaders/DX11GBufferPixelShader.h"
 #include "Hyperion/Renderer/Renderer.h"
 #include "Hyperion/Renderer/Resources/RMaterial.h"
-#include "Hyperion/Renderer/DirectX11/DirectX11Texture.h"
+#include "Hyperion/Renderer/DirectX11/DX11Texture.h"
 #include "Hyperion/File/FileSystem.h"
 
 
@@ -118,10 +118,10 @@ namespace Hyperion
 		auto baseMapIdentifier = baseMap->GetAssetIdentifier();
 		if( m_AttachedBaseMap == ASSET_INVALID || m_AttachedBaseMap != baseMapIdentifier )
 		{
-			auto dx11Texture = std::dynamic_pointer_cast< DirectX11Texture2D >( baseMap );
+			auto dx11Texture = std::dynamic_pointer_cast< DX11Texture2D >( baseMap );
 			HYPERION_VERIFY( dx11Texture != nullptr, "[DX11] API type mismatch?" );
 
-			ID3D11ShaderResourceView* viewList[] = { dx11Texture->GetView() };
+			ID3D11ShaderResourceView* viewList[] = { dx11Texture->GetSRV() };
 			m_Context->PSSetShaderResources( 0, 1, viewList );
 
 			m_AttachedBaseMap = baseMapIdentifier;

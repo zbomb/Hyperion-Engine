@@ -35,7 +35,8 @@ Hyperion::RTTI::RegistryEntry __g_HyperionType__##__class__ = Hyperion::RTTI::Re
 
 namespace Hyperion
 {
-	template< typename _Ty >
+	template< typename _Ty,
+		typename = typename std::enable_if_t< std::is_base_of< Object, _Ty >::value || std::is_same< Object, _Ty >::value > >
 	class HypPtr;
 
 	class Object;

@@ -8,10 +8,11 @@
 #include "Hyperion/Win32/Win32Headers.h"
 #include "Hyperion/Core/Engine.h"
 #include "Hyperion/Core/InputManager.h"
-#include "../Tests/RenderTests.hpp"
+#include "../Tests/MultithreadTests.hpp"
 #include "Hyperion/Core/ThreadManager.h"
 #include "Hyperion/Renderer/Renderer.h"
 #include "Hyperion/Constants.h"
+#include "Hyperion/Core/TaskManager.h"
 
 #include <io.h>
 #include <fcntl.h>
@@ -200,6 +201,13 @@ int Impl_Main( HINSTANCE inInstance, LPWSTR inCmdLine, int inCmdShow )
 		return -1;
 	}
 
+	// Initialize task system
+	if( !Hyperion::TaskManager::Initialize( std::thread::hardware_concurrency() ) )
+	{
+		MessageBox( hWindow, L"Failed to start engine. Task manager failed to intialize!", L"Hyperion Error!", MB_OK );
+		return -1;
+	}
+
 	auto res = eng->GetStartupScreenResolution();
 	if( bForceFullscreen ) { res.FullScreen = true; }
 	else if( bForceWindowed ) { res.FullScreen = false; }
@@ -274,13 +282,11 @@ int Impl_Main( HINSTANCE inInstance, LPWSTR inCmdLine, int inCmdShow )
 	inputManager->SetCaptureCallback( &OnMouseCapture );
 	inputManager->CaptureMouse();
 
+	// Perform some testing....
+	Hyperion::Tests::RunMultithreadTests();
+
 	// Wait for both renderer and game to initialize
 	eng->WaitForInitComplete();
-	
-
-	// DEBUG
-	// Inject test function into game thread
-	auto task = Hyperion::ThreadManager::CreateTask< void >( std::bind( &Hyperion::Tests::RunRendererTests ), Hyperion::THREAD_GAME );
 
 	// New Message Loop
 	bool bQuit		= false;
@@ -298,7 +304,7 @@ int Impl_Main( HINSTANCE inInstance, LPWSTR inCmdLine, int inCmdShow )
 				case WM_QUIT:
 				{
 					bQuit = true;
-					exitCode = message.wParam;
+					exitCode = (int)message.wParam;
 					break;
 				}
 
@@ -507,6 +513,7 @@ void Impl_Shutdown()
 	}
 
 	eng->Stop();
+	Hyperion::TaskManager::Shutdown();
 
 	if( bUsingOSConsole )
 	{
@@ -603,10 +610,10 @@ LRESULT CALLBACK WndProc( HWND inWindow, UINT inMessage, WPARAM inWParam, LPARAM
 
 		case WM_DESTROY:
 		{
-			PostQuitMessage( inWParam );
+			PostQuitMessage( (int)inWParam );
 			break;
 		}
-
+		
 		case WM_SIZE:
 		{
 			if( inWParam == SIZE_MINIMIZED )

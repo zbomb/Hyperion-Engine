@@ -94,6 +94,9 @@ namespace Hyperion
 	bool ResourceManager::UploadMeshLOD( const std::shared_ptr<StaticModelAsset>& inAsset, uint8 inLOD,
 											 const std::vector< std::vector<byte> >& inVertexData, const std::vector< std::vector<byte> >& inIndexData )
 	{
+		return true;
+
+		/*
 		// Validate parameters
 		if( !inAsset || inLOD > MODEL_MAX_LODS || inVertexData.size() == 0 || inIndexData.size() == 0 || inVertexData.size() != inIndexData.size() )
 		{
@@ -171,11 +174,15 @@ namespace Hyperion
 
 		targetLOD->bCached = true;
 		return true;
+		*/
 	}
 
 
 	bool ResourceManager::RemoveMeshLOD( const std::shared_ptr<StaticModelAsset>& inAsset, uint8 inLOD )
 	{
+		return true;
+
+		/*
 		// Validate Parameters
 		if( !inAsset || inLOD > MODEL_MAX_LODS )
 		{
@@ -213,12 +220,16 @@ namespace Hyperion
 		}
 
 		return true;
+		*/
 	}
 
 
 	bool ResourceManager::UploadFullMesh( const std::shared_ptr<StaticModelAsset>& inAsset, 
 											  const std::vector< std::vector<std::vector<byte>>>& inVertexData, const std::vector< std::vector<std::vector<byte>>>& inIndexData )
 	{
+		return true;
+
+		/*
 		// Validate parameters
 		if( !inAsset || inVertexData.size() == 0 || inVertexData.size() != inIndexData.size() )
 		{
@@ -311,11 +322,15 @@ namespace Hyperion
 		}
 
 		return true;
+		*/
 	}
 
 
 	bool ResourceManager::RemoveFullMesh( const std::shared_ptr<StaticModelAsset>& inAsset )
 	{
+		return true;
+
+		/*
 		if( !inAsset ) { return false; }
 
 		if( !IsRenderThread() )
@@ -346,11 +361,15 @@ namespace Hyperion
 		}
 
 		return true;
+		*/
 	}
 
 
 	std::shared_ptr<RMesh> ResourceManager::GetMesh( const std::shared_ptr<StaticModelAsset>& inAsset )
 	{
+		return nullptr;
+
+		/*
 		if( !inAsset ) { return nullptr; }
 		
 		// Find geometry entry
@@ -375,11 +394,13 @@ namespace Hyperion
 
 		// Return the pointer
 		return ptr;
+		*/
 	}
 
 
 	void ResourceManager::ClearMeshes()
 	{
+		/*
 		if( IsRenderThread() )
 		{
 			m_Geometry.clear();
@@ -388,11 +409,15 @@ namespace Hyperion
 		{
 			Engine::GetRenderer()->AddCommand( std::make_unique< RenderCommand >( std::bind( &ResourceManager::ClearMeshes, this ) ) );
 		}
+		*/
 	}
 
 
 	std::shared_ptr<RTexture1D> ResourceManager::Get1DTexture( uint32 inIdentifier )
 	{
+		return nullptr;
+
+		/*
 		if( !IsRenderThread() )
 		{
 			Console::WriteLine( "[ERROR] ResourceManager: Attempt to access cache from outside render thread!" );
@@ -412,10 +437,14 @@ namespace Hyperion
 
 		if( entry->second.type != TextureType::Tex1D ) { return nullptr; }
 		return std::static_pointer_cast<RTexture1D>( entry->second.ptr );
+		*/
 	}
 
 	std::shared_ptr<RTexture2D> ResourceManager::Get2DTexture( uint32 inIdentifier )
 	{
+		return nullptr;
+
+		/*
 		if( !IsRenderThread() )
 		{
 			Console::WriteLine( "[ERROR] ResourceManager: Attempt to access cache from outside render thread!" );
@@ -435,10 +464,14 @@ namespace Hyperion
 
 		if( entry->second.type != TextureType::Tex2D ) { return nullptr; }
 		return std::static_pointer_cast<RTexture2D>( entry->second.ptr );
+		*/
 	}
 
 	std::shared_ptr<RTexture3D> ResourceManager::Get3DTexture( uint32 inIdentifier )
 	{
+		return nullptr;
+
+		/*
 		if( !IsRenderThread() )
 		{
 			Console::WriteLine( "[ERROR] TextureCache: Attempt to access cache from outside render thread!" );
@@ -458,10 +491,14 @@ namespace Hyperion
 
 		if( entry->second.type != TextureType::Tex3D ) { return nullptr; }
 		return std::static_pointer_cast<RTexture3D>( entry->second.ptr );
+		*/
 	}
 
 	std::shared_ptr<RTextureBase> ResourceManager::GetTexture( uint32 inIdentifier )
 	{
+		return nullptr;
+
+		/*
 		if( !IsRenderThread() )
 		{
 			Console::WriteLine( "[ERROR] ResourceManager: Attempt to access cache from outside render thread!" );
@@ -474,11 +511,13 @@ namespace Hyperion
 		if( entry == m_Textures.end() ) { return nullptr; }
 
 		return entry->second.type != TextureType::None ? entry->second.ptr : nullptr;
+		*/
 	}
 
 
 	void ResourceManager::ClearTextures()
 	{
+		/*
 		if( IsRenderThread() )
 		{
 			m_Textures.clear();
@@ -487,11 +526,13 @@ namespace Hyperion
 		{
 			Engine::GetRenderer()->AddCommand( std::make_unique< RenderCommand >( std::bind( &ResourceManager::ClearTextures, this ) ) );
 		}
+		*/
 	}
 
 
 	void ResourceManager::IncreaseTextureDetail( const std::shared_ptr<TextureAsset>& inAsset, uint8 inNewMaxLOD, const std::vector<std::vector<byte>>& inData )
 	{
+		/*
 		HYPERION_VERIFY( inAsset != nullptr && inNewMaxLOD <= TEXTURE_MAX_LODS && inData.size() > 0, "[ResourceManager] Update texture was called with invalid arguments" );
 
 		auto renderer = Engine::GetRenderer();
@@ -622,11 +663,13 @@ namespace Hyperion
 				renderer->AddCommand( std::make_unique< RenderCommand >( std::bind( &ResourceManager::IncreaseTextureDetail, this, inAsset, inNewMaxLOD, inData ) ) );
 			}
 		}
+		*/
 	}
 
 
 	void ResourceManager::DecreaseTextureDetail( const std::shared_ptr<TextureAsset>& inAsset, uint8 inNewMaxLOD )
 	{
+		/*
 		HYPERION_VERIFY( inAsset != nullptr && inNewMaxLOD <= TEXTURE_MAX_LODS, "[ResourceManager] Update texture was called with invalid parameters" );
 
 		auto renderer			= Engine::GetRenderer();
@@ -710,11 +753,13 @@ namespace Hyperion
 			// Run this function on the render thread instead
 			renderer->AddCommand( std::make_unique< RenderCommand >( std::bind( &ResourceManager::DecreaseTextureDetail, this, inAsset, inNewMaxLOD ) ) );
 		}
+		*/
 	}
 
 
 	void ResourceManager::RemoveTexture( const std::shared_ptr<TextureAsset>& inAsset )
 	{
+		/*
 		HYPERION_VERIFY( inAsset != nullptr, "[ResourceManager] Remove texture was called with invalid arguments" );
 
 		auto renderer = Engine::GetRenderer();
@@ -743,6 +788,7 @@ namespace Hyperion
 		{
 			renderer->AddCommand( std::make_unique< RenderCommand >( std::bind( &ResourceManager::RemoveTexture, this, inAsset ) ) );
 		}
+		*/
 	}
 
 

@@ -1,7 +1,7 @@
 /*==================================================================================================
 	Hyperion Engine
 	Include/Hyperion/Constants.h
-	© 2019, Zachary Berry
+	© 2021, Zachary Berry
 ==================================================================================================*/
 
 #pragma once
@@ -13,95 +13,90 @@
 namespace Hyperion
 {
 
-	class GameInstance;
+	/*
+	*	Core
+	*/
+	enum class ByteOrder
+	{
+		LittleEndian	= 0,
+		BigEndian		= 1
+	};
 
+	enum class ComparisonType
+	{
+		LESS_THAN,
+		LESS_THAN_OR_EQUAL,
+		EQUAL,
+		GREATER_THAN,
+		GREATER_THAN_OR_EQUAL
+	};
+
+	/*
+	*	String System
+	*/
 	namespace Encoding
 	{
 		constexpr uint32 InvalidChar = 0xFFFD;
 	}
 
-	enum class GraphicsAPI
-	{
-		None = 0,
-		DX11 = 1,
-		DX12 = 2,
-		OpenGL = 3
-	};
-
-	enum class LightType
-	{
-		Point = 1,
-		Spot = 2,
-		Directional = 3
-	};
-
-	typedef unsigned int ObjectID;
-	constexpr ObjectID OBJECT_INVALID	= 0;
-	constexpr ObjectID OBJECT_NONE		= 0;
-
-	// TODO: Check if this is deprecated
-	typedef unsigned int ObjectCacheID;
-	constexpr ObjectCacheID CACHE_INVALID		= 0;
-	constexpr ObjectCacheID CACHE_NONE			= 0;
-	constexpr ObjectCacheID CACHE_TEST			= 1;
-	constexpr ObjectCacheID CACHE_OTHER			= 2;
-	constexpr ObjectCacheID CACHE_CORE			= 3;
-	constexpr ObjectCacheID CACHE_ENTITY		= 4;
-	constexpr ObjectCacheID CACHE_COMPONENT		= 5;
-	constexpr ObjectCacheID CACHE_RENDERER		= 6;
-
 	typedef uint16 LanguageID;
 	constexpr LanguageID LANG_NONE = 0;
 
-	constexpr uint32 ASSET_INVALID			= 0;
-	constexpr uint32 ASSET_TYPE_INVALID		= 0;
+	/*
+	*	Object System
+	*/
+	typedef uint32 ObjectID;
+	constexpr ObjectID OBJECT_INVALID	= 0;
+	constexpr ObjectID OBJECT_NONE		= 0;
 
-	constexpr uint32 PLAYER_LOCAL = 0;
-	constexpr uint32 PLAYER_INVALID = std::numeric_limits< uint32 >::max();
+	enum class GarbageCollectionMethod
+	{
+		// Default Method, object is shutdown asyncronously
+		// If you need to run code when the objects ref-count hits zero, use Object::OnGarbageCollected
+		Deferred = 0,
 
+		// Only should use in controlled manner, object shutdown code runs when ref-count hits zero, on whatever thread had the last HypPtr pointing to the object
+		// Ensure your shutdown function is lightweight and doesnt block the thread, especially if the object is being used in simulation threads
+		Immediate = 1
+	};
+
+	/*
+	*	Startup
+	*/
+	constexpr uint32 ENGINE_MIN_TASK_POOL_THREADS	= 2;
+	constexpr uint32 ENGINE_MAX_TASK_POOL_THREADS	= 1000;
+
+	/*
+	*	Asset System
+	*/
+	constexpr uint32 ASSET_INVALID				= 0;
+	constexpr uint32 ASSET_TYPE_INVALID			= 0;
 	constexpr uint32 ASSET_TYPE_TEXTURE			= 1;
 	constexpr uint32 ASSET_TYPE_STATICMODEL		= 2;
 	constexpr uint32 ASSET_TYPE_MATERIAL		= 3;
 
-	constexpr auto THREAD_GAME		= "game";
-	constexpr auto THREAD_RENDERER	= "renderer";
-	constexpr auto THREAD_POOL		= "pool";
+	/*
+	*	Game Simulation
+	*/
+	constexpr uint32 PLAYER_LOCAL		= 0;
+	constexpr uint32 PLAYER_INVALID		= std::numeric_limits< uint32 >::max();
 
-	constexpr uint32 RENDERER_CLUSTER_COUNT_X		= 15;
-	constexpr uint32 RENDERER_CLUSTER_COUNT_Y		= 10;
-	constexpr uint32 RENDERER_CLUSTER_COUNT_Z		= 24;
-	constexpr uint32 RENDERER_CLUSTER_MAX_LIGHTS	= 128;
-	constexpr uint32 RENDERER_MAX_DYNAMIC_LIGHTS	= 262144;	// This limit is due to the compute function that assigns lights to view clusters
-																// The lights are processed by 512 threads per cluster, with a maximum of 512 lights per thread, giving us this value
+	/*
+	*	Renderer
+	*/
+	enum class GraphicsAPI
+	{
+		None = 0,
+		DX11 = 1,
+		OpenGL = 2
+	};
 
-	constexpr uint32 RENDERER_MIN_RESOLUTION_WIDTH	= 480;
-	constexpr uint32 RENDERER_MIN_RESOLUTION_HEIGHT = 360;
-
-
-	constexpr uint32 RENDERER_RESOURCE_ACCESS_NONE				= 0;
-	constexpr uint32 RENDERER_RESOURCE_ACCESS_SHADER_RESOURCE	= 1;
-	constexpr uint32 RENDERER_RESOURCE_ACCESS_COMPUTE_WRITE		= 2;
-	constexpr uint32 RENDERER_RESOURCE_ACCESS_RENDER_TARGET		= 4;
-
-
-	// Flags 
-	constexpr uint32 FLAG_NONE				= 0U;
-
-	constexpr uint32 FLAG_RENDERER_DX11		= 0b00000000'00000000'00000001'00000000;
-	constexpr uint32 FLAG_RENDERER_DX12		= 0b00000000'00000000'00000010'00000000;
-	constexpr uint32 FLAG_RENDERER_OGL		= 0b00000000'00000000'00000100'00000000;
-	constexpr uint32 FLAG_RENDERER_VSYNC	= 0b00000000'00000000'00001000'00000000;
-
-	// Default Resolution
-	// TODO: Make this dynamic, select a default using the graphics api to see whats available, monitor aspect ratio, etc...
-	constexpr uint32 DEFAULT_RESOLUTION_WIDTH		= 1080;
-	constexpr uint32 DEFAULT_RESOLUTION_HEIGHT		= 720;
-	constexpr bool DEFAULT_RESOLUTION_FULLSCREEN	= false;
-
-	constexpr uint32 MIN_RESOLUTION_WIDTH	= 480;
-	constexpr uint32 MIN_RESOLUTION_HEIGHT	= 360;
-
-	constexpr uint32 RENDERER_MAX_INSTANCES_PER_BATCH = 512;
+	enum class LightType
+	{
+		Point			= 1,
+		Spot			= 2,
+		Directional		= 3
+	};
 
 	enum class AntiAliasingType
 	{
@@ -109,101 +104,42 @@ namespace Hyperion
 		FXAA	= 1
 	};
 
-	/*
-	*	Static Settings
-	*	- Eventually we need to create a StaticVar system, where we can set vars from some time of external program
-	*	- Basically, we have a header file (not included in the project file) and is included by the main header
-	*	- Then, settings are saved into this file for build
-	*/
-	constexpr auto TYPE_OVERRIDE_GAME_INSTANCE	= "gameinstance";
-	
-	constexpr uint32 DEFAULT_API_WIN32			= FLAG_RENDERER_DX11;
-	constexpr uint32 DEFAULT_API_OSX			= FLAG_RENDERER_OGL;
-
-	constexpr auto SHADER_PATH_DX11_VERTEX_SCENE			= "shaders/dx11/scene.hvs";
-	constexpr auto SHADER_PATH_DX11_VERTEX_SCREEN			= "shaders/dx11/screen.hvs";
-	constexpr auto SHADER_PATH_DX11_PIXEL_GBUFFER			= "shaders/dx11/gbuffer.hps";
-	constexpr auto SHADER_PATH_DX11_PIXEL_LIGHTING			= "shaders/dx11/lighting.hps";
-	constexpr auto SHADER_PATH_DX11_COMPUTE_BUILD_CLUSTERS	= "shaders/dx11/build_clusters.hcs";
-	constexpr auto SHADER_PATH_DX11_COMPUTE_FIND_CLUSTERS	= "shaders/dx11/find_clusters.hcs";
-	constexpr auto SHADER_PATH_DX11_COMPUTE_CULL_LIGHTS		= "shaders/dx11/cull_lights.hcs";
-	constexpr auto SHADER_PATH_DX11_PIXEL_FORWARD_PRE_Z		= "shaders/dx11/forward_pre_z.hps";
-	constexpr auto SHADER_PATH_DX11_PIXEL_FORWARD			= "shaders/dx11/forward.hps";
-	constexpr auto SHADER_PATH_DX11_FX_FXAA					= "shaders/dx11/fxaa.hpps";
-
-	constexpr uint32 BUILD_CLUSTERS_MODE_REBUILD	= 0;
-	constexpr uint32 BUILD_CLUSTERS_MODE_CLEAR		= 1;
-
-	// Enums
 	enum class GeometryCollectionSource
 	{
-		Scene = 0,
-		ScreenQuad = 1
+		Scene		= 0,
+		ScreenQuad	= 1
 	};
 
-	enum class PipelineRenderTarget
-	{
-		BackBuffer = 0,
-		GBuffer = 1,
-		ViewClusters = 2,
-		PostProcessBuffer = 3
-	};
+	constexpr uint32 RENDERER_MIN_RESOLUTION_WIDTH		= 480;
+	constexpr uint32 RENDERER_MIN_RESOLUTION_HEIGHT		= 360;
+	constexpr uint32 RENDERER_DEF_RESOLUTION_WIDTH		= 1080;
+	constexpr uint32 RENDERER_DEF_RESOLUTION_HEIGHT		= 720;
+	constexpr bool RENDERER_DEF_FULLSCREEN_MODE			= true;
 
-	enum class PipelineDepthStencilTarget
-	{
-		Screen		= 0,
-		GBuffer		= 1,
-		None		= 3
-	};
+	constexpr uint32 RENDERER_CLUSTER_COUNT_X		= 15;
+	constexpr uint32 RENDERER_CLUSTER_COUNT_Y		= 10;
+	constexpr uint32 RENDERER_CLUSTER_COUNT_Z		= 24;
+	constexpr uint32 RENDERER_CLUSTER_MAX_LIGHTS	= 128;
+	constexpr uint32 RENDERER_MAX_DYNAMIC_LIGHTS	= 262144;
 
-	// Flags
+	constexpr uint32 RENDERER_BUILD_CLUSTERS_MODE_REBUILD	= 0; // TODO: Just make two different shaders!
+	constexpr uint32 RENDERER_BUILD_CLUSTERS_MODE_CLEAR		= 1;
+
+	constexpr uint32 RENDERER_RESOURCE_ACCESS_NONE				= 0;
+	constexpr uint32 RENDERER_RESOURCE_ACCESS_SHADER_RESOURCE	= 1;
+	constexpr uint32 RENDERER_RESOURCE_ACCESS_COMPUTE_WRITE		= 2;
+	constexpr uint32 RENDERER_RESOURCE_ACCESS_RENDER_TARGET		= 4;
+
 	constexpr uint32 RENDERER_GEOMETRY_COLLECTION_FLAG_NONE			= 0;
 	constexpr uint32 RENDERER_GEOMETRY_COLLECTION_FLAG_OPAQUE		= 1;
 	constexpr uint32 RENDERER_GEOMETRY_COLLECTION_FLAG_TRANSLUCENT	= 2;
 
-	// Shader Types
-	enum class VertexShaderType
-	{
-		Scene	= 0,
-		Screen	= 1
-	};
+	constexpr uint32 RENDERER_MAX_INSTANCES_PER_BATCH	= 512;
+	constexpr GraphicsAPI RENDERER_DEF_API_WIN32		= GraphicsAPI::DX11;
+	// TODO: Make one of these for each platform, also, ensure were actually using this
 
-	enum class PixelShaderType
-	{
-		GBuffer			= 0,
-		Lighting		= 1,
-		ForwardPreZ		= 2,
-		Forward			= 3
-	};
-
-	enum class GeometryShaderType
-	{
-
-	};
-
-	enum class ComputeShaderType
-	{
-		BuildClusters	= 0,
-		FindClusters	= 1,
-		CullLights		= 2
-	};
-
-	enum class PostProcessShaderType
-	{
-		FXAA = 0
-	};
-
-	enum class PostProcessRenderTarget
-	{
-		Intermediate = 0,
-		BackBuffer = 1
-	};
-
-	/*
-		Maximum number of LODs that a texture can have, this makes the max texture width/height is 65,536px
-	*/
-	constexpr uint8 TEXTURE_MAX_LODS = 15;
-	constexpr uint8 MODEL_MAX_LODS = 10;
+	constexpr uint32 RENDERER_TEXTURE_MAX_LODS	= 15;
+	constexpr uint32 RENDERER_MODEL_MAX_LODS	= 10;
 
 	enum class TextureFormat
 	{
@@ -213,87 +149,87 @@ namespace Hyperion
 		 * 8-bit Types
 		*/
 		// Unsigned Normals (converted to floats in shaders) [0,1]
-		R_8BIT_UNORM = 1,
-		RG_8BIT_UNORM = 2,
-		RGBA_8BIT_UNORM = 4,
-		RGBA_8BIT_UNORM_SRGB = 5,
+		R_8BIT_UNORM			= 1,
+		RG_8BIT_UNORM			= 2,
+		RGBA_8BIT_UNORM			= 4,
+		RGBA_8BIT_UNORM_SRGB	= 5,
 
 		// Signed Normals (converted to floats in shaders) [-1,1]
-		R_8BIT_SNORM = 6,
-		RG_8BIT_SNORM = 7,
-		RGBA_8BIT_SNORM = 9,
+		R_8BIT_SNORM		= 6,
+		RG_8BIT_SNORM		= 7,
+		RGBA_8BIT_SNORM		= 9,
 
 		// Unsigned Integers (not converted to floats)
-		R_8BIT_UINT = 10,
-		RG_8BIT_UINT = 11,
-		RGBA_8BIT_UINT = 13,
+		R_8BIT_UINT		= 10,
+		RG_8BIT_UINT	= 11,
+		RGBA_8BIT_UINT	= 13,
 
 		// Signed Integers (not converted to floats)
-		R_8BIT_SINT = 14,
-		RG_8BIT_SINT = 15,
-		RGBA_8BIT_SINT = 17,
+		R_8BIT_SINT		= 14,
+		RG_8BIT_SINT	= 15,
+		RGBA_8BIT_SINT	= 17,
 
 		/*
 		 * 16-bit Types
 		*/
 		// Unsigned normals (converted to floats in shaders) [0,1]
-		R_16BIT_UNORM = 18,
-		RG_16BIT_UNORM = 19,
-		RGBA_16BIT_UNORM = 21,
+		R_16BIT_UNORM		= 18,
+		RG_16BIT_UNORM		= 19,
+		RGBA_16BIT_UNORM	= 21,
 
 		// Signed normals (converted to floats in shaders) [-1,1]
-		R_16BIT_SNORM = 23,
-		RG_16BIT_SNORM = 24,
-		RGBA_16BIT_SNORM = 26,
+		R_16BIT_SNORM		= 23,
+		RG_16BIT_SNORM		= 24,
+		RGBA_16BIT_SNORM	= 26,
 
 		// Unisnged Integers (not converted to floats)
-		R_16BIT_UINT = 27,
-		RG_16BIT_UINT = 28,
-		RGBA_16BIT_UINT = 30,
+		R_16BIT_UINT		= 27,
+		RG_16BIT_UINT		= 28,
+		RGBA_16BIT_UINT		= 30,
 
 		// Signed Integers (not converted to floats)
-		R_16BIT_SINT = 31,
-		RG_16BIT_SINT = 32,
-		RGBA_16BIT_SINT = 34,
+		R_16BIT_SINT		= 31,
+		RG_16BIT_SINT		= 32,
+		RGBA_16BIT_SINT		= 34,
 
 		// Floats 
-		R_16BIT_FLOAT = 35,
-		RG_16BIT_FLOAT = 36,
-		RGBA_16BIT_FLOAT = 38,
+		R_16BIT_FLOAT		= 35,
+		RG_16BIT_FLOAT		= 36,
+		RGBA_16BIT_FLOAT	= 38,
 
 		/*
 		 * 32-bit Types
 		*/
 
 		// Unsigned integers (not converted to floats)
-		R_32BIT_UINT = 48,
-		RG_32BIT_UINT = 49,
-		RGB_32BIT_UINT = 50,
-		RGBA_32BIT_UINT = 51,
+		R_32BIT_UINT		= 48,
+		RG_32BIT_UINT		= 49,
+		RGB_32BIT_UINT		= 50,
+		RGBA_32BIT_UINT		= 51,
 
 		// Signed integers (not converted to floats)
-		R_32BIT_SINT = 52,
-		RG_32BIT_SINT = 53,
-		RGB_32BIT_SINT = 54,
-		RGBA_32BIT_SINT = 55,
+		R_32BIT_SINT		= 52,
+		RG_32BIT_SINT		= 53,
+		RGB_32BIT_SINT		= 54,
+		RGBA_32BIT_SINT		= 55,
 
 		// Floats
-		R_32BIT_FLOAT = 56,
-		RG_32BIT_FLOAT = 57,
-		RGB_32BIT_FLOAT = 58,
-		RGBA_32BIT_FLOAT = 59,
+		R_32BIT_FLOAT		= 56,
+		RG_32BIT_FLOAT		= 57,
+		RGB_32BIT_FLOAT		= 58,
+		RGBA_32BIT_FLOAT	= 59,
 
 		/*
 			Compressed Types
 		*/
-		RGB_DXT_1 = 60,
-		RGBA_DXT_5 = 61,
-		RGB_BC_7 = 62,
-		RGBA_BC_7 = 63
+		RGB_DXT_1	= 60,
+		RGBA_DXT_5	= 61,
+		RGB_BC_7	= 62,
+		RGBA_BC_7	= 63
 
-		/*	
+		/*
 			Valid Texture Asset Formats
-			
+
 			1. RGB_DXT_1
 			2. RGBA_DXT_5
 			3. RGB_BC_7
@@ -323,24 +259,27 @@ namespace Hyperion
 		}
 	}
 
+	/*
+	*	Input Manager
+	*/
 	enum class InputAxis
 	{
-		None	= 0,
-		MouseX	= 1,
-		MouseY	= 2
+		None = 0,
+		MouseX = 1,
+		MouseY = 2
 	};
 
 	enum class KeyEvent
 	{
-		None		= 0,
-		Pressed		= 1,
-		Released	= 2,
-		Any			= 3
+		None = 0,
+		Pressed = 1,
+		Released = 2,
+		Any = 3
 	};
 
 	enum class Keys
 	{
-		NONE = 0,
+		NONE	= 0,
 
 		// Letter Keys
 		A	= 1,
@@ -440,25 +379,25 @@ namespace Hyperion
 		BREAK			= 81,
 
 		// Numpad Stuff
-		NUM0		= 82,
-		NUM1		= 83,
-		NUM2		= 84,
-		NUM3		= 85,
-		NUM4		= 86,
-		NUM5		= 87,
-		NUM6		= 88,
-		NUM7		= 89,
-		NUM8		= 90,
-		NUM9		= 91,
-		NUM_DIV		= 92,
-		NUM_MULT	= 93,
-		NUM_SUB		= 94,
-		NUM_ADD		= 95,
-		NUM_ENTER	= 96,
-		NUM_DECIMAL	= 97,
+		NUM0			= 82,
+		NUM1			= 83,
+		NUM2			= 84,
+		NUM3			= 85,
+		NUM4			= 86,
+		NUM5			= 87,
+		NUM6			= 88,
+		NUM7			= 89,
+		NUM8			= 90,
+		NUM9			= 91,
+		NUM_DIV			= 92,
+		NUM_MULT		= 93,
+		NUM_SUB			= 94,
+		NUM_ADD			= 95,
+		NUM_ENTER		= 96,
+		NUM_DECIMAL		= 97,
 
 		// Escape Key
-		ESCAPE	= 98,
+		ESCAPE = 98,
 
 		// Mouse Stuff
 		MOUSE1		= 99,
@@ -488,21 +427,12 @@ namespace Hyperion
 		F24		= 119,
 
 		// Other Keys I forgot about..
-		NUM_LOCK		= 120,
-		RCTRL			= 121,
-		RALT			= 122
+		NUM_LOCK	= 120,
+		RCTRL		= 121,
+		RALT		= 122
 
 	};
 
-	enum class ByteOrder
-	{
-		LittleEndian = 0,
-		BigEndian = 1
-	};
-
-	/*
-		static std::string GetKeyName( Hyperion::Keys )
-	*/
 	static std::string GetKeyName( Hyperion::Keys Input )
 	{
 		switch( Input )
@@ -757,6 +687,5 @@ namespace Hyperion
 			return "Unknown";
 		}
 	}
-
 	
 }

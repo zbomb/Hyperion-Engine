@@ -37,11 +37,11 @@ namespace Hyperion
 
 		ConsoleVar() = delete;
 		ConsoleVar( const String& inKey, const String& inDescription, uint32 inDefault, uint32 inMin, uint32 inMax, 
-					std::function< void( uint32 ) > Callback = nullptr, const std::string& callbackThread = THREAD_POOL )
+					std::function< void( uint32 ) > Callback = nullptr )
 			: m_Default( inDefault )
 		{
 			// Create new command and try to add it to the console
-			auto newVar = std::make_shared< ConsoleVarInstance< uint32 > >( inKey, inDescription, inDefault, inMin, inMax, Callback, callbackThread );
+			auto newVar = std::make_shared< ConsoleVarInstance< uint32 > >( inKey, inDescription, inDefault, inMin, inMax, Callback );
 			
 			if( Console::CreateVar( newVar ) )
 			{
@@ -113,10 +113,10 @@ namespace Hyperion
 		ConsoleVar( ConsoleVar&& ) = delete;
 
 		ConsoleVar( const String& inKey, const String& inDescription, int32 inDefault, int32 inMin, int32 inMax,
-					std::function< void( int32 ) > inCallback = nullptr, const std::string& inThread = THREAD_POOL )
+					std::function< void( int32 ) > inCallback = nullptr )
 			: m_Default( inDefault )
 		{
-			auto newVar = std::make_shared< ConsoleVarInstance< int32 > >( inKey, inDescription, inDefault, inMin, inMax, inCallback, inThread );
+			auto newVar = std::make_shared< ConsoleVarInstance< int32 > >( inKey, inDescription, inDefault, inMin, inMax, inCallback );
 			if( Console::CreateVar( newVar ) )
 			{
 				m_Instance = newVar;
@@ -187,10 +187,10 @@ namespace Hyperion
 		ConsoleVar( ConsoleVar&& ) = delete;
 
 		ConsoleVar( const String& inKey, const String& inDescription, const String& inDefault,
-					std::function< void( const String& ) > inCallback = nullptr, const std::string& inThread = THREAD_POOL )
+					std::function< void( const String& ) > inCallback = nullptr )
 			: m_Default( inDefault )
 		{
-			auto newVar = std::make_shared< ConsoleVarInstance< String > >( inKey, inDescription, inDefault, inCallback, inThread );
+			auto newVar = std::make_shared< ConsoleVarInstance< String > >( inKey, inDescription, inDefault, inCallback );
 			if( Console::CreateVar( newVar ) )
 			{
 				m_Instance = newVar;
@@ -248,10 +248,10 @@ namespace Hyperion
 		ConsoleVar( ConsoleVar&& ) = delete;
 
 		ConsoleVar( const String& inKey, const String& inDescription, float inDefault, float inMin, float inMax,
-					std::function< void( float ) > inCallback = nullptr, const std::string& inThread = THREAD_POOL )
+					std::function< void( float ) > inCallback = nullptr )
 			: m_Default( inDefault )
 		{
-			auto newVar = std::make_shared< ConsoleVarInstance< float > >( inKey, inDescription, inDefault, inMin, inMax, inCallback, inThread );
+			auto newVar = std::make_shared< ConsoleVarInstance< float > >( inKey, inDescription, inDefault, inMin, inMax, inCallback );
 			if( Console::CreateVar( newVar ) )
 			{
 				m_Instance = newVar;

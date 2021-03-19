@@ -5,26 +5,163 @@
 ==================================================================================================*/
 
 #include "Hyperion/Core/Engine.h"
-#include "Hyperion/Core/GameInstance.h"
-#include "Hyperion/Core/InputManager.h"
-#include "Hyperion/Renderer/DeferredRenderer.h"
-#include "Hyperion/File/FileSystem.h"
 #include "Hyperion/Core/ThreadManager.h"
-#include "Hyperion/Core/Platform.h"
-
-#include <sstream>
-#include <iomanip>
+#include "Hyperion/Core/TaskManager.h"
+#include "Hyperion/Core/GameInstance.h"
 
 
 namespace Hyperion
 {
 
 	/*
+	*	Singleton Getter
+	*/
+	Engine& Engine::Get()
+	{
+		static Engine inst {};
+		return inst;
+	}
+
+	/*
+	*	Constructor & Destructor
+	*/
+	Engine::Engine()
+		: m_bInitialized( false ), m_GC( std::make_shared< GarbageCollector >() )
+	{
+		HYPERION_VERIFY( m_GC != nullptr, "[Core] GC couldnt be instantiated?" );
+	}
+
+
+	Engine::~Engine()
+	{
+		Shutdown();
+	}
+
+	/*
+	*	Initialize
+	*/
+	Engine::InitializeResult Engine::Initialize( const InitializeParameters& inParams )
+	{
+		// Ensure we arent already running
+		if( m_bInitialized )
+		{
+			return InitializeResult::AlreadyInitialized;
+		}
+
+		// Validate the parameters
+		if( inParams.ptrOutputSurface == nullptr )
+		{
+			return InitializeResult::InvalidOutputSurface;
+		}
+		else if( inParams.desiredResX < RENDERER_MIN_RESOLUTION_WIDTH ||
+				 inParams.desiredResY < RENDERER_MIN_RESOLUTION_HEIGHT )
+		{
+			return InitializeResult::InvalidResolution;
+		}
+		else if( inParams.targetAPI == GraphicsAPI::None ||
+				 ( inParams.targetAPI == GraphicsAPI::DX11 && !IsDirectX11Supported() ) ||
+				 ( inParams.targetAPI == GraphicsAPI::OpenGL && !IsOpenGLSupported() ) )
+		{
+			return InitializeResult::InvalidGraphicsAPI;
+		}
+		else if( inParams.numTaskPoolThreads < ENGINE_MIN_TASK_POOL_THREADS ||
+				 inParams.numTaskPoolThreads > ENGINE_MAX_TASK_POOL_THREADS )
+		{
+			return InitializeResult::InvalidNumTaskPoolThreads;
+		}
+
+
+		// Start initializing services
+		// This also is where asset discovery is happening by default.. we probably should move asset discovery
+		// into a task, and wait for it to finish before actually running the simulation
+		// TODO TODO TODO
+		if( !m_GC->Initialize() )
+		{
+			return InitializeResult::ServicesFailed;
+		}
+
+		RTTI::Initialize();
+
+		if( !Console::Initialize( inParams.startupFlags ) ||
+			!TaskManager::Initialize( inParams.numTaskPoolThreads ) ||
+			!ThreadManager::Initialize() ||
+			!FileSystem::Initialize( true, inParams.startupFlags ) )
+		{
+			return InitializeResult::ServicesFailed;
+		}
+
+		// Create the desired game instance type
+		String strInstType( inParams.instanceType, StringEncoding::ASCII );
+		strInstType = strInstType.TrimBoth();
+
+		auto instType = Type::Get( strInstType );
+		
+		if( !instType.IsValid() || !instType->IsDerivedFrom< GameInstance >() )
+		{
+			return InitializeResult::InvalidInstanceType;
+		}
+
+		auto objGInst			= instType->CreateInstance();
+		auto newGameInstance	= objGInst ? CastObject< GameInstance >( objGInst ) : nullptr;
+
+		Engine::InitializeResult gameResult;
+
+		if( !newGameInstance.IsValid() ||
+			( gameResult = newGameInstance->BeginGame( inParams ) ) != InitializeResult::Success )
+		{
+			return gameResult;
+		}
+
+		m_GameInstance = newGameInstance;
+		return InitializeResult::Success;
+	}
+
+
+	void Engine::Shutdown()
+	{
+		// Check if we are already 'shutdown'
+		if( m_bInitialized )
+		{
+			return;
+		}
+
+		// Now, we shutdown in the opposite order we initialized in, so we start with the game instance
+		if( m_GameInstance )
+		{
+			m_GameInstance->EndGame();
+		}
+
+		m_GameInstance.Clear();
+
+		ThreadManager::Shutdown();
+		TaskManager::Shutdown();
+		FileSystem::Shutdown();
+		Console::Shutdown();
+		
+		if( m_GC )
+		{
+			m_GC->Shutdown();
+		}
+
+		m_bInitialized = false;
+	}
+
+
+
+
+
+
+
+
+
+	/////////////////////////////////////////////// OLD ////////////////////////////////////////////
+
+	/*
 		Console Vars
 	*/
 	ConsoleVar< String > g_CVar_Resolution = ConsoleVar< String >(
 		"r_resolution", "Screen Resolution [x, y]", "1280, 720",
-		[] ( const String& ) { Engine::Get()->OnResolutionUpdated(); }, THREAD_RENDERER
+		[] ( const String& ) { Engine::Get()->OnResolutionUpdated(); }
 		);
 
 	ConsoleVar< String > g_CVar_GraphicsAPI = ConsoleVar< String >(
@@ -33,12 +170,12 @@ namespace Hyperion
 
 	ConsoleVar< uint32 > g_CVar_Fullscreen = ConsoleVar< uint32 >(
 		"r_fullscreen", "Fullscreen mode, 1: Fullscreen, 0: Windowed",
-		1, 0, 1, [] ( uint32 ) { Engine::Get()->OnResolutionUpdated(); }, THREAD_RENDERER
+		1, 0, 1, [] ( uint32 ) { Engine::Get()->OnResolutionUpdated(); }
 		);
 
 	ConsoleVar< uint32 > g_CVar_VSync = ConsoleVar< uint32 >(
 		"r_vsync", "Vertical Sync, 1: On, 0: Off",
-		0, 0, 1, [] ( uint32 ) { Engine::Get()->OnVSyncUpdated(); }, THREAD_RENDERER
+		0, 0, 1, [] ( uint32 ) { Engine::Get()->OnVSyncUpdated(); }
 		);
 
 	std::function< void( const String& ) > Engine::s_FatalErrorCallback( nullptr );
@@ -79,7 +216,7 @@ namespace Hyperion
 		RTTI::Initialize();
 
 		// Next, lets initialize console
-		if( !Console::Start( inFlags ) )
+		if( !Console::Initialize( inFlags ) )
 		{
 			FatalError( "Failed to initialize console" );
 			return false;
@@ -93,11 +230,7 @@ namespace Hyperion
 		}
 
 		// Finally, initialize thread manager
-		if( !ThreadManager::Start( inFlags ) )
-		{
-			FatalError( "Failed to initialize thread manager" );
-			return false;
-		}
+		// REMOVED
 
 		m_bServicesRunning = true;
 		return true;
@@ -150,6 +283,7 @@ namespace Hyperion
 
 	void Engine::DoRenderThreadInit( void* pWindow, ScreenResolution inResolution, uint32 inFlags )
 	{
+		/*
 		// Ensure the renderer wasnt created
 		HYPERION_VERIFY( !m_Renderer && pWindow != nullptr, "During render thread init, the renderer object is already created?" );
 
@@ -275,25 +409,29 @@ namespace Hyperion
 			m_bRenderInit = true;
 			m_RenderWaitCondition.notify_all();
 		}
-
+		*/
 	}
 
 
 	void Engine::DoRenderThreadTick()
 	{
+		/*
 		if( !m_bRenderInit ) { return; }
 		HYPERION_VERIFY( m_Renderer, "[Engine] Renderer was null!" );
 
 		m_Renderer->Frame();
+		*/
 	}
 
 
 	void Engine::DoRenderThreadShutdown()
 	{
+		/*
 		HYPERION_VERIFY( m_Renderer, "[Engine] Renderer was null!" );
 
 		m_Renderer->Shutdown();
 		m_Renderer.reset();
+		*/
 	}
 
 
@@ -311,6 +449,9 @@ namespace Hyperion
 
 	bool Engine::InitializeRenderer( void* pWindow, ScreenResolution inResolution, uint32 inFlags /* = FLAG_NONE */ )
 	{
+		return true;
+
+		/*
 		// First, check if the renderer is already created
 		if( m_Renderer || m_RenderThread.IsValid() )
 		{
@@ -354,11 +495,13 @@ namespace Hyperion
 		}
 
 		return true;
+		*/
 	}
 
 
 	void Engine::ShutdownRenderer()
 	{
+		/*
 		if( m_RenderThread )
 		{
 			if( m_RenderThread->IsRunning() )
@@ -373,6 +516,7 @@ namespace Hyperion
 		{
 			Console::WriteLine( "[Engine] ERROR: Failed to shutdown renderer.. thread wasnt running?" );
 		}
+		*/
 	}
 
 
@@ -393,9 +537,6 @@ namespace Hyperion
 		gameThreadParams.Identifier = THREAD_GAME;
 		gameThreadParams.Frequency = 0.f;
 		gameThreadParams.Deviation = 0.f;
-		gameThreadParams.MinimumTasksPerTick = 1;
-		gameThreadParams.MaximumTasksPerTick = 0;
-		gameThreadParams.AllowTasks = true;
 		gameThreadParams.StartAutomatically = true;
 		gameThreadParams.InitFunction = std::bind( &Engine::DoGameThreadInit, this );
 		gameThreadParams.TickFunction = std::bind( &Engine::DoGameThreadTick, this );
@@ -547,8 +688,8 @@ namespace Hyperion
 
 	void Engine::ShutdownServices()
 	{
-		ThreadManager::Stop();
-		Console::Stop();
+		ThreadManager::Shutdown();
+		Console::Shutdown();
 		FileSystem::Shutdown();
 	}
 
@@ -631,9 +772,11 @@ namespace Hyperion
 			while( !m_bGameInit && !s_bFatalError ) { m_GameWaitCondition.wait_for( lock, std::chrono::milliseconds( 10 ) ); }
 		}
 
+		// DEBUG
+		// Renderer bypass
 		{
-			std::unique_lock< std::mutex > lock( m_RenderWaitMutex );
-			while( !m_bRenderInit && !s_bFatalError ) { m_RenderWaitCondition.wait_for( lock, std::chrono::milliseconds( 10 ) ); }
+			//std::unique_lock< std::mutex > lock( m_RenderWaitMutex );
+			//while( !m_bRenderInit && !s_bFatalError ) { m_RenderWaitCondition.wait_for( lock, std::chrono::milliseconds( 10 ) ); }
 		}
 	}
 

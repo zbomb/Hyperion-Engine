@@ -7,12 +7,75 @@
 #pragma once
 
 #include "Hyperion/Hyperion.h"
-#include "Hyperion/Core/Threading.h"
 #include "Hyperion/Core/Object.h"
 
 
 namespace Hyperion
 {
+	enum class ThreadTickBehavior
+	{
+		// ClockSynced
+		// On thread start, we create an OS clock and we only tick the thread on clock ticks, kind of like VSync
+		// Once the tick function returns, we call it again on the next tick signal from the OS clock
+		ClockSynced = 0,
+
+		// RateLimited
+		// We time the earliest possible next tick based on when the last tick was called
+		// So basically, at the start of a tick, we take the current time and add the target tick time, then, if we arent at or past that time when the tick function returns
+		// then we pause the current thread until we get there. If the current tick function runs past this time, the next tick is called immediatley after the current one returns
+		RateLimited = 1
+	};
+
+	struct ThreadParameters
+	{
+		std::string identifier;;
+		std::function< void() > initFunc;
+		std::function< void( const std::atomic< bool >& ) > mainFunc;
+		std::function< void() > shutdownFunc;
+		bool bIsTicked;
+		bool bAutoStart;
+		double ticksPerSecond;
+		ThreadTickBehavior tickType;
+	};
+
+
+	class Thread : public Object
+	{
+
+	protected:
+
+		std::unique_ptr< std::thread > m_Handle;
+		std::atomic< bool > m_State;
+		ThreadParameters m_Params;
+
+		Thread() = delete;
+
+	public:
+
+		Thread( const ThreadParameters& inParams )
+			: m_Params( inParams )
+		{}
+
+		bool Start();
+		bool Stop();
+
+		const ThreadParameters& GetParameters() const { return m_Params; }
+		std::string GetIdentifier() const { return m_Params.identifier; }
+		bool IsRunning() const { return m_State; }
+
+		std::thread::id GetSystemIdentifier() const
+		{
+			if( m_Handle )
+			{
+				return m_Handle->get_id();
+			}
+
+			return std::thread::id();
+		}
+
+		friend void _tickedThreadBody( Thread& );
+		friend void _normalThreadBody( Thread& );
+	};
 
 
 	class ThreadManager
@@ -20,77 +83,25 @@ namespace Hyperion
 
 	private:
 
-		static std::map< std::string, HypPtr< TickedThread > > m_TickedThreads;
-		static std::map< std::string, HypPtr< CustomThread > > m_CustomThreads;
-		static std::vector< std::shared_ptr< PoolWorkerThread > > m_TaskPoolThreads;
-
-		static bool m_bRunning;
+		static std::map< std::string, HypPtr< Thread > > m_Threads;
+		static std::mutex m_ThreadMutex;
+		static std::atomic< bool > m_bIsShutdown;
+		static std::atomic< uint32 > m_ThreadCount;
+		static bool m_bInit;
+		static bool m_bClosed;
+		static float m_MinResolution;
 
 	public:
 
 		ThreadManager() = delete;
 
-		static bool Start( uint32 inFlags = 0 );
-		static bool Stop();
+		static bool Initialize();
+		static bool Shutdown();
 
-		template< typename T >
-		static TaskHandle< T > CreateTask( std::function< T( void ) > inFunc, std::string inTargetThread = THREAD_POOL )
-		{
-			// Validate input function
-			if( !inFunc )
-			{
-				Console::WriteLine( "[ERROR] TaskManager: Failed to create task.. null function provided!" );
-				return TaskHandle< T >( nullptr );
-			}
-
-			// Create a new task instance
-			auto inst = std::make_unique< TaskInstance< T > >( inFunc );
-
-			// Then, create a new task handle pointing to this instance to return to the caller
-			TaskHandle< T > handle( *inst );
-
-			if( inTargetThread == THREAD_POOL )
-			{
-				// Aquire lock on the task list
-				{
-					std::lock_guard< std::mutex > lock( TaskPool::m_TaskMutex );
-
-					// Insert into the queue and notify any threads waiting
-					TaskPool::m_TaskList.push( std::move( inst ) );
-					TaskPool::m_TaskBool = true;
-				}
-
-				// The boolean will be reset by whichever worker thread wakes up from this call
-				TaskPool::m_TaskCV.notify_one();
-			}
-			else
-			{
-				// Find the thread, and inject the task
-				auto thread = GetThread( inTargetThread );
-				if( !thread )
-				{
-					Console::WriteLine( "[ERROR] TaskManager: Failed to create task.. invalid target thread '", inTargetThread, "'" );
-					return TaskHandle< T >( nullptr );
-				}
-
-				if( !thread->InjectTask( std::move( inst ) ) )
-				{
-					Console::WriteLine( "[ERROR] Taskmanager: Failed to create task.. thread '", inTargetThread, "' did not accept the task" );
-					return TaskHandle< T >( nullptr );
-				}
-			}
-
-			return handle;
-		}
-
-
-		static HypPtr< Thread > CreateThread( const TickedThreadParameters& );
-		static HypPtr< Thread > CreateThread( const CustomThreadParameters& );
+		static HypPtr< Thread > CreateThread( ThreadParameters& inParams );
 		static HypPtr< Thread > GetThread( const std::string& );
 		static bool DestroyThread( const std::string& );
 		static uint32 GetThreadCount();
-
-		static bool IsWorkerThread( const std::thread::id& inIdentifier );
 
 	};
 

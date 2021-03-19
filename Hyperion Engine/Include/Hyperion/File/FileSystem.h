@@ -153,7 +153,7 @@ namespace Hyperion
 		static void FindDirectories( const FilePath& inPath, std::vector< FilePath >& Out, std::function< bool( const FilePath& ) > inPredicate, bool bRecursive = false );
 		static void FindDirectories( const FilePath& inPath, std::vector< FilePath >& Out, bool bRecursive = false );
 
-		static bool Initialize( bool bDiscoverAssets, uint32 inFlags = FLAG_NONE );
+		static bool Initialize( bool bDiscoverAssets, uint32 inFlags );
 		static void Shutdown();
 
 

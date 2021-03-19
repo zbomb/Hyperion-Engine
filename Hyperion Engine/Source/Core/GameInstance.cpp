@@ -1,29 +1,97 @@
 /*==================================================================================================
 	Hyperion Engine
 	Source/Core/GameInstance.cpp
-	© 2019, Zachary Berry
+	© 2021, Zachary Berry
 ==================================================================================================*/
 
 
 #include "Hyperion/Core/GameInstance.h"
-#include "Hyperion/Framework/World.h"
-#include "Hyperion/Framework/RenderComponent.h"
-#include "Hyperion/Framework/PrimitiveComponent.h"
-#include "Hyperion/Framework/LightComponent.h"
-#include "Hyperion/Framework/CameraComponent.h"
-#include "Hyperion/Framework/LocalPlayer.h"
-#include "Hyperion/Framework/Player.h"
-#include "Hyperion/Core/Engine.h"
-#include "Hyperion/Streaming/BasicStreamingManager.h"
-#include "Hyperion/Renderer/Renderer.h"
+#include "Hyperion/Core/ThreadManager.h"
 
 
 namespace Hyperion
 {
 
-	/*
+	GameInstance::GameInstance( const HypPtr< ISimulationSchedulerTask >& inSimulationScheduler, const HypPtr< IRenderSchedulerTask >& inRenderScheduler )
+		: m_SimulationScheduler( inSimulationScheduler ), m_RenderScheduler( inRenderScheduler ), m_bIsGameRunning( false )
+	{
+		HYPERION_VERIFY( inSimulationScheduler.IsValid() && inRenderScheduler.IsValid(), "[GameInstance] Both of these tasks have to be valid!" );
+	}
+
+
+	GameInstance::~GameInstance()
+	{
+
+	}
+
+
+	bool GameInstance::StartGame()
+	{
+		// Ensure we are not already running
+		if( m_bIsGameRunning.load() || m_CoreThread.IsValid() )
+		{
+			Console::WriteLine( "[ERROR] GameInstance: Failed to start game.. the game loop is already running" );
+			return false;
+		}
+
+		// Ensure our main tasks are valid
+		if( !m_SimulationScheduler.IsValid() || !m_RenderScheduler.IsValid() )
+		{
+			Console::WriteLine( "[ERROR] GameInstance: Failed to start game.. the render and simulation scheduler tasks were not valid! Check override settings" );
+			return false;
+		}
+
+		m_bIsGameRunning.store( true );
+
+		// Create the game instance thread
+		ThreadParameters params {};
+
+		params.identifier = "core";
+		params.mainFunc = std::bind( &GameInstance::CoreMain, this, std::placeholders::_1 );
+		params.bIsTicked = false;
+		params.bAutoStart = true;
+
+		m_CoreThread = ThreadManager::CreateThread( params );
+		if( !m_CoreThread.IsValid() )
+		{
+			Console::WriteLine( "[ERROR] GameInstance: Failed to start game.. couldnt create the 'core game thread'!" );
+			return false;
+		}
+
+		return true;
+	}
+
+
+	void GameInstance::StopGame()
+	{
+		m_bIsGameRunning.store( false );
+
+		if( m_CoreThread.IsValid() )
+		{
+			m_CoreThread->Stop();
+			m_CoreThread.Clear();
+		}
+	}
+
+
+	void GameInstance::CoreMain( const std::atomic< bool >& bThreadState )
+	{
+		// This is the main game loop thread, its responsible for scheduling the tasks for each of the main systems
+		// If a game wants to add/remove systems, they will have to override the GameInstance class, and setup and run the game loop however they please
+		
+		// TODO: Game Init
+
+		while( bThreadState.load() )
+		{
+			
+		}
+
+		// TODO: Game Shutdown
+	}
+
+	/* ------------------------------------ OLD --------------------------------------
 	*	ConsoleVars
-	*/
+	
 	ConsoleVar< float > g_CVar_FOV = ConsoleVar< float >(
 		"r_fov", "Field of view multiplier", 0.5f, 0.f, 1.f
 	);
@@ -132,7 +200,7 @@ namespace Hyperion
 
 	/*
 		Hooks for derived classes
-	*/
+	
 	void GameInstance::OnStart()
 	{
 
@@ -335,7 +403,7 @@ namespace Hyperion
 
 		return false;
 	}
-
+	*/
 }
 
 

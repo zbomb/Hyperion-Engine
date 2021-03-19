@@ -123,7 +123,7 @@ namespace Hyperion
 		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
 
 		// Get the values we need
-		DirectX::XMMATRIX viewMatrix( inRenderer.GetViewMatrix().GetData() );
+		DirectX::XMMATRIX viewMatrix( inRenderer.GetViewMatrix().m );
 		uint32 lightCount = inRenderer.GetLightBuffer()->GetLightCount();
 
 		D3D11_MAPPED_SUBRESOURCE resource {};

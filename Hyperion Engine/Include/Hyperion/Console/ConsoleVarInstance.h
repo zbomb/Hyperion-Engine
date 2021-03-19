@@ -52,13 +52,12 @@ namespace Hyperion
 		String m_Key;
 		String m_Description;
 		std::function< void( uint32 ) > m_Callback;
-		std::string m_CallbackThread;
 
 	public:
 
 		ConsoleVarInstance() = delete;
 		ConsoleVarInstance( const String& inKey, const String& inDescription, uint32 inDefault, uint32 inMin, uint32 inMax,
-							std::function< void( uint32 ) > inCallback, const std::string& callbackThread = THREAD_POOL );
+							std::function< void( uint32 ) > inCallback );
 
 		inline String GetKey() const final { return m_Key; }
 		inline String GetDescription() const final { return m_Description; }
@@ -91,13 +90,12 @@ namespace Hyperion
 		String m_Key;
 		String m_Description;
 		std::function< void( int32 ) > m_Callback;
-		std::string m_CallbackThread;
 
 	public:
 
 		ConsoleVarInstance() = delete;
 		ConsoleVarInstance( const String& inKey, const String& inDescription, int32 inDefault, int32 inMin, int32 inMax,
-							std::function< void( int32 ) > inCallback, const std::string& callbackThread = THREAD_POOL );
+							std::function< void( int32 ) > inCallback );
 
 		inline String GetKey() const final { return m_Key; }
 		inline String GetDescription() const final { return m_Description; }
@@ -126,14 +124,13 @@ namespace Hyperion
 		std::shared_mutex m_Mutex;
 		String m_Value;
 		std::function< void( const String& ) > m_Callback;
-		std::string m_CallbackThread;
 		String m_Key;
 		String m_Description;
 
 	public:
 
 		ConsoleVarInstance() = delete;
-		ConsoleVarInstance( const String& inKey, const String& inDescription, const String& inDefault, std::function< void( const String& ) > inCallback, const std::string& inCallbackThread = THREAD_POOL );
+		ConsoleVarInstance( const String& inKey, const String& inDescription, const String& inDefault, std::function< void( const String& ) > inCallback );
 
 		inline String GetKey() const final { return m_Key; }
 		inline String GetDescription() const final { return m_Description; }
@@ -163,13 +160,12 @@ namespace Hyperion
 		String m_Key;
 		String m_Description;
 		std::function< void( float ) > m_Callback;
-		std::string m_CallbackThread;
 
 	public:
 
 		ConsoleVarInstance() = delete;
 		ConsoleVarInstance( const String& inKey, const String& inDescription, float inDefault, float inMin, float inMax,
-							std::function< void( float ) > inCallback, const std::string& callbackThread = THREAD_POOL );
+							std::function< void( float ) > inCallback );
 
 		inline String GetKey() const final { return m_Key; }
 		inline String GetDescription() const final { return m_Description; }

@@ -18,7 +18,7 @@ namespace Hyperion
 	{
 
 	private:
-
+		
 		String m_ExecPath;
 		String m_ExecName;
 		String m_UserPath;

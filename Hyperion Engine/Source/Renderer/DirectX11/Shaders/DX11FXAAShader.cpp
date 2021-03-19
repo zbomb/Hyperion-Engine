@@ -7,7 +7,7 @@
 #include "Hyperion/Renderer/DirectX11/Shaders/DX11FXAAShader.h"
 #include "Hyperion/Renderer/Renderer.h"
 #include "Hyperion/File/FileSystem.h"
-#include "Hyperion/Renderer/DirectX11/DirectX11Texture.h"
+#include "Hyperion/Renderer/DirectX11/DX11Texture.h"
 
 
 namespace Hyperion
@@ -140,8 +140,8 @@ namespace Hyperion
 		}
 
 		// Cast to DX11 type, and set the shader parameters
-		auto* tex = dynamic_cast< DirectX11Texture2D* >( inSource.get() );
-		auto* srv = tex ? tex->GetView() : nullptr;
+		auto* tex = dynamic_cast< DX11Texture2D* >( inSource.get() );
+		auto* srv = tex ? tex->GetSRV() : nullptr;
 
 		if( !srv )
 		{

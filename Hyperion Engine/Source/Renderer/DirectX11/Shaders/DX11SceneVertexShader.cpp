@@ -184,8 +184,8 @@ namespace Hyperion
 
 		// Upload the view and projection matrix
 		// Convert to DX11 matricies
-		DirectX::XMMATRIX dx11ViewMatrix( inRenderer.GetViewMatrix().GetData() );
-		DirectX::XMMATRIX dx11ProjMatrix( inRenderer.GetProjectionMatrix().GetData() );
+		DirectX::XMMATRIX dx11ViewMatrix( inRenderer.GetViewMatrix().m );
+		DirectX::XMMATRIX dx11ProjMatrix( inRenderer.GetProjectionMatrix().m );
 
 		// Map our constant buffer
 		D3D11_MAPPED_SUBRESOURCE bufferData {};

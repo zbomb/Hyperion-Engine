@@ -6,6 +6,12 @@
 
 #include "Hyperion/Core/ThreadManager.h"
 
+#if HYPERION_OS_WIN32
+#include "Hyperion/Win32/Win32Headers.h"
+#include <timeapi.h>
+#include <mmsystem.h>
+#endif
+
 
 namespace Hyperion
 {
@@ -13,148 +19,365 @@ namespace Hyperion
 	/*
 		Static Definitions
 	*/
-	std::map< std::string, HypPtr< TickedThread > > ThreadManager::m_TickedThreads;
-	std::map< std::string, HypPtr< CustomThread > > ThreadManager::m_CustomThreads;
-	std::vector< std::shared_ptr< PoolWorkerThread > > ThreadManager::m_TaskPoolThreads;
-	bool ThreadManager::m_bRunning( false );
+	std::map< std::string, HypPtr< Thread > > ThreadManager::m_Threads {};
+	std::mutex ThreadManager::m_ThreadMutex {};
+	std::atomic< bool > ThreadManager::m_bIsShutdown( false );
+	std::atomic< uint32 > ThreadManager::m_ThreadCount( 0 );
+	bool ThreadManager::m_bClosed( false );
+	bool ThreadManager::m_bInit( false );
+	float ThreadManager::m_MinResolution( 1.f );
 
-
-	bool ThreadManager::Start( uint32 inFlags /* = 0 */ )
+	/*
+	*	Ticked thread body
+	*/
+	void _tickedThreadBody( Thread& inThread )
 	{
-		// Check if were already running
-		if( m_bRunning )
+		auto& params = inThread.GetParameters();
+
+		if( params.initFunc )
 		{
-			// TODO: Use console
-			Console::Write( "[ERROR] ThreadSystem: Attempt to start when already running!\n" );
+			params.initFunc();
+		}
+
+		bool bInfRate = params.ticksPerSecond == 0.0;
+		if( bInfRate )
+		{
+			// Infinite rate ticked thread, most simple of all types of ticked threads
+			while( inThread.m_State.load() )
+			{
+				params.mainFunc( inThread.m_State );
+			}
+		}
+		else if( params.tickType == ThreadTickBehavior::ClockSynced )
+		{
+			// This tick method creates a clock, and syncs the tick calls to the clock signal
+			// For Windows, were going to use multi-media timers, although this might change in the future, it seems to be the most
+			// accurate way to get a high-resolution timer even though the API is considered obsolete
+			
+			#if HYPERION_OS_WIN32
+
+			// We need to create a sync event, then, the timer is going to trigger this event
+			// At the end of each tick, we reset the event and then wait for it to be triggered again
+			HANDLE hTick = CreateEvent( NULL, TRUE, FALSE, NULL );
+			UINT tickDelay = (UINT) round( 1000.0 / params.ticksPerSecond );
+
+			auto winTimerId = timeSetEvent( tickDelay, 0, (TIMECALLBACK*) hTick, NULL, TIME_PERIODIC | TIME_CALLBACK_EVENT_SET );
+			if( winTimerId == NULL )
+			{
+				Console::WriteLine( "[ERROR] ThreadManager: Failed to create a clock-synced ticked thread, the os-based timer couldnt be created!" );
+				if( params.shutdownFunc )
+				{
+					params.shutdownFunc();
+				}
+
+				return;
+			}
+
+			// Main tick-loop
+			while( inThread.m_State.load() )
+			{
+				// Reset and wait for the next clock signal
+				bool bClockSyncSuccess = false;
+
+				if( ResetEvent( hTick ) )
+				{
+					// We also want to ensure were checking for the thread shutdown, so this thread doesnt hang
+					DWORD waitResult;
+					bool bShouldExit = false;
+
+					while( ( waitResult = WaitForSingleObject( hTick, 500 ) ) == WAIT_TIMEOUT )
+					{
+						if( !inThread.m_State.load() )
+						{
+							bShouldExit = true;
+							break;
+						}
+					}
+
+					if( bShouldExit ) 
+					{
+						break;
+					}
+
+					if( waitResult == WAIT_OBJECT_0 )
+					{
+						bClockSyncSuccess = true;
+					}
+				}
+
+				if( !bClockSyncSuccess )
+				{
+					Console::WriteLine( "[ERROR] Thread: Ticked thread '", inThread.GetIdentifier(), "' failed to sync with clock!" );
+					break;
+				}
+
+				// Execute tick function
+				params.mainFunc( inThread.m_State );
+			}
+
+			// Before exiting the tick cycle, kill the timer
+			timeKillEvent( winTimerId );
+
+			#else
+			HYPERION_NOT_IMPLEMENTED( "[Thread] Non win-32 clock-synced ticked thread loop" );
+			#endif
+
+		}
+		else
+		{
+			// This method is going to basically time the start of the next tick based on the start of the previous tick
+			
+			#if HYPERION_OS_WIN32
+
+			// To do this one, we will have to use one-time clocks each tick, and the clock will set an event for us to check at the end of the tick cycle
+			HANDLE hTick	= CreateEvent( NULL, TRUE, FALSE, NULL );
+			UINT tickDelay	= (UINT) round( 1000.0 / params.ticksPerSecond );
+
+			while( inThread.m_State.load() )
+			{
+				// Set our clock to time when we can start the next tick
+				auto winTimerId = timeSetEvent( tickDelay, 0, (TIMECALLBACK*) hTick, NULL, TIME_ONESHOT | TIME_CALLBACK_EVENT_SET );
+				if( winTimerId == NULL )
+				{
+					Console::WriteLine( "[ERROR} Thread: Ticked thread '", params.identifier, "' failed to create tick timer!" );
+					break;
+				}
+
+				// Execute tick function
+				params.mainFunc( inThread.m_State );
+
+				// Wait for the clock signal before next tick
+				DWORD waitResult;
+				bool bShouldExit = false;
+
+				while( ( waitResult = WaitForSingleObject( hTick, 500 ) ) == WAIT_TIMEOUT )
+				{
+					if( !inThread.m_State.load() )
+					{
+						bShouldExit = true;
+						break;
+					}
+				}
+
+				if( bShouldExit )
+				{
+					break;
+				}
+
+				if( waitResult != WAIT_OBJECT_0 || !ResetEvent( hTick ) )
+				{
+					Console::WriteLine( "[ERROR] Thread: Ticked thread '", params.identifier, "' failed to sync with clock (rate-limited thread)" );
+					break;
+				}
+			}
+
+			#else
+			HYPERION_NOT_IMPLEMENTED( "[Thread] Non win-32 rate-limited ticked thread loop" );
+			#endif
+		}
+
+		if( params.shutdownFunc )
+		{
+			params.shutdownFunc();
+		}
+	}
+
+	/*
+	*	Non-ticked thread body 
+	*/
+	void _normalThreadBody( Thread& inThread )
+	{
+		auto& params = inThread.GetParameters();
+		
+		if( params.initFunc )
+		{
+			params.initFunc();
+		}
+
+		params.mainFunc( inThread.m_State );
+
+		if( params.shutdownFunc )
+		{
+			params.shutdownFunc();
+		}
+	}
+
+	/*--------------------------------------------------------------------------------------
+		Thread
+	--------------------------------------------------------------------------------------*/
+	bool Thread::Start()
+	{
+		HYPERION_VERIFY( m_Params.mainFunc, "[ThreadManager] Thread main function was not bound!" );
+
+		// Check if the thread is already running
+		if( m_State.load() || m_Handle != nullptr )
+		{
+			Console::WriteLine( "[ERROR] ThreadManager: Attempt to start running a thread, that is already running!" );
+			return false;
+		}
+		
+		// Create the thread using the proper thread body
+		m_State.store( true );
+		m_Handle = std::make_unique< std::thread >( std::bind( m_Params.bIsTicked ? &_tickedThreadBody : &_normalThreadBody, *this ) );
+		
+		return true;
+	}
+
+
+	bool Thread::Stop()
+	{
+		// Set the state to false, so the thread knows it should stop
+		m_State.store( false );
+
+		if( m_Handle != nullptr )
+		{
+			if( m_Handle->joinable() )
+			{
+				m_Handle->join();
+				m_Handle.reset();
+			}
+			else
+			{
+				Console::WriteLine( "[ERROR] ThreadManager: Failed to stop thread, it wasnt 'joinable'!" );
+				return false;
+			}
+			
+		}
+
+		return true;
+	}
+
+	/*--------------------------------------------------------------------------------------
+		Thread Manager
+	--------------------------------------------------------------------------------------*/
+	bool ThreadManager::Initialize()
+	{
+		// Ensure we arent already running
+		if( m_bInit )
+		{
+			Console::WriteLine( "[ERROR] ThreadManager: Attempt to start the thread manager when its already running!" );
 			return false;
 		}
 
-		m_bRunning = true;
+		m_bInit = true;
 
-		// Create our worker pool
-		auto tc = std::thread::hardware_concurrency();
+		// Depending on the system, we need to determine the accuracy of the timer system
+	#if HYPERION_OS_WIN32
 
-		if( tc <= 1 ) tc = 3; else tc--;
-		for( uint32 i = 0; i < tc; i++ )
+		TIMECAPS timerPerf {};
+
+		if( timeGetDevCaps( &timerPerf, sizeof( timerPerf ) ) != MMSYSERR_NOERROR )
 		{
-			auto newWorker = std::make_shared< PoolWorkerThread >();
-			newWorker->Start();
+			Console::WriteLine( "[ERROR] ThreadManager: Failed to query system timer performance! Ticked threads might not run at the desired frequency" );
 
-			m_TaskPoolThreads.push_back( newWorker );
+			// Fall back on defaults
+			m_MinResolution	= 1.f;
+		}
+		else
+		{
+			m_MinResolution = (float) timerPerf.wPeriodMin;
 		}
 
-		Console::Write( "[STATUS] ThreadSystem: Initialized successfully! Running ", tc, " worker threads.\n" );
+		timeBeginPeriod( m_MinResolution );
+
+		Console::WriteLine( "[Startup] ThreadManager: Initialized using Win32 with a timer resolution of ", m_MinResolution, "ms" );
+	#else
+		
+		m_MinResolution = 1.f;
+
+	#endif
 
 		return true;
 	}
 
 
-	bool ThreadManager::Stop()
+	bool ThreadManager::Shutdown()
 	{
-		// Ensure were running
-		if( !m_bRunning && m_TaskPoolThreads.size() == 0 &&
-			m_CustomThreads.size() == 0 && m_TickedThreads.size() == 0 )
+		// Use atomics to ensure this function wasnt already called, and it only gets ran once
+		bool bShutdown = m_bIsShutdown.exchange( true );
+		if( bShutdown )
 		{
-			Console::Write( "[ERROR] ThreadSystem: Attempt to shutdown, but this system wasnt running!\n" );
+			Console::WriteLine( "[ERROR] ThreadManager: Attempt to shutdown, but shutdown was already called!" );
 			return false;
 		}
 
-		m_bRunning = false;
-
-		// Shut down all active threads
-		Console::Write( "ThreadSystem: Shutting down engine threads...\n" );
-
-		for( auto& th : m_CustomThreads )
 		{
-			if( th.second && th.second->IsRunning() ) th.second->Stop();
+			std::lock_guard< std::mutex > lck( m_ThreadMutex );
+			m_bClosed = true;
+
+			// Loop through any active threads and shut them down
+			for( auto it = m_Threads.begin(); it != m_Threads.end(); it++ )
+			{
+				if( it->second )
+				{
+					it->second->Stop();
+				}
+			}
+
+			m_Threads.clear();
+			m_ThreadCount.store( 0 );
 		}
 
-		m_CustomThreads.clear();
+		#if HYPERION_OS_WIN32
+		timeEndPeriod( (UINT) m_MinResolution );
+		#endif
 
-		for( auto& th : m_TickedThreads )
-		{
-			if( th.second && th.second->IsRunning() ) th.second->Stop();
-		}
-
-		m_TickedThreads.clear();
-
-		Console::Write( "ThreadSystem: Shutting down task pool threads...\n" );
-
-		for( auto& th : m_TaskPoolThreads )
-		{
-			if( th ) th->Stop();
-		}
-
-		m_TaskPoolThreads.clear();
-
-		Console::Write( "ThreadSystem: Shutdown successful!\n" );
-
+		Console::WriteLine( "[Shutdown] ThreadManager shutdown complete!" );
 		return true;
 	}
 
 
-	HypPtr< Thread > ThreadManager::CreateThread( const TickedThreadParameters& params )
+	HypPtr< Thread > ThreadManager::CreateThread( ThreadParameters& inParams )
 	{
 		// Validate the parameters
-		if( params.Identifier.size() == 0 )
+		if( inParams.identifier.empty() || !inParams.mainFunc )
 		{
-			Console::Write( "[ERROR] ThreadSystem: Attempt to create a thread without a valid identifier\n" );
-			return nullptr;
-		}
-		else if( !params.TickFunction )
-		{
-			Console::Write( "[ERROR] ThreadSystem: Failed to create thread '", params.Identifier, "' because the tick function was not specified\n" );
-			return nullptr;
-		}
-		else if( params.MinimumTasksPerTick > params.MaximumTasksPerTick&& params.MaximumTasksPerTick != 0 )
-		{
-			Console::Write( "[ERROR] ThreadSystem: Failed to create thread '", params.Identifier, "' because the minimum task count is greater than the maximum task count\n" );
-			return nullptr;
-		}
-		else if( GetThread( params.Identifier ) )
-		{
-			Console::Write( "[ERROR] ThreadSystem: Failed to create thread '", params.Identifier, "' because a thread with that identifier already exists\n" );
+			Console::WriteLine( "[ERROR] ThreadManager: Failed to create thread.. parameters were invalid (either identifier or main func)" );
 			return nullptr;
 		}
 
-		// Next, create the thread in-place
-		auto& newThread = m_TickedThreads[ params.Identifier ] = CreateObject< TickedThread >( params );
-
-		// And were going to run it automatically if desired
-		if( params.StartAutomatically )
+		// Check if the tick frequency exceeds the limits of the current OS/hardware
+		if( inParams.bIsTicked && inParams.ticksPerSecond > 0 )
 		{
-			newThread->Start();
+			float tickLengthMs = 1000.f / inParams.ticksPerSecond;
+			if( tickLengthMs < m_MinResolution )
+			{
+				inParams.ticksPerSecond = 1000.0 / (double) m_MinResolution;
+				Console::WriteLine( "[Warning] ThreadManager: Attempt to create a thread that requires higher tick precision than the system can garuntee, clamping tick rate to ", inParams.ticksPerSecond, "hz" );
+			}
 		}
 
-		return newThread;
-	}
+		// Aquire a lock on the thread mutex
+		HypPtr< Thread > newThread;
 
-
-	HypPtr< Thread > ThreadManager::CreateThread( const CustomThreadParameters& params )
-	{
-		// Validate the parameters
-		if( params.Identifier.size() == 0 )
 		{
-			Console::Write( "[ERROR] ThreadManager: Attempt to create a thread without a valid identifier\n" );
-			return nullptr;
+			std::lock_guard< std::mutex > lck( m_ThreadMutex );
+
+			// Ensure were not shutdown while holding the lock, ensures threads arent able to be added after shutdown
+			if( m_bClosed )
+			{
+				Console::WriteLine( "[ERROR] ThreadManager: Failed to create thread.. the thread list was shutdown!" );
+				return false;
+			}
+
+			// Check if a thread with this name already exists
+			auto entry = m_Threads.find( inParams.identifier );
+			if( entry != m_Threads.end() )
+			{
+				Console::WriteLine( "[ERROR] ThreadManager: Failed to create thread.. a thread with this name already exists '", inParams.identifier, "'" );
+				return false;
+			}
+
+			newThread = m_Threads[ inParams.identifier ] = CreateObject< Thread >( inParams );
+			HYPERION_VERIFY( newThread != nullptr, "[ThreadManager] Thread couldnt be created?" );
+
+			m_ThreadCount++;
 		}
-		else if( !params.ThreadFunction )
-		{
-			Console::Write( "[ERROR] ThreadManager: Failed to create thread '", params.Identifier, "' because the tick function was not specified\n" );
-			return nullptr;
-		}
-		else if( GetThread( params.Identifier ) )
-		{
-			Console::Write( "[ERROR] ThreadManager: Failed to create thread '", params.Identifier, "' because a thread with that identifier already exists\n" );
-			return nullptr;
-		}
 
-		// Create thread in-place
-		auto& newThread = m_CustomThreads[ params.Identifier ] = CreateObject< CustomThread >( params );
-
-		if( params.StartAutomatically )
+		if( inParams.bAutoStart && !newThread->Start() )
 		{
-			newThread->Start();
+			Console::WriteLine( "[ThreadManager] Failed to create thread.. it couldnt be started" );
+			return false;
 		}
 
 		return newThread;
@@ -166,78 +389,53 @@ namespace Hyperion
 		if( identifier.size() == 0 )
 			return nullptr;
 
-		// Check both lists for the target 
-		auto it = m_TickedThreads.find( identifier );
-		if( it != m_TickedThreads.end() )
+		// Acquire a lock, and query the list for the identifier
 		{
-			return it->second;
-		}
+			std::lock_guard< std::mutex > lck( m_ThreadMutex );
 
-		auto cit = m_CustomThreads.find( identifier );
-		if( cit != m_CustomThreads.end() )
-		{
-			return cit->second;
-		}
+			auto entry = m_Threads.find( identifier );
+			if( entry == m_Threads.end() )
+			{
+				return nullptr;
+			}
 
-		return nullptr;
+			return entry->second;
+		}
 	}
 
 
 	bool ThreadManager::DestroyThread( const std::string& identifier )
 	{
-		if( identifier.size() == 0 )
-			return false;
+		if( identifier.empty() ) { return false; }
 
-		// Attempt to find an iterator to the thread
-		auto it = m_TickedThreads.find( identifier );
-		if( it != m_TickedThreads.end() )
+		// We need a lock on the thread list
 		{
-			if( it->second && it->second->IsRunning() )
+			std::lock_guard< std::mutex > lck( m_ThreadMutex );
+
+			auto entry = m_Threads.find( identifier );
+			if( entry == m_Threads.end() || !entry->second.IsValid() )
 			{
-				it->second->Stop();
+				return false;
 			}
 
-			m_TickedThreads.erase( it );
+			if( entry->second->IsRunning() )
+			{
+				entry->second->Stop();
+			}
+
+			m_Threads.erase( entry );
+			m_ThreadCount--;
+
 			return true;
 		}
-		else
-		{
-			auto cit = m_CustomThreads.find( identifier );
-			if( cit != m_CustomThreads.end() )
-			{
-				if( cit->second && cit->second->IsRunning() )
-				{
-					cit->second->Stop();
-				}
-
-				m_CustomThreads.erase( cit );
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 
 	uint32 ThreadManager::GetThreadCount()
 	{
-		return static_cast< uint32 >( m_TickedThreads.size() + m_CustomThreads.size() );
-	}
-
-
-	bool ThreadManager::IsWorkerThread( const std::thread::id& inIdentifier )
-	{
-		// If we were passed a default thread id, then return false
-		if( inIdentifier == std::thread::id() )
-			return false;
-
-		for( auto It = m_TaskPoolThreads.begin(); It != m_TaskPoolThreads.end(); It++ )
-		{
-			if( *It && ( *It )->GetSystemIdentifier() == inIdentifier )
-				return true;
-		}
-
-		return false;
+		return m_ThreadCount.load();
 	}
 
 }
+
+HYPERION_REGISTER_ABSTRACT_OBJECT_TYPE( Thread, Object );

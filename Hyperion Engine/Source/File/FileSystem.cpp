@@ -176,7 +176,7 @@ namespace Hyperion
 		class FileSystem
 	===============================================================================================================*/
 
-	bool FileSystem::Initialize( bool bDiscoverAssets, uint32 inFlags /* = FLAGS_NONE */ )
+	bool FileSystem::Initialize( bool bDiscoverAssets, uint32 inFlags )
 	{
 		// Check if we need to discover assets through this file system
 		if( bDiscoverAssets )

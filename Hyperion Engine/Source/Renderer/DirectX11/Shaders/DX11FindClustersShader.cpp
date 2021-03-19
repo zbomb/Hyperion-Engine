@@ -8,7 +8,7 @@
 #include "Hyperion/File/FileSystem.h"
 #include "Hyperion/Renderer/Renderer.h"
 #include "Hyperion/Renderer/GBuffer.h"
-#include "Hyperion/Renderer/DirectX11/DirectX11Texture.h"
+#include "Hyperion/Renderer/DirectX11/DX11Texture.h"
 #include "Hyperion/Renderer/DirectX11/DirectX11ViewClusters.h"
 
 
@@ -163,7 +163,7 @@ namespace Hyperion
 		HYPERION_VERIFY( m_Context, "[DX11] Device context was null" );
 
 		// Get the depth texture
-		DirectX11Texture2D* depthTexture = dynamic_cast< DirectX11Texture2D* >( inGBuffer.GetNormalDepthTexture().get() );
+		DX11Texture2D* depthTexture = dynamic_cast< DX11Texture2D* >( inGBuffer.GetNormalDepthTexture().get() );
 		if( depthTexture == nullptr )
 		{
 			Console::WriteLine( "[ERROR] DX11: Failed to upload GBuffer to 'find clusters' shader, GBuffer was invalid" );
@@ -171,7 +171,7 @@ namespace Hyperion
 		}
 
 		// Upload to the shader
-		ID3D11ShaderResourceView* views[] = { depthTexture->GetView() };
+		ID3D11ShaderResourceView* views[] = { depthTexture->GetSRV() };
 		m_Context->CSSetShaderResources( 0, 1, views );
 
 		return true;

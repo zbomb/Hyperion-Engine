@@ -37,7 +37,7 @@ namespace Hyperion
 	}
 
 
-	bool Console::Start( uint32 inFlags /* = 0 */ )
+	bool Console::Initialize( uint32 inFlags /* = 0 */ )
 	{
 		// Check if were already running
 		if( m_bRunning )
@@ -68,7 +68,7 @@ namespace Hyperion
 	}
 
 
-	bool Console::Stop()
+	bool Console::Shutdown()
 	{
 		// Check if were running
 		if( !m_bRunning )
